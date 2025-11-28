@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'apps.db',
     'apps.accounts',
     'apps.hospitals',
     'apps.reservations',
@@ -81,9 +82,9 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'carebridge',          # 우리가 만든 DB 이름
-        'USER': 'carebridge_user',     # 방금 만든 전용 계정
-        'PASSWORD': 'cb1234',         # 네가 설정한 비밀번호
+        'NAME': 'carebridge',         
+        'USER': 'carebridge_user',     
+        'PASSWORD': 'cb1234',         
         'HOST': '127.0.0.1',
         'PORT': '3306',
         'OPTIONS': {
