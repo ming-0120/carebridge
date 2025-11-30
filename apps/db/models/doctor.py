@@ -9,7 +9,7 @@ class Doctors(models.Model):
     profil_url = models.CharField(max_length=255, null=True, blank=True)
 
     hos = models.ForeignKey('Hospital', on_delete=models.CASCADE)
-    user = models.ForeignKey('Users', on_delete=models.CASCADE)
+    user = models.OneToOneField('Users', on_delete=models.CASCADE)
     dep = models.ForeignKey('Department', on_delete=models.CASCADE)
 
     class Meta:

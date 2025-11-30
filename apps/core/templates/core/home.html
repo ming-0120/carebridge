@@ -1,279 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareBridge 메인</title>
-<style>
-  body {
-    margin: 0;
-    background: #F4F6F9;
-    font-family: "Noto Sans KR", sans-serif;
-    color: #222;
-  }
-
-  /* ========= Header ========= */
-  .header {
-    height: 80px;
-    background: #ffffff;
-    border-bottom: 1px solid #e1e4ec;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .header-inner {
-    width: 1320px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .logo {
-    font-size: 22px;
-    font-weight: 700;
-    color: #1B3C73;
-  }
-
-  .logo small {
-    font-size: 13px;
-    font-weight: 400;
-    color: #777;
-    margin-left: 4px;
-  }
-
-  .nav {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    gap: 40px;
-  }
-
-  .nav a {
-    font-size: 16px;
-    text-decoration: none;
-    color: #222;
-    padding-bottom: 6px;
-    transition: .2s;
-  }
-
-  .nav a:hover,
-  .nav a.active {
-    color: #1B3C73;
-    border-bottom: 2px solid #1B3C73;
-  }
-
-  .util {
-    font-size: 13px;
-    color: #555;
-  }
-
-  .util a {
-    text-decoration: none;
-    color: #555;
-    margin-left: 10px;
-  }
-
-  .util a:hover {
-    text-decoration: underline;
-  }
-
-  /* ========= Layout ========= */
-  .page {
-    width: 1320px;
-    margin: 40px auto 70px;
-  }
-
-  /* === Hero: 좌측 이미지 + 우측 뉴스레터 === */
-  .hero-row {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 30px;
-    margin-bottom: 40px;
-  }
-
-  /* 왼쪽: 이미지 영역 */
-  .hero-left {
-    position: relative;
-    height: 360px;
-    overflow: hidden;
-    border-radius: 16px;
-  }
-
-  .hero-left img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
-
-  .hero-arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(0,0,0,0.4);
-    color: #fff;
-    cursor: pointer;
-  }
-
-  .hero-arrow.prev { left: 14px; }
-  .hero-arrow.next { right: 14px; }
-
-  .hero-dots {
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 6px;
-  }
-
-  .hero-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.6);
-  }
-
-  .hero-dot.active {
-    background: #ffffff;
-  }
-
-  /* 오른쪽: 뉴스레터 패널 */
-  .news-panel {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 22px 22px 18px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-  }
-
-  .news-panel h2 {
-    margin: 0 0 14px;
-    font-size: 22px;
-    color: #1B3C73;
-  }
-
-  .news-card {
-    background: #F8FAFF;
-    border-radius: 12px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    transition: .2s;
-  }
-
-  .news-card:hover {
-    background: #E9F1FF;
-    transform: translateY(-2px);
-  }
-
-  .news-tag {
-    font-size: 12px;
-    color: #CA5F3C;
-    font-weight: 700;
-    margin-bottom: 4px;
-  }
-
-  .news-title {
-    display: block;
-    font-size: 15px;
-    color: #1B2C4A;
-    text-decoration: none;
-    margin-bottom: 4px;
-  }
-
-  .news-title:hover {
-    text-decoration: underline;
-  }
-
-  .news-date {
-    font-size: 12px;
-    color: #777;
-  }
-
-
-/* ========= 아래 메뉴 3개 (응급실 / 병원예약 / QnA) ========= */
-.card-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
-  margin-top: 10px;
-}
-
-.info-card-link {
-  text-decoration: none;
-}
-
-.info-card {
-  border-radius: 6px;
-  padding: 22px 20px;
-  color: #fff;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  cursor: pointer;
-  transition: .2s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  height: 160px;
-}
-
-.info-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.22);
-}
-
-.info-card h3 {
-  margin: 0 0 10px;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.info-card p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  opacity: 0.96;
-}
-
-/* 카드 하단 버튼 영역 */
-.card-btn-area {
-  margin-top: 18px;
-}
-
-.card-btn {
-  display: inline-block;
-  margin-right: 8px;
-  padding: 7px 16px;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.9);
-  font-size: 13px;
-  color: #fff;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.card-btn:hover {
-  background: rgba(255,255,255,0.15);
-}
-
-/* 카드별 배경색 */
-.card-emergency  { background: #0075C9; }  /* 밝은 파랑 */
-.card-reservation { background: #0050A8; } /* 짙은 파랑 */
-.card-qna       { background: #1AA783; }   /* 초록 */
-
-
-  /* ========= Footer ========= */
-  .footer {
-    background: #222;
-    color: #ccc;
-    text-align: center;
-    padding: 26px 0;
-    font-size: 13px;
-  }
-</style>
+<link rel="stylesheet" href="{% static 'core/css/home.css' %}">
 </head>
 <body>
 
@@ -289,6 +21,7 @@
       <a href="#reservation">병원 예약</a>
       <a href="#qna">QnA</a>
       <a href="#newsletter">메디컬 레터</a>
+      <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
     </nav>
 
     <div class="util">
@@ -301,7 +34,8 @@
 <main class="page">
   <section class="hero-row">
     <div class="hero-left">
-      <img src="img/medical_main.jpg" alt="진료 안내 메인 이미지">
+      <img src="{% static 'core/img/medical1.png' %}" alt="감염병 대시보드 화면 예시">
+      
       <button class="hero-arrow prev">&#10094;</button>
       <button class="hero-arrow next">&#10095;</button>
 
@@ -326,7 +60,7 @@
         <div class="news-date">2025.11.20</div>
       </div>
 
-      <div class="news-card">
+      <!-- <div class="news-card">
         <div class="news-tag">칼럼</div>
         <a href="#" class="news-title">독감 유행 시기, 예방접종 안내</a>
         <div class="news-date">2025.11.19</div>
@@ -336,7 +70,7 @@
         <div class="news-tag">칼럼</div>
         <a href="#" class="news-title">만성질환 환자를 위한 식단 가이드</a>
         <div class="news-date">2025.11.18</div>
-      </div>
+      </div> -->
 
       <div class="news-card">
         <div class="news-tag">보도자료</div>
@@ -395,5 +129,6 @@
 <footer class="footer">
   © CareBridge All Rights Reserved.
 </footer>
+<script src="{% static 'core/js/home.js' %}"></script>
 </body>
 </html>
