@@ -1,0 +1,337 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>의사 승인 대기 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
+  <style>
+    .approval-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e1e4ec;
+    }
+    
+    .approval-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1B3C73;
+      margin-bottom: 8px;
+    }
+    
+    .approval-count {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 4px;
+    }
+    
+    .approval-subtitle {
+      font-size: 14px;
+      color: #999;
+    }
+    
+    .approval-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    .btn-approve {
+      padding: 10px 20px;
+      background-color: #10B981;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-approve:hover {
+      background-color: #059669;
+    }
+    
+    .btn-reject {
+      padding: 10px 20px;
+      background-color: #EF4444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-reject:hover {
+      background-color: #DC2626;
+    }
+    
+    .approval-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .approval-table thead {
+      background-color: #F8FAFF;
+    }
+    
+    .approval-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #1B3C73;
+      border-bottom: 2px solid #e1e4ec;
+    }
+    
+    .approval-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .approval-row {
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .approval-row:hover {
+      background-color: #F8FAFF;
+    }
+    
+    .approval-row.selected {
+      background-color: #E9F1FF;
+    }
+    
+    .approval-detail-section {
+      margin-top: 32px;
+      padding: 24px;
+      background-color: #F8FAFF;
+      border-radius: 12px;
+      border: 1px solid #e1e4ec;
+    }
+    
+    .approval-detail-title {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: #1B3C73;
+    }
+    
+    .approval-detail-message {
+      margin-bottom: 20px;
+      padding: 12px;
+      background-color: #fff;
+      border-radius: 6px;
+      color: #666;
+      font-size: 14px;
+    }
+    
+    .approval-detail-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+    
+    .approval-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .approval-detail-label {
+      font-size: 12px;
+      color: #666;
+      font-weight: 500;
+    }
+    
+    .approval-detail-value {
+      font-size: 14px;
+      color: #222;
+      font-weight: 400;
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      <div class="util">
+        {% if user.is_authenticated %}
+          {{ user.username }} | <a href="{% url 'admin:logout' %}">로그아웃</a>
+        {% else %}
+          <a href="{% url 'admin:login' %}">로그인</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 상단 탭 -->
+    <div class="tabs">
+      <a href="{% url 'user_list' %}" class="tab">사용자목록</a>
+      <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
+      <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
+      <a href="{% url 'approval_pending' %}" class="tab active">승인대기</a>
+    </div>
+
+    <!-- 승인 대기 헤더 -->
+    <div class="approval-header">
+      <div class="approval-title">의사 승인 대기</div>
+      <div class="approval-count">{{ total_pending_count }}명</div>
+      <div class="approval-subtitle">면허 및 병원 소속 검증 필요</div>
+    </div>
+
+    <!-- 승인대기 목록 -->
+    <div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: #1B3C73;">승인대기 목록</h3>
+        <div class="approval-actions">
+          <form method="post" action="{% url 'approval_pending' %}" id="approvalForm" style="display: inline;">
+            {% csrf_token %}
+            <input type="hidden" name="action" id="actionInput" value="">
+            <input type="hidden" name="doctor_ids" id="doctorIdsInput" value="">
+            <button type="button" onclick="approveSelected()" class="btn-approve">승인</button>
+            <button type="button" onclick="rejectSelected()" class="btn-reject">승인 거절</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table class="approval-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+              </th>
+              <th>No.</th>
+              <th>이름</th>
+              <th>ID</th>
+              <th>병원명</th>
+              <th>전공과</th>
+              <th>면허번호</th>
+              <th>전화번호</th>
+              <th>생성일시</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for doctor in pending_doctors %}
+            <tr 
+              onclick="selectDoctor({{ doctor.doctor_id }})" 
+              class="approval-row {% if selected_doctor and selected_doctor.doctor_id == doctor.doctor_id %}selected{% endif %}"
+            >
+              <td onclick="event.stopPropagation();">
+                <input 
+                  type="checkbox" 
+                  name="doctor_checkbox" 
+                  value="{{ doctor.doctor_id }}"
+                  onchange="updateSelectedDoctors()"
+                >
+              </td>
+              <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+              <td>{{ doctor.user.name }}</td>
+              <td>{{ doctor.user.username|default:"-" }}</td>
+              <td>{{ doctor.hos.name|default:"-" }}</td>
+              <td>{{ doctor.dep.dep_name|default:"-" }}</td>
+              <td>{{ doctor.license_no }}</td>
+              <td>{{ doctor.user.phone|default:"-" }}</td>
+              <td>{{ doctor.user.created_at|date:"Y.m.d" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="no-data">승인 대기 중인 의사가 없습니다.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 페이지네이션 -->
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?page=1{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">«</a>
+          <a href="?page={{ page_obj.previous_page_number }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link"><</a>
+        {% else %}
+          <span class="page-link disabled">«</span>
+          <span class="page-link disabled"><</span>
+        {% endif %}
+
+        {% if page_obj.paginator.num_pages > 0 %}
+          {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+              <span class="page-link active">{{ num }}</span>
+            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+              <a href="?page={{ num }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">{{ num }}</a>
+            {% endif %}
+          {% endfor %}
+        {% else %}
+          <span class="page-link active">1</span>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">></a>
+          <a href="?page={{ page_obj.paginator.num_pages }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">»</a>
+        {% else %}
+          <span class="page-link disabled">></span>
+          <span class="page-link disabled">»</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- 승인신청 상세정보 -->
+    <div class="approval-detail-section">
+      <h3 class="approval-detail-title">승인신청 상세정보</h3>
+      {% if selected_doctor %}
+      <div class="approval-detail-grid">
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">구분</span>
+          <span class="approval-detail-value">의사</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">이름</span>
+          <span class="approval-detail-value">{{ selected_doctor.user.name }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">의사ID</span>
+          <span class="approval-detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">전공과</span>
+          <span class="approval-detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">주근무 병원</span>
+          <span class="approval-detail-value">{{ selected_doctor.hos.name|default:"-" }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">면허번호</span>
+          <span class="approval-detail-value">{{ selected_doctor.license_no }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">연락처</span>
+          <span class="approval-detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
+        </div>
+        <div class="approval-detail-item">
+          <span class="approval-detail-label">신청일</span>
+          <span class="approval-detail-value">{{ selected_doctor.user.created_at|date:"Y.m.d" }}</span>
+        </div>
+      </div>
+      {% else %}
+      <div class="approval-detail-message">
+        왼쪽 목록에서 행을 클릭하면 상세정보가 표시됩니다.
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="{% static 'admin_panel/js/approval_pending.js' %}"></script>
+</body>
+</html>
+

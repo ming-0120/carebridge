@@ -1,0 +1,226 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>의사 목록 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
+  <style>
+    /* 승인상태 스타일 */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .status-approved {
+      background-color: #10B981;
+      color: #fff;
+    }
+    .status-pending {
+      background-color: #F59E0B;
+      color: #fff;
+    }
+    .status-rejected {
+      background-color: #EF4444;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      <div class="util">
+        {% if user.is_authenticated %}
+          {{ user.username }} | <a href="{% url 'admin:logout' %}">로그아웃</a>
+        {% else %}
+          <a href="{% url 'admin:login' %}">로그인</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 상단 탭 -->
+    <div class="tabs">
+      <a href="{% url 'user_list' %}" class="tab">사용자목록</a>
+      <a href="{% url 'doctor_list' %}" class="tab active">의사목록</a>
+      <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
+      <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+    </div>
+
+    <!-- 검색 섹션 -->
+    <div class="search-section">
+      <!-- 디버깅 정보 (나중에 제거 가능) -->
+      {% if search_type and search_keyword %}
+      <div style="margin-bottom: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+        전체 의사: {{ total_doctors_count }}명 | 검색 결과: {{ search_result_count }}명 | 검색어: "{{ search_keyword }}"
+      </div>
+      {% endif %}
+      <form method="get" action="{% url 'doctor_list' %}" class="search-form">
+        <select name="search_type" class="search-select">
+          <option value="">검색조건</option>
+          <option value="name" {% if search_type == 'name' %}selected{% endif %}>이름</option>
+          <option value="doctor_id" {% if search_type == 'doctor_id' %}selected{% endif %}>의사ID</option>
+          <option value="license_no" {% if search_type == 'license_no' %}selected{% endif %}>면허번호</option>
+          <option value="department" {% if search_type == 'department' %}selected{% endif %}>전공과</option>
+          <option value="hospital" {% if search_type == 'hospital' %}selected{% endif %}>병원명</option>
+        </select>
+        <input 
+          type="text" 
+          name="search_keyword" 
+          value="{{ search_keyword }}" 
+          placeholder="조건 선택 후 입력" 
+          class="search-input"
+        >
+        <button type="submit" class="search-btn">
+          <span class="search-icon">🔍</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- 의사 목록 테이블 -->
+    <div class="table-container">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>의사ID</th>
+            <th>이름</th>
+            <th>전공과</th>
+            <th>면허번호</th>
+            <th>주근무 병원</th>
+            <th>전화번호</th>
+            <th>이메일</th>
+            <th>승인상태</th>
+            <th>가입일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for doctor in doctors %}
+          <tr onclick="selectDoctor({{ doctor.doctor_id }})" class="user-row">
+            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td>{{ doctor.user.username|default:"-" }}</td>
+            <td>{{ doctor.user.name }}</td>
+            <td>{{ doctor.dep.dep_name|default:"-" }}</td>
+            <td>{{ doctor.license_no }}</td>
+            <td>{{ doctor.hos.name|default:"-" }}</td>
+            <td>{{ doctor.user.phone|default:"-" }}</td>
+            <td>{{ doctor.user.email|default:"-" }}</td>
+            <td>
+              {% if doctor.verified %}
+                <span class="status-badge status-approved">승인</span>
+              {% else %}
+                <span class="status-badge status-pending">대기</span>
+              {% endif %}
+            </td>
+            <td>{{ doctor.user.created_at|date:"Y.m.d" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="10" class="no-data">의사 데이터가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+      {% else %}
+        <span class="page-link disabled">«</span>
+        <span class="page-link disabled"><</span>
+      {% endif %}
+
+      {% if page_obj.paginator.num_pages > 0 %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="page-link active">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <span class="page-link active">1</span>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+      {% else %}
+        <span class="page-link disabled">></span>
+        <span class="page-link disabled">»</span>
+      {% endif %}
+    </div>
+
+    <!-- 선택 의사 상세정보 -->
+    {% if selected_doctor %}
+    <div class="user-detail-section">
+      <h3 class="detail-title">선택 의사 상세정보</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">이름</span>
+          <span class="detail-value">{{ selected_doctor.user.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">의사ID</span>
+          <span class="detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">면허번호</span>
+          <span class="detail-value">{{ selected_doctor.license_no }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">전공과</span>
+          <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">주근무 병원</span>
+          <span class="detail-value">{{ selected_doctor.hos.name|default:"-" }}{% if selected_doctor.dep.dep_name %} {{ selected_doctor.dep.dep_name }}{% endif %}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">승인상태</span>
+          <span class="detail-value">
+            {% if selected_doctor.verified %}
+              <span class="status-badge status-approved">승인</span>
+              {% if selected_doctor.user.created_at %}
+                ({{ selected_doctor.user.created_at|date:"Y.m.d" }} 승인완료)
+              {% endif %}
+            {% else %}
+              <span class="status-badge status-pending">대기</span>
+            {% endif %}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">전화번호</span>
+          <span class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">이메일</span>
+          <span class="detail-value">{{ selected_doctor.user.email|default:"-" }}</span>
+        </div>
+        {% if selected_doctor.memo %}
+        <div class="detail-item full-width">
+          <span class="detail-label">한줄 메모</span>
+          <span class="detail-value">{{ selected_doctor.memo }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <script src="{% static 'admin_panel/js/doctor_list.js' %}"></script>
+</body>
+</html>
+
