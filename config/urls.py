@@ -21,5 +21,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('apps.core.urls')),
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
+    path('admin-panel/', include('apps.admin_panel.urls')),
 
 ]

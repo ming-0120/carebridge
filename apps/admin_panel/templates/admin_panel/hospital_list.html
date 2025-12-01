@@ -1,0 +1,204 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>병원 목록 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      <div class="util">
+        {% if user.is_authenticated %}
+          {{ user.username }} | <a href="{% url 'admin:logout' %}">로그아웃</a>
+        {% else %}
+          <a href="{% url 'admin:login' %}">로그인</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 상단 탭 -->
+    <div class="tabs">
+      <a href="{% url 'user_list' %}" class="tab">사용자목록</a>
+      <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
+      <a href="{% url 'hospital_list' %}" class="tab active">병원정보</a>
+      <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+    </div>
+
+    <!-- 검색 섹션 -->
+    <div class="search-section">
+      <!-- 디버깅 정보 (나중에 제거 가능) -->
+      {% if search_type and search_keyword %}
+      <div style="margin-bottom: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+        전체 병원: {{ total_hospitals_count }}개 | 검색 결과: {{ search_result_count }}개 | 검색어: "{{ search_keyword }}"
+      </div>
+      {% endif %}
+      <form method="get" action="{% url 'hospital_list' %}" class="search-form">
+        <select name="search_type" class="search-select">
+          <option value="">검색조건</option>
+          <option value="name" {% if search_type == 'name' %}selected{% endif %}>병원명</option>
+          <option value="region" {% if search_type == 'region' %}selected{% endif %}>지역</option>
+          <option value="phone" {% if search_type == 'phone' %}selected{% endif %}>전화번호</option>
+          <option value="hpid" {% if search_type == 'hpid' %}selected{% endif %}>HPID</option>
+        </select>
+        <input 
+          type="text" 
+          name="search_keyword" 
+          value="{{ search_keyword }}" 
+          placeholder="검색어를 입력하세요" 
+          class="search-input"
+        >
+        <button type="submit" class="search-btn">
+          <span class="search-icon">🔍</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- 병원 목록 테이블 -->
+    <div class="table-container">
+      <table class="user-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>병원명</th>
+            <th>HPID</th>
+            <th>전화번호</th>
+            <th>주소</th>
+            <th>의사 수</th>
+            <th>응급실</th>
+            <th>등록일</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for hospital in hospitals %}
+          <tr onclick="selectHospital({{ hospital.hos_id }})" class="user-row">
+            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td>{{ hospital.name }}</td>
+            <td>{{ hospital.hpid }}</td>
+            <td>{{ hospital.tel|default:"-" }}</td>
+            <td>{{ hospital.address }}</td>
+            <td>
+              {% if hospital.doctor_count %}
+                {{ hospital.doctor_count }}명
+              {% elif hospital.dr_total %}
+                {{ hospital.dr_total }}명
+              {% else %}
+                0명
+              {% endif %}
+            </td>
+            <td>
+              {% if hospital.hpid in er_hpids %}
+                운영중
+              {% else %}
+                -
+              {% endif %}
+            </td>
+            <td>{{ hospital.created_at|date:"Y.m.d" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="8" class="no-data">병원 데이터가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page=1{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+      {% else %}
+        <span class="page-link disabled">«</span>
+        <span class="page-link disabled"><</span>
+      {% endif %}
+
+      {% if page_obj.paginator.num_pages > 0 %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="page-link active">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <span class="page-link active">1</span>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+      {% else %}
+        <span class="page-link disabled">></span>
+        <span class="page-link disabled">»</span>
+      {% endif %}
+    </div>
+
+    <!-- 선택 병원 상세정보 -->
+    {% if selected_hospital %}
+    <div class="user-detail-section">
+      <h3 class="detail-title">선택 병원 상세정보</h3>
+      <div class="detail-grid">
+        <div class="detail-item">
+          <span class="detail-label">병원명</span>
+          <span class="detail-value">{{ selected_hospital.name }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">HPID</span>
+          <span class="detail-value">{{ selected_hospital.hpid }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">전화번호</span>
+          <span class="detail-value">{{ selected_hospital.tel|default:"-" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">주소</span>
+          <span class="detail-value">{{ selected_hospital.address }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">총 의사수</span>
+          <span class="detail-value">
+            {% if selected_hospital.doctor_count %}
+              {{ selected_hospital.doctor_count }}명
+            {% elif selected_hospital.dr_total %}
+              {{ selected_hospital.dr_total }}명
+            {% else %}
+              0명
+            {% endif %}
+          </span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">응급실 운영</span>
+          <span class="detail-value">
+            {% if has_emergency %}
+              운영중
+            {% else %}
+              -
+            {% endif %}
+          </span>
+        </div>
+        {% if selected_hospital.category_name %}
+        <div class="detail-item full-width">
+          <span class="detail-label">상세소개</span>
+          <span class="detail-value">{{ selected_hospital.category_name }}</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <script src="{% static 'admin_panel/js/hospital_list.js' %}"></script>
+</body>
+</html>
+
