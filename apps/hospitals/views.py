@@ -1,7 +1,7 @@
 # hospitals/views.py
 from django.shortcuts import render
 import json
-
+from apps.db.models.disease import DimDisease
 from apps.db.models.statistic import InfectiousStat
 
 def infectious_stat(request):

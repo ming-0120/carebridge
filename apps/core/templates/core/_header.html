@@ -1,0 +1,28 @@
+{% load static %}
+
+<header class="header">
+
+  <link rel="stylesheet" href="{% static 'core/css/_header.css' %}">
+
+  <div class="header-inner">
+    <div class="logo">
+        <a href="{% url 'home' %}">
+            <img src="{% static 'core/img/logo_2.png' %}" alt="" style="width:200px; margin-top:10px;">
+        </a>
+    </div>
+
+    <nav class="nav">
+      <a href="#emergency">응급실 조회</a>
+      <a href="#reservation">병원 예약</a>
+      <a href="#qna">QnA</a>
+      <a href="#newsletter">메디컬 레터</a>
+      <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
+    </nav>
+
+    <div class="util">
+      <a href="#">로그인</a> |
+      <a href="#">회원가입</a>
+    </div>
+
+  </div>
+</header>
