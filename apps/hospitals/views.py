@@ -6,3 +6,6 @@ def infectious_stat(request):
     data = InfectiousStat.objects.filter()
     return render(data, "hospitals/infectious_stat.html")
 
+def emergency_main(request):
+    return render(request, 'emergency/main.html')
+
