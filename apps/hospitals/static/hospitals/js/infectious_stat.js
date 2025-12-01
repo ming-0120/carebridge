@@ -2,40 +2,7 @@
     // ① 백엔드에서 넘어올 원시 데이터 예시
     //    (실제에선 Django에서 context로 JSON 직렬화해서 내려주면 됨)
     // ------------------------------------------------------------------
-    const rawData = [
-      // ===== GENDER 예시 (홍역) =====
-      { disease: "홍역", stdDate: "2024-01-01", statType: "GENDER", groupCode: "계",   groupName: "계", count: 49 },
-      { disease: "홍역", stdDate: "2024-01-01", statType: "GENDER", groupCode: "남",   groupName: "남", count: 35 },
-      { disease: "홍역", stdDate: "2024-01-01", statType: "GENDER", groupCode: "여",   groupName: "여", count: 14 },
-
-      // ===== AGE 예시 (홍역 – 실제 DB에는 0세~95세까지 행이 있음) =====
-      // 여기서는 샘플로 4개만 넣어둠
-      { disease: "홍역", stdDate: "2024-01-01", statType: "AGE", groupCode: "0-9",   groupName: "0-9세",   count: 5 },
-      { disease: "홍역", stdDate: "2024-01-01", statType: "AGE", groupCode: "10-19", groupName: "10-19세", count: 12 },
-      { disease: "홍역", stdDate: "2024-01-01", statType: "AGE", groupCode: "20-39", groupName: "20-39세", count: 20 },
-      { disease: "홍역", stdDate: "2024-01-01", statType: "AGE", groupCode: "40+",  groupName: "40세 이상", count: 12 },
-
-      // ===== 다른 질병 샘플 (장출혈성대장균감염증) =====
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "GENDER", groupCode: "계", groupName: "계", count: 274 },
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "GENDER", groupCode: "남", groupName: "남", count: 128 },
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "GENDER", groupCode: "여", groupName: "여", count: 146 },
-
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "AGE", groupCode: "0-9",   groupName: "0-9세", count: 30 },
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "AGE", groupCode: "10-19", groupName: "10-19세", count: 60 },
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "AGE", groupCode: "20-39", groupName: "20-39세", count: 120 },
-      { disease: "장출혈성대장균감염증", stdDate: "2024-01-01", statType: "AGE", groupCode: "40+",  groupName: "40세 이상", count: 64 },
-
-      // ===== 또 다른 질병 샘플 (A형간염) =====
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "GENDER", groupCode: "계", groupName: "계", count: 0 },
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "GENDER", groupCode: "남", groupName: "남", count: 631 },
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "GENDER", groupCode: "여", groupName: "여", count: 537 },
-
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "AGE", groupCode: "0-9",   groupName: "0-9세", count: 50 },
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "AGE", groupCode: "10-19", groupName: "10-19세", count: 200 },
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "AGE", groupCode: "20-39", groupName: "20-39세", count: 600 },
-      { disease: "A형간염", stdDate: "2024-01-01", statType: "AGE", groupCode: "40+",  groupName: "40세 이상", count: 318 },
-    ];
-
+    let rawData = [];
     // ------------------------------------------------------------------
     // ② 질병 설명 (임시 샘플 – 실제로는 감염병 정보 API/DB에서 가져오기)
     // ------------------------------------------------------------------
@@ -55,162 +22,245 @@
     };
 
     // 질병 목록 드롭다운 채우기
-    function initDiseaseSelect() {
-      const select = document.getElementById("diseaseSelect");
-      const diseases = Array.from(new Set(rawData.map(d => d.disease)));
-      diseases.sort();
+function initDiseaseSelect() {        
+  const select = document.getElementById("diseaseSelect");
+  if (!select) return;
 
-      diseases.forEach(d => {
-        const opt = document.createElement("option");
-        opt.value = d;
-        opt.textContent = d;
-        select.appendChild(opt);
-      });
+  const diseases = Array.from(new Set(rawData.map((d) => d.disease)));
+  diseases.sort();
 
-      // 기본 선택 – 첫 번째 질병
-      if (diseases.length > 0) {
-        select.value = diseases[0];
-      }
-    }
+  diseases.forEach((d) => {
+    const opt = document.createElement("option");
+    opt.value = d;
+    opt.textContent = d;
+    select.appendChild(opt);
+  });
 
-    // 특정 질병 + 날짜 기준으로 데이터 필터링
-    function filterData(disease, stdDate) {
-      const filtered = rawData.filter(
-        row => row.disease === disease && row.stdDate === stdDate
-      );
+  if (diseases.length > 0 && !select.value) {
+    select.value = diseases[0];
+  }
+}
 
-      const genderRows = filtered.filter(row => row.statType === "GENDER");
-      const ageRows = filtered.filter(row => row.statType === "AGE");
+// ------------------------------------------------------------------
+// ③ 특정 질병 + 날짜 기준으로 데이터 필터링
+// ------------------------------------------------------------------
+function filterData(disease, stdDate) {
+  // disease / stdDate 둘 다 매칭
+  const filtered = rawData.filter(
+    (row) => row.disease === disease && row.stdDate === stdDate
+  );
 
-      return { genderRows, ageRows };
-    }
+  const genderRows = filtered.filter((row) => row.statType === "GENDER");
+  const ageRows = filtered.filter((row) => row.statType === "AGE");
 
-    // 차트 인스턴스 전역 관리
-    let genderChartInstance = null;
-    let ageChartInstance = null;
+  return { genderRows, ageRows };
+}
 
-    function renderGenderChart(rows, disease) {
-      const ctx = document.getElementById("genderChart");
+// ------------------------------------------------------------------
+// ④ 차트 인스턴스 전역 관리
+// ------------------------------------------------------------------
+let genderChartInstance = null;
+let ageChartInstance = null;
 
-      const labels = rows.map(r => r.groupName);
-      const data = rows.map(r => r.count);
+// ------------------------------------------------------------------
+// ⑤ 성별 차트 렌더링 (도넛 그래프 버전)
+// ------------------------------------------------------------------
+function renderGenderChart(rows, disease) {
+  const ctx = document.getElementById("genderChart");
+  if (!ctx) return;
+  const filtered = rows.filter(r => r.groupName !== "계");
+  const labels = filtered.map((r) => r.groupName);
+  const data = filtered.map((r) => r.count);
 
-      // 기존 차트 있으면 destroy
-      if (genderChartInstance) {
-        genderChartInstance.destroy();
-      }
+  // 기존 차트 있으면 destroy
+  if (genderChartInstance) {
+    genderChartInstance.destroy();
+  }
 
-      genderChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "건수",
-              data,
-              borderWidth: 1
-            }
-          ]
+  genderChartInstance = new Chart(ctx, {
+    type: "doughnut",               // ← bar → doughnut 로 변경
+    data: {
+      labels,
+      datasets: [
+        {
+          data,
+          borderWidth: 1,          
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: {
-              display: false
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 50 }
-            }
-          }
-        }
-      });
-
-      const total = data.reduce((a, b) => a + b, 0);
-      const summary = document.getElementById("genderSummary");
-      summary.textContent = `${disease}의 성별별 발생 건수 (총 ${total}건)`;
-    }
-
-    function renderAgeChart(rows, disease) {
-      const ctx = document.getElementById("ageChart");
-
-      const labels = rows.map(r => r.groupName);
-      const data = rows.map(r => r.count);
-
-      if (ageChartInstance) {
-        ageChartInstance.destroy();
-      }
-
-      ageChartInstance = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels,
-          datasets: [
-            {
-              label: "건수",
-              data,
-              borderWidth: 1
-            }
-          ]
+      ],
+    },
+    options: {
+      responsive: true,          // 다시 켜기
+      maintainAspectRatio: false,// 부모(.chart-wrapper) 비율을 따르도록      
+      plugins: {
+        legend: {
+          display: true,
+          position: "bottom",       // 범례를 아래로
         },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            title: { display: false }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 50 }
-            }
-          }
-        }
-      });
+        title: {
+          display: false,
+        },
+      },
+      cutout: "60%",                // 도넛 두께 (50~70% 사이에서 취향껏)
+    },
+  });
 
-      const total = data.reduce((a, b) => a + b, 0);
-      const summary = document.getElementById("ageSummary");
-      summary.textContent = `${disease}의 연령대별 발생 건수 (총 ${total}건)`;
-    }
+  const total = data.reduce((a, b) => a + b, 0);
+  const summary = document.getElementById("genderSummary");
+  if (summary) {
+    summary.textContent = `${disease}의 성별별 발생 건수 (총 ${total}건)`;
+  }
+}
 
-    // 질병 설명 영역 업데이트
-    function renderDiseaseInfo(disease) {
-      const titleEl = document.getElementById("diseaseTitle");
-      const defEl = document.getElementById("diseaseDefinition");
-      const causeEl = document.getElementById("diseaseCause");
+// ------------------------------------------------------------------
+// ⑥ 연령 차트 렌더링
+// ------------------------------------------------------------------
+function renderAgeChart(rows, disease) {
+  const ctx = document.getElementById("ageChart");
+  if (!ctx) return;
 
-      titleEl.textContent = disease;
+  const labels = rows.map((r) => r.groupName);
+  const data = rows.map((r) => r.count);
 
-      const info = diseaseInfo[disease];
-      if (info) {
-        defEl.textContent = info.definition;
-        causeEl.textContent = info.cause;
-      } else {
-        defEl.textContent = "해당 질병에 대한 설명 정보가 아직 등록되지 않았습니다.";
-        causeEl.textContent = "관리자 페이지에서 질병 설명을 입력하거나, 외부 감염병 API와 연동하여 자동으로 불러올 수 있습니다.";
+  if (ageChartInstance) {
+    ageChartInstance.destroy();
+  }
+
+  ageChartInstance = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "건수",
+          data,
+          borderWidth: 1,
+        },
+      ],
+    },
+    options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+    layout: {
+      padding: {
+        left: 20,
+        right: 20
       }
+    },
+    scales: {
+      y: { beginAtZero: true },
+      x: {}
     }
+  },
+  });
 
-    // 필터 적용 (질병, 날짜 변경 시)
-    function applyFilter() {
-      const disease = document.getElementById("diseaseSelect").value;
-      const stdDate = document.getElementById("dateInput").value || "2024-01-01";
+  const total = data.reduce((a, b) => a + b, 0);
+  const summary = document.getElementById("ageSummary");
+  if (summary) {
+    summary.textContent = `${disease}의 연령대별 발생 건수 (총 ${total}건)`;
+  }
+}
 
-      const { genderRows, ageRows } = filterData(disease, stdDate);
+// ------------------------------------------------------------------
+// ⑦ 질병 설명 영역 업데이트
+// ------------------------------------------------------------------
+function renderDiseaseInfo(selectedValue) {
+  const titleEl = document.getElementById("diseaseTitle");
+  const contentEl = document.getElementById("diseaseDefinition");
+  // const updatedEl = document.getElementById("ai-summary-updated"); 
 
-      renderGenderChart(genderRows, disease);
-      renderAgeChart(ageRows, disease);
-      renderDiseaseInfo(disease);
-    }
+  if (!titleEl || !contentEl) {
+    console.warn("요약 출력용 요소를 찾을 수 없습니다.");
+    return;
+  }
 
-    // 초기화
-    window.addEventListener("DOMContentLoaded", () => {
-      initDiseaseSelect();
-      document.getElementById("applyFilterBtn").addEventListener("click", applyFilter);
+  // 아무 것도 선택 안 된 경우 리셋
+  if (!selectedValue) {
+    titleEl.textContent = "AI 요약";
+    contentEl.textContent = "질병을 선택하면 AI 요약이 여기에 표시됩니다.";
+    return;
+  }
 
-      // 첫 화면 렌더링
-      applyFilter();
-    });
+  // DISEASE_INFO에서 해당 질병 찾기
+  const disease = DISEASE_INFO.find(
+    (d) => d.disease_code === selectedValue || d.disease_name === selectedValue
+  );
+
+  // 못 찾았을 때
+  if (!disease) {
+    titleEl.textContent = "AI 요약";
+    contentEl.textContent = "해당 질병에 대한 AI 요약이 없습니다.";
+    return;
+  }
+
+  // 찾았을 때
+  titleEl.textContent = `${disease.disease_name} AI 요약`;
+
+  // if (disease.ai_updated_at) {
+  //   // updatedEl.textContent = `마지막 업데이트: ${disease.ai_updated_at}`;
+  // } else {
+  //   updatedEl.textContent = "";
+  // }
+
+  contentEl.innerHTML = marked.parse(disease.ai_summary || "");
+}
+
+// ✅ select 변경 이벤트에 연결
+if (diseaseSelect) {
+  diseaseSelect.addEventListener("change", (e) => {
+    const selectedCode = e.target.value;  // value에 disease_code를 쓰는 게 제일 좋아
+    renderDiseaseInfo(selectedCode);
+
+    // 여기서 이미 그래프 갱신하는 코드가 있다면 같이 실행되겠지
+  });
+
+  // 페이지 첫 로딩 시 기본 선택값에 대한 요약도 한 번 갱신
+  if (diseaseSelect.value) {
+    renderDiseaseInfo(diseaseSelect.value);
+  }
+}
+
+// ------------------------------------------------------------------
+// ⑧ 필터 적용 (질병, 날짜 변경 시)
+// ------------------------------------------------------------------
+function applyFilter() {
+  const disease = document.getElementById("diseaseSelect").value;
+  const stdDate =
+    document.getElementById("dateInput").value || "2024-01-01";
+  console.log("applyFilter 호출!", disease, stdDate);  // ← 추가
+  const { genderRows, ageRows } = filterData(disease, stdDate);
+
+  renderGenderChart(genderRows, disease);
+  renderAgeChart(ageRows, disease);
+  renderDiseaseInfo(disease);
+}
+
+// ------------------------------------------------------------------
+// ⑨ 초기화
+// ------------------------------------------------------------------
+window.addEventListener("DOMContentLoaded", () => {
+  rawData = window.INFECTIOUS_DATA || [];
+  console.log("최종 rawData:", rawData);
+
+  initDiseaseSelect();
+
+  const btn = document.getElementById("applyFilterBtn");
+  if (btn) {
+    btn.addEventListener("click", applyFilter);
+  }
+
+  const diseaseSelect = document.getElementById("diseaseSelect");
+  if (diseaseSelect) {
+    diseaseSelect.addEventListener("change", applyFilter);   // ✅ 질병 바뀔 때마다
+  }
+
+  const dateInput = document.getElementById("dateInput");
+  if (dateInput) {
+    dateInput.addEventListener("change", applyFilter);       // ✅ 날짜 바뀔 때마다
+  }
+
+  // 첫 화면 렌더링
+  applyFilter();
+});

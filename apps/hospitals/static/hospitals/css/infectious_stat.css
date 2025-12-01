@@ -123,12 +123,23 @@
       background: var(--primary-dark);
     }
 
-    /* ===== 메인 3열 레이아웃 ===== */
+    /* ===== 메인 레이아웃: 왼쪽 그래프(세로 2장) + 오른쪽 설명 ===== */
     .content-row {
-      display: grid;
-      grid-template-columns: 1.2fr 1.2fr 1.6fr;
+      display: flex;
       gap: 16px;
-      align-items: stretch;
+      align-items: flex-start;
+    }
+    /* 왼쪽: 그래프 두 개 세로 */
+    .graph-column {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 오른쪽: 설명 카드 – 전체 폭의 약 45~50% */
+    .info-column {
+      flex: 0 0 45%;
     }
 
     .card {
@@ -157,8 +168,23 @@
     }
 
     .card-body {
-      margin-top: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
+    
+    /* 도넛 차트 전용 래퍼 */
+    .chart-wrapper {
+      width: 100%;
+      max-width: 550px;    /* 여기만 조정하면 최대 크기 바뀜 */
+      aspect-ratio: 1 / 1; /* 정사각형 유지 */
+    }
+    
+    .chart-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
 
     /* 오른쪽 질병 설명 카드 */
     .disease-title {
@@ -203,9 +229,12 @@
       margin-right: 6px;
     }
 
-    /* 반응형 */
     @media (max-width: 1024px) {
       .content-row {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+      }
+    
+      .info-column {
+        flex: 1 1 auto;
       }
     }
