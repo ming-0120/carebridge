@@ -1,6 +1,6 @@
 from django.urls import path
-import views
+import apps.emr.views as views
 
 urlpatterns = [
-    path('', home, name='home')
+    path('', views.test, name='test')
 ]
