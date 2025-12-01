@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>병원내 의료진 대시보드 (11페이지 수정본)</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'emr/css/hospital_staff_dashboard.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <div class="logo" onclick="location.href='main.html'">로고</div>
+            <div class="hospital-name">00병원</div>
+        </div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="container">
+        <h2> 병원내 의료진 대시보드</h2>
+        
+        <div class="status-overview">
+            
+            <div class="card status-box">
+                <h3>치료 대기</h3>
+                <div class="status-counts">
+                    <div class="count-item inprogress">진행 중 <strong>6명</strong></div>
+                    <div class="count-item completed">완료 <strong>6명</strong></div>
+                </div>
+            </div>
+            
+            <div class="card status-box">
+                <h3>검사 대기</h3>
+                <div class="status-counts">
+                    <div class="count-item inprogress">진행 중 <strong>3명</strong></div>
+                    <div class="count-item completed">완료 <strong>3명</strong></div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="patient-list-grid">
+            
+            <div class="card list-panel">
+                <h3>치료 대기중인 환자</h3>
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>나이</th>
+                            <th>성별</th>
+                            <th>담당의사</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr onclick="goToRecord('Treatment', '홍길동1', 'PENDING')">
+                            <td>홍길동1</td>
+                            <td>45</td>
+                            <td>남</td>
+                            <td>홍길동2</td>
+                            <td><button class="status-button status-pending">PENDING</button></td>
+                        </tr>
+                        <tr onclick="goToRecord('Treatment', '홀길동2', 'IN_PROGRESS')">
+                            <td>홀길동2</td>
+                            <td>45</td>
+                            <td>여</td>
+                            <td>홍길동3</td>
+                            <td><button class="status-button status-inprogress">IN_PROGRESS</button></td>
+                        </tr>
+                        <tr>
+                            <td>홍길동4</td>
+                            <td>45</td>
+                            <td>남</td>
+                            <td>홍길동2</td>
+                            <td><span class="status-completed">COMPLETED</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card list-panel">
+                <h3>검사 대기중인 환자</h3>
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>나이</th>
+                            <th>성별</th>
+                            <th>담당의사</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>홍길동1</td>
+                            <td>45</td>
+                            <td>남</td>
+                            <td>홍길동2</td>
+                            <td><button class="status-button status-pending">PENDING</button></td>
+                        </tr>
+                        <tr class="emergency-row" onclick="goToRecord('Lab', '홍길동2', 'SAMPLED')">
+                            <td>홍길동2</td>
+                            <td>45</td>
+                            <td>여</td>
+                            <td>홍길동3</td>
+                            <td><button class="status-button status-sampled">SAMPLED</button></td>
+                        </tr>
+                        <tr>
+                            <td>홍길동4</td>
+                            <td>45</td>
+                            <td>남</td>
+                            <td>홍길동2</td>
+                            <td><span class="status-completed">COMPLETED</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/hospital_staff_dashboard.js' %}"></script>
+</body>
+</html>
+

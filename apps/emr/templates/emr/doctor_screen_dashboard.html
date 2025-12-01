@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>의사 화면 대시보드</title>
+    <link rel="stylesheet" href="{% static 'emr/css/doctor_screen_dashboard.css' %}">
+    <script src="https://jsuites.net/v5/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" onclick="location.href='main.html'">로고</div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="dashboard-container">
+
+        <div class="card doctor-profile">
+            <h3>나의 정보</h3>
+            <div class="profile-content">
+                <img src="https://via.placeholder.com/100/007bff/ffffff?text=Doctor" alt="의사 이미지">
+                <p>성명: <strong>강민경</strong></p>
+                <p>나이: <strong>24세</strong></p>
+                <p>근무병원: <strong>강내과</strong></p>
+                <p>담당과: <strong>내과</strong></p>
+            </div>
+        </div>
+
+        <div class="card calendar">
+            <h3>🗓️ 진료 예약 현황</h3>
+            <div style="height:100%">
+                <div id="calendar" style="height: 450px;"></div>
+            </div>
+        </div>
+
+        <div class="card patient-list">
+            <h3>오늘의 환자 (4명)</h3>
+            <div class="patient-list-item" onclick="alert('홍길동1 환자 진료 작성 페이지로 이동')">
+                <h4>성명: 홍길동1</h4>
+                <p>생년월일: 2002.01.20 | 성별: 여</p>
+            </div>
+            <div class="patient-list-item" onclick="alert('홍길동2 환자 진료 작성 페이지로 이동')">
+                <h4>성명: 홍길동2</h4>
+                <p>생년월일: 2002.01.01 | 성별: 남</p>
+            </div>
+            <div class="patient-list-item" onclick="alert('홍길동3 환자 진료 작성 페이지로 이동')">
+                <h4>성명: 홍길동3</h4>
+                <p>생년월일: 1998.01.22 | 성별: 여</p>
+            </div>
+            <div class="patient-list-item" onclick="alert('홍길동4 환자 진료 작성 페이지로 이동')">
+                <h4>성명: 홍길동4</h4>
+                <p>생년월일: 1944.10.25 | 성별: 남</p>
+            </div>
+            <div style="max-height: 200px; overflow-y: auto;">
+                 <div class="patient-list-item" onclick="alert('추가 환자1 진료 작성 페이지로 이동')">
+                    <h4>성명: 홍길동5</h4>
+                    <p>생년월일: 2010.05.01 | 성별: 남</p>
+                </div>
+                <div class="patient-list-item" onclick="alert('추가 환자2 진료 작성 페이지로 이동')">
+                    <h4>성명: 홍길동6</h4>
+                    <p>생년월일: 1977.11.11 | 성별: 여</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="card memo">
+            <h3>📝 메모</h3>
+            <textarea id="doctorMemo" onblur="saveMemo()">메모입니다</textarea>
+            <p style="font-size: 12px; color: #28a745; text-align: right;">(마우스 커서 이탈 시 자동 저장)</p>
+        </div>
+
+        <div class="card patient-search">
+            <h3>🔍 환자 검색</h3>
+            <div class="search-container">
+                <input type="text" placeholder="홍길" value="홍길">
+                <button onclick="alert('환자 조회 리스트 화면으로 이동')">검색</button>
+            </div>
+            <p class="search-desc">현재 재직 중인 병원 내 환자만 조회 가능합니다.</p>
+        </div>
+
+
+        <div class="card chart-weekly">
+            <h3>📊 7일간 환자의 진료 및 오더 통계</h3>
+            <div class="chart-container">
+                <div class="chart-placeholder">
+                                        <br> (7일간 환자 진료, 검사, 치료 수 통계)
+                </div>
+            </div>
+        </div>
+
+        <div class="card chart-daily">
+            <h3>📈 오늘 진료 환자 통계</h3>
+            <div class="chart-placeholder">
+                                <br> (오늘 진료 완료: 70%, 대기 중: 30%)
+            </div>
+        </div>
+
+    </div>
+
+    <script src="{% static 'emr/js/doctor_screen_dashboard.js' %}"></script>
+</body>
+</html>

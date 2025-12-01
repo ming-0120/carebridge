@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>검사 기록 작성</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'emr/css/lab_record_creation.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" onclick="location.href='main.html'">로고</div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="container">
+        <h2> 검사 기록 작성</h2>
+        
+        <div class="patient-info-header">
+            <div class="info-item"><strong>성명:</strong> 조진석</div>
+            <div class="info-item"><strong>주민번호:</strong> 021123-*******</div>
+            <div class="info-item"><strong>전화번호:</strong> 010-****-****</div>
+            <div class="info-item"><strong>성별:</strong> 남</div>
+            <div class="info-item" style="grid-column: span 2;"><strong>주소:</strong> 송파구 송파대로...</div>
+            <div class="info-item"><strong>진단정보:</strong> 팔 부상</div>
+            <div class="info-item"><strong>진료기록내용:</strong> ....</div>
+        </div>
+
+        <div class="card">
+            <h3>검사 기록 데이터 입력</h3>
+
+            <div class="record-entry-grid">
+                
+                <div>
+                    <div class="form-group">
+                        <label for="labName">검사 항목명</label>
+                        <div class="input-with-button">
+                            <input type="text" id="labName" value="X-ray촬영" disabled>
+                            <input type="text" id="labCode" value="E58" disabled>
+                            <button class="search-btn" onclick="openLabSearchModal()">검색</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specimenType">검체 유형 코드</label>
+                        <div class="input-with-button">
+                            <select id="specimenType">
+                                <option value="UR" selected>UR (소변)</option>
+                                <option value="BLD">BLD (혈액)</option>
+                                <option value="TS">TS (조직)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="testResult">결과 값 입력</label>
+                        <textarea id="testResult" placeholder="검사 결과를 상세히 입력하세요. (수치 또는 소견)"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="specialNotes">특이사항 메모</label>
+                        <textarea id="specialNotes" placeholder="특이사항 메모란"></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label>첨부파일</label>
+                        <input type="file" id="fileAttachment" style="display: none;" onchange="addAttachment(this)">
+                        <button class="search-btn attach-btn" onclick="document.getElementById('fileAttachment').click()">첨부파일</button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>첨부된 이미지 목록</label>
+                        <ul class="attachment-list" id="attachmentList">
+                            <li data-filename="202511242129.jpg">
+                                <span>202511242129.jpg</span>
+                                <button class="delete-btn" onclick="removeAttachment(this)">x</button>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-button-group">
+                <button class="status-button btn-sampled" id="btnSampled" onclick="updateStatus('SAMPLED')">SAMPLED</button>
+                <button class="status-button btn-completed" id="btnCompleted" onclick="updateStatus('COMPLETED')">COMPLETED</button>
+                <button class="status-button btn-next" id="btnNext" onclick="goToNextPatient()">다음환자</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="labSearchModal">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                검사항목 검색 모달창
+                <button class="close-btn" onclick="closeModal('labSearchModal')">×</button>
+            </div>
+
+            <div class="modal-body">
+                
+                <div class="search-controls">
+                    <input type="text" id="labNameInput" placeholder="검사항목명을 입력한다">
+                    <button onclick="performSearch()">검색</button>
+                </div>
+
+                <table class="result-table" id="labResultTable">
+                    <thead>
+                        <tr>
+                            <th>검사항목명</th>
+                            <th>검사항목코드</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-code="E58" data-name="X-ray" onclick="selectLabItem(this)">
+                            <td>X-ray</td>
+                            <td>E58</td>
+                        </tr>
+                        <tr data-code="E59" data-name="흉부(X-선)촬영" onclick="selectLabItem(this)">
+                            <td>흉부(X-선)촬영</td>
+                            <td>E59</td>
+                        </tr>
+                        <tr data-code="LAB001" data-name="CBC (Complete Blood Count)" onclick="selectLabItem(this)">
+                            <td>CBC (Complete Blood Count)</td>
+                            <td>LAB001</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('labSearchModal')">취소</button>
+                <button class="btn-confirm" onclick="confirmSelection()">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/lab_record_creation.js' %}"></script>
+</body>
+</html>

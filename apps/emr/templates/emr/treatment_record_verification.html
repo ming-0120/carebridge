@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>치료 기록 화면</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'emr/css/treatment_record_verification.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">로고</div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="container">
+        <h2>치료 기록 화면</h2>
+        
+        <div class="patient-info-header">
+            <div class="info-item"><strong>성명:</strong> 조진석</div>
+            <div class="info-item"><strong>주민번호:</strong> 921123-*******</div>
+            <div class="info-item"><strong>전화번호:</strong> 010-****-****</div>
+            <div class="info-item"><strong>성별:</strong> 남</div>
+            <div class="info-item"><strong>주소:</strong> 송파구 송파대로...</div>
+            <div class="info-item"><strong>진단정보:</strong> 팔 부상</div>
+            <div class="info-item"><strong>진료기록내용:</strong> ....</div>
+        </div>
+
+        <div class="card">
+            <h3>시술/처치 기록 입력 (2)</h3>
+            
+            <div class="record-entry-grid">
+                
+                <div>
+                    <div class="form-group">
+                        <label for="procedureName">시술/처치 명칭 및 코드</label>
+                        <div class="input-with-button">
+                            <input type="text" id="procedureName" value="신경계통의 결핵" disabled>
+                            <input type="text" id="procedureCode" value="A17" disabled>
+                            <button class="search-btn" id="searchProcedureBtn" onclick="openProcedureSearchModal()">검색</button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="procedureSite">시술/처치 부위</label>
+                        <input type="text" id="procedureSite" value="left arm">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="startTime">시작 시각</label>
+                        <input type="text" id="startTime" disabled placeholder="시술 시작 시 자동 기록">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="completionTime">완료 시각</label>
+                        <input type="text" id="completionTime" disabled placeholder="시술 완료 시 자동 기록">
+                    </div>
+                </div>
+
+                <div>
+                    <div class="form-group">
+                        <label for="specialNotes">특이사항 메모</label>
+                        <textarea id="specialNotes" placeholder="특이사항 메모란"></textarea>
+                    </div>
+                </div>
+                
+                <div class="status-button-group">
+                    <button class="status-button btn-start" id="btnStart" onclick="updateStatus('IN_PROGRESS')">IN PROGRESS</button>
+                    <button class="status-button btn-complete" id="btnComplete" onclick="updateStatus('COMPLETED')">COMPLETED</button>
+                    <button class="status-button btn-next" id="btnNext" onclick="goToNextPatient()">다음환자</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 시술/처치 검색 모달 -->
+    <div class="modal-overlay" id="procedureSearchModal">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                처치검색 모달창
+                <button class="close-btn" onclick="closeModal('procedureSearchModal')">×</button>
+            </div>
+
+            <div class="modal-body">
+                
+                <div class="search-controls">
+                    <input type="text" id="procedureNameInput" placeholder="시술/처치명을 입력한다">
+                    <button onclick="performSearch()">검색</button>
+                </div>
+
+                <table class="result-table" id="procedureResultTable">
+                    <thead>
+                        <tr>
+                            <th>시술/처치명</th>
+                            <th>코드</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-code="A17" data-name="신경계통의 결핵" onclick="selectProcedure(this)">
+                            <td>신경계통의 결핵</td>
+                            <td>A17</td>
+                        </tr>
+                        <tr data-code="A19" data-name="좁쌀결핵" onclick="selectProcedure(this)">
+                            <td>좁쌀결핵</td>
+                            <td>A19</td>
+                        </tr>
+                        <tr data-code="TR002" data-name="드레싱 (Dressing)" onclick="selectProcedure(this)">
+                            <td>드레싱 (Dressing)</td>
+                            <td>TR002</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('procedureSearchModal')">취소</button>
+                <button class="btn-confirm" onclick="confirmSelection()">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/treatment_record_verification.js' %}"></script>
+</body>
+</html>
