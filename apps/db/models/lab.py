@@ -25,7 +25,7 @@ class LabOrders(models.Model):
     lab_nm = models.CharField(max_length=100, null=True, blank=True)
     specimen_cd = models.CharField(max_length=10, null=True, blank=True)
 
-    medical_record = models.ForeignKey('MedicalRecord', on_delete=models.CASCADE)
+    medical_record = models.OneToOneField('MedicalRecord', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'lab_orders'

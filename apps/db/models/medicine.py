@@ -8,7 +8,7 @@ class MedicineOrders(models.Model):
     stop_datetime = models.DateTimeField(null=True, blank=True)
     notes = models.TextField(null=True, blank=True)
 
-    medical_record = models.ForeignKey('MedicalRecord', on_delete=models.CASCADE)
+    medical_record = models.OneToOneField('MedicalRecord', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'medicine_orders'
