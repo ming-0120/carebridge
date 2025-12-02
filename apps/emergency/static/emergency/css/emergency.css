@@ -495,3 +495,52 @@ header h1 {
   background: #2563eb;
   color: #fff;
 }
+
+/* 필터 결과 영역 */
+#filter-tags-container {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  margin: 18px 0;
+}
+
+#filter-tags {
+  display: flex;
+  flex-wrap: nowrap; /* 가로 1줄 */
+  gap: 8px;
+  overflow-x: auto;  /* 많아지면 스크롤 */
+}
+
+.filter-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: #e7f0ff;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1976ff;
+  white-space: nowrap; /* 줄바꿈 방지 */
+}
+
+.filter-tag .tag-remove {
+  cursor: pointer;
+  font-weight: bold;
+  color: #1976ff;
+}
+
+#filter-tags-reset {
+  margin-left: auto;
+  padding: 6px 14px;
+  font-size: 14px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  cursor: pointer;
+  white-space: nowrap;
+}

@@ -1,14 +1,11 @@
 // 의사 승인 대기 페이지 JavaScript
+// 공통 함수는 admin_common.js를 참조하세요
 
 function selectDoctor(doctorId) {
-  const url = new URL(window.location.href);
-  url.searchParams.set('doctor_id', doctorId);
-  // 페이지 파라미터 제거 (선택 시 첫 페이지로)
-  url.searchParams.delete('page');
-  window.location.href = url.toString();
+  selectItem(doctorId, 'doctor_id');
 }
 
-function toggleSelectAll() {
+function toggleSelectAllApproval() {
   const selectAllCheckbox = document.getElementById('selectAll');
   const checkboxes = document.querySelectorAll('input[name="doctor_checkbox"]');
   
@@ -20,14 +17,13 @@ function toggleSelectAll() {
 }
 
 function updateSelectedDoctors() {
-  const checkboxes = document.querySelectorAll('input[name="doctor_checkbox"]:checked');
-  const doctorIds = Array.from(checkboxes).map(cb => cb.value);
+  const doctorIds = getSelectedItemIds('doctor_checkbox');
   document.getElementById('doctorIdsInput').value = doctorIds.join(',');
   
   // 전체 선택 체크박스 상태 업데이트
   const selectAllCheckbox = document.getElementById('selectAll');
   const allCheckboxes = document.querySelectorAll('input[name="doctor_checkbox"]');
-  selectAllCheckbox.checked = allCheckboxes.length > 0 && checkboxes.length === allCheckboxes.length;
+  selectAllCheckbox.checked = allCheckboxes.length > 0 && doctorIds.length === allCheckboxes.length;
 }
 
 function approveSelected() {
@@ -60,4 +56,5 @@ function rejectSelected() {
 document.addEventListener('DOMContentLoaded', function() {
   updateSelectedDoctors();
 });
+
 

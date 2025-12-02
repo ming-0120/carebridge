@@ -3,156 +3,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>의사 승인 대기 - CareBridge 관리자</title>
-  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
-  <style>
-    .approval-header {
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #e1e4ec;
-    }
-    
-    .approval-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1B3C73;
-      margin-bottom: 8px;
-    }
-    
-    .approval-count {
-      font-size: 18px;
-      color: #666;
-      margin-bottom: 4px;
-    }
-    
-    .approval-subtitle {
-      font-size: 14px;
-      color: #999;
-    }
-    
-    .approval-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    
-    .btn-approve {
-      padding: 10px 20px;
-      background-color: #10B981;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .btn-approve:hover {
-      background-color: #059669;
-    }
-    
-    .btn-reject {
-      padding: 10px 20px;
-      background-color: #EF4444;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .btn-reject:hover {
-      background-color: #DC2626;
-    }
-    
-    .approval-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    
-    .approval-table thead {
-      background-color: #F8FAFF;
-    }
-    
-    .approval-table th {
-      padding: 12px;
-      text-align: left;
-      font-weight: 600;
-      color: #1B3C73;
-      border-bottom: 2px solid #e1e4ec;
-    }
-    
-    .approval-table td {
-      padding: 12px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .approval-row {
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .approval-row:hover {
-      background-color: #F8FAFF;
-    }
-    
-    .approval-row.selected {
-      background-color: #E9F1FF;
-    }
-    
-    .approval-detail-section {
-      margin-top: 32px;
-      padding: 24px;
-      background-color: #F8FAFF;
-      border-radius: 12px;
-      border: 1px solid #e1e4ec;
-    }
-    
-    .approval-detail-title {
-      margin: 0 0 20px 0;
-      font-size: 18px;
-      font-weight: 700;
-      color: #1B3C73;
-    }
-    
-    .approval-detail-message {
-      margin-bottom: 20px;
-      padding: 12px;
-      background-color: #fff;
-      border-radius: 6px;
-      color: #666;
-      font-size: 14px;
-    }
-    
-    .approval-detail-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-    
-    .approval-detail-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    
-    .approval-detail-label {
-      font-size: 12px;
-      color: #666;
-      font-weight: 500;
-    }
-    
-    .approval-detail-value {
-      font-size: 14px;
-      color: #222;
-      font-weight: 400;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/approval_pending.css' %}">
 </head>
 <body>
   <!-- 헤더 -->
@@ -160,7 +14,7 @@
     <div class="header-inner">
       <a href="{% url 'admin_dashboard' %}" class="logo-link">
         <div class="logo">
-          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
         </div>
       </a>
       <div class="util">
@@ -180,6 +34,7 @@
       <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
       <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
       <a href="{% url 'approval_pending' %}" class="tab active">승인대기</a>
+      <a href="{% url 'qna_list' %}" class="tab">1:1문의관리</a>
     </div>
 
     <!-- 승인 대기 헤더 -->
@@ -209,7 +64,7 @@
           <thead>
             <tr>
               <th style="width: 40px;">
-                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAllApproval()">
               </th>
               <th>No.</th>
               <th>이름</th>
@@ -331,7 +186,9 @@
     </div>
   </div>
 
+  <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/approval_pending.js' %}"></script>
 </body>
 </html>
+
 

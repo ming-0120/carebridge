@@ -3,7 +3,9 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>CareBridge 관리자 대시보드</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/dashboard.css' %}">
 </head>
 <body>
@@ -12,7 +14,7 @@
     <div class="header-inner">
       <a href="{% url 'admin_dashboard' %}" class="logo-link">
         <div class="logo">
-          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
         </div>
       </a>
       <div class="util">
@@ -57,7 +59,7 @@
         <span class="desc">검증 여부와 관계없이 전체 의사</span>
       </div>
     </a>
-    <a href="#" class="summary-card-link">
+    <a href="{% url 'qna_list' %}" class="summary-card-link">
       <div class="summary-card card-green">
         <span class="label">미처리 1:1 문의</span>
         <span class="value">{{ pending_qna_count }}건</span>

@@ -48,5 +48,3 @@ def infectious_stat(request):
          "diseases_json": diseases_json,},
         
     )
-def emergency_main(request):
-    return render(request, 'emergency/main.html')

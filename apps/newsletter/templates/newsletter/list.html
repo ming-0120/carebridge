@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>메디컬 뉴스레터</title> 
+    <link rel="stylesheet" href="{% static 'newsletter/css/newsletter.css' %}">
+</head>
+<body>
+      {% include "core/_header.html" %}
+  <div class="newsletter-wrapper">
+    <h1 class="newsletter-title">메디컬 뉴스레터</h1>
+
+    {% if items %}
+      <div class="news-list">
+        {% for item in items %}
+          <a
+            href="{{ item.url }}"
+            target="_blank"
+            class="news-card-link"
+          >
+            <article class="news-card">
+              <div class="news-card-header">
+                <span class="news-badge">
+                  {{ item.category|default:"보도자료" }}
+                </span>
+                <span class="news-date">
+                  {{ item.published_at|date:"Y.m.d" }}
+                </span>
+              </div>
+
+              <h2 class="news-title">
+                {{ item.title }}
+              </h2>
+
+              <p class="news-body">
+                {# 본문이 있으면 본문, 없으면 summary 사용. 150자 정도만 보여주기 #}
+                {% if item.body %}
+                  {{ item.body|truncatechars:150 }}
+                {% else %}
+                  {{ item.summary|truncatechars:150 }}
+                {% endif %}
+              </p>
+            </article>
+          </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="news-empty">
+        뉴스가 없습니다. 관리자 페이지에서 데이터를 수집해 주세요.
+      </p>
+    {% endif %}
+  </div>
+</body>
+</html>

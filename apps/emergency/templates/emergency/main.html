@@ -5,15 +5,36 @@
 {% block title %}실시간 응급실 조회{% endblock %}
 
 {% block content %}
+
 <header>
   <h1>실시간 응급실 조회</h1>
 </header>
 
 <div class="control-row">
   <button class="btn" onclick="openRegionModal()">지역 선택</button>
-  <span id="region-summary" class="region-summary">{{ selected_region }}</span>
+  <span id="region-summary" class="region-summary">
+    {{ selected_region|default:"전체 지역" }}
+  </span>
   <button class="btn" onclick="openFilterModal()">필터</button>
 </div>
+
+<!-- 선택된 필터 태그 -->
+<div id="filter-tags-container" class="filter-tags hidden">
+  <div class="filter-tags-label">필터 결과</div>
+
+  <!-- 가로 1열 정렬 -->
+  <div id="filter-tags" style="
+        display:flex;
+        flex-wrap:nowrap;
+        align-items:center;
+        gap:8px;
+        overflow-x:auto;
+        padding:6px 0;
+  "></div>
+
+  <button id="filter-tags-reset" class="filter-reset-btn">선택 초기화 ✕</button>
+</div>
+
 
 <div class="table-box">
   <div class="table-header">
@@ -29,20 +50,24 @@
 
   {% for hos in hospitals %}
     {% with st=hos.statuses.all|dictsortreversed:"hvdate"|first %}
-    <div class="row" data-er-id="{{ hos.er_id }}" onclick="openHospitalDetail('{{ hos.er_id }}')">
+    <div class="row"
+         data-er-id="{{ hos.er_id }}"
+         onclick="openHospitalDetail('{{ hos.er_id }}')">
+
+      <!-- 병원명 / 주소 / 거리 -->
       <div>
         <div class="h-name">{{ hos.er_name }}</div>
-
         <div class="h-subinfo">
-          {{ hos.er_sido }} {{ hos.er_sigungu }} |
+          {{ hos.er_sido }} {{ hos.er_sigungu }}
           {% if hos.distance_km %}
-            {{ hos.distance_km }}km
+            | {{ hos.distance_km }}km
           {% else %}
-            {{ hos.er_address }}
+            | {{ hos.er_address }}
           {% endif %}
         </div>
       </div>
 
+      <!-- 응급실 일반 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'er_general' }}">
           {{ st|status_label:'er_general' }}
@@ -50,6 +75,7 @@
         {{ st.er_general_available|default:"-" }} / {{ st.er_general_total|default:"-" }}
       </div>
 
+      <!-- 응급실 소아 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'er_child' }}">
           {{ st|status_label:'er_child' }}
@@ -57,6 +83,7 @@
         {{ st.er_child_available|default:"-" }} / {{ st.er_child_total|default:"-" }}
       </div>
 
+      <!-- 분만실 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'birth' }}">
           {{ st|status_label:'birth' }}
@@ -64,12 +91,15 @@
         {{ st.birth_available|default:"-" }} / {{ st.birth_total|default:"-" }}
       </div>
 
+      <!-- 음압격리 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'negative' }}">
-          {{ st.negative_pressure_available|default:"-" }} / {{ st.negative_pressure_total|default:"-" }}
+          {{ st|status_label:'negative' }}
         </div>
+        {{ st.negative_pressure_available|default:"-" }} / {{ st.negative_pressure_total|default:"-" }}
       </div>
 
+      <!-- 일반격리 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'isolation' }}">
           {{ st|status_label:'isolation' }}
@@ -77,6 +107,7 @@
         {{ st.isolation_available|default:"-" }} / {{ st.isolation_total|default:"-" }}
       </div>
 
+      <!-- 코호트격리 -->
       <div class="status-wrap">
         <div class="circle {{ st|status_color:'cohort' }}">
           {{ st|status_label:'cohort' }}
@@ -84,6 +115,7 @@
         {{ st.cohort_available|default:"-" }} / {{ st.cohort_total|default:"-" }}
       </div>
 
+      <!-- 즐겨찾기(별) -->
       <div class="favorite">☆</div>
     </div>
     {% endwith %}
@@ -97,19 +129,5 @@
 {% include "emergency/_modal_region.html" %}
 {% include "emergency/_modal_filter.html" %}
 {% include "emergency/_modal_detail.html" %}
+
 {% endblock %}
-
-<!-- base.html 또는 main.html 맨 아래 -->
-{% load static %}
-
-<script>
-  const regionDict = JSON.parse('{{ region_dict_json|safe }}');
-
-  // 페이지 첫 로드시 위치 정보 요청 (파라미터 없을 경우에만)
-  document.addEventListener("DOMContentLoaded", () => {
-      const url = new URL(window.location.href);
-      if (!url.searchParams.get("lat") && !url.searchParams.get("sido")) {
-          requestUserLocation();
-      }
-  });
-</script>
