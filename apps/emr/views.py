@@ -10,23 +10,51 @@ from apps.db.models import (
     MedicineData
 )
 
-# ---------------------------------------------------------
-# 의사 대시보드 화면
-# ---------------------------------------------------------
-def doctor_screen_dashboard(request):
+# -------------------------------------------------------------------
+# 페이지 뷰
+# -------------------------------------------------------------------
+
+# 이미 존재
+def test(request):
     return render(request, 'emr/doctor_screen_dashboard.html')
 
-
-# ---------------------------------------------------------
-# 진료기록 작성 페이지
-# ---------------------------------------------------------
+# 이미 존재
 def medical_record_creation(request):
     return render(request, 'emr/medical_record_creation.html')
 
 
-# ---------------------------------------------------------
-# 의료기록 + 처방 저장 API
-# ---------------------------------------------------------
+# -------------------------------------------------------------------
+# 추가해야 하는 나머지 View (템플릿만 연결)
+# -------------------------------------------------------------------
+
+def doctor_screen_dashboard(request):
+    return render(request, 'emr/doctor_screen_dashboard.html')
+
+def hospital_staff_dashboard(request):
+    return render(request, 'emr/hospital_staff_dashboard.html')
+
+def lab_record_creation(request):
+    return render(request, 'emr/lab_record_creation.html')
+
+def medical_record_inquiry(request):
+    return render(request, 'emr/medical_record_inquiry.html')
+
+def patient_search_list(request):
+    return render(request, 'emr/patient_search_list.html')
+
+def today_patient_list(request):
+    return render(request, 'emr/today_patient_list.html')
+
+def treatment_record_verification(request):
+    return render(request, 'emr/treatment_record_verification.html')
+
+def view_previous_medical_records(request):
+    return render(request, 'emr/view_previous_medical_records.html')
+
+
+# -------------------------------------------------------------------
+# 의료기록 + 처방 저장 API (이미 정상)
+# -------------------------------------------------------------------
 @csrf_exempt
 def api_create_medical_record(request):
     if request.method != "POST":
