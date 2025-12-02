@@ -15,66 +15,12 @@
   font-family: "Segoe UI", Arial, sans-serif;
 }
 
+/* ========= 대시보드 페이지 전용 CSS ========= */
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* 대시보드 전용 스타일 */
 body {
   background-color: var(--bg-page);
-  margin: 0;
-  font-family: "Noto Sans KR", sans-serif;
-  color: #222;
-}
-
-/* ========= Header ========= */
-.header {
-  height: 80px;
-  background: #ffffff;
-  border-bottom: 1px solid #e1e4ec;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.header-inner {
-  width: 1320px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header .logo-link {
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.header .logo-link:hover {
-  opacity: 0.8;
-}
-
-.header .logo {
-  display: flex;
-  align-items: center;
-}
-
-.header .logo-img {
-  width: 200px;
-  height: auto;
-  object-fit: contain;
-  margin-top: 10px;
-}
-
-.header .util {
-  font-size: 13px;
-  color: #555;
-}
-
-.header .util a {
-  text-decoration: none;
-  color: #555;
-  margin-left: 10px;
-}
-
-.header .util a:hover {
-  text-decoration: underline;
 }
 
 .dashboard-wrap {

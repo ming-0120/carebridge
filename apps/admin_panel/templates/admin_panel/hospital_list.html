@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>병원 목록 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
 </head>
 <body>
@@ -12,7 +13,7 @@
     <div class="header-inner">
       <a href="{% url 'admin_dashboard' %}" class="logo-link">
         <div class="logo">
-          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
         </div>
       </a>
       <div class="util">
@@ -32,6 +33,7 @@
       <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
       <a href="{% url 'hospital_list' %}" class="tab active">병원정보</a>
       <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+      <a href="{% url 'qna_list' %}" class="tab">1:1문의관리</a>
     </div>
 
     <!-- 검색 섹션 -->
@@ -71,10 +73,10 @@
             <th>No.</th>
             <th>병원명</th>
             <th>HPID</th>
+            <th>hPW</th>
             <th>전화번호</th>
             <th>주소</th>
             <th>의사 수</th>
-            <th>응급실</th>
             <th>등록일</th>
           </tr>
         </thead>
@@ -83,7 +85,8 @@
           <tr onclick="selectHospital({{ hospital.hos_id }})" class="user-row">
             <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
             <td>{{ hospital.name }}</td>
-            <td>{{ hospital.hpid }}</td>
+            <td>{{ hospital.hos_name|default:"-" }}</td>
+            <td>{{ hospital.hos_password|default:"-" }}</td>
             <td>{{ hospital.tel|default:"-" }}</td>
             <td>{{ hospital.address }}</td>
             <td>
@@ -95,14 +98,7 @@
                 0명
               {% endif %}
             </td>
-            <td>
-              {% if hospital.hpid in er_hpids %}
-                운영중
-              {% else %}
-                -
-              {% endif %}
-            </td>
-            <td>{{ hospital.created_at|date:"Y.m.d" }}</td>
+            <td>{{ hospital.estb_date|default:"-" }}</td>
           </tr>
           {% empty %}
           <tr>
@@ -155,7 +151,11 @@
         </div>
         <div class="detail-item">
           <span class="detail-label">HPID</span>
-          <span class="detail-value">{{ selected_hospital.hpid }}</span>
+          <span class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</span>
+        </div>
+        <div class="detail-item">
+          <span class="detail-label">hPW</span>
+          <span class="detail-value">{{ selected_hospital.hos_password|default:"-" }}</span>
         </div>
         <div class="detail-item">
           <span class="detail-label">전화번호</span>
@@ -177,16 +177,6 @@
             {% endif %}
           </span>
         </div>
-        <div class="detail-item">
-          <span class="detail-label">응급실 운영</span>
-          <span class="detail-value">
-            {% if has_emergency %}
-              운영중
-            {% else %}
-              -
-            {% endif %}
-          </span>
-        </div>
         {% if selected_hospital.category_name %}
         <div class="detail-item full-width">
           <span class="detail-label">상세소개</span>
@@ -198,6 +188,7 @@
     {% endif %}
   </div>
 
+  <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/hospital_list.js' %}"></script>
 </body>
 </html>

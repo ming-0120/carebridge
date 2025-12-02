@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import Count, Q, Sum
 from django.core.paginator import Paginator
-from apps.db.models import Users, Doctors, Hospital, Qna, DailyVisit, UserFavorite, Department, ErInfo
+from apps.db.models import Users, Doctors, Hospital, Qna, DailyVisit, UserFavorite, Department
 import json
 
 # Create your views here.
@@ -230,9 +230,6 @@ def hospital_list(request):
         doctor_count=Count('doctors')
     ).all().order_by('-created_at')
     
-    # 응급실 운영 여부를 위한 ErInfo hpid 목록
-    er_hpids = set(ErInfo.objects.values_list('hpid', flat=True))
-    
     # 검색 필터 적용
     if search_type and search_keyword:
         search_keyword = search_keyword.strip()
@@ -254,14 +251,11 @@ def hospital_list(request):
     
     # 선택된 병원 정보
     selected_hospital = None
-    has_emergency = False
     if selected_hospital_id:
         try:
             selected_hospital = Hospital.objects.annotate(
                 doctor_count=Count('doctors')
             ).get(hos_id=selected_hospital_id)
-            # 응급실 운영 여부 확인
-            has_emergency = ErInfo.objects.filter(hpid=selected_hospital.hpid).exists()
         except Hospital.DoesNotExist:
             pass
     
@@ -275,8 +269,6 @@ def hospital_list(request):
         'search_type': search_type,
         'search_keyword': search_keyword,
         'selected_hospital': selected_hospital,
-        'has_emergency': has_emergency,
-        'er_hpids': er_hpids,
         'total_hospitals_count': total_hospitals_count,
         'search_result_count': search_result_count,
     }
@@ -334,3 +326,235 @@ def approval_pending(request):
     }
     
     return render(request, 'admin_panel/approval_pending.html', context)
+
+
+def qna_list(request):
+    """
+    1:1 문의 목록 페이지 뷰
+    """
+    # 삭제 처리 (POST 요청)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        qna_ids_str = request.POST.get('qna_ids', '')
+        
+        if action == 'delete' and qna_ids_str:
+            # 쉼표로 구분된 ID 문자열을 리스트로 변환
+            qna_ids = [int(id.strip()) for id in qna_ids_str.split(',') if id.strip()]
+            if qna_ids:
+                Qna.objects.filter(qna_id__in=qna_ids).delete()
+            return redirect('qna_list')
+    
+    # 기본 쿼리셋 (모든 문의, 최신순)
+    qnas = Qna.objects.select_related('user').all().order_by('-created_at')
+    
+    # 페이지네이션 (페이지당 10개)
+    paginator = Paginator(qnas, 10)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
+    # 디버깅용
+    total_qna_count = Qna.objects.count()
+    
+    context = {
+        'page_obj': page_obj,
+        'qnas': page_obj,
+        'total_qna_count': total_qna_count,
+    }
+    
+    return render(request, 'admin_panel/qna_list.html', context)
+
+
+def qna_detail(request, qna_id):
+    """
+    1:1 문의 상세 페이지 뷰
+    """
+    # 문의 조회
+    qna = get_object_or_404(Qna.objects.select_related('user'), qna_id=qna_id)
+    
+    # 답변 저장 처리 (POST 요청)
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'reply':
+            reply_content = request.POST.get('reply_content', '').strip()
+            if reply_content:
+                qna.reply = reply_content
+                qna.save()
+                return redirect('qna_list')
+        elif action == 'cancel':
+            return redirect('qna_list')
+    
+    context = {
+        'qna': qna,
+    }
+    
+    return render(request, 'admin_panel/qna_detail.html', context)
+
+
+def create_user_dummy_data(request):
+    """
+    더미 사용자 데이터 생성 (임시용)
+    """
+    from django.contrib.auth.hashers import make_password
+    import random
+    
+    # 더미 사용자 데이터
+    user_data = [
+        {
+            'username': 'user01',
+            'name': '나아는',
+            'email': 'test1@gmail.com',
+            'phone': '010-1234-5678',
+            'gender': 'M',
+            'address': '서울특별시 강남구',
+        },
+        {
+            'username': 'user02',
+            'name': '준비중',
+            'email': 'test2@naver.com',
+            'phone': '010-2345-6789',
+            'gender': 'W',
+            'address': '서울특별시 서초구',
+        },
+        {
+            'username': 'user03',
+            'name': '김철수',
+            'email': 'test3@gmail.com',
+            'phone': '010-3456-7890',
+            'gender': 'M',
+            'address': '서울특별시 송파구',
+        },
+        {
+            'username': 'user04',
+            'name': '이영희',
+            'email': 'test4@naver.com',
+            'phone': '010-4567-8901',
+            'gender': 'W',
+            'address': '경기도 성남시',
+        },
+        {
+            'username': 'user05',
+            'name': '박민수',
+            'email': 'test5@gmail.com',
+            'phone': '010-5678-9012',
+            'gender': 'M',
+            'address': '인천광역시',
+        },
+    ]
+    
+    created_count = 0
+    for data in user_data:
+        # 이미 존재하는지 확인
+        if Users.objects.filter(username=data['username']).exists():
+            continue
+        
+        # 사용자 생성
+        user = Users.objects.create(
+            username=data['username'],
+            password=make_password('1234'),  # 기본 비밀번호: 1234
+            name=data['name'],
+            email=data['email'],
+            phone=data['phone'],
+            gender=data['gender'],
+            resident_reg_no=f'{random.randint(500000, 999999)}-{random.randint(1000000, 9999999)}',
+            mail_confirm='Y',
+            address=data['address'],
+            provider='local',
+            role='USER',
+            withdrawal='0',
+        )
+        created_count += 1
+    
+    return redirect('user_list')
+
+
+def create_qna_dummy_data(request):
+    """
+    더미 문의 데이터 생성 (임시용)
+    """
+    from datetime import timedelta
+    import random
+    
+    # 먼저 사용자 데이터가 있는지 확인하고 없으면 생성
+    if Users.objects.count() == 0:
+        # 사용자 더미 데이터 생성
+        create_user_dummy_data(request)
+    
+    # 더미 문의 데이터
+    qna_data = [
+        {
+            'title': '버튼 클릭이 잘 안돼요~',
+            'content': '홈페이지에서 응급실 이동 버튼이 클릭이 잘 안돼요~!',
+            'has_reply': False
+        },
+        {
+            'title': '병원 예약 관련 문의드립니다.',
+            'content': '병원 예약을 하고 싶은데 어떻게 해야 하나요?',
+            'has_reply': True,
+            'reply': '병원 예약은 병원 목록에서 원하는 병원을 선택하신 후 예약 버튼을 클릭하시면 됩니다.'
+        },
+        {
+            'title': '응급실 정보가 이상해요',
+            'content': '응급실 정보가 실제와 다르게 표시되는 것 같습니다.',
+            'has_reply': False
+        },
+        {
+            'title': '로그인이 안됩니다',
+            'content': '로그인을 시도하는데 계속 실패합니다.',
+            'has_reply': True,
+            'reply': '비밀번호를 확인해주시고, 그래도 안되시면 비밀번호 찾기를 이용해주세요.'
+        },
+        {
+            'title': '회원가입 문의',
+            'content': '회원가입 시 이메일 인증이 안됩니다.',
+            'has_reply': False
+        },
+        {
+            'title': '의사 정보 수정 요청',
+            'content': '의사 정보에 오류가 있어서 수정 요청드립니다.',
+            'has_reply': True,
+            'reply': '의사 정보 수정 요청을 접수했습니다. 검토 후 수정하겠습니다.'
+        },
+        {
+            'title': '예약 취소 방법',
+            'content': '예약을 취소하고 싶은데 어떻게 해야 하나요?',
+            'has_reply': False
+        },
+        {
+            'title': '결제 오류 문의',
+            'content': '결제 과정에서 오류가 발생했습니다.',
+            'has_reply': False
+        },
+    ]
+    
+    # 사용자 조회
+    users = list(Users.objects.all())
+    
+    if not users:
+        return HttpResponse('사용자 생성에 실패했습니다.', status=400)
+    
+    created_count = 0
+    for i, data in enumerate(qna_data):
+        # 사용자 순환 할당
+        user = users[i % len(users)]
+        
+        # 이미 존재하는지 확인
+        if Qna.objects.filter(title=data['title'], user=user).exists():
+            continue
+        
+        # 문의 생성
+        qna = Qna.objects.create(
+            title=data['title'],
+            content=data['content'],
+            user=user,
+            created_at=timezone.now() - timedelta(days=random.randint(0, 10))
+        )
+        
+        # 답변이 있는 경우 추가
+        if data.get('has_reply') and data.get('reply'):
+            qna.reply = data['reply']
+            qna.save()
+        
+        created_count += 1
+    
+    return redirect('qna_list')

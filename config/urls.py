@@ -22,6 +22,6 @@ urlpatterns = [
     path('', include('apps.core.urls')),
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
     path('emergency/', include('apps.hospitals.urls')),
-    path('admin-panel/', include('apps.admin_panel.urls')),
+    path('admin_panel/', include('apps.admin_panel.urls')),  
     path('mstaff/', include('apps.emr.urls')),
 ]

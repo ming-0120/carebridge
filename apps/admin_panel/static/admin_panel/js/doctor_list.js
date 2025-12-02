@@ -1,9 +1,9 @@
 // 의사 목록 페이지 JavaScript
+// 공통 함수는 admin_common.js를 참조하세요
 
 function selectDoctor(doctorId) {
-  const url = new URL(window.location.href);
-  url.searchParams.set('doctor_id', doctorId);
-  window.location.href = url.toString();
+  selectItem(doctorId, 'doctor_id');
 }
+
 
 

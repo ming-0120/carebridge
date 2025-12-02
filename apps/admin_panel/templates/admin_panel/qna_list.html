@@ -1,0 +1,222 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>1:1 문의 관리 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
+  <style>
+    .qna-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e1e4ec;
+    }
+    
+    .qna-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1B3C73;
+      margin: 0;
+    }
+    
+    .btn-delete {
+      padding: 10px 20px;
+      background-color: #EF4444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .btn-delete:hover {
+      background-color: #DC2626;
+    }
+    
+    .qna-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .qna-table thead {
+      background-color: #F8FAFF;
+    }
+    
+    .qna-table th {
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      color: #1B3C73;
+      border-bottom: 2px solid #e1e4ec;
+    }
+    
+    .qna-table td {
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .qna-row {
+      transition: background-color 0.2s;
+      cursor: pointer;
+    }
+    
+    .qna-row:hover {
+      background-color: #F8FAFF;
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    .status-waiting {
+      background-color: #F59E0B;
+      color: #fff;
+    }
+    
+    .status-completed {
+      background-color: #10B981;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="header">
+    <div class="header-inner">
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      <div class="util">
+        {% if user.is_authenticated %}
+          {{ user.username }} | <a href="{% url 'admin:logout' %}">로그아웃</a>
+        {% else %}
+          <a href="{% url 'admin:login' %}">로그인</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- 상단 탭 -->
+    <div class="tabs">
+      <a href="{% url 'user_list' %}" class="tab">사용자목록</a>
+      <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
+      <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
+      <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+      <a href="{% url 'qna_list' %}" class="tab active">1:1문의관리</a>
+    </div>
+
+    <!-- 문의 관리 헤더 -->
+    <div class="qna-header">
+      <h1 class="qna-title">1:1 문의 관리</h1>
+      <div style="display: flex; gap: 10px;">
+        <a href="{% url 'create_qna_dummy' %}" class="btn-delete" style="background-color: #10B981; text-decoration: none; display: inline-block;">더미 데이터 생성</a>
+        <form method="post" action="{% url 'qna_list' %}" id="deleteForm" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="delete">
+          <input type="hidden" name="qna_ids" id="qnaIdsInput" value="">
+          <button type="button" onclick="deleteSelected()" class="btn-delete">삭제</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 문의 목록 테이블 -->
+    <div class="table-container">
+      <table class="qna-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">
+              <input type="checkbox" id="selectAll" onchange="toggleSelectAllQna()">
+            </th>
+            <th>No.</th>
+            <th>이름</th>
+            <th>이메일</th>
+            <th>문의 제목</th>
+            <th>문의 일자</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for qna in qnas %}
+          <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
+            <td onclick="event.stopPropagation(); return false;">
+              <input 
+                type="checkbox" 
+                name="qna_checkbox" 
+                value="{{ qna.qna_id }}"
+                onclick="event.stopPropagation(); return false;"
+                onchange="updateSelectedQnas();"
+              >
+            </td>
+            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td>{{ qna.user.name }}</td>
+            <td>{{ qna.user.email }}</td>
+            <td>{{ qna.title }}</td>
+            <td>{{ qna.created_at|date:"Y-m-d" }}</td>
+            <td>
+              {% if qna.reply %}
+                <span class="status-badge status-completed">답변 완료</span>
+              {% else %}
+                <span class="status-badge status-waiting">대기</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="no-data">문의 데이터가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 페이지네이션 -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?page=1" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link"><</a>
+      {% else %}
+        <span class="page-link disabled">«</span>
+        <span class="page-link disabled"><</span>
+      {% endif %}
+
+      {% if page_obj.paginator.num_pages > 0 %}
+        {% for num in page_obj.paginator.page_range %}
+          {% if page_obj.number == num %}
+            <span class="page-link active">{{ num }}</span>
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <span class="page-link active">1</span>
+      {% endif %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">»</a>
+      {% else %}
+        <span class="page-link disabled">></span>
+        <span class="page-link disabled">»</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
+  <script src="{% static 'admin_panel/js/qna_list.js' %}"></script>
+</body>
+</html>
+

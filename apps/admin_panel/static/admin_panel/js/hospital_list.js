@@ -1,9 +1,9 @@
 // 병원 목록 페이지 JavaScript
+// 공통 함수는 admin_common.js를 참조하세요
 
 function selectHospital(hospitalId) {
-  const url = new URL(window.location.href);
-  url.searchParams.set('hospital_id', hospitalId);
-  window.location.href = url.toString();
+  selectItem(hospitalId, 'hospital_id');
 }
+
 
 

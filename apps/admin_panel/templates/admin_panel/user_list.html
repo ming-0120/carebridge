@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <title>사용자 목록 - CareBridge 관리자</title>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
 </head>
 <body>
@@ -12,7 +13,7 @@
     <div class="header-inner">
       <a href="{% url 'admin_dashboard' %}" class="logo-link">
         <div class="logo">
-          <img src="{% static 'images/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
         </div>
       </a>
       <div class="util">
@@ -32,7 +33,16 @@
       <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
       <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
       <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+      <a href="{% url 'qna_list' %}" class="tab">1:1문의관리</a>
     </div>
+    
+    <!-- 더미 데이터 생성 버튼 (데이터가 없을 때만 표시) -->
+    {% if total_users_count == 0 %}
+    <div style="text-align: center; padding: 20px; background-color: #F8FAFF; border-radius: 8px; margin-bottom: 24px;">
+      <p style="margin-bottom: 10px; color: #666;">사용자 데이터가 없습니다.</p>
+      <a href="{% url 'create_user_dummy' %}" style="display: inline-block; padding: 10px 20px; background-color: #10B981; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">더미 사용자 데이터 생성</a>
+    </div>
+    {% endif %}
 
     <!-- 검색 섹션 -->
     <div class="search-section">
@@ -180,6 +190,7 @@
     {% endif %}
   </div>
 
+  <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/user_list.js' %}"></script>
 </body>
 </html>
