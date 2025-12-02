@@ -20,7 +20,7 @@ class ErInfo(models.Model):
 
 class ErStatus(models.Model):
     status_id = models.AutoField(primary_key=True)
-    er = models.ForeignKey('ErInfo', on_delete=models.CASCADE)
+    er = models.ForeignKey(ErInfo, on_delete=models.CASCADE, related_name="statuses")
     hpid = models.CharField(max_length=20)
     hvdate = models.DateTimeField()
     update_at = models.DateTimeField(auto_now=True)
