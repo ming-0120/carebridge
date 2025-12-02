@@ -1,10 +1,11 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>이전 진료기록 보기</title>
-    <link rel="stylesheet" href="view_previous_medical_records.css">
+    <link rel="stylesheet" href="{% static 'emr/css/view_previous_medical_records.css' %}">
 </head>
 <body>
 
@@ -107,6 +108,6 @@
         </div>
     </div>
 
-    <script src="view_previous_medical_records.js"></script>
+    <script src="{% static 'emr/js/view_previous_medical_records.js' %}"></script>
 </body>
 </html>
