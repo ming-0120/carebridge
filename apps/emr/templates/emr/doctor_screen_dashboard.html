@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -5,11 +6,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>의사 화면 대시보드</title>
     <link rel="stylesheet" href="{% static 'emr/css/doctor_screen_dashboard.css' %}">
-    <script src="https://jsuites.net/v5/jsuites.js"></script>
-    <link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
+    <!-- <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js'></script> -->
+    <!-- fullcalendar CDN -->
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js'></script>
+    <!-- fullcalendar 언어 CDN -->
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js'></script>
+    <script>
+        let holidays = "{{ holidays | escape }}"
+        function htmlDecode(input) {
+            const doc = new DOMParser().parseFromString(input, "text/html");
+            return doc.documentElement.textContent;
+        }
+
+        holidays = JSON.parse(htmlDecode(holidays))
+    </script>
 </head>
 <body>
-
     <div class="header">
         <div class="logo" onclick="location.href='main.html'">로고</div>
         <div class="user-info">00님</div>
@@ -31,7 +44,7 @@
         <div class="card calendar">
             <h3>🗓️ 진료 예약 현황</h3>
             <div style="height:100%">
-                <div id="calendar" style="height: 450px;"></div>
+                <div id="calendar"></div>
             </div>
         </div>
 

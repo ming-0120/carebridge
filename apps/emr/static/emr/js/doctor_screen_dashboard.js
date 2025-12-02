@@ -1,3 +1,5 @@
+let selectedDate = undefined;
+let currentYear = new Date().getFullYear();
 function saveMemo() {
     const memoContent = document.getElementById('doctorMemo').value;
     // 실제 환경에서는 서버나 로컬 스토리지에 저장
@@ -5,13 +7,39 @@ function saveMemo() {
     // alert('메모가 저장되었습니다.');
 }
 
-let instance = jSuites.calendar(document.getElementById('calendar'), {
-    format: 'YYYY-MM-DD',
-    onupdate: function() {
-        console.log(arguments[1])
-    },
-    months: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'],
-    monthsFull: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-    weekdays: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
-    weekdays_short: ['일', '월', '화', '수', '목', '금', '토'],
-});
+window.onload = function() {
+    // console.log(JSON.parse(holidays))
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        dateClick: function(info) {
+            if (!selectedDate) {
+                selectedDate = info.dayEl
+            } else {
+                selectedDate.style.backgroundColor = '#ffffff'
+                selectedDate = info.dayEl
+            }
+
+            if (document.getElementsByClassName('fc-day-today')[0]) {
+                document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)'
+            }
+            info.dayEl.style.backgroundColor = '#2c6cc5aa';
+            console.log(info.dateStr)
+        },
+        selectable: false,
+        selectOverlap: false,
+        height: 400,
+        dayCellClassNames: function(arg) {
+            const day = arg.date.getDay();
+            const y = arg.date.getFullYear();
+            const m = String(arg.date.getMonth() + 1).padStart(2, "0");
+            const d = String(arg.date.getDate()).padStart(2, "0");
+            const dateStr = `${y}-${m}-${d}`;
+            const holiday = holidays && holidays.find((h) => h.date == dateStr);
+            if (holiday) return ["fc-holiday-cell"];
+            return [];
+        },
+    });
+    calendar.render();
+}
+

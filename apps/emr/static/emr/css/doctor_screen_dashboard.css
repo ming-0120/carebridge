@@ -144,3 +144,25 @@ body {
 .chart-daily .chart-placeholder {
         min-height: 150px;
 }
+
+/* 일요일 날짜: 빨간색 */
+.fc-day-sun a {
+    color: red;
+}
+  
+/* 토요일 날짜: 파란색 */
+.fc-day-sat a {
+    color: blue;
+}
+
+.fc-holiday-cell {
+    color: red !important;
+}
+
+.fc-saturday, .fc-sunday {
+  background-color: #f8f9fa !important;
+}
+
+.fc-saturday, .fc-sunday {
+  background-color: #f8f9fa !important;
+}
