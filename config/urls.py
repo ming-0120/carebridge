@@ -29,11 +29,23 @@ def admin_panel_redirect(request, path=''):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # 메인 홈페이지
     path('', include('apps.core.urls')),
+    # 감염병 통계 & 병원 페이지
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
-    path('emergency/', include('apps.hospitals.urls')),
-    path('admin_panel/', include('apps.admin_panel.urls')),  
+    
+    # 실시간 응급실 조회 전용 라우팅
+    path('emergency/', include('apps.emergency.urls')),
+    
+    # 관리자 페이지
+    path('admin_panel/', include('apps.admin_panel.urls')),
     path('admin-panel/', lambda request: admin_panel_redirect(request, '')),  # 하이픈으로 접근 시 언더스코어로 리다이렉트
-    path('admin-panel/<path:path>', admin_panel_redirect),  # 하이픈으로 접근 시 언더스코어로 리다이렉트
+    path('admin-panel/<path:path>', admin_panel_redirect),  # 하이픈으로 접근 시 언더스코어로 리다이렉트  
+    
+    # 의사 EMR
     path('mstaff/', include('apps.emr.urls')),
+    path("", include("apps.newsletter.urls")), 
 ]
+
+

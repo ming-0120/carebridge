@@ -1,0 +1,36 @@
+<div id="filter-modal" class="modal-overlay hidden">
+  <div class="filter-modal-box">
+
+    <div class="filter-header">
+      <h2>필터</h2>
+      <button class="modal-close" onclick="closeFilterModal()">×</button>
+    </div>
+
+    <!-- ① 응급 유형 -->
+    <h3 class="filter-title">응급 유형</h3>
+    <div id="emergency-type-group" class="type-group">
+      <div class="type-chip" data-type="stroke">뇌출혈 / 뇌경색</div>
+      <div class="type-chip" data-type="traffic">교통사고</div>
+      <div class="type-chip" data-type="cardio">심근경색</div>
+      <div class="type-chip" data-type="obstetrics">산부인과</div>
+    </div>
+
+    <!-- ② 장비 및 시설 -->
+    <h3 class="filter-title">장비 및 시설</h3>
+    <div id="equipment-group" class="equip-group">
+      <div class="equip-chip" data-equip="ct">CT</div>
+      <div class="equip-chip" data-equip="mri">MRI</div>
+      <div class="equip-chip" data-equip="angio">Angio</div>
+      <div class="equip-chip" data-equip="icu">중환자실</div>
+      <div class="equip-chip" data-equip="surgery">수술실</div>
+      <div class="equip-chip" data-equip="delivery">분만실</div>
+    </div>
+
+    <!-- ③ 초기화 / ④ 적용하기 -->
+    <div class="filter-footer">
+      <button class="btn reset" type="button" onclick="resetFilter()">초기화</button>
+      <button class="btn apply" type="button" onclick="applyFilter()">적용하기</button>
+    </div>
+
+  </div>
+</div>

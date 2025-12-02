@@ -43,7 +43,9 @@ INSTALLED_APPS = [
     'apps.emr',
     'apps.admin_panel',
     'apps.core',
+    'apps.newsletter',
     'apps.db.apps.DbConfig',
+    'apps.emergency',
 ]
 
 MIDDLEWARE = [
@@ -130,7 +132,8 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'apps/hospitals/static',
+    BASE_DIR / 'static',
+    BASE_DIR / 'apps/emergency/static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Default primary key field type
