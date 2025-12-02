@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'apps.emr',
     'apps.admin_panel',
     'apps.core',
+    'apps.newsletter',
     'apps.db.apps.DbConfig',
     'apps.emergency',
 ]

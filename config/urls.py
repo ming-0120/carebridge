@@ -34,6 +34,7 @@ urlpatterns = [
 
     # 의사 EMR
     path('mstaff/', include('apps.emr.urls')),
+    path("", include("apps.newsletter.urls")), 
 ]
 
 

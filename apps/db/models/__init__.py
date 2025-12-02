@@ -16,3 +16,4 @@ from .review import AiReview
 from .favorite import UserFavorite
 from .qna import Qna
 from .daily_visit import DailyVisit
+from .medical_newsletter import MedicalNewsletter
