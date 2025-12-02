@@ -1,0 +1,76 @@
+<div id="detail-modal" class="modal-overlay hidden">
+  <div class="modal-wrap detail-large">
+
+    <!-- Close Button -->
+    <button class="modal-close" onclick="closeDetailModal()">×</button>
+
+    <!-- Header Info -->
+    <div class="detail-header">
+      <h1 id="detail-title" class="detail-title"></h1>
+      <p id="detail-meta" class="detail-meta"></p>
+      <div id="detail-tags" class="tag-row"></div>
+    </div>
+
+    <!-- Emergency message banner -->
+    <div id="detail-banner" class="message-banner hidden"></div>
+
+    <!-- Section: 병상현황 -->
+    <div class="section-title">병상 현황</div>
+
+    <!-- 6 Circle chart in one row -->
+    <div class="circle-row-large">
+
+      <div class="circle-box">
+        <div id="circle-er" class="circle"></div>
+        <p>응급실<br><span id="er-count"></span></p>
+      </div>
+
+      <div class="circle-box">
+        <div id="circle-child" class="circle"></div>
+        <p>소아응급<br><span id="child-count"></span></p>
+      </div>
+
+      <div class="circle-box">
+        <div id="circle-birth" class="circle"></div>
+        <p>분만실<br><span id="birth-count"></span></p>
+      </div>
+
+      <div class="circle-box">
+        <div id="circle-negative" class="circle"></div>
+        <p>음압격리<br><span id="negative-count"></span></p>
+      </div>
+
+      <div class="circle-box">
+        <div id="circle-isolation" class="circle"></div>
+        <p>일반격리<br><span id="isolation-count"></span></p>
+      </div>
+
+      <div class="circle-box">
+        <div id="circle-cohort" class="circle"></div>
+        <p>코호트<br><span id="cohort-count"></span></p>
+      </div>
+
+    </div>
+
+    <div id="detail-desc" class="desc-text"></div>
+
+    <!-- Bottom content -->
+    <div class="bottom-wrap">
+
+      <!-- 리뷰 -->
+      <div class="box review-box">
+        <div class="section-title">AI 리뷰 요약</div>
+        <div id="detail-review" class="review-text">리뷰 데이터 준비중...</div>
+      </div>
+
+      <!-- 지도 -->
+      <div class="box map-box-wrap">
+        <div class="section-title">위치 / 길찾기</div>
+        <div id="map-box" class="map-box"></div>
+        <button class="btn" onclick="openMap()">길찾기</button>
+      </div>
+
+    </div>
+
+  </div>
+</div>
