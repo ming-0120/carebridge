@@ -3,92 +3,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>1:1 문의 관리 - CareBridge 관리자</title>
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
-  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
-  <style>
-    .qna-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #e1e4ec;
-    }
-    
-    .qna-title {
-      font-size: 24px;
-      font-weight: 700;
-      color: #1B3C73;
-      margin: 0;
-    }
-    
-    .btn-delete {
-      padding: 10px 20px;
-      background-color: #EF4444;
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background-color 0.2s;
-    }
-    
-    .btn-delete:hover {
-      background-color: #DC2626;
-    }
-    
-    .qna-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    
-    .qna-table thead {
-      background-color: #F8FAFF;
-    }
-    
-    .qna-table th {
-      padding: 12px;
-      text-align: left;
-      font-weight: 600;
-      color: #1B3C73;
-      border-bottom: 2px solid #e1e4ec;
-    }
-    
-    .qna-table td {
-      padding: 12px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-    
-    .qna-row {
-      transition: background-color 0.2s;
-      cursor: pointer;
-    }
-    
-    .qna-row:hover {
-      background-color: #F8FAFF;
-    }
-    
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    .status-waiting {
-      background-color: #F59E0B;
-      color: #fff;
-    }
-    
-    .status-completed {
-      background-color: #10B981;
-      color: #fff;
-    }
-  </style>
+  <link rel="stylesheet" href="{% static 'admin_panel/css/qna_list.css' %}">
 </head>
 <body>
   <!-- 헤더 -->

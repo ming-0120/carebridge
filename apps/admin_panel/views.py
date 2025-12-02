@@ -123,8 +123,8 @@ def user_list(request):
             elif search_type == 'phone':
                 users = users.filter(phone__icontains=search_keyword)
     
-    # 페이지네이션 (페이지당 10개)
-    paginator = Paginator(users, 10)
+    # 페이지네이션 (페이지당 5개)
+    paginator = Paginator(users, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
@@ -186,8 +186,8 @@ def doctor_list(request):
             elif search_type == 'hospital':
                 doctors = doctors.filter(hos__name__icontains=search_keyword)
     
-    # 페이지네이션 (페이지당 10개)
-    paginator = Paginator(doctors, 10)
+    # 페이지네이션 (페이지당 5개)
+    paginator = Paginator(doctors, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
@@ -244,8 +244,8 @@ def hospital_list(request):
             elif search_type == 'hpid':
                 hospitals = hospitals.filter(hpid__icontains=search_keyword)
     
-    # 페이지네이션 (페이지당 10개)
-    paginator = Paginator(hospitals, 10)
+    # 페이지네이션 (페이지당 5개)
+    paginator = Paginator(hospitals, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
@@ -300,8 +300,8 @@ def approval_pending(request):
         # 첫 번째 의사를 기본 선택
         selected_doctor = pending_doctors.first()
     
-    # 페이지네이션 (페이지당 10개)
-    paginator = Paginator(pending_doctors, 10)
+    # 페이지네이션 (페이지당 5개)
+    paginator = Paginator(pending_doctors, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     
@@ -347,8 +347,8 @@ def qna_list(request):
     # 기본 쿼리셋 (모든 문의, 최신순)
     qnas = Qna.objects.select_related('user').all().order_by('-created_at')
     
-    # 페이지네이션 (페이지당 10개)
-    paginator = Paginator(qnas, 10)
+    # 페이지네이션 (페이지당 5개)
+    paginator = Paginator(qnas, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
     

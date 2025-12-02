@@ -3,9 +3,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>병원 목록 - CareBridge 관리자</title>
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
-  <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/hospital_list.css' %}">
 </head>
 <body>
   <!-- 헤더 -->
@@ -72,8 +73,8 @@
           <tr>
             <th>No.</th>
             <th>병원명</th>
-            <th>HPID</th>
-            <th>hPW</th>
+            <th>병원ID</th>
+            <th>병원PW</th>
             <th>전화번호</th>
             <th>주소</th>
             <th>의사 수</th>
@@ -86,7 +87,13 @@
             <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
             <td>{{ hospital.name }}</td>
             <td>{{ hospital.hos_name|default:"-" }}</td>
-            <td>{{ hospital.hos_password|default:"-" }}</td>
+            <td>
+              {% if hospital.hos_password and hospital.hos_password != "-" %}
+                {{ hospital.hos_password|slice:":1" }}{% for i in hospital.hos_password|slice:"1:" %}*{% endfor %}
+              {% else %}
+                -
+              {% endif %}
+            </td>
             <td>{{ hospital.tel|default:"-" }}</td>
             <td>{{ hospital.address }}</td>
             <td>
@@ -150,12 +157,18 @@
           <span class="detail-value">{{ selected_hospital.name }}</span>
         </div>
         <div class="detail-item">
-          <span class="detail-label">HPID</span>
+          <span class="detail-label">병원ID</span>
           <span class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</span>
         </div>
         <div class="detail-item">
-          <span class="detail-label">hPW</span>
-          <span class="detail-value">{{ selected_hospital.hos_password|default:"-" }}</span>
+          <span class="detail-label">병원PW</span>
+          <span class="detail-value">
+            {% if selected_hospital.hos_password and selected_hospital.hos_password != "-" %}
+              {{ selected_hospital.hos_password|slice:":1" }}{% for i in selected_hospital.hos_password|slice:"1:" %}*{% endfor %}
+            {% else %}
+              -
+            {% endif %}
+          </span>
         </div>
         <div class="detail-item">
           <span class="detail-label">전화번호</span>

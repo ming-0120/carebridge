@@ -40,28 +40,36 @@ function goToQnaDetail(qnaId) {
     console.error('qnaId가 없습니다.');
     return;
   }
-  const url = `/admin-panel/qna/${qnaId}/`;
+  const url = `/admin_panel/qna/${qnaId}/`;
   console.log('이동할 URL:', url);
   window.location.href = url;
 }
 
-// 페이지 로드 시 선택된 항목 업데이트 및 행 클릭 이벤트 설정
-document.addEventListener('DOMContentLoaded', function() {
+// 테이블 행 클릭 이벤트 연결 (AJAX 페이지네이션 후 재연결용)
+function attachTableRowListeners() {
   updateSelectedQnas();
   
   // 모든 문의 행에 클릭 이벤트 추가
   const qnaRows = document.querySelectorAll('.qna-row[data-qna-id]');
   qnaRows.forEach(row => {
-    row.addEventListener('click', function(e) {
-      // 체크박스나 체크박스 셀을 클릭한 경우는 무시
-      if (e.target.type === 'checkbox' || e.target.closest('td:first-child')) {
-        return;
-      }
-      const qnaId = this.getAttribute('data-qna-id');
-      if (qnaId) {
+    // 기존 이벤트 리스너 제거 후 새로 추가
+    row.removeEventListener('click', row._clickHandler);
+    const qnaId = row.getAttribute('data-qna-id');
+    if (qnaId) {
+      row._clickHandler = function(e) {
+        // 체크박스나 체크박스 셀을 클릭한 경우는 무시
+        if (e.target.type === 'checkbox' || e.target.closest('td:first-child')) {
+          return;
+        }
         goToQnaDetail(parseInt(qnaId));
-      }
-    });
+      };
+      row.addEventListener('click', row._clickHandler);
+    }
   });
+}
+
+// 페이지 로드 시 선택된 항목 업데이트 및 행 클릭 이벤트 설정
+document.addEventListener('DOMContentLoaded', function() {
+  attachTableRowListeners();
 });
 
