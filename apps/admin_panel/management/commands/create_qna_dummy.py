@@ -110,3 +110,5 @@ class Command(BaseCommand):
             f'답변 대기: {Qna.objects.filter(reply__isnull=True).count() + Qna.objects.filter(reply="").count()}개'
         )
 
+
+

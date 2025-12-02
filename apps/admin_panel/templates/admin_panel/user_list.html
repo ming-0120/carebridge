@@ -3,6 +3,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>사용자 목록 - CareBridge 관리자</title>
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
@@ -38,9 +39,9 @@
     
     <!-- 더미 데이터 생성 버튼 (데이터가 없을 때만 표시) -->
     {% if total_users_count == 0 %}
-    <div style="text-align: center; padding: 20px; background-color: #F8FAFF; border-radius: 8px; margin-bottom: 24px;">
-      <p style="margin-bottom: 10px; color: #666;">사용자 데이터가 없습니다.</p>
-      <a href="{% url 'create_user_dummy' %}" style="display: inline-block; padding: 10px 20px; background-color: #10B981; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600;">더미 사용자 데이터 생성</a>
+    <div class="dummy-data-section">
+      <p class="dummy-data-message">사용자 데이터가 없습니다.</p>
+      <a href="{% url 'create_user_dummy' %}" class="dummy-data-btn">더미 사용자 데이터 생성</a>
     </div>
     {% endif %}
 
@@ -48,7 +49,7 @@
     <div class="search-section">
       <!-- 디버깅 정보 (나중에 제거 가능) -->
       {% if search_type and search_keyword %}
-      <div style="margin-bottom: 10px; padding: 8px; background: #f0f0f0; border-radius: 4px; font-size: 12px;">
+      <div class="debug-info">
         전체 사용자: {{ total_users_count }}명 | 검색 결과: {{ search_result_count }}명 | 검색어: "{{ search_keyword }}"
       </div>
       {% endif %}

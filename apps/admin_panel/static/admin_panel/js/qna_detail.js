@@ -6,3 +6,5 @@ document.addEventListener('DOMContentLoaded', function() {
   // 추가 초기화 로직이 필요하면 여기에 작성
 });
 
+
+

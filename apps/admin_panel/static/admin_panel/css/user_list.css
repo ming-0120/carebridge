@@ -1,4 +1,40 @@
 /* ========= 사용자 목록 페이지 전용 CSS ========= */
 /* 공통 CSS는 admin_common.css를 참조하세요 */
 
-/* 사용자 목록 페이지에만 필요한 추가 스타일이 있다면 여기에 작성 */
+/* 더미 데이터 생성 섹션 */
+.dummy-data-section {
+  text-align: center;
+  padding: 20px;
+  background-color: #F8FAFF;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.dummy-data-message {
+  margin-bottom: 10px;
+  color: #666;
+}
+
+.dummy-data-btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #10B981;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.dummy-data-btn:hover {
+  background-color: #059669;
+}
+
+/* 디버깅 정보 (개발용) */
+.debug-info {
+  margin-bottom: 10px;
+  padding: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  font-size: 12px;
+}
