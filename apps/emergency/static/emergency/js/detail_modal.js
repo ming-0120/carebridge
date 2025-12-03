@@ -1,3 +1,4 @@
+// 상세 모달 열기
 function openHospitalDetail(erId) {
   const modal = document.getElementById("detail-modal");
   modal.classList.remove("hidden");
@@ -6,65 +7,78 @@ function openHospitalDetail(erId) {
     .then(res => res.json())
     .then(data => {
 
-      // 상단 정보
+      // Header
       document.getElementById("detail-title").innerText = data.er_name;
       document.getElementById("detail-meta").innerText =
-        `${data.distance ? data.distance + "km | " : ""}${data.er_address}`;
+        `${data.er_address}${data.distance ? " · " + data.distance + "km" : ""}`;
 
-      // 태그 렌더링 (CT/MRI/분만/수술 등)
+      // Tags
       const tagWrap = document.getElementById("detail-tags");
-      tagWrap.innerHTML = data.tags?.map(t => `<div class="tag">${t}</div>`).join("") || "";
+      tagWrap.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join("");
 
-      // 응급 메시지 배너
+      // Message banner
       const banner = document.getElementById("detail-banner");
-      if (data.messages?.length > 0) {
+      if (data.messages && data.messages.length > 0) {
         banner.innerText = data.messages[0];
         banner.classList.remove("hidden");
       } else {
         banner.classList.add("hidden");
       }
 
-      // 병상 현황 circle 그래프
-      fillCircle("circle-er", data.status.er_general_available, data.status.er_general_total);
-      fillCircle("circle-child", data.status.er_child_available, data.status.er_child_total);
-      fillCircle("circle-birth", data.status.birth_available, data.status.birth_total);
-      fillCircle("circle-negative", data.status.negative_pressure_available, data.status.negative_pressure_total);
-      fillCircle("circle-isolation", data.status.isolation_available, data.status.isolation_total);
-      fillCircle("circle-cohort", data.status.cohort_available, data.status.cohort_total);
-
-      document.getElementById("er-count").innerText       = `${data.status.er_general_available}/${data.status.er_general_total}`;
-      document.getElementById("child-count").innerText    = `${data.status.er_child_available}/${data.status.er_child_total}`;
-      document.getElementById("birth-count").innerText    = `${data.status.birth_available}/${data.status.birth_total}`;
-      document.getElementById("negative-count").innerText = `${data.status.negative_pressure_available}/${data.status.negative_pressure_total}`;
-      document.getElementById("isolation-count").innerText= `${data.status.isolation_available}/${data.status.isolation_total}`;
-      document.getElementById("cohort-count").innerText   = `${data.status.cohort_available}/${data.status.cohort_total}`;
+      // 병상 상태 적용
+      fillCircle("er", data.status.er_general_available, data.status.er_general_total);
+      fillCircle("child", data.status.er_child_available, data.status.er_child_total);
+      fillCircle("birth", data.status.birth_available, data.status.birth_total);
+      fillCircle("negative", data.status.negative_pressure_available, data.status.negative_pressure_total);
+      fillCircle("isolation", data.status.isolation_available, data.status.isolation_total);
+      fillCircle("cohort", data.status.cohort_available, data.status.cohort_total);
     });
 }
 
-function fillCircle(id, available, total) {
-  const el = document.getElementById(id);
-  if (!el) return;
 
-  const rate = total ? available / total : 0;
+// 상태 원형 UI 생성 (가용 수 기반)
+function fillCircle(key, available, total) {
+  const circleEl = document.getElementById(`circle-${key}`);
+  const countEl = document.getElementById(`${key}-count`);
 
-  el.classList.remove("warn", "full", "free");
+  // 숫자 표기
+  countEl.innerText = `${available ?? "-"} / ${total ?? "-"}`;
 
-  if (available === 0) {
-    el.innerText = "포화";
-    el.classList.add("full");
-  } else if (rate < 0.3) {
-    el.innerText = "주의";
-    el.classList.add("warn");
-  } else {
-    el.innerText = "여유";
-    el.classList.add("free");
+  // 색상 초기화
+  circleEl.classList.remove("circle-good", "circle-warn", "circle-full", "circle-empty");
+
+  // 1) 정보없음
+  if (available === null || available === undefined) {
+    circleEl.classList.add("circle-empty");
+    circleEl.innerText = "정보없음";
+    return;
   }
+
+  // 2) 포화
+  if (available === 0) {
+    circleEl.classList.add("circle-full");
+    circleEl.innerText = "포화";
+    return;
+  }
+
+  // 3) 주의 (가용 1)
+  if (available === 1) {
+    circleEl.classList.add("circle-warn");
+    circleEl.innerText = "주의";
+    return;
+  }
+
+  // 4) 여유 (가용 2 이상)
+  circleEl.classList.add("circle-good");
+  circleEl.innerText = "여유";
 }
 
+
+// ESC 닫기
 function closeDetailModal() {
   document.getElementById("detail-modal").classList.add("hidden");
 }
 
-document.addEventListener("keydown", (e) => {
+document.addEventListener("keydown", e => {
   if (e.key === "Escape") closeDetailModal();
 });

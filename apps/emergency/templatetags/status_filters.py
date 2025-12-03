@@ -2,40 +2,89 @@ from django import template
 
 register = template.Library()
 
-@register.filter
-def status_color(value, arg=None):
-    # arg는 현재 사용하지 않아도 기본 파라미터를 받아 예외 방지
-    if value is None:
-        return "gray"
-
-    try:
-        value = int(value)
-    except:
-        return "gray"
-
-    if value >= 70:
-        return "green"
-    elif value >= 40:
-        return "orange"
-    else:
-        return "red"
-
-
 
 @register.filter
-def status_label(value, arg=None):
-    if value is None:
+def status_color(st, field):
+    if not st:
+        return "empty"
+
+    avail = getattr(st, f"{field}_available", None)
+    total = getattr(st, f"{field}_total", None)
+
+    # total이 None이어도 available 값만으로 판단
+    if avail is None:
+        return "empty"
+
+    if avail == 0:
+        return "full"
+
+    # total 제공 안 되면 available 기준으로 “주의/여유” 처리
+    if total in [None, 0]:
+        return "warn" if avail == 1 else "free"
+
+    ratio = avail / total
+    if ratio < 0.3:
+        return "warn"
+
+    return "free"
+
+
+@register.filter
+def status_label(st, field):
+    if not st:
         return "정보없음"
 
-    try:
-        value = int(value)
-    except:
+    avail = getattr(st, f"{field}_available", None)
+    total = getattr(st, f"{field}_total", None)
+
+    if avail is None:
         return "정보없음"
 
-    if value >= 70:
-        return "원활"
-    elif value >= 40:
+    if avail == 0:
+        return "포화"
+
+    if total in [None, 0]:
+        # total을 모르는 경우 available 기준으로 판단
+        return "주의" if avail == 1 else "여유"
+
+    ratio = avail / total
+    if ratio < 0.3:
+        return "주의"
+
+    return "여유"
+
+@register.filter
+def status_badge_color(available, total):
+    if available is None:
+        return "badge-none"   # 회색
+
+    if available == 0:
+        return "badge-full"   # 빨강
+
+    if total in [None, 0]:
+        return "badge-mid"    # 주의(주황)
+
+    ratio = available / total
+    if ratio < 0.3:
+        return "badge-mid"
+
+    return "badge-good"        # 초록
+
+
+@register.filter
+def status_badge_text(available, total):
+    if available is None:
+        return "정보없음"
+
+    if available == 0:
+        return "포화"
+
+    if total in [None, 0]:
         return "보통"
-    else:
-        return "혼잡"
 
+    ratio = available / total
+
+    if ratio < 0.3:
+        return "주의"
+
+    return "원활"

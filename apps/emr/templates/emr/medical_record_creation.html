@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>진료 기록 작성</title>
 
-    {% load static %}
     <link rel="stylesheet" href="{% static 'emr/css/medical_record_creation.css' %}">
 </head>
 <body>
@@ -16,15 +15,15 @@
         <div class="user-info">강민경님</div>
     </div>
 
-    <!-- 🔥 전체 페이지를 감싸는 FORM -->
+    <!-- 전체 FORM -->
     <form id="recordForm" method="POST" action="/mstaff/api/medical-record/create/">
         {% csrf_token %}
 
-        <!-- 🔥 prescriptions / orders 전송용 hidden -->
+        <!-- JS가 JSON으로 넣어주는 필드 -->
         <input type="hidden" id="prescriptions" name="prescriptions">
         <input type="hidden" id="orders" name="orders">
 
-        <!-- 🔥 테스트용 기본값 -->
+        <!-- 기본 값 -->
         <input type="hidden" name="patient_id" value="1">
         <input type="hidden" name="doctor_id" value="1">
         <input type="hidden" name="hos_id" value="1">
@@ -43,6 +42,7 @@
 
             <div class="middle-content-grid">
 
+                <!-- 진료기록 -->
                 <div class="card">
                     <div class="section-title">진료기록 작성</div>
 
@@ -76,6 +76,7 @@
                     </div>
                 </div>
 
+                <!-- SOAP -->
                 <div class="card soap-area">
                     <div class="section-title">경과기록 (SOAP)</div>
 
@@ -100,49 +101,30 @@
                     </div>
                 </div>
 
+                <!--  처방전 영역 시작 -->
                 <div class="card prescription-area">
                     <div class="section-title">처방전 작성</div>
 
                     <div class="form-group">
-                        <label for="drugName">약품명</label>
-                        <div class="drug-input-wrap">
-                            <input type="text" id="drugName" placeholder="약품명을 입력하세요">
-                            <button class="search-btn-5page" type="button" onclick="openDrugSearchModal()">검색</button>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="drugCode">약품 표준코드</label>
-                        <input type="text" id="drugCode" disabled>
-                    </div>
-
-                    <div class="form-group">
                         <label>투약 기간</label>
                         <div class="date-group">
-                            <span>시작:</span><input type="date" id="startDate">
-                            <span>종료:</span><input type="date" id="endDate">
+                            <span>시작:</span>
+                            <input type="date" id="globalStartDate">
+
+                            <span>종료:</span>
+                            <input type="date" id="globalEndDate">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label>투여 빈도</label>
-                        <input type="text" id="freqInput">
-                    </div>
+                    <div id="prescriptionContainer"></div>
 
-                    <div class="form-group">
-                        <label>투여 용량</label>
-                        <input type="text" id="doseInput">
-                    </div>
-
-                    <div class="form-group">
-                        <label>특이사항</label>
-                        <input type="text" id="noteInput">
-                    </div>
-
-                    <button class="order-add-button" type="button" onclick="addPrescription()">처방 추가 (+)</button>
+                    <button class="order-add-button" type="button" onclick="addPrescriptionForm()">
+                        처방 추가 (+)
+                    </button>
                 </div>
             </div>
 
+            <!-- 추가 오더 + 예약 -->
             <div class="bottom-content-grid">
 
                 <div class="card">
@@ -150,27 +132,24 @@
 
                     <div class="form-group">
                         <label for="orderType">오더 종류</label>
-                        <select id="orderType">
+
+                        <!-- order_type name 제거해야 JS → orders JSON 구조 유지됨 -->
+                        <select id="orderType" onchange="toggleEmergencyOption()">
                             <option value="">선택</option>
                             <option value="treatment">치료/처치</option>
                             <option value="lab">검사</option>
                         </select>
                     </div>
 
-                    <div class="form-group">
-                        <label for="nurse">담당 간호사</label>
-                        <select id="nurse">
-                            <option value="">선택</option>
-                            <option value="nurse1">김 간호사</option>
-                            <option value="nurse2">이 간호사</option>
-                        </select>
-                    </div>
+                    <!-- 검사 선택 시 표시 -->
+                    <div id="emergencyWrapper" style="display:none;">
+                        <label class="emergency-label">응급 여부</label>
 
-                    <div class="form-group">
-                        <label>응급 여부</label>
-                        <div class="radio-group">
+                        <div class="radio-line">
+                            <!-- 반드시 같은 name 필요 -->
                             <input type="radio" id="emergencyY" name="emergency_flag" value="yes">
                             <label for="emergencyY">예</label>
+
                             <input type="radio" id="emergencyN" name="emergency_flag" value="no" checked>
                             <label for="emergencyN">아니오</label>
                         </div>
@@ -198,6 +177,7 @@
                         <textarea id="reservationMemo" name="reservation_memo"></textarea>
                     </div>
                 </div>
+
             </div>
 
             <div class="action-buttons">
@@ -206,15 +186,13 @@
         </div>
     </form>
 
+    <!-- 모달 -->
     <div class="modal-overlay" id="drugSearchModal">
         <div class="modal-content">
 
-            <div class="modal-header">
-                약품 검색 모달창
-            </div>
+            <div class="modal-header">약품 검색 모달창</div>
 
             <div class="modal-body">
-
                 <div class="search-controls">
                     <input type="text" id="drugNameInput" placeholder="약품명을 입력한다">
                     <button type="button" onclick="performSearch()">검색</button>
@@ -227,20 +205,7 @@
                             <th>약품코드</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr data-code="200808876" data-name="가스디알정50밀리그램" onclick="selectDrug(this)">
-                            <td>가스디알정50밀리그램</td>
-                            <td>200808876</td>
-                        </tr>
-                        <tr data-code="200808877" data-name="페라트라정2.5밀리그램" onclick="selectDrug(this)">
-                            <td>페라트라정2.5밀리그램</td>
-                            <td>200808877</td>
-                        </tr>
-                        <tr data-code="200808878" data-name="아세트아미노펜 500mg" onclick="selectDrug(this)">
-                            <td>아세트아미노펜 500mg</td>
-                            <td>200808878</td>
-                        </tr>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
 
