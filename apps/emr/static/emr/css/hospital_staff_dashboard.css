@@ -80,10 +80,15 @@ h2 {
     display: block;
     font-size: 20px;
 }
-.count-item.inprogress strong {
+/* .count-item.pending strong {
+    
+} */
+
+.count-item.emergency strong {
     color: #dc3545;
 }
-.count-item.completed strong {
+
+.count-item.inprogress strong {
     color: #28a745;
 }
 

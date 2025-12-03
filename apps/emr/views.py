@@ -5,11 +5,20 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import datetime
 import requests, json
 from django.utils import timezone
+from django.db.models import Q
+from django.http import JsonResponse
+import xml.etree.ElementTree as ET
 
 from apps.db.models import (
     MedicalRecord,
     MedicineOrders,
-    MedicineData
+    MedicineData,
+    LabData,
+    Hospital,
+    Users,
+    LabOrders,
+    LabUpload,
+    TreatmentProcedures,
 )
 
 # .env 파일 로드
@@ -54,10 +63,44 @@ def medical_record_creation(request):
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
 
-def doctor_screen_dashboard(request):
-    return render(request, 'emr/doctor_screen_dashboard.html')
-
 def hospital_staff_dashboard(request):
+
+    try:
+        medical_records = Hospital.objects.get(hos_id=1).medicalrecord_set.all()
+        lab_order = []
+        treatment_order = []
+        lab_pending_count = 0
+        lab_sampled_count = 0
+        lab_is_urgent_count = 0
+        treatment_pending_count = 0
+        treatment_inprogress_count = 0
+        for record in medical_records:
+            try:
+                lab = LabOrders.objects.get(medical_record__pk=record.medical_record_id)
+                lab_order.append(lab.objects.values())
+                if lab.objects.values('status') == 'PENDING':
+                    lab_pending_count += 1
+                if lab.objects.values('status') == 'SAMPLED':
+                    lab_sampled_count += 1
+                if lab.objects.values('is_urgent') == True:
+                    lab_is_urgent_count += 1
+            except:
+                print('LabOrders error')
+            print(record.medical_record_id)
+            try:
+                treatment = TreatmentProcedures.objects.get(medical_record__pk=record.medical_record_id)
+                treatment_order.append(treatment.objects.values())
+                if treatment.objects.values('status') == 'PENDING':
+                    treatment_pending_count += 1
+                if treatment.objects.values('status') == 'PENDING':
+                    treatment_inprogress_count += 1
+            except:
+                print('TreatmentProcedures error')
+
+    except:
+        print('Hospital error')
+
+
     return render(request, 'emr/hospital_staff_dashboard.html')
 
 def lab_record_creation(request):
@@ -135,4 +178,42 @@ def api_create_medical_record(request):
         "result": "ok",
         "medical_record_id": record.medical_record_id
     })
+
+def lab_data_search(request):
+    search = request.GET.get('search', '')
+
+    datas = []
+    if (search == ''):
+        datas = list(LabData.objects.all().values())
+    else:
+        datas = list(LabData.objects.filter(Q(lab_name__icontains=search)|Q(lab_code__icontains=search)).values())
+
+    return JsonResponse({
+        'lab_datas': datas
+    })
+
+def treatment_data_search(request):
+    search = request.GET.get('search', '')
+
+    url = f'https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey={os.getenv("API_KEY")}&numOfRows=9999&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_NM&searchText={search}'
+
+    response = requests.get(url)
+    root = ET.fromstring(response.text)
+
+    items = root.findall('./body/items/item')
+
+    datas = []
+    for item in items:
+        datas.append({
+            'sickCd': item.find('sickCd').text,
+            'sickNm': item.find('sickNm').text
+        })
+
+    return JsonResponse({
+        'treatment_datas': datas
+    })
+
+
+
+
 

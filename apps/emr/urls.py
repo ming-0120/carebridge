@@ -14,6 +14,8 @@ urlpatterns = [
 
     # API
     path("api/medical-record/create/", views.api_create_medical_record, name="api_create_medical_record"),
+    path('lab_data_search/', views.lab_data_search, name='lab_data_search'),
+    path('treatment_data_search/', views.treatment_data_search, name='treatment_data_search'),
 
 ]
         
