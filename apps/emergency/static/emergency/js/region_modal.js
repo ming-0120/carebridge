@@ -31,7 +31,9 @@ function selectSido(sido, sigunguKeyword) {
   loadSigungu(sido, sigunguKeyword);
 }
 
-// 시군구 리스트 로딩 (옵션: 로딩 후 바로 필터링)
+// ===============================
+// 시군구 로딩
+// ===============================
 function loadSigungu(sido, sigunguKeyword) {
   fetch(`/emergency/get_sigungu/?sido=${encodeURIComponent(sido)}`)
     .then(res => res.json())
@@ -50,7 +52,6 @@ function loadSigungu(sido, sigunguKeyword) {
           </div>`;
       });
 
-      // 시군구 키워드가 넘어온 경우: 로딩이 끝난 뒤 필터 적용
       if (sigunguKeyword) {
         filterSigungu(sigunguKeyword);
       }
@@ -59,7 +60,7 @@ function loadSigungu(sido, sigunguKeyword) {
 }
 
 // ===============================
-// 시/군/구 선택
+// 시군구 선택
 // ===============================
 function selectSigungu(sigungu) {
   selectedSigungu = sigungu;
@@ -69,80 +70,67 @@ function selectSigungu(sigungu) {
   });
 }
 
-// 시군구 필터 helper
-function filterSigungu(keyword) {
-  document.querySelectorAll(".sigungu-item").forEach(el => {
-    const name = el.textContent.trim();
-    if (name === "전체") return;
-    el.style.display = name.includes(keyword) ? "block" : "none";
-  });
-}
-
 // ===============================
-// 즉각 검색 (시/도 + 시/군/구)
-// - "김포" 같이 시군구만 입력해도 동작
+// 즉각 검색
 // ===============================
 function liveSearchRegion() {
   const input = document.getElementById("region-search-input");
   const keyword = input ? input.value.trim() : "";
   const parts = keyword.split(" ").filter(Boolean);
 
-  // 검색어 없으면 전체 복원
   if (!keyword) {
     document.querySelectorAll(".sido-item").forEach(el => (el.style.display = "block"));
     document.querySelectorAll(".sigungu-item").forEach(el => (el.style.display = "block"));
     return;
   }
 
-  const sidoPart = parts[0] || "";
-  const sigunguPart = parts[1] || "";
+  const regionDict = window.regionDict || {};
+  let detectedSido = null;
 
-  // 1) 단일 단어(시군구만 입력)인 경우: regionDict 기준으로 시도 자동 선택
-  if (parts.length === 1) {
-    const regionDict = window.regionDict || {};
-    let targetSido = null;
-
-    for (const [sido, sigList] of Object.entries(regionDict)) {
-      if (sigList.some(name => name.includes(keyword))) {
-        targetSido = sido;
-        break;
-      }
-    }
-
-    if (targetSido) {
-      // 시도 리스트도 해당 시도만 보이게
-      document.querySelectorAll(".sido-item").forEach(el => {
-        const text = el.textContent.trim();
-        el.style.display = text === targetSido ? "block" : "none";
-      });
-
-      // 시도 선택 + 로딩 뒤 시군구 필터
-      selectSido(targetSido, keyword);
-      return; // 여기서 종료 (아래 시도+시군구 로직은 타지 않음)
+  // 시군구 first matching
+  for (const [sido, sigList] of Object.entries(regionDict)) {
+    if (sigList.some(name => name.includes(keyword))) {
+      detectedSido = sido;
+      break;
     }
   }
 
-  // 2) 시/도 + 시/군/구 형태 (예: "경기도 김포")
-  let matchedSido = null;
+  // 시군구 기반 자동 시도 선택
+  if (detectedSido) {
+    document.querySelectorAll(".sido-item").forEach(el => {
+      const text = el.textContent.trim();
+      el.style.display = text === detectedSido ? "block" : "none";
+    });
 
+    selectSido(detectedSido, keyword);
+    return;
+  }
+
+  // "경기도 김포" style
+  let matchedSido = null;
   document.querySelectorAll(".sido-item").forEach(el => {
     const text = el.textContent.trim();
-    const match = text.includes(sidoPart);
-
+    const match = text.includes(parts[0]);
     el.style.display = match ? "block" : "none";
     if (match && !matchedSido) matchedSido = text;
   });
 
-  // 시도 자동 선택
   if (matchedSido && selectedSido !== matchedSido) {
-    selectSido(matchedSido, sigunguPart || null);
-  } else if (matchedSido && !sigunguPart) {
-    // 시도만 검색한 경우: 현재 로딩된 시군구 전체 표시
-    document.querySelectorAll(".sigungu-item").forEach(el => (el.style.display = "block"));
-  } else if (sigunguPart) {
-    // 이미 선택된 시도에서 시군구 필터
-    filterSigungu(sigunguPart);
+    selectSido(matchedSido, parts[1] || null);
+  } else if (parts[1]) {
+    filterSigungu(parts[1]);
   }
+}
+
+// ===============================
+// 시군구 필터링
+// ===============================
+function filterSigungu(keyword) {
+  document.querySelectorAll(".sigungu-item").forEach(el => {
+    const name = el.textContent.trim();
+    if (name === "전체") return;
+    el.style.display = name.includes(keyword) ? "block" : "none";
+  });
 }
 
 // ===============================
@@ -161,7 +149,7 @@ function applyRegionFilter() {
 }
 
 // ===============================
-// 초기화 (전체 리스트 & 모달닫기)
+// 초기화
 // ===============================
 function resetRegion() {
   const params = new URLSearchParams(window.location.search);
