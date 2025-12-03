@@ -134,6 +134,7 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
     BASE_DIR / 'apps/emergency/static',
+    BASE_DIR / 'apps/emr/static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Default primary key field type

@@ -55,9 +55,23 @@ function closeModal(id) {
 }
 
 /* 검색 기능 (Mock) */
-function performSearch() {
+async function labPerformSearch() {
     const query = document.getElementById('labNameInput').value;
-    alert(`"${query}" 검색 실행`);
+    const url = `http://127.0.0.1:8000/mstaff/lab_data_search/?search=${query}`;
+    const response = await fetch(url);
+    const datas = await response.json();
+    const table = [];
+
+    for(row of datas.lab_datas) {
+        table.push(`
+            <tr data-code="${row.lab_code}" data-name="${row.lab_name}" onclick="selectLabItem(this)">
+                <td>${row.lab_name}</td>
+                <td>${row.lab_code}</td>
+            </tr>
+        `);
+    }
+
+    $('#labResultTable tbody').html(table.join('\n'));
 }
 
 /* 항목 선택 */

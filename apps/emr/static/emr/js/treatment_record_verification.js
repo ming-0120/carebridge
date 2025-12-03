@@ -77,9 +77,24 @@ function closeModal(id) {
 }
 
 // 모달 검색
-function performSearch() {
+async function treatmentPerformSearch() {
     const q = document.getElementById('procedureNameInput').value;
-    alert(`"${q}" 검색 실행`);
+    url = `http://127.0.0.1:8000/mstaff/treatment_data_search/?search=${q}`
+    
+    const response = await fetch(url);
+    const datas = await response.json();
+    const table = [];
+
+    for(row of datas.treatment_datas) {
+        table.push(`
+            <tr data-code="${row.sickCd}" data-name="${row.sickNm}" onclick="selectProcedure(this)">
+                <td>${row.sickNm}</td>
+                <td>${row.sickCd}</td>
+            </tr>
+        `);
+    }
+
+    $('#procedureResultTable tbody').html(table.join('\n'));
 }
 
 // 모달 항목 선택

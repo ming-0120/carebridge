@@ -19,28 +19,33 @@ class ErInfo(models.Model):
 
 
 class ErStatus(models.Model):
-    status_id = models.AutoField(primary_key=True)
-    er = models.ForeignKey(ErInfo, on_delete=models.CASCADE, related_name="statuses")
-    hpid = models.CharField(max_length=20)
-    hvdate = models.DateTimeField()
-    update_at = models.DateTimeField(auto_now=True)
+    er = models.ForeignKey(ErInfo, on_delete=models.CASCADE)
 
-    er_general_available = models.IntegerField(null=True, blank=True)
-    er_general_total = models.IntegerField(null=True, blank=True)
-    er_child_available = models.IntegerField(null=True, blank=True)
-    er_child_total = models.IntegerField(null=True, blank=True)
-    birth_available = models.IntegerField(null=True, blank=True)
-    birth_total = models.IntegerField(null=True, blank=True)
-    negative_pressure_available = models.IntegerField(null=True, blank=True)
-    negative_pressure_total = models.IntegerField(null=True, blank=True)
-    isolation_available = models.IntegerField(null=True, blank=True)
-    isolation_total = models.IntegerField(null=True, blank=True)
-    cohort_available = models.IntegerField(null=True, blank=True)
-    cohort_total = models.IntegerField(null=True, blank=True)
+    hvdate = models.DateTimeField()
+
+    er_general_available = models.IntegerField(null=True)
+    er_general_total = models.IntegerField(null=True)
+
+    er_child_available = models.IntegerField(null=True)
+    er_child_total = models.IntegerField(null=True)
+
+    birth_available = models.IntegerField(null=True)
+    birth_total = models.IntegerField(null=True)
+
+    negative_pressure_available = models.IntegerField(null=True)
+    negative_pressure_total = models.IntegerField(null=True)
+
+    isolation_available = models.IntegerField(null=True)
+    isolation_total = models.IntegerField(null=True)
+
+    cohort_available = models.IntegerField(null=True)
+    cohort_total = models.IntegerField(null=True)
+
     has_ct = models.BooleanField(null=True)
     has_mri = models.BooleanField(null=True)
-    has_ventilator = models.BooleanField(null=True)
     has_angio = models.BooleanField(null=True)
+    has_ventilator = models.BooleanField(null=True)
+
 
     class Meta:
         db_table = 'er_status'
@@ -66,24 +71,31 @@ class ErMessage(models.Model):
 
 class ErStatusStaging(models.Model):
     hos_id = models.CharField(max_length=20)
-    hvdate = models.DateTimeField(null=True, blank=True)
-    hv31 = models.IntegerField()
-    hv36 = models.IntegerField(null=True, blank=True)
-    hv7 = models.IntegerField(null=True, blank=True)
-    hv5 = models.IntegerField(null=True, blank=True)
-    hv11 = models.IntegerField(null=True, blank=True)
-    hv10 = models.IntegerField(null=True, blank=True)
-    hvs03 = models.IntegerField(null=True, blank=True)
-    hvs04 = models.IntegerField(null=True, blank=True)
-    hvs05 = models.IntegerField(null=True, blank=True)
-    hvs06 = models.IntegerField(null=True, blank=True)
-    hvs07 = models.IntegerField(null=True, blank=True)
-    hwventisoayn = models.BooleanField(null=True)
-    hwventiayn = models.BooleanField(null=True)
-    hvctayn = models.BooleanField(null=True)
-    hvmriayn = models.BooleanField(null=True)
-    hvangioayn = models.BooleanField(null=True)
-    has_ventilator = models.BooleanField(null=True)
+    hvdate = models.DateTimeField(null=True)
+
+    hv31 = models.IntegerField(null=True)   # 응급실 일반
+    hvs03 = models.IntegerField(null=True)
+
+    hv36 = models.IntegerField(null=True)   # 소아응급
+    hvs04 = models.IntegerField(null=True)
+
+    hv7 = models.IntegerField(null=True)    # 분만실
+    hvs05 = models.IntegerField(null=True)
+
+    hv11 = models.IntegerField(null=True)   # 음압
+    hvs06 = models.IntegerField(null=True)
+
+    hv10 = models.IntegerField(null=True)   # 일반격리
+    hvs07 = models.IntegerField(null=True)
+
+    hv5 = models.IntegerField(null=True)    # 코호트
+    hvs38 = models.IntegerField(null=True)
+
+    hvctayn = models.CharField(max_length=1, null=True)
+    hvmriayn = models.CharField(max_length=1, null=True)
+    hvangioayn = models.CharField(max_length=1, null=True)
+    hvventiayn = models.CharField(max_length=1, null=True)
+
 
     class Meta:
         db_table = 'er_status_staging'

@@ -12,17 +12,19 @@
 
 <div class="control-row">
   <button class="btn" onclick="openRegionModal()">지역 선택</button>
-  <span id="region-summary" class="region-summary">
-    {{ selected_region|default:"전체 지역" }}
-  </span>
+  {% if selected_region %}
+    <span id="region-summary" class="region-summary">{{ selected_region }}</span>
+  {% endif %}
   <button class="btn" onclick="openFilterModal()">필터</button>
+
+  <!-- 거리순 정렬 버튼 -->
+  <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
 </div>
 
 <!-- 선택된 필터 태그 -->
 <div id="filter-tags-container" class="filter-tags hidden">
   <div class="filter-tags-label">필터 결과</div>
 
-  <!-- 가로 1열 정렬 -->
   <div id="filter-tags" style="
         display:flex;
         flex-wrap:nowrap;
@@ -49,85 +51,94 @@
   </div>
 
   {% for hos in hospitals %}
-    {% with st=hos.statuses.all|dictsortreversed:"hvdate"|first %}
-    <div class="row"
-         data-er-id="{{ hos.er_id }}"
-         onclick="openHospitalDetail('{{ hos.er_id }}')">
+    {% with st=hos.statuses.last %}
+      <div class="row" data-er-id="{{ hos.er_id }}" onclick="openHospitalDetail('{{ hos.er_id }}')">
 
-      <!-- 병원명 / 주소 / 거리 -->
-      <div>
-        <div class="h-name">{{ hos.er_name }}</div>
-        <div class="h-subinfo">
-          {{ hos.er_sido }} {{ hos.er_sigungu }}
-          {% if hos.distance_km %}
-            | {{ hos.distance_km }}km
-          {% else %}
-            | {{ hos.er_address }}
-          {% endif %}
+        <div>
+          <div class="h-name">{{ hos.er_name }}</div>
+          <div class="h-subinfo">
+            {{ hos.er_sido }} {{ hos.er_sigungu }}
+            {% if hos.distance_km %}
+              | {{ hos.distance_km }}km
+            {% else %}
+              | {{ hos.er_address }}
+            {% endif %}
+          </div>
         </div>
-      </div>
 
-      <!-- 응급실 일반 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'er_general' }}">
-          {{ st|status_label:'er_general' }}
+        <!-- 일반 응급 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'er_general' }}">
+            {{ st|status_label:'er_general' }}
+          </div>
+          {{ st.er_general_available|default_if_none:"-" }} / {{ st.er_general_total|default_if_none:"-" }}
         </div>
-        {{ st.er_general_available|default:"-" }} / {{ st.er_general_total|default:"-" }}
-      </div>
 
-      <!-- 응급실 소아 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'er_child' }}">
-          {{ st|status_label:'er_child' }}
+        <!-- 소아 응급 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'er_child' }}">
+            {{ st|status_label:'er_child' }}
+          </div>
+          {{ st.er_child_available|default_if_none:"-" }} / {{ st.er_child_total|default_if_none:"-" }}
         </div>
-        {{ st.er_child_available|default:"-" }} / {{ st.er_child_total|default:"-" }}
-      </div>
 
-      <!-- 분만실 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'birth' }}">
-          {{ st|status_label:'birth' }}
+        <!-- 분만실 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'birth' }}">
+            {{ st|status_label:'birth' }}
+          </div>
+          {{ st.birth_available|default_if_none:"-" }} / {{ st.birth_total|default_if_none:"-" }}
         </div>
-        {{ st.birth_available|default:"-" }} / {{ st.birth_total|default:"-" }}
-      </div>
 
-      <!-- 음압격리 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'negative' }}">
-          {{ st|status_label:'negative' }}
+        <!-- 음압격리 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'negative' }}">
+            {{ st|status_label:'negative' }}
+          </div>
+          {{ st.negative_pressure_available|default_if_none:"-" }} / {{ st.negative_pressure_total|default_if_none:"-" }}
         </div>
-        {{ st.negative_pressure_available|default:"-" }} / {{ st.negative_pressure_total|default:"-" }}
-      </div>
 
-      <!-- 일반격리 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'isolation' }}">
-          {{ st|status_label:'isolation' }}
+        <!-- 일반격리 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'isolation' }}">
+            {{ st|status_label:'isolation' }}
+          </div>
+          {{ st.isolation_available|default_if_none:"-" }} / {{ st.isolation_total|default_if_none:"-" }}
         </div>
-        {{ st.isolation_available|default:"-" }} / {{ st.isolation_total|default:"-" }}
-      </div>
 
-      <!-- 코호트격리 -->
-      <div class="status-wrap">
-        <div class="circle {{ st|status_color:'cohort' }}">
-          {{ st|status_label:'cohort' }}
+        <!-- 코호트 -->
+        <div class="status-wrap">
+          <div class="circle {{ st|status_color:'cohort' }}">
+            {{ st|status_label:'cohort' }}
+          </div>
+          {{ st.cohort_available|default_if_none:"-" }} / {{ st.cohort_total|default_if_none:"-" }}
         </div>
-        {{ st.cohort_available|default:"-" }} / {{ st.cohort_total|default:"-" }}
-      </div>
 
-      <!-- 즐겨찾기(별) -->
-      <div class="favorite">☆</div>
-    </div>
+        <div class="favorite">☆</div>
+      </div>
     {% endwith %}
-  {% empty %}
-    <div class="row">
-      <div>조회 결과가 없습니다.</div>
-    </div>
   {% endfor %}
+
 </div>
 
 {% include "emergency/_modal_region.html" %}
 {% include "emergency/_modal_filter.html" %}
 {% include "emergency/_modal_detail.html" %}
+
+<script>
+  window.regionDict = JSON.parse('{{ region_dict_json|safe }}');
+
+  // -------------------------
+  // 거리 순 정렬 기능
+  // -------------------------
+  function sortByDistance() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("sort", "distance");
+    window.location.href = url.toString();
+  }
+</script>
+
+<!-- home.js: 위치 → lat/lng 파라미터 설정 -->
+<script src="{% static 'core/js/home.js' %}"></script>
 
 {% endblock %}

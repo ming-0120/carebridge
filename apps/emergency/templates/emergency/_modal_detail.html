@@ -1,73 +1,75 @@
 <div id="detail-modal" class="modal-overlay hidden">
   <div class="modal-wrap detail-large">
 
-    <!-- Close Button -->
     <button class="modal-close" onclick="closeDetailModal()">×</button>
 
-    <!-- Header Info -->
+    <!-- Header -->
     <div class="detail-header">
       <h1 id="detail-title" class="detail-title"></h1>
       <p id="detail-meta" class="detail-meta"></p>
       <div id="detail-tags" class="tag-row"></div>
     </div>
 
-    <!-- Emergency message banner -->
+    <!-- Message Banner -->
     <div id="detail-banner" class="message-banner hidden"></div>
 
-    <!-- Section: 병상현황 -->
-    <div class="section-title">병상 현황</div>
+    <!-- 병상 현황 -->
+    <h3 class="section-title">병상 현황</h3>
 
-    <!-- 6 Circle chart in one row -->
-    <div class="circle-row-large">
+    <div class="detail-bed-grid">
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-er" class="circle"></div>
-        <p>응급실<br><span id="er-count"></span></p>
+        <div class="bed-label">응급실</div>
+        <div id="er-count" class="bed-count"></div>
       </div>
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-child" class="circle"></div>
-        <p>소아응급<br><span id="child-count"></span></p>
+        <div class="bed-label">소아응급</div>
+        <div id="child-count" class="bed-count"></div>
       </div>
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-birth" class="circle"></div>
-        <p>분만실<br><span id="birth-count"></span></p>
+        <div class="bed-label">분만실</div>
+        <div id="birth-count" class="bed-count"></div>
       </div>
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-negative" class="circle"></div>
-        <p>음압격리<br><span id="negative-count"></span></p>
+        <div class="bed-label">음압격리</div>
+        <div id="negative-count" class="bed-count"></div>
       </div>
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-isolation" class="circle"></div>
-        <p>일반격리<br><span id="isolation-count"></span></p>
+        <div class="bed-label">일반격리</div>
+        <div id="isolation-count" class="bed-count"></div>
       </div>
 
-      <div class="circle-box">
+      <div class="bed-item">
         <div id="circle-cohort" class="circle"></div>
-        <p>코호트<br><span id="cohort-count"></span></p>
+        <div class="bed-label">코호트</div>
+        <div id="cohort-count" class="bed-count"></div>
       </div>
 
     </div>
 
-    <div id="detail-desc" class="desc-text"></div>
+    <!-- 하단 2단 구성 -->
+    <div class="detail-bottom">
 
-    <!-- Bottom content -->
-    <div class="bottom-wrap">
-
-      <!-- 리뷰 -->
-      <div class="box review-box">
-        <div class="section-title">AI 리뷰 요약</div>
-        <div id="detail-review" class="review-text">리뷰 데이터 준비중...</div>
+      <!-- AI 리뷰 -->
+      <div class="detail-box">
+        <h3>AI 리뷰 요약</h3>
+        <p id="detail-review">리뷰 데이터 준비중...</p>
       </div>
 
       <!-- 지도 -->
-      <div class="box map-box-wrap">
-        <div class="section-title">위치 / 길찾기</div>
-        <div id="map-box" class="map-box"></div>
-        <button class="btn" onclick="openMap()">길찾기</button>
+      <div class="detail-box">
+        <h3>위치 / 길찾기</h3>
+        <div id="detail-map" class="detail-map">지도 로딩중...</div>
+        <button class="btn primary">길찾기</button>
       </div>
 
     </div>

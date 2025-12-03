@@ -1,3 +1,6 @@
+/* -----------------------------
+   기본 스타일 (PC 기준)
+------------------------------*/
 body {
     font-family: 'Malgun Gothic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
@@ -5,6 +8,7 @@ body {
     background-color: #f0f4f7;
     color: #333;
 }
+
 .header {
     background-color: #ffffff;
     border-bottom: 2px solid #0056b3;
@@ -13,16 +17,19 @@ body {
     justify-content: space-between;
     align-items: center;
 }
+
 .logo {
     font-size: 24px;
     font-weight: bold;
     color: #0056b3;
     cursor: pointer;
 }
+
 .user-info {
     font-size: 16px;
     color: #555;
 }
+
 .container {
     max-width: 1500px;
     margin: 20px auto;
@@ -36,6 +43,7 @@ body {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     margin-bottom: 20px;
 }
+
 h2 {
     color: #17a2b8;
     border-bottom: 1px solid #eee;
@@ -51,23 +59,28 @@ h2 {
     font-size: 15px;
     gap: 15px;
 }
+
 .patient-header-info strong {
     color: #007bff;
     margin-right: 3px;
 }
+
 .patient-header-info span {
     border-right: 1px solid #cce5ff;
     padding-right: 10px;
 }
+
 .patient-header-info span:last-child {
     border-right: none;
 }
 
+/* PC 기본 3열 레이아웃 */
 .middle-content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 20px;
 }
+
 .section-title {
     font-size: 18px;
     font-weight: bold;
@@ -78,12 +91,14 @@ h2 {
 .form-group {
     margin-bottom: 15px;
 }
+
 .form-group label {
     font-weight: bold;
     color: #495057;
     margin-bottom: 5px;
     display: block;
 }
+
 .form-group input,
 .form-group select {
     width: 100%;
@@ -91,6 +106,7 @@ h2 {
     border: 1px solid #ced4da;
     border-radius: 4px;
 }
+
 .form-group textarea {
     width: 100%;
     min-height: 80px;
@@ -106,6 +122,7 @@ h2 {
     display: flex;
     gap: 5px;
 }
+
 .search-btn-5page {
     background-color: #17a2b8;
     border: none;
@@ -127,8 +144,10 @@ h2 {
     padding: 10px 15px;
     border-radius: 4px;
     cursor: pointer;
+    margin-top: 10px;
 }
 
+/* PC 기본 2열 */
 .bottom-content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -141,6 +160,7 @@ h2 {
     margin-top: 20px;
     border-top: 1px solid #dee2e6;
 }
+
 .btn-save {
     background-color: #28a745;
     padding: 15px 30px;
@@ -151,7 +171,40 @@ h2 {
     border: none;
 }
 
-/* 모달 */
+/* ---------------------------
+   처방 블록
+----------------------------*/
+.prescription-block {
+    border: 1px solid #d0d7df;
+    padding: 15px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    background-color: #f9fcff;
+}
+
+/* 처방 입력을 모두 세로 배치 */
+.prescription-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.prescription-row .form-group {
+    width: 100%;
+}
+
+/* 삭제 버튼도 세로 배치 아래쪽으로 */
+.btn-remove {
+    align-self: flex-end;
+    width: 100%;
+    height: 40px;
+    margin-top: 5px;
+}
+
+
+/* ---------------------------
+   모달
+----------------------------*/
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -164,6 +217,7 @@ h2 {
     justify-content: center;
     align-items: center;
 }
+
 .modal-content {
     width: 500px;
     max-height: 80vh;
@@ -172,63 +226,87 @@ h2 {
     display: flex;
     flex-direction: column;
 }
-.modal-header {
-    background: #007bff;
-    padding: 15px 20px;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-}
-.modal-body {
-    padding: 20px;
-    overflow-y: auto;
-}
-.search-controls {
-    display: flex;
-    gap: 10px;
-}
-.search-controls input {
-    flex-grow: 1;
-    padding: 10px;
-}
-.search-controls button {
-    background: #17a2b8;
-    border: none;
-    padding: 10px 15px;
-    color: white;
-    border-radius: 4px;
+
+/* -----------------------------
+      🔥 반응형 추가 구간
+------------------------------*/
+
+/* -----------------------------
+   태블릿 (max-width: 1024px)
+------------------------------*/
+@media (max-width: 1024px) {
+
+    .middle-content-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .bottom-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content {
+        width: 400px;
+    }
 }
 
-.result-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.result-table th,
-.result-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
+/* -----------------------------
+   모바일 (max-width: 768px)
+------------------------------*/
+@media (max-width: 768px) {
 
-.result-table tbody tr:hover,
-.result-table tbody tr.selected {
-    background: #e6f7e9;
-    cursor: pointer;
-}
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
 
-.modal-footer {
-    padding: 15px 20px;
-    text-align: right;
-    border-top: 1px solid #dee2e6;
-}
-.btn-cancel-6page {
-    background-color: #6c757d;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 4px;
-}
-.btn-confirm-6page {
-    background-color: #007bff;
-    color: white;
-    padding: 10px 15px;
-    border-radius: 4px;
+    .container {
+        padding: 10px;
+        margin: 10px;
+    }
+
+    h2 {
+        font-size: 20px;
+    }
+
+    .patient-header-info {
+        font-size: 14px;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    /* PC 3열 → 모바일 1열 */
+    .middle-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* PC 2열 → 1열 */
+    .bottom-content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* 처방 입력 UI 단수 변경 */
+    .prescription-row {
+        grid-template-columns: 1fr;
+    }
+
+    .date-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .modal-content {
+        width: 90%;
+        margin: 10px;
+    }
+
+    .action-buttons {
+        margin-top: 10px;
+    }
+
+    .btn-save {
+        width: 100%;
+        padding: 18px;
+    }
 }

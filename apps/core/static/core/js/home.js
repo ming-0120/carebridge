@@ -1,3 +1,6 @@
+// --------------------------------------
+// 현재 위치를 받아 세션에 저장 (URL 수정 없음)
+// --------------------------------------
 function saveUserLocation() {
   if (!navigator.geolocation) {
     console.warn("이 브라우저는 위치 정보를 지원하지 않습니다.");
@@ -22,8 +25,11 @@ function saveUserLocation() {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  // 기존 저장 값이 없으면 위치 요청
-  if (!sessionStorage.getItem("user_lat")) {
+  const storedLat = sessionStorage.getItem("user_lat");
+  const storedLng = sessionStorage.getItem("user_lng");
+
+  // 기존 저장된 위치가 없으면 처음 한 번만 요청
+  if (!storedLat || !storedLng) {
     saveUserLocation();
   }
 });
