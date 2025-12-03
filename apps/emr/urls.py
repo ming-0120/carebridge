@@ -12,8 +12,10 @@ urlpatterns = [
     path('treatment_verify/', views.treatment_record_verification, name='treatment_verify'),
     path('previous_records/', views.view_previous_medical_records, name='previous_records'),
 
-    # API
+    # 처방 저장 API
     path("api/medical-record/create/", views.api_create_medical_record, name="api_create_medical_record"),
 
+    # 약품 검색 API
+    path("api/medicine/search/", views.api_search_medicine, name="api_search_medicine"),
 ]
         
