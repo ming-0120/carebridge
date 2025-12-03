@@ -45,6 +45,15 @@
         전체 의사: {{ total_doctors_count }}명 | 검색 결과: {{ search_result_count }}명 | 검색어: "{{ search_keyword }}"
       </div>
       {% endif %}
+      <!-- 더미 데이터 생성/삭제 버튼 -->
+      <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+        <a href="{% url 'create_doctor_dummy' %}" class="dummy-data-btn" style="display: inline-block; padding: 10px 20px; background-color: #10B981; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">
+          더미 의사 데이터 생성
+        </a>
+        <a href="{% url 'delete_doctor_dummy' %}" class="dummy-data-btn" id="deleteDoctorDummyBtn" style="display: inline-block; padding: 10px 20px; background-color: #EF4444; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">
+          더미 의사 데이터 삭제
+        </a>
+      </div>
       <form method="get" action="{% url 'doctor_list' %}" class="search-form">
         <select name="search_type" class="search-select">
           <option value="">검색조건</option>
@@ -72,22 +81,86 @@
       <table class="user-table">
         <thead>
           <tr>
-            <th>No.</th>
-            <th>의사ID</th>
-            <th>이름</th>
-            <th>전공과</th>
-            <th>면허번호</th>
-            <th>주근무 병원</th>
+            <th>
+              <a href="#" data-sort-field="doctor_id" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                No.
+                {% if sort_field == 'doctor_id' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="username" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                의사ID
+                {% if sort_field == 'username' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이름
+                {% if sort_field == 'name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="department" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                전공과
+                {% if sort_field == 'department' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="license_no" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                면허번호
+                {% if sort_field == 'license_no' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="hospital" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                주근무 병원
+                {% if sort_field == 'hospital' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>전화번호</th>
-            <th>이메일</th>
-            <th>승인상태</th>
-            <th>가입일</th>
+            <th>
+              <a href="#" data-sort-field="email" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이메일
+                {% if sort_field == 'email' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="verified" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                승인상태
+                {% if sort_field == 'verified' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                가입일
+                {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {% for doctor in doctors %}
-          <tr onclick="selectDoctor({{ doctor.doctor_id }})" class="user-row">
-            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+          {% for item in doctors_with_number %}
+          {% with doctor=item.doctor %}
+          <tr data-doctor-id="{{ doctor.doctor_id }}" class="user-row">
+            <td>{{ item.number }}</td>
             <td>{{ doctor.user.username|default:"-" }}</td>
             <td>{{ doctor.user.name }}</td>
             <td>{{ doctor.dep.dep_name|default:"-" }}</td>
@@ -104,6 +177,7 @@
             </td>
             <td>{{ doctor.user.created_at|date:"Y.m.d" }}</td>
           </tr>
+          {% endwith %}
           {% empty %}
           <tr>
             <td colspan="10" class="no-data">의사 데이터가 없습니다.</td>
@@ -116,8 +190,8 @@
     <!-- 페이지네이션 -->
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+        <a href="?page=1{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
       {% else %}
         <span class="page-link disabled">«</span>
         <span class="page-link disabled"><</span>
@@ -128,7 +202,7 @@
           {% if page_obj.number == num %}
             <span class="page-link active">{{ num }}</span>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -136,8 +210,8 @@
       {% endif %}
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
       {% else %}
         <span class="page-link disabled">></span>
         <span class="page-link disabled">»</span>
@@ -198,6 +272,9 @@
         {% endif %}
       </div>
     </div>
+    {% else %}
+    <!-- 상세 정보 영역이 없을 때도 공간 유지 (스크롤 이동 방지) -->
+    <div class="doctor-detail-section placeholder-hidden"></div>
     {% endif %}
   </div>
 

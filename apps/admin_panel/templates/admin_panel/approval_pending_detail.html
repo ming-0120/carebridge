@@ -1,0 +1,45 @@
+<!-- 승인신청 상세정보 -->
+<div class="approval-detail-section">
+  <h3 class="approval-detail-title">승인신청 상세정보</h3>
+  {% if selected_doctor %}
+  <div class="approval-detail-grid">
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">구분</span>
+      <span class="approval-detail-value">의사</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">이름</span>
+      <span class="approval-detail-value">{{ selected_doctor.user.name }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">의사ID</span>
+      <span class="approval-detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">전공과</span>
+      <span class="approval-detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">주근무 병원</span>
+      <span class="approval-detail-value">{{ selected_doctor.hos.name|default:"-" }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">면허번호</span>
+      <span class="approval-detail-value">{{ selected_doctor.license_no }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">연락처</span>
+      <span class="approval-detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
+    </div>
+    <div class="approval-detail-item">
+      <span class="approval-detail-label">신청일</span>
+      <span class="approval-detail-value">{{ selected_doctor.user.created_at|date:"Y.m.d" }}</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="approval-detail-message">
+    왼쪽 목록에서 행을 클릭하면 상세정보가 표시됩니다.
+  </div>
+  {% endif %}
+</div>
+

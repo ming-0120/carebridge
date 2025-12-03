@@ -42,11 +42,12 @@
       <h1 class="qna-title">1:1 문의 관리</h1>
       <div style="display: flex; gap: 10px;">
         <a href="{% url 'create_qna_dummy' %}" class="btn-delete" style="background-color: #10B981; text-decoration: none; display: inline-block;">더미 데이터 생성</a>
+        <a href="{% url 'delete_qna_dummy' %}" class="btn-delete" id="deleteQnaDummyBtn" style="background-color: #EF4444; text-decoration: none; display: inline-block;">더미 데이터 삭제</a>
         <form method="post" action="{% url 'qna_list' %}" id="deleteForm" style="display: inline;">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete">
           <input type="hidden" name="qna_ids" id="qnaIdsInput" value="">
-          <button type="button" onclick="deleteSelected()" class="btn-delete">삭제</button>
+          <button type="button" id="deleteSelectedBtn" class="btn-delete">삭제</button>
         </form>
       </div>
     </div>
@@ -57,29 +58,70 @@
         <thead>
           <tr>
             <th style="width: 40px;">
-              <input type="checkbox" id="selectAll" onchange="toggleSelectAllQna()">
+              <input type="checkbox" id="selectAll">
             </th>
-            <th>No.</th>
-            <th>이름</th>
-            <th>이메일</th>
-            <th>문의 제목</th>
-            <th>문의 일자</th>
-            <th>상태</th>
+            <th>
+              <a href="#" data-sort-field="qna_id" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                No.
+                {% if sort_field == 'qna_id' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이름
+                {% if sort_field == 'name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="email" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이메일
+                {% if sort_field == 'email' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="title" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                문의 제목
+                {% if sort_field == 'title' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                문의 일자
+                {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="status" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                상태
+                {% if sort_field == 'status' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {% for qna in qnas %}
+          {% for item in qnas_with_number %}
+          {% with qna=item.qna %}
           <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
-            <td onclick="event.stopPropagation(); return false;">
+            <td class="checkbox-cell">
               <input 
                 type="checkbox" 
                 name="qna_checkbox" 
                 value="{{ qna.qna_id }}"
-                onclick="event.stopPropagation(); return false;"
-                onchange="updateSelectedQnas();"
               >
             </td>
-            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+            <td>{{ item.number }}</td>
             <td>{{ qna.user.name }}</td>
             <td>{{ qna.user.email }}</td>
             <td>{{ qna.title }}</td>
@@ -92,6 +134,7 @@
               {% endif %}
             </td>
           </tr>
+          {% endwith %}
           {% empty %}
           <tr>
             <td colspan="7" class="no-data">문의 데이터가 없습니다.</td>
@@ -116,7 +159,7 @@
           {% if page_obj.number == num %}
             <span class="page-link active">{{ num }}</span>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -124,8 +167,8 @@
       {% endif %}
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" class="page-link">></a>
-        <a href="?page={{ page_obj.paginator.num_pages }}" class="page-link">»</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">»</a>
       {% else %}
         <span class="page-link disabled">></span>
         <span class="page-link disabled">»</span>

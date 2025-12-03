@@ -51,7 +51,7 @@
           <option value="name" {% if search_type == 'name' %}selected{% endif %}>병원명</option>
           <option value="region" {% if search_type == 'region' %}selected{% endif %}>지역</option>
           <option value="phone" {% if search_type == 'phone' %}selected{% endif %}>전화번호</option>
-          <option value="hpid" {% if search_type == 'hpid' %}selected{% endif %}>HPID</option>
+          <option value="hpid" {% if search_type == 'hpid' %}selected{% endif %}>병원ID</option>
         </select>
         <input 
           type="text" 
@@ -71,20 +71,63 @@
       <table class="user-table">
         <thead>
           <tr>
-            <th>No.</th>
-            <th>병원명</th>
-            <th>병원ID</th>
+            <th>
+              <a href="#" data-sort-field="hos_id" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                No.
+                {% if sort_field == 'hos_id' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                병원명
+                {% if sort_field == 'name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="hos_name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                병원ID
+                {% if sort_field == 'hos_name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>병원PW</th>
-            <th>전화번호</th>
-            <th>주소</th>
+            <th>
+              <a href="#" data-sort-field="tel" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                전화번호
+                {% if sort_field == 'tel' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="address" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                주소
+                {% if sort_field == 'address' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>의사 수</th>
-            <th>등록일</th>
+            <th>
+              <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                등록일
+                {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {% for hospital in hospitals %}
-          <tr onclick="selectHospital({{ hospital.hos_id }})" class="user-row">
-            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+          {% for item in hospitals_with_number %}
+          {% with hospital=item.hospital %}
+          <tr data-hospital-id="{{ hospital.hos_id }}" class="user-row">
+            <td>{{ item.number }}</td>
             <td>{{ hospital.name }}</td>
             <td>{{ hospital.hos_name|default:"-" }}</td>
             <td>
@@ -107,6 +150,7 @@
             </td>
             <td>{{ hospital.estb_date|default:"-" }}</td>
           </tr>
+          {% endwith %}
           {% empty %}
           <tr>
             <td colspan="8" class="no-data">병원 데이터가 없습니다.</td>
@@ -119,8 +163,8 @@
     <!-- 페이지네이션 -->
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+        <a href="?page=1{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
       {% else %}
         <span class="page-link disabled">«</span>
         <span class="page-link disabled"><</span>
@@ -131,7 +175,7 @@
           {% if page_obj.number == num %}
             <span class="page-link active">{{ num }}</span>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -139,8 +183,8 @@
       {% endif %}
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
       {% else %}
         <span class="page-link disabled">></span>
         <span class="page-link disabled">»</span>
@@ -198,6 +242,9 @@
         {% endif %}
       </div>
     </div>
+    {% else %}
+    <!-- 상세 정보 영역이 없을 때도 공간 유지 (스크롤 이동 방지) -->
+    <div class="hospital-detail-section placeholder-hidden"></div>
     {% endif %}
   </div>
 

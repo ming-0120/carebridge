@@ -329,6 +329,13 @@ html, body {
   background-color: #E9F1FF;
 }
 
+.user-row.selected {
+  background-color: #E3F2FD;
+  /* 🌟 border-left를 padding으로 대체하여 행 높이 변화 방지 🌟 */
+  /* border-left: 3px solid #2196F3; */
+  box-shadow: inset 3px 0 0 0 #2196F3; /* inset box-shadow 사용 */
+}
+
 .no-data {
   text-align: center;
   padding: 40px;
@@ -381,7 +388,9 @@ html, body {
 }
 
 /* ========= Detail Section (공통) ========= */
-.user-detail-section {
+.user-detail-section,
+.doctor-detail-section,
+.hospital-detail-section {
   margin-top: 32px;
   padding: 24px;
   background-color: #F8FAFF;
@@ -389,6 +398,27 @@ html, body {
   border: 1px solid #e1e4ec;
   flex-shrink: 0;
   margin-bottom: 0;
+  /* 🌟 상세 정보 섹션에 기본 최소 높이를 적용하여 로드 시 높이 변화 최소화 🌟 */
+  min-height: 200px; /* 🌟 placeholder와 동일한 최소 높이 설정 (안정성 강화) 🌟 */
+}
+
+/* ========= Detail Section Placeholder Fix ========= */
+/* 상세 정보가 없을 때도 공간을 차지하도록 합니다 (버그 해결 핵심) */
+.user-detail-section.placeholder-hidden,
+.doctor-detail-section.placeholder-hidden,
+.hospital-detail-section.placeholder-hidden {
+  /* 높이를 미리 예상하거나 고정할 수 없을 경우, 최소 높이를 설정합니다. */
+  min-height: 200px; /* 🌟 상세 정보 내용에 따라 적절히 조정 🌟 */
+  
+  /* 공간은 차지하되 보이지 않게 처리 */
+  visibility: hidden !important; 
+  opacity: 0 !important;
+  padding: 0 !important; /* 내부 패딩도 없애 높이 계산을 쉽게 함 */
+  margin: 0 !important;
+  margin-top: 32px !important; /* 상단 마진은 유지하여 레이아웃 일관성 유지 */
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
 }
 
 

@@ -100,6 +100,19 @@
   background-color: #E9F1FF;
 }
 
+/* 면허번호와 주민번호 뒷자리가 일치하지 않는 의사 행 스타일 */
+.approval-row.invalid-license {
+  background-color: #FEE2E2;
+}
+
+.approval-row.invalid-license:hover {
+  background-color: #FECACA;
+}
+
+.approval-row.invalid-license.selected {
+  background-color: #FCA5A5;
+}
+
 .approval-detail-section {
   margin-top: 32px;
   padding: 24px;
@@ -152,4 +165,5 @@
   color: #222;
   font-weight: 400;
 }
+
 
