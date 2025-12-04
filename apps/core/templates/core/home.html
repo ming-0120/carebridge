@@ -25,38 +25,17 @@
     </div>
     <aside class="news-panel" id="newsletter">
       <h2>메디컬 뉴스레터</h2>
-
-      <div class="news-card">
-        <div class="news-tag">보도자료</div>
-        <a href="#" class="news-title">한국보건의료정보원, 글로벌스탠더드경영대상 BEST BRAND 수상</a>
-        <div class="news-date">2025.11.21</div>
-      </div>
-
-      <div class="news-card">
-        <div class="news-tag">공지사항</div>
-        <a href="#" class="news-title">이번 주 응급실 혼잡도 안내</a>
-        <div class="news-date">2025.11.20</div>
-      </div>
-
-      <!-- <div class="news-card">
-        <div class="news-tag">칼럼</div>
-        <a href="#" class="news-title">독감 유행 시기, 예방접종 안내</a>
-        <div class="news-date">2025.11.19</div>
-      </div>
-
-      <div class="news-card">
-        <div class="news-tag">칼럼</div>
-        <a href="#" class="news-title">만성질환 환자를 위한 식단 가이드</a>
-        <div class="news-date">2025.11.18</div>
-      </div> -->
-
-      <div class="news-card">
-        <div class="news-tag">보도자료</div>
-        <a href="#" class="news-title">CareBridge, 지역 응급의료센터와 데이터 연계</a>
-        <div class="news-date">2025.11.17</div>
-      </div>
+        
+      {% for item in newsletters %}
+        <a href="{{ item.url }}" target="_blank" rel="noopener" class="news-card-link">
+          <div class="news-card">
+            <div class="news-tag">{{ item.category }}</div>
+            <div class="news-title">{{ item.title }}</div>
+            <div class="news-date">{{ item.created_at|date:"Y.m.d" }}</div>
+          </div>
+        </a>
+      {% endfor %}
     </aside>
-
   </section>
 
   <section class="card-row">

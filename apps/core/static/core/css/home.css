@@ -1,16 +1,18 @@
- body {
+  body {
     margin: 0;
     background: #F4F6F9;
     font-family: "Noto Sans KR", sans-serif;
     color: #222;
   }
 
-
-  /* ========= Layout ========= */
+  /* 고정 width → 가변 width + max-width */
   .page {
-    width: 1320px;
+    width: 100%;
+    max-width: 1320px;     /* 최대 1320px까지 */
     margin: 40px auto 70px;
+    padding: 0 20px;       /* 좌우 여백 */
   }
+
 
   /* === Hero: 좌측 이미지 + 우측 뉴스레터 === */
   .hero-row {
@@ -201,3 +203,84 @@
     padding: 26px 0;
     font-size: 13px;
   }
+  /* 1024px 이하: 2열 / 카드 2개 */
+@media (max-width: 1024px) {
+
+  .page {
+    margin: 24px auto 50px;
+    padding: 0 16px;
+  }
+
+  .hero-row {
+    grid-template-columns: 1fr;   /* 위/아래 한 줄로 */
+    gap: 20px;
+  }
+
+  .hero-left {
+    height: 260px;                /* 너무 높지 않게 */
+  }
+
+  .card-row {
+    grid-template-columns: repeat(2, 1fr);  /* 3 → 2열 */
+  }
+
+  .info-card {
+    height: auto;                 /* 고정 높이 대신 내용에 맞게 */
+    min-height: 150px;
+  }
+}
+
+/* 768px 이하: 전부 1열 */
+@media (max-width: 768px) {
+
+  .page {
+    margin: 20px auto 40px;
+    padding: 0 14px;
+  }
+
+  .hero-left {
+    height: 220px;
+  }
+
+  .card-row {
+    grid-template-columns: 1fr;   /* 1열 */
+    gap: 14px;
+  }
+
+  .info-card {
+    padding: 18px 16px;
+  }
+}
+
+/* 480px 이하: 폰용 최적화 */
+@media (max-width: 480px) {
+
+  .page {
+    padding: 0 12px;
+  }
+
+  .hero-left {
+    height: 200px;
+  }
+
+  .news-panel h2 {
+    font-size: 18px;
+  }
+
+  .info-card h3 {
+    font-size: 16px;
+  }
+
+  .info-card p {
+    font-size: 13px;
+  }
+}
+.news-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.news-card {
+  cursor: pointer;
+}
