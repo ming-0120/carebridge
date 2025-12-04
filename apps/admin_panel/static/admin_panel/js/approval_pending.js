@@ -11,6 +11,7 @@ function toggleSelectAllApproval() {
   
   checkboxes.forEach(checkbox => {
     checkbox.checked = selectAllCheckbox.checked;
+    updateRowCheckboxClass(checkbox);
   });
   
   updateSelectedDoctors();
@@ -94,6 +95,18 @@ function attachTableRowListeners() {
   });
 }
 
+// 체크박스 체크 상태에 따라 행 클래스 업데이트
+function updateRowCheckboxClass(checkbox) {
+  const row = checkbox.closest('tr');
+  if (row) {
+    if (checkbox.checked) {
+      row.classList.add('checkbox-checked');
+    } else {
+      row.classList.remove('checkbox-checked');
+    }
+  }
+}
+
 // 체크박스 이벤트 연결
 function attachCheckboxListeners() {
   const selectAllCheckbox = document.getElementById('selectAll');
@@ -107,8 +120,12 @@ function attachCheckboxListeners() {
   
   const checkboxes = document.querySelectorAll('input[name="doctor_checkbox"]');
   checkboxes.forEach(checkbox => {
+    // 초기 상태 설정
+    updateRowCheckboxClass(checkbox);
+    
     checkbox.removeEventListener('change', checkbox._changeHandler);
     checkbox._changeHandler = function() {
+      updateRowCheckboxClass(checkbox);
       updateSelectedDoctors();
     };
     checkbox.addEventListener('change', checkbox._changeHandler);
