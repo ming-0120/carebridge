@@ -4,7 +4,7 @@ import os
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from datetime import datetime
+from datetime import datetime, date
 import requests, json
 from django.utils import timezone
 from apps.db.models.slot_reservation import Reservations
@@ -69,43 +69,62 @@ def doctor_screen_dashboard(request):
 # 병원 직원 대시보드
 # ---------------------------------------------------------
 def hospital_staff_dashboard(request):
+    lab_order = []
+    treatment_order = []
+    lab_pending_count = 0
+    lab_sampled_count = 0
+    lab_is_urgent_count = 0
+    treatment_pending_count = 0
+    treatment_inprogress_count = 0
     try:
         medical_records = Hospital.objects.get(hos_id=1).medicalrecord_set.all()
-        lab_order = []
-        treatment_order = []
-        lab_pending_count = 0
-        lab_sampled_count = 0
-        lab_is_urgent_count = 0
-        treatment_pending_count = 0
-        treatment_inprogress_count = 0
         for record in medical_records:
             try:
-                lab = LabOrders.objects.get(medical_record__pk=record.medical_record_id)
-                lab_order.append(lab.objects.values())
-                if lab.objects.values('status') == 'PENDING':
+                print(str(date.today()))
+                lab = LabOrders.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    order_datetime__contains=str(date.today()),
+                )
+                lab_order.append(lab)
+                if lab.status == 'Pending':
                     lab_pending_count += 1
-                if lab.objects.values('status') == 'SAMPLED':
+                if lab.status == 'Sampled':
                     lab_sampled_count += 1
-                if lab.objects.values('is_urgent') == True:
+                if lab.is_urgent == True:
                     lab_is_urgent_count += 1
             except:
                 print('LabOrders error')
             print(record.medical_record_id)
             try:
-                treatment = TreatmentProcedures.objects.get(medical_record__pk=record.medical_record_id)
-                treatment_order.append(treatment.objects.values())
-                if treatment.objects.values('status') == 'PENDING':
+                treatment = TreatmentProcedures.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    execution_datetime__contains=str(date.today()),
+                )
+                treatment_order.append(treatment)
+                if treatment.status == 'Pending':
                     treatment_pending_count += 1
-                if treatment.objects.values('status') == 'PENDING':
+                if treatment.status == 'In progress':
                     treatment_inprogress_count += 1
             except:
-                print('TreatmentProcedures error')
-
+                print('TreatmentProcedures error')    
     except:
         print('Hospital error')
 
+    context = {
+       'lab_order': lab_order,
+       'treatment_order': treatment_order,
+       'lab_pending_count': lab_pending_count,
+       'lab_sampled_count': lab_sampled_count,
+       'lab_is_urgent_count': lab_is_urgent_count,
+       'treatment_pending_count': treatment_pending_count,
+       'treatment_inprogress_count': treatment_inprogress_count
+    }
 
-    return render(request, 'emr/hospital_staff_dashboard.html')
+    return render(request, 'emr/hospital_staff_dashboard.html', context)
 
 
 
@@ -126,12 +145,6 @@ def medical_record_creation(request):
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
-
-def doctor_screen_dashboard(request):
-    return render(request, 'emr/doctor_screen_dashboard.html')
-
-def hospital_staff_dashboard(request):
-    return render(request, 'emr/hospital_staff_dashboard.html')
 
 def lab_record_creation(request):
     return render(request, 'emr/lab_record_creation.html')
