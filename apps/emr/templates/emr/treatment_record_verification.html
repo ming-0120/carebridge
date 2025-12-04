@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -9,6 +10,9 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'emr/css/treatment_record_verification.css' %}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script>
+        let currentState = "{{ order.status }}";
+    </script>
 </head>
 <body>
 
@@ -21,17 +25,26 @@
         <h2>치료 기록 화면</h2>
         
         <div class="patient-info-header">
-            <div class="info-item"><strong>성명:</strong> 조진석</div>
-            <div class="info-item"><strong>주민번호:</strong> 921123-*******</div>
-            <div class="info-item"><strong>전화번호:</strong> 010-****-****</div>
-            <div class="info-item"><strong>성별:</strong> 남</div>
-            <div class="info-item"><strong>주소:</strong> 송파구 송파대로...</div>
-            <div class="info-item"><strong>진단정보:</strong> 팔 부상</div>
-            <div class="info-item"><strong>진료기록내용:</strong> ....</div>
+            <div class="info-item"><strong>성명:</strong> {{ user.name }}</div>
+            <div class="info-item"><strong>주민번호:</strong> {{ user.resident_reg_no }}</div>
+            <div class="info-item"><strong>전화번호:</strong> {{ user.phone }}</div>
+            <div class="info-item"><strong>성별:</strong> {% if user.gender == 'F' %} 여 {% else %} 남 {% endif %}</div>
+            <div class="info-item"><strong>주소:</strong> {{ user.address }}</div>
+            <div class="info-item"><strong>진단정보:</strong> {{ medical_record.record_type }}</div>
+            <div class="info-item"><strong>진료기록내용:</strong> {{ medical_record.record_content }}</div>
+            <div class="info-item"><strong>S:</strong> {{ medical_record.subjective }}</div>
+            <div class="info-item"><strong>O:</strong> {{ medical_record.objective }}</div>
+            <div class="info-item"><strong>A:</strong> {{ medical_record.assessment }}</div>
+            <div class="info-item"><strong>P:</strong> {{ medical_record.plan }}</div>
         </div>
 
-        <div class="card">
+        <form name="frmTreatment" class="card" method="post" action="/mstaff/treatment_verify/">
+            {% csrf_token %}
             <h3>시술/처치 기록 입력 (2)</h3>
+            <input type="hidden" name="medical_record_id" value="{{ medical_record.medical_record_id }}">
+            <input type="hidden" name="order_id" value="{{ order.treatment_id }}">
+            <input type="hidden" name="user_id" value="{{ user.user_id }}">
+            <input type="hidden" name="current_status" value="{{ order.status }}">
             
             <div class="record-entry-grid">
                 
@@ -39,15 +52,15 @@
                     <div class="form-group">
                         <label for="procedureName">시술/처치 명칭 및 코드</label>
                         <div class="input-with-button">
-                            <input type="text" id="procedureName" disabled>
-                            <input type="text" id="procedureCode" disabled>
-                            <button class="search-btn" id="searchProcedureBtn" style="width: 100px;" onclick="openProcedureSearchModal()">검색</button>
+                            <input type="text" name="procedureName" id="procedureName" value="결핵" disabled required>
+                            <input type="text" name="procedureCode" id="procedureCode" value="2025087777" disabled required>
+                            <button class="search-btn" id="searchProcedureBtn" type="button" style="width: 100px;" onclick="openProcedureSearchModal()">검색</button>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="procedureSite">시술/처치 부위</label>
-                        <input type="text" id="procedureSite" value="left arm">
+                        <input type="text" name="procedureSite" id="procedureSite">
                     </div>
                     
                     <div class="form-group">
@@ -64,17 +77,17 @@
                 <div>
                     <div class="form-group">
                         <label for="specialNotes">특이사항 메모</label>
-                        <textarea id="specialNotes" placeholder="특이사항 메모란"></textarea>
+                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"></textarea>
                     </div>
                 </div>
                 
                 <div class="status-button-group">
-                    <button class="status-button btn-start" id="btnStart" onclick="updateStatus('IN_PROGRESS')">IN PROGRESS</button>
-                    <button class="status-button btn-complete" id="btnComplete" onclick="updateStatus('COMPLETED')">COMPLETED</button>
-                    <button class="status-button btn-next" id="btnNext" onclick="goToNextPatient()">다음환자</button>
+                    <button class="status-button btn-start" id="btnStart" type="button" onclick="updateStatus('In progress')">IN PROGRESS</button>
+                    <button class="status-button btn-complete" id="btnComplete" type="button" onclick="updateStatus('Completed')">COMPLETED</button>
+                    <button class="status-button btn-next" id="btnNext" type="button" onclick="goToNextPatient()">다음환자</button>
                 </div>
             </div>
-        </div>
+        </form>
     </div>
 
     <!-- 시술/처치 검색 모달 -->

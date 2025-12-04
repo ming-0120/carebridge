@@ -17,7 +17,7 @@ class LabData(models.Model):
 class LabOrders(models.Model):
     lab_order_id = models.AutoField(primary_key=True)
     order_datetime = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=LAB_STATUS_CHOICES)
+    status = models.CharField(max_length=20, choices=LAB_STATUS_CHOICES, default='Pending')
     status_datetime = models.DateTimeField(null=True, blank=True)
     requisition_note = models.TextField(null=True, blank=True)
     is_urgent = models.BooleanField()

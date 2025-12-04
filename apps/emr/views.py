@@ -4,13 +4,15 @@ import os
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from datetime import datetime
+from datetime import datetime, date
 import requests, json
 from django.utils import timezone
 from apps.db.models.slot_reservation import Reservations
 from django.db import connection
 from django.db.models import Q
+from apps.db.models import Users
 import xml.etree.ElementTree as ET
+
 from apps.db.models import (
     MedicalRecord,
     MedicineOrders,
@@ -22,6 +24,7 @@ from apps.db.models import (
     LabUpload,
     TreatmentProcedures,
     Reservations,
+    Doctors,
 )
 
 load_dotenv()
@@ -69,43 +72,84 @@ def doctor_screen_dashboard(request):
 # 병원 직원 대시보드
 # ---------------------------------------------------------
 def hospital_staff_dashboard(request):
+    lab_order = []
+    treatment_order = []
+    lab_pending_count = 0
+    lab_sampled_count = 0
+    lab_is_urgent_count = 0
+    treatment_pending_count = 0
+    treatment_inprogress_count = 0
     try:
         medical_records = Hospital.objects.get(hos_id=1).medicalrecord_set.all()
-        lab_order = []
-        treatment_order = []
-        lab_pending_count = 0
-        lab_sampled_count = 0
-        lab_is_urgent_count = 0
-        treatment_pending_count = 0
-        treatment_inprogress_count = 0
         for record in medical_records:
             try:
-                lab = LabOrders.objects.get(medical_record__pk=record.medical_record_id)
-                lab_order.append(lab.objects.values())
-                if lab.objects.values('status') == 'PENDING':
+                print(str(date.today()))
+                lab = LabOrders.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    order_datetime__contains=str(date.today()),
+                )
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                lab_order.append({
+                    'lab': lab,
+                    'user': user,
+                    'doctor': doctor,
+                    'doctor_info': doctor_info,
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if lab.status == 'Pending':
                     lab_pending_count += 1
-                if lab.objects.values('status') == 'SAMPLED':
+                if lab.status == 'Sampled':
                     lab_sampled_count += 1
-                if lab.objects.values('is_urgent') == True:
+                if lab.is_urgent == True:
                     lab_is_urgent_count += 1
             except:
                 print('LabOrders error')
-            print(record.medical_record_id)
             try:
-                treatment = TreatmentProcedures.objects.get(medical_record__pk=record.medical_record_id)
-                treatment_order.append(treatment.objects.values())
-                if treatment.objects.values('status') == 'PENDING':
+                treatment = TreatmentProcedures.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    execution_datetime__contains=str(date.today()),
+                )
+
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                treatment_order.append({
+                    'treatment': treatment,
+                    'user': user,
+                    'doctor': doctor,
+                    'doctor_info': doctor_info,
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if treatment.status == 'Pending':
                     treatment_pending_count += 1
-                if treatment.objects.values('status') == 'PENDING':
+                if treatment.status == 'In progress':
                     treatment_inprogress_count += 1
             except:
-                print('TreatmentProcedures error')
-
+                print('TreatmentProcedures error')    
     except:
         print('Hospital error')
 
+    context = {
+       'lab_order': lab_order,
+       'treatment_order': treatment_order,
+       'lab_pending_count': lab_pending_count,
+       'lab_sampled_count': lab_sampled_count,
+       'lab_is_urgent_count': lab_is_urgent_count,
+       'treatment_pending_count': treatment_pending_count,
+       'treatment_inprogress_count': treatment_inprogress_count
+    }
 
-    return render(request, 'emr/hospital_staff_dashboard.html')
+    return render(request, 'emr/hospital_staff_dashboard.html', context)
 
 
 
@@ -120,18 +164,16 @@ def lab_record_creation(request):
 # 진료기록 작성 화면
 # ---------------------------------------------------------
 def medical_record_creation(request):
-    return render(request, 'emr/medical_record_creation.html')
+    patient_id = request.GET.get("patient_id")
+    return render(request, 'emr/medical_record_creation.html', {
+        "patient_id": patient_id
+    })
+
 
 
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
-
-def doctor_screen_dashboard(request):
-    return render(request, 'emr/doctor_screen_dashboard.html')
-
-def hospital_staff_dashboard(request):
-    return render(request, 'emr/hospital_staff_dashboard.html')
 
 def lab_record_creation(request):
     return render(request, 'emr/lab_record_creation.html')
@@ -157,32 +199,106 @@ def today_patient_list(request):
 # ---------------------------------------------------------
 # 치료/처치 기록 검증 화면
 # ---------------------------------------------------------
+@csrf_exempt
 def treatment_record_verification(request):
-    return render(request, "emr/treatment_record_verification.html")
 
+    if request.method == "GET":
+        order_id = request.GET['order_id']
+        user_id = request.GET['user_id']
+        record_id = request.GET['medical_record_id']
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = TreatmentProcedures.objects.get(treatment_id=int(order_id))
+
+        except:
+            print('error')
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+        }
+
+        return render(request, "emr/treatment_record_verification.html", context)
+    elif request.method == "POST":
+        order_id = request.POST['order_id']
+        user_id = request.POST['user_id']
+        record_id = request.POST['medical_record_id']
+        current_status = request.POST['current_status']
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = TreatmentProcedures.objects.get(treatment_id=order_id)
+            if current_status == 'Pending':
+                order.status = 'In progress'
+                order.execution_datetime = datetime.now()
+                order.save()
+            elif current_status == 'In progress':
+                order.status = 'Completed'
+                order.completion_datetime = datetime.now()
+                order.save()
+        except:
+            print('error')
+        
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+        }
+
+
+        return render(request, "emr/treatment_record_verification.html", context)
 
 # ---------------------------------------------------------
 # 과거 진료기록 조회 화면
 # ---------------------------------------------------------
 def view_previous_medical_records(request):
-    return render(request, "emr/previous_medical_records.html")
+    return render(request, "emr/view_previous_medical_records.html")
 
 
 # ---------------------------------------------------------
 # 약품 검색 API
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# 약품 검색 API (외부 API 버전)
+# ---------------------------------------------------------
 @require_GET
 def api_search_medicine(request):
-    q = request.GET.get("q", "").strip()
-
-    if q == "":
+    query = request.GET.get("q", "").strip()
+    if not query:
         return JsonResponse({"results": []})
 
-    rows = MedicineData.objects.filter(order_name__icontains=q)[:50]
+    service_key = "7o7cPo1AJvy3VxggWsMo/ZVdslwCi1Ebcm6LQ36QOIkQTgFNRBGfKkzq1Ug7LhWkxdmmhjnW1zM76UZA7cOo1A=="
 
-    data = [{"name": r.order_name, "code": r.order_code} for r in rows]
+    url = (
+        "https://apis.data.go.kr/1471000/MdcinGrnIdntfcInfoService03/getMdcinGrnIdntfcInfoList03?"
+        f"serviceKey={service_key}"
+        f"&item_name={query}"
+        f"&pageNo=1"
+        f"&numOfRows=50"
+        f"&type=json"
+    )
 
-    return JsonResponse({"results": data})
+    response = requests.get(url)
+    data = response.json()
+
+    items = (
+        data.get("body", {})
+            .get("items", [])
+    )
+
+    results = []
+    for item in items:
+        name = item.get("ITEM_NAME")
+        code = item.get("ITEM_SEQ")
+        if name and code:
+            results.append({"name": name, "code": code})
+
+    return JsonResponse({"results": results})
+
 
 
 # ---------------------------------------------------------
@@ -258,7 +374,7 @@ def api_create_medical_record(request):
         order_datetime=timezone.now(),
         start_datetime=global_start,
         stop_datetime=global_end,
-        notes=None,
+        notes= prescriptions[0].get("note") if prescriptions else None,
         medical_record_id=record.medical_record_id
     )
 
@@ -291,7 +407,6 @@ def api_create_medical_record(request):
     elif order_type == "treatment":
         TreatmentProcedures.objects.create(
             execution_datetime=timezone.now(),
-            status="pending",
             medical_record=record
         )
     # ------------------------------------------------
@@ -301,20 +416,50 @@ def api_create_medical_record(request):
     reservation_type = request.POST.get("reservation_type")
     reservation_memo = request.POST.get("reservation_memo")
 
+    # ------------------------------------------------
+    # 예약 시간 유효성 검사 + 예약 datetime 생성
+    # ------------------------------------------------
+
     reserved_at = None
     reserved_end = None
 
-    if reservation_date:
-        # 문자열을 datetime으로 변환
-        naive_dt = datetime.strptime(reservation_date, "%Y-%m-%dT%H:%M")
+    date_str = request.POST.get("reservation_date")      # "2025-12-04T12:00" 가능
+    hour_str = request.POST.get("reservation_hour")      # "12" 또는 빈값
 
-        # timezone aware 로 변환
-        if timezone.is_naive(naive_dt):
-            reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+    if date_str:
+
+        # reservation_date 가 datetime-local 형태인 경우
+        if "T" in date_str:
+            naive_dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M")
+
         else:
-            reserved_at = naive_dt
+            # 날짜만 있는 경우 (hour_str 사용)
+            naive_dt = datetime.strptime(f"{date_str}T{hour_str}:00", "%Y-%m-%dT%H:%M")
 
+        hour = naive_dt.hour
+
+        # 점심시간 제외
+        if hour == 13:
+            return JsonResponse({"error": "13시는 예약 불가"}, status=400)
+
+        # 운영시간 체크
+        if hour < 9 or hour > 17:
+            return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
+
+        # 중복 체크
+        exists = Reservations.objects.filter(
+            slot__doctor_id=doctor_id,
+            reserved_at__date=naive_dt.date(),
+            reserved_at__hour=naive_dt.hour
+        ).exists()
+
+        if exists:
+            return JsonResponse({"error": "이미 예약된 시간입니다"}, status=400)
+        
+        # 5) timezone-aware 변환
+        reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
         reserved_end = reserved_at + timezone.timedelta(hours=1)
+
 
     # ------------------------------
     # 예약 저장
@@ -408,6 +553,92 @@ def treatment_data_search(request):
             'sickNm': item.find('sickNm').text
         })
 
+
     return JsonResponse({
         'treatment_datas': datas
     })
+
+def patient_search_list_view(request):
+    # role='patient' 인 사용자만 조회
+    patients = Users.objects.filter(role='patient').values(
+        'user_id', 'name', 'gender', 'birth_date'
+    )
+
+    return render(request, "emr/patient_search_list.html", {
+        "patients": patients
+    })
+    
+def api_search_patient(request):
+    keyword = request.GET.get("keyword", "").strip()
+
+    if keyword == "":
+        return JsonResponse({"results": []})
+
+    rows = Users.objects.filter(
+        Q(name__icontains=keyword) |
+        Q(resident_reg_no__startswith=keyword),
+        role='patient'
+    ).values('user_id', 'name', 'gender', 'resident_reg_no')
+
+    results = []
+    for r in rows:
+        rrn = r["resident_reg_no"]
+        dob = None
+        if rrn and len(rrn) >= 8:
+            dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+
+        results.append({
+            "user_id": r["user_id"],
+            "name": r["name"],
+            "gender": r["gender"],
+            "birth_date": dob,
+        })
+
+    return JsonResponse({"results": results})
+
+
+def calculate_age_from_rrn(rrn_string, age_type='korean'):
+    """
+    주민등록번호 문자열을 받아 나이를 계산합니다.
+    :param rrn_string: 'YYMMDD-GXXXXXX' 형태의 주민등록번호
+    :param age_type: 'man' (만 나이) 또는 'korean' (세는 나이)
+    :return: 계산된 나이 (정수)
+    """
+    
+    # 1. 생년월일 및 성별 코드 추출
+    birth_date_part = rrn_string[:6]
+    gender_code = rrn_string[7]
+
+    # 2. 세기 결정 (1900년대 vs 2000년대)
+    if gender_code in ('1', '2', '5', '6', '9', '0'):
+        # 19xx년생 (1, 2, 9, 0) 또는 18xx년생 (5, 6)
+        if gender_code in ('1', '2', '9', '0'):
+             century_prefix = 19
+        else: # 5, 6
+             century_prefix = 18
+    else: # 3, 4, 7, 8 (20xx년생)
+        century_prefix = 20
+
+    # 3. 완전한 생년월일 생성
+    birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
+    birth_month = int(birth_date_part[2:4])
+    birth_day = int(birth_date_part[4:6])
+
+    today = date.today()
+    
+    # 4. 나이 계산 로직
+    if age_type == 'man':
+        ## 📌 만 나이 계산 (국제 표준)
+        # (현재 연도 - 출생 연도)에서, 아직 생일이 지나지 않았으면 1을 뺌
+        age = today.year - birth_year
+        if (today.month, today.day) < (birth_month, birth_day):
+            age -= 1
+        return age
+        
+    elif age_type == 'korean':
+        ## 📌 세는 나이 계산 (한국식 나이)
+        # (현재 연도 - 출생 연도) + 1
+        return today.year - birth_year + 1
+        
+    else:
+        raise ValueError("age_type은 'man' 또는 'korean'이어야 합니다.")

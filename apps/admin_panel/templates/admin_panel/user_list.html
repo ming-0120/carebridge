@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>사용자 목록 - CareBridge 관리자</title>
+  <!-- Bootstrap CSS (먼저 로드하여 커스텀 CSS로 오버라이드 가능) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/user_list.css' %}">
 </head>
@@ -107,7 +109,7 @@
             </th>
             <th>
               <a href="#" data-sort-field="resident_reg_no" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
-                주민번호
+                생년월일
                 {% if sort_field == 'resident_reg_no' %}
                   {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
                 {% endif %}
@@ -162,7 +164,7 @@
             <td>{{ item.number }}</td>
             <td>{{ user_obj.username }}</td>
             <td>{{ user_obj.name }}</td>
-            <td>{{ user_obj.resident_reg_no|slice:":6" }}-{{ user_obj.resident_reg_no|slice:"6:7" }}******</td>
+            <td>{{ item.birth_date|default:"-" }}</td>
             <td>{% if user_obj.gender == 'M' %}남{% else %}여{% endif %}</td>
             <td>{{ user_obj.phone }}</td>
             <td>{{ user_obj.email }}</td>
@@ -212,46 +214,64 @@
 
     <!-- 선택 사용자 상세정보 -->
     {% if selected_user %}
-    <div class="user-detail-section">
-      <h3 class="detail-title">선택 사용자 상세정보</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">이름</span>
-          <span class="detail-value">{{ selected_user.name }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">id</span>
-          <span class="detail-value">{{ selected_user.username }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">주민번호</span>
-          <span class="detail-value">{{ selected_user.resident_reg_no|slice:":6" }}-{{ selected_user.resident_reg_no|slice:"6:7" }}******</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">성별</span>
-          <span class="detail-value">{% if selected_user.gender == 'M' %}남{% else %}여{% endif %}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">전화번호</span>
-          <span class="detail-value">{{ selected_user.phone }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">주소</span>
-          <span class="detail-value">{{ selected_user.address }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">email</span>
-          <span class="detail-value">{{ selected_user.email }}</span>
-        </div>
-        <div class="detail-item full-width">
-          <span class="detail-label">즐겨찾기 병원</span>
-          <span class="detail-value">
-            {% if favorite_hospitals %}
-              {{ favorite_hospitals|join:", " }}
-            {% else %}
-              없음
-            {% endif %}
-          </span>
+    <div class="user-detail-section card shadow-sm">
+      <div class="card-body">
+        <h3 class="detail-title card-title border-bottom pb-3 mb-4">선택 사용자 상세정보</h3>
+        <div class="detail-grid row g-3">
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">이름</span>
+              <div class="detail-value">{{ selected_user.name }}</span>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">id</span>
+              <div class="detail-value">{{ selected_user.username }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">생년월일</span>
+              <div class="detail-value">{{ birth_date|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">성별</span>
+              <div class="detail-value">{% if selected_user.gender == 'M' %}남{% else %}여{% endif %}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">전화번호</span>
+              <div class="detail-value">{{ selected_user.phone }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">주소</span>
+              <div class="detail-value">{{ selected_user.address }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">email</span>
+              <div class="detail-value">{{ selected_user.email }}</div>
+            </div>
+          </div>
+          <div class="col-md-12">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">즐겨찾기 병원</span>
+              <div class="detail-value">
+                {% if favorite_hospitals %}
+                  {{ favorite_hospitals|join:", " }}
+                {% else %}
+                  없음
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

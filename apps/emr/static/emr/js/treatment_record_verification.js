@@ -1,4 +1,3 @@
-let currentState = 'PENDING';
 let selectedProcedure = null;
 
 // 현재 시간
@@ -10,7 +9,7 @@ function getCurrentTime() {
 
 // 모달 열기
 function openProcedureSearchModal() {
-    if (currentState !== 'PENDING') {
+    if (currentState !== 'Pending') {
         alert('시술이 이미 시작되어 변경할 수 없습니다.');
         return;
     }
@@ -24,17 +23,29 @@ function updateStatus(newStatus) {
     const startTime = document.getElementById('startTime');
     const completionTime = document.getElementById('completionTime');
 
-    if (newStatus === 'IN_PROGRESS') {
-        startTime.value = getCurrentTime();
-        currentState = 'IN_PROGRESS';
-        alert('시술이 시작되었습니다.');
-    } else if (newStatus === 'COMPLETED') {
+    if (newStatus === 'In progress') {
+        // startTime.value = getCurrentTime();
+        // currentState = 'In progress';
+
+        if ($('#procedureName').val().trim() == '' && $('#procedureCode').val().trim() == '') {
+            alert('처치항목은 필수값입니다.')
+            return;
+        }
+
+        if ($('#procedureSite').val().trim() == '') {
+            alert('처치부위는 필수 입력값입니다.')
+            return;
+        }
+
+        $("form[name='frmTreatment']").submit();
+
+    } else if (newStatus === 'Completed') {
         completionTime.value = getCurrentTime();
-        currentState = 'COMPLETED';
+        // currentState = 'Completed';
         alert('시술이 완료되었습니다.');
     }
 
-    updateButtonVisibility();
+    // updateButtonVisibility();
 }
 
 // UI 업데이트
@@ -51,13 +62,13 @@ function updateButtonVisibility() {
     site.disabled = false;
     searchBtn.disabled = false;
 
-    if (currentState === 'PENDING') {
+    if (currentState === 'Pending') {
         btnStart.style.display = 'inline-block';
-    } else if (currentState === 'IN_PROGRESS') {
+    } else if (currentState === 'In progress') {
         btnComplete.style.display = 'inline-block';
         site.disabled = true;
         searchBtn.disabled = true;
-    } else if (currentState === 'COMPLETED') {
+    } else if (currentState === 'Completed') {
         btnNext.style.display = 'inline-block';
         site.disabled = true;
         searchBtn.disabled = true;
