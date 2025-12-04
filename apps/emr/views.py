@@ -24,6 +24,7 @@ from apps.db.models import (
     LabUpload,
     TreatmentProcedures,
     Reservations,
+    Doctors,
 )
 
 load_dotenv()
@@ -89,7 +90,18 @@ def hospital_staff_dashboard(request):
                     medical_record__pk=record.medical_record_id,
                     order_datetime__contains=str(date.today()),
                 )
-                lab_order.append(lab)
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                lab_order.append({
+                    'lab': lab,
+                    'user': user,
+                    'doctor': doctor,
+                    'doctor_info': doctor_info,
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
                 if lab.status == 'Pending':
                     lab_pending_count += 1
                 if lab.status == 'Sampled':
@@ -98,7 +110,6 @@ def hospital_staff_dashboard(request):
                     lab_is_urgent_count += 1
             except:
                 print('LabOrders error')
-            print(record.medical_record_id)
             try:
                 treatment = TreatmentProcedures.objects.exclude(
                     status__in=['Completed']
@@ -106,7 +117,19 @@ def hospital_staff_dashboard(request):
                     medical_record__pk=record.medical_record_id,
                     execution_datetime__contains=str(date.today()),
                 )
-                treatment_order.append(treatment)
+
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                treatment_order.append({
+                    'treatment': treatment,
+                    'user': user,
+                    'doctor': doctor,
+                    'doctor_info': doctor_info,
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
                 if treatment.status == 'Pending':
                     treatment_pending_count += 1
                 if treatment.status == 'In progress':
@@ -176,9 +199,58 @@ def today_patient_list(request):
 # ---------------------------------------------------------
 # 치료/처치 기록 검증 화면
 # ---------------------------------------------------------
+@csrf_exempt
 def treatment_record_verification(request):
-    return render(request, "emr/treatment_record_verification.html")
 
+    if request.method == "GET":
+        order_id = request.GET['order_id']
+        user_id = request.GET['user_id']
+        record_id = request.GET['medical_record_id']
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = TreatmentProcedures.objects.get(treatment_id=int(order_id))
+
+        except:
+            print('error')
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+        }
+
+        return render(request, "emr/treatment_record_verification.html", context)
+    elif request.method == "POST":
+        order_id = request.POST['order_id']
+        user_id = request.POST['user_id']
+        record_id = request.POST['medical_record_id']
+        current_status = request.POST['current_status']
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = TreatmentProcedures.objects.get(treatment_id=order_id)
+            if current_status == 'Pending':
+                order.status = 'In progress'
+                order.execution_datetime = datetime.now()
+                order.save()
+            elif current_status == 'In progress':
+                order.status = 'Completed'
+                order.completion_datetime = datetime.now()
+                order.save()
+        except:
+            print('error')
+        
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+        }
+
+
+        return render(request, "emr/treatment_record_verification.html", context)
 
 # ---------------------------------------------------------
 # 과거 진료기록 조회 화면
@@ -494,3 +566,49 @@ def api_search_patient(request):
 
     return JsonResponse({"results": results})
 
+
+def calculate_age_from_rrn(rrn_string, age_type='korean'):
+    """
+    주민등록번호 문자열을 받아 나이를 계산합니다.
+    :param rrn_string: 'YYMMDD-GXXXXXX' 형태의 주민등록번호
+    :param age_type: 'man' (만 나이) 또는 'korean' (세는 나이)
+    :return: 계산된 나이 (정수)
+    """
+    
+    # 1. 생년월일 및 성별 코드 추출
+    birth_date_part = rrn_string[:6]
+    gender_code = rrn_string[7]
+
+    # 2. 세기 결정 (1900년대 vs 2000년대)
+    if gender_code in ('1', '2', '5', '6', '9', '0'):
+        # 19xx년생 (1, 2, 9, 0) 또는 18xx년생 (5, 6)
+        if gender_code in ('1', '2', '9', '0'):
+             century_prefix = 19
+        else: # 5, 6
+             century_prefix = 18
+    else: # 3, 4, 7, 8 (20xx년생)
+        century_prefix = 20
+
+    # 3. 완전한 생년월일 생성
+    birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
+    birth_month = int(birth_date_part[2:4])
+    birth_day = int(birth_date_part[4:6])
+
+    today = date.today()
+    
+    # 4. 나이 계산 로직
+    if age_type == 'man':
+        ## 📌 만 나이 계산 (국제 표준)
+        # (현재 연도 - 출생 연도)에서, 아직 생일이 지나지 않았으면 1을 뺌
+        age = today.year - birth_year
+        if (today.month, today.day) < (birth_month, birth_day):
+            age -= 1
+        return age
+        
+    elif age_type == 'korean':
+        ## 📌 세는 나이 계산 (한국식 나이)
+        # (현재 연도 - 출생 연도) + 1
+        return today.year - birth_year + 1
+        
+    else:
+        raise ValueError("age_type은 'man' 또는 'korean'이어야 합니다.")
