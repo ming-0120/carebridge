@@ -7,6 +7,7 @@ function toggleSelectAllQna() {
   
   checkboxes.forEach(checkbox => {
     checkbox.checked = selectAllCheckbox.checked;
+    updateRowCheckboxClass(checkbox);
   });
   
   updateSelectedQnas();
@@ -68,8 +69,95 @@ function attachTableRowListeners() {
   });
 }
 
+// 정렬 링크 이벤트 연결
+function attachSortListeners() {
+  const sortLinks = document.querySelectorAll('a[data-sort-field]');
+  sortLinks.forEach(link => {
+    link.removeEventListener('click', link._sortHandler);
+    link._sortHandler = function(e) {
+      e.preventDefault();
+      const sortField = link.getAttribute('data-sort-field');
+      const currentSort = link.getAttribute('data-current-sort') || '';
+      const currentOrder = link.getAttribute('data-current-order') || 'asc';
+      handleSortClick(sortField, currentSort, currentOrder);
+    };
+    link.addEventListener('click', link._sortHandler);
+  });
+}
+
+// 체크박스 체크 상태에 따라 행 클래스 업데이트
+function updateRowCheckboxClass(checkbox) {
+  const row = checkbox.closest('tr');
+  if (row) {
+    if (checkbox.checked) {
+      row.classList.add('checkbox-checked');
+    } else {
+      row.classList.remove('checkbox-checked');
+    }
+  }
+}
+
+// 체크박스 이벤트 연결
+function attachCheckboxListeners() {
+  const selectAllCheckbox = document.getElementById('selectAll');
+  if (selectAllCheckbox) {
+    selectAllCheckbox.removeEventListener('change', selectAllCheckbox._changeHandler);
+    selectAllCheckbox._changeHandler = function() {
+      toggleSelectAllQna();
+    };
+    selectAllCheckbox.addEventListener('change', selectAllCheckbox._changeHandler);
+  }
+  
+  const checkboxes = document.querySelectorAll('input[name="qna_checkbox"]');
+  checkboxes.forEach(checkbox => {
+    // 초기 상태 설정
+    updateRowCheckboxClass(checkbox);
+    
+    checkbox.removeEventListener('change', checkbox._changeHandler);
+    checkbox._changeHandler = function() {
+      updateRowCheckboxClass(checkbox);
+      updateSelectedQnas();
+    };
+    checkbox.addEventListener('change', checkbox._changeHandler);
+  });
+  
+  // 체크박스 셀 클릭 시 이벤트 전파 방지
+  const checkboxCells = document.querySelectorAll('.checkbox-cell');
+  checkboxCells.forEach(cell => {
+    cell.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  });
+}
+
+// 삭제 버튼 이벤트 연결
+function attachButtonListeners() {
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', deleteSelected);
+  }
+}
+
+// 더미 데이터 삭제 확인
+function confirmDeleteQnaDummy() {
+  return confirm('더미 문의 데이터를 모두 삭제하시겠습니까?');
+}
+
 // 페이지 로드 시 선택된 항목 업데이트 및 행 클릭 이벤트 설정
 document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners();
+  attachSortListeners();
+  attachCheckboxListeners();
+  attachButtonListeners();
+  
+  // 더미 데이터 삭제 버튼 이벤트
+  const deleteBtn = document.getElementById('deleteQnaDummyBtn');
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', function(e) {
+      if (!confirmDeleteQnaDummy()) {
+        e.preventDefault();
+      }
+    });
+  }
 });
 

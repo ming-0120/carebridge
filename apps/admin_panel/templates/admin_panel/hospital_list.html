@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>병원 목록 - CareBridge 관리자</title>
+  <!-- Bootstrap CSS (먼저 로드하여 커스텀 CSS로 오버라이드 가능) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/hospital_list.css' %}">
 </head>
@@ -51,7 +53,7 @@
           <option value="name" {% if search_type == 'name' %}selected{% endif %}>병원명</option>
           <option value="region" {% if search_type == 'region' %}selected{% endif %}>지역</option>
           <option value="phone" {% if search_type == 'phone' %}selected{% endif %}>전화번호</option>
-          <option value="hpid" {% if search_type == 'hpid' %}selected{% endif %}>HPID</option>
+          <option value="hpid" {% if search_type == 'hpid' %}selected{% endif %}>병원ID</option>
         </select>
         <input 
           type="text" 
@@ -71,20 +73,63 @@
       <table class="user-table">
         <thead>
           <tr>
-            <th>No.</th>
-            <th>병원명</th>
-            <th>병원ID</th>
+            <th>
+              <a href="#" data-sort-field="hos_id" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                No.
+                {% if sort_field == 'hos_id' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                병원명
+                {% if sort_field == 'name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="hos_name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                병원ID
+                {% if sort_field == 'hos_name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>병원PW</th>
-            <th>전화번호</th>
-            <th>주소</th>
+            <th>
+              <a href="#" data-sort-field="tel" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                전화번호
+                {% if sort_field == 'tel' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            <th>
+              <a href="#" data-sort-field="address" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                주소
+                {% if sort_field == 'address' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
             <th>의사 수</th>
-            <th>등록일</th>
+            <th>
+              <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                등록일
+                {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {% for hospital in hospitals %}
-          <tr onclick="selectHospital({{ hospital.hos_id }})" class="user-row">
-            <td>{{ page_obj.start_index|add:forloop.counter0 }}</td>
+          {% for item in hospitals_with_number %}
+          {% with hospital=item.hospital %}
+          <tr data-hospital-id="{{ hospital.hos_id }}" class="user-row">
+            <td>{{ item.number }}</td>
             <td>{{ hospital.name }}</td>
             <td>{{ hospital.hos_name|default:"-" }}</td>
             <td>
@@ -107,6 +152,7 @@
             </td>
             <td>{{ hospital.estb_date|default:"-" }}</td>
           </tr>
+          {% endwith %}
           {% empty %}
           <tr>
             <td colspan="8" class="no-data">병원 데이터가 없습니다.</td>
@@ -119,8 +165,8 @@
     <!-- 페이지네이션 -->
     <div class="pagination">
       {% if page_obj.has_previous %}
-        <a href="?page=1{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
-        <a href="?page={{ page_obj.previous_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+        <a href="?page=1{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="?page={{ page_obj.previous_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
       {% else %}
         <span class="page-link disabled">«</span>
         <span class="page-link disabled"><</span>
@@ -131,7 +177,7 @@
           {% if page_obj.number == num %}
             <span class="page-link active">{{ num }}</span>
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -139,8 +185,8 @@
       {% endif %}
 
       {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
       {% else %}
         <span class="page-link disabled">></span>
         <span class="page-link disabled">»</span>
@@ -149,55 +195,74 @@
 
     <!-- 선택 병원 상세정보 -->
     {% if selected_hospital %}
-    <div class="user-detail-section">
-      <h3 class="detail-title">선택 병원 상세정보</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">병원명</span>
-          <span class="detail-value">{{ selected_hospital.name }}</span>
+    <div class="user-detail-section card shadow-sm">
+      <div class="card-body">
+        <h3 class="detail-title card-title border-bottom pb-3 mb-4">선택 병원 상세정보</h3>
+        <div class="detail-grid row g-3">
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원명</span>
+              <div class="detail-value">{{ selected_hospital.name }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원ID</span>
+              <div class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원PW</span>
+              <div class="detail-value">
+                {% if selected_hospital.hos_password and selected_hospital.hos_password != "-" %}
+                  {{ selected_hospital.hos_password|slice:":1" }}{% for i in selected_hospital.hos_password|slice:"1:" %}*{% endfor %}
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">전화번호</span>
+              <div class="detail-value">{{ selected_hospital.tel|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">주소</span>
+              <div class="detail-value">{{ selected_hospital.address }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">총 의사수</span>
+              <div class="detail-value">
+                {% if selected_hospital.doctor_count %}
+                  {{ selected_hospital.doctor_count }}명
+                {% elif selected_hospital.dr_total %}
+                  {{ selected_hospital.dr_total }}명
+                {% else %}
+                  0명
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if selected_hospital.category_name %}
+          <div class="col-md-12">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">상세소개</span>
+              <div class="detail-value">{{ selected_hospital.category_name }}</div>
+            </div>
+          </div>
+          {% endif %}
         </div>
-        <div class="detail-item">
-          <span class="detail-label">병원ID</span>
-          <span class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">병원PW</span>
-          <span class="detail-value">
-            {% if selected_hospital.hos_password and selected_hospital.hos_password != "-" %}
-              {{ selected_hospital.hos_password|slice:":1" }}{% for i in selected_hospital.hos_password|slice:"1:" %}*{% endfor %}
-            {% else %}
-              -
-            {% endif %}
-          </span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">전화번호</span>
-          <span class="detail-value">{{ selected_hospital.tel|default:"-" }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">주소</span>
-          <span class="detail-value">{{ selected_hospital.address }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">총 의사수</span>
-          <span class="detail-value">
-            {% if selected_hospital.doctor_count %}
-              {{ selected_hospital.doctor_count }}명
-            {% elif selected_hospital.dr_total %}
-              {{ selected_hospital.dr_total }}명
-            {% else %}
-              0명
-            {% endif %}
-          </span>
-        </div>
-        {% if selected_hospital.category_name %}
-        <div class="detail-item full-width">
-          <span class="detail-label">상세소개</span>
-          <span class="detail-value">{{ selected_hospital.category_name }}</span>
-        </div>
-        {% endif %}
       </div>
     </div>
+    {% else %}
+    <!-- 상세 정보 영역이 없을 때도 공간 유지 (스크롤 이동 방지) -->
+    <div class="hospital-detail-section placeholder-hidden"></div>
     {% endif %}
   </div>
 

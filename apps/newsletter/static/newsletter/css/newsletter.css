@@ -1,34 +1,42 @@
-
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      padding: 40px 24px;
+      padding: 0;              /* ← 여기서 패딩 제거 */
       background: #f5f7fb;
       color: #111827;
     }
-
+    
+    /* 이 페이지 전체 레이아웃 */
+    .newsletter-page {
+      display: flex;
+      justify-content: center; /* 가운데 정렬 */
+      padding: 40px 24px;      /* 기존 body 패딩을 여기로 이동 */
+    }
+    
+    /* 기존 코드 그대로 사용 */
     .newsletter-wrapper {
       max-width: 720px;
+      width: 100%;
       margin: 0 auto;
     }
-
+    
     .newsletter-title {
       font-size: 26px;
       font-weight: 700;
       margin-bottom: 24px;
     }
-
+    
     .news-list {
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
-
+    
     .news-card-link {
       text-decoration: none;
       color: inherit;
     }
-
+    
     .news-card {
       background: #f9fbff;
       border-radius: 18px;
@@ -36,7 +44,7 @@
       box-shadow: 0 6px 15px rgba(15, 23, 42, 0.06);
       transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
     }
-
+    
     .news-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);

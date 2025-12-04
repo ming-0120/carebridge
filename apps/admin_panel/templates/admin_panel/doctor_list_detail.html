@@ -1,0 +1,56 @@
+<!-- 선택 의사 상세정보 -->
+{% if selected_doctor %}
+<div class="user-detail-section">
+  <h3 class="detail-title">선택 의사 상세정보</h3>
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="detail-label">이름</span>
+      <span class="detail-value">{{ selected_doctor.user.name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">의사ID</span>
+      <span class="detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">면허번호</span>
+      <span class="detail-value">{{ selected_doctor.license_no }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">전공과</span>
+      <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">주근무 병원</span>
+      <span class="detail-value">{{ selected_doctor.hos.name|default:"-" }}{% if selected_doctor.dep.dep_name %} {{ selected_doctor.dep.dep_name }}{% endif %}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">승인상태</span>
+      <span class="detail-value">
+        {% if selected_doctor.verified %}
+          <span class="status-badge status-approved">승인</span>
+          {% if selected_doctor.user.created_at %}
+            ({{ selected_doctor.user.created_at|date:"Y.m.d" }} 승인완료)
+          {% endif %}
+        {% else %}
+          <span class="status-badge status-pending">대기</span>
+        {% endif %}
+      </span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">전화번호</span>
+      <span class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">이메일</span>
+      <span class="detail-value">{{ selected_doctor.user.email|default:"-" }}</span>
+    </div>
+    {% if selected_doctor.memo %}
+    <div class="detail-item full-width">
+      <span class="detail-label">한줄 메모</span>
+      <span class="detail-value">{{ selected_doctor.memo }}</span>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+

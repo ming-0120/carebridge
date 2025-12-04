@@ -1,0 +1,49 @@
+<!-- 선택 사용자 상세정보 -->
+{% if selected_user %}
+<div class="user-detail-section">
+  <h3 class="detail-title">선택 사용자 상세정보</h3>
+  <div class="detail-grid">
+    <div class="detail-item">
+      <span class="detail-label">이름</span>
+      <span class="detail-value">{{ selected_user.name }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">id</span>
+      <span class="detail-value">{{ selected_user.username }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">주민번호</span>
+      <span class="detail-value">{{ selected_user.resident_reg_no|slice:":6" }}-{{ selected_user.resident_reg_no|slice:"6:7" }}******</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">성별</span>
+      <span class="detail-value">{% if selected_user.gender == 'M' %}남{% else %}여{% endif %}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">전화번호</span>
+      <span class="detail-value">{{ selected_user.phone }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">주소</span>
+      <span class="detail-value">{{ selected_user.address }}</span>
+    </div>
+    <div class="detail-item">
+      <span class="detail-label">email</span>
+      <span class="detail-value">{{ selected_user.email }}</span>
+    </div>
+    <div class="detail-item full-width">
+      <span class="detail-label">즐겨찾기 병원</span>
+      <span class="detail-value">
+        {% if favorite_hospitals %}
+          {{ favorite_hospitals|join:", " }}
+        {% else %}
+          없음
+        {% endif %}
+      </span>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+

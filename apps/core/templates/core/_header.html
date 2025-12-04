@@ -10,19 +10,42 @@
             <img src="{% static 'core/img/logo_2.png' %}" alt="" style="width:200px; margin-top:10px;">
         </a>
     </div>
+    <!-- 햄버거 버튼 -->
+    <button class="menu-toggle" type="button" aria-label="메뉴 열기">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-wrapper">
+      <nav class="nav">
+        <a href="#emergency">응급실 조회</a>
+        <a href="#reservation">병원 예약</a>
+        <a href="#qna">QnA</a>
+        <a href="{% url 'newsletter_list' %}">메디컬 레터</a>
+        <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
+      </nav>
 
-    <nav class="nav">
-      <a href="#emergency">응급실 조회</a>
-      <a href="#reservation">병원 예약</a>
-      <a href="#qna">QnA</a>
-      <a href="{% url 'newsletter_list' %}">메디컬 레터</a>
-      <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
-    </nav>
-
-    <div class="util">
-      <a href="#">로그인</a> |
-      <a href="#">회원가입</a>
+      <div class="util">
+        {% if request.session.username %}
+            <span>{{ request.session.username }}님 안녕하세요</span>
+            |
+            <a href="#">마이페이지</a>
+            |
+            <form action="{% url 'logout' %}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" style="background:none; border:none; cursor:pointer;">
+                    로그아웃
+                </button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}">로그인</a>
+        {% endif %}
+      </div>
     </div>
-
   </div>
+
 </header>
+<script>
+  const KAKAO_LOGIN_URL = "{% url 'kakao_login' %}";
+</script>
+<script src="{% static 'core/js/_header.js' %}"></script>

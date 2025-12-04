@@ -13,7 +13,7 @@ from apps.db.models import MedicalNewsletter  # medical_newsletter.py 안의 모
 
 
 BASE_URL = "https://www.medicaltimes.com"
-LIST_URL = "https://www.medicaltimes.com/Main/News/List.html?MainCate=2"
+LIST_URL = "https://www.medicaltimes.com/Main/News/List.html"
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
 }
