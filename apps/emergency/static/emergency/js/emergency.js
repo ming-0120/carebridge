@@ -50,11 +50,16 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ===============================
-// 새로고침 시 저장된 상태 초기화
+// 새로고침 시 저장된 상태 초기화 (위치 정보는 제외)
 // ===============================
 window.addEventListener("load", () => {
   localStorage.clear();
+  // sessionStorage의 위치 정보는 유지하고 나머지만 초기화
+  const userLat = sessionStorage.getItem("user_lat");
+  const userLng = sessionStorage.getItem("user_lng");
   sessionStorage.clear();
+  if (userLat) sessionStorage.setItem("user_lat", userLat);
+  if (userLng) sessionStorage.setItem("user_lng", userLng);
 });
 
 // ===============================

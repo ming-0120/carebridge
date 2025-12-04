@@ -104,24 +104,86 @@ header h1 {
   font-weight:500;
 }
 
-.status-wrap {text-align:center;font-size:13px;font-weight:600;color:#2c2c2c;}
+.status-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  text-align:center;
+  font-size:13px;
+  font-weight:600;
+  color:#2c2c2c;
+}
 
 .circle {
   width:48px;
   height:48px;
-  border-radius:50%;
+  position:relative;
   display:flex;
   justify-content:center;
   align-items:center;
   margin:0 auto 4px;
-  font-size:12px;
-  font-weight:700;
-  background:#fff;
-  transition:0.2s ease;
 }
-.good { border:4px solid #0FB56E; color:#0FB56E; }
-.warning { border:4px solid #FFB200; color:#FF9800; }
-.full { border:4px solid #E53935; color:#E53935; }
+
+.circle svg {
+  width:48px;
+  height:48px;
+  transform:rotate(-90deg);
+}
+
+.circle .meter {
+  fill:none;
+  stroke-width:4;
+  stroke-linecap:round;
+  transition:stroke-dasharray 0.3s ease;
+  stroke-dashoffset:0;
+}
+
+/* 색상별 스타일 */
+.circle.green .meter {
+  stroke:#0FB56E;
+}
+
+.circle.orange .meter {
+  stroke:#FFB200;
+}
+
+.circle.red .meter {
+  stroke:#E53935;
+}
+
+.circle.none .meter {
+  stroke:#e0e0e0;
+}
+
+.circle .label {
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  font-size:11px;
+  font-weight:700;
+  color:#1f2430;
+  z-index:1;
+  line-height:1.2;
+  white-space:nowrap;
+}
+
+.circle.green .label {
+  color:#0FB56E;
+}
+
+.circle.orange .label {
+  color:#FFB200;
+}
+
+.circle.red .label {
+  color:#E53935;
+}
+
+.circle.none .label {
+  color:#999;
+}
 
 .favorite {
   font-size:24px;

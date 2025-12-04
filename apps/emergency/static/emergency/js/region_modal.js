@@ -4,6 +4,16 @@
 function openRegionModal() {
   const modal = document.getElementById("region-modal");
   if (modal) modal.classList.remove("hidden");
+  
+  // 모달 열 때 현재 선택된 값 반영
+  if (selectedSido) {
+    const sidoItem = Array.from(document.querySelectorAll(".sido-item")).find(
+      el => el.textContent.trim() === selectedSido
+    );
+    if (sidoItem) {
+      selectSido(selectedSido, selectedSigungu);
+    }
+  }
 }
 
 function closeRegionModal() {
@@ -12,10 +22,11 @@ function closeRegionModal() {
 }
 
 // ===============================
-// 상태 지역 선택
+// 상태 지역 선택 (URL 파라미터에서 초기값 읽기)
 // ===============================
-let selectedSido = "";
-let selectedSigungu = "";
+const urlParams = new URLSearchParams(window.location.search);
+let selectedSido = urlParams.get("sido") || "";
+let selectedSigungu = urlParams.get("sigungu") || "";
 
 // ===============================
 // 시/도 선택
