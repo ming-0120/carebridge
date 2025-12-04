@@ -1,5 +1,6 @@
 from django.urls import path
 import apps.emr.views as views
+from .views import api_search_medicine
 
 urlpatterns = [
     path('doctor_dashboard/', views.doctor_screen_dashboard, name='doctor_dashboard'),
@@ -17,7 +18,10 @@ urlpatterns = [
     path('lab_data_search/', views.lab_data_search, name='lab_data_search'),
     path('treatment_data_search/', views.treatment_data_search, name='treatment_data_search'),
 
-    # 약품 검색 API
-    path("api/medicine/search/", views.api_search_medicine, name="api_search_medicine"),
+    path("api/medicine/search/", api_search_medicine),
+
+    path("patient_search_list/", views.patient_search_list_view, name="patient_search_list"),
+    path("api/patient/search/", views.api_search_patient),
+
 ]
         
