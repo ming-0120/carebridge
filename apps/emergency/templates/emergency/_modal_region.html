@@ -15,7 +15,7 @@
 
       <div class="sido-list">
         {% for s in sido_list %}
-          <div class="sido-item" onclick="selectSido('{{ s }}')">{{ s }}</div>
+          <div class="sido-item {% if selected_sido == s %}active{% endif %}" onclick="selectSido('{{ s }}')">{{ s }}</div>
         {% endfor %}
       </div>
 

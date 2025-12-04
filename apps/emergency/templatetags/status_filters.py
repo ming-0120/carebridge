@@ -4,6 +4,47 @@ register = template.Library()
 
 
 @register.filter
+def percent(available, total):
+    """
+    병상 가용률 (0~100) 반환
+    (available / total) * 100
+    """
+    try:
+        if available is None or total is None:
+            return 0
+        available = int(available) if available else 0
+        total = int(total) if total else 0
+        if total <= 0:
+            return 0
+        return round((available / total) * 100)
+    except (ValueError, TypeError, ZeroDivisionError):
+        return 0
+
+
+@register.filter
+def circle_dasharray(available, total):
+    """
+    SVG 원형 그래프용 stroke-dasharray 값 계산
+    원주 = 2 * π * r = 2 * π * 20 ≈ 125.66
+    """
+    import math
+    try:
+        if available is None or total is None:
+            return "0, 125.66"
+        available = int(available) if available else 0
+        total = int(total) if total else 0
+        if total <= 0:
+            return "0, 125.66"
+        
+        circumference = 2 * math.pi * 20  # r = 20
+        pct = available / total
+        dash_length = pct * circumference
+        return f"{dash_length:.2f}, {circumference:.2f}"
+    except (ValueError, TypeError, ZeroDivisionError):
+        return "0, 125.66"
+
+
+@register.filter
 def status_color(st, field):
     if not st:
         return "empty"
