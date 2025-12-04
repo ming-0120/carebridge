@@ -1,8 +1,12 @@
 # hospitals/views.py
+from django.http import JsonResponse
 from django.shortcuts import render
 import json
 from apps.db.models.disease import DimDisease
 from apps.db.models.statistic import InfectiousStat
+from apps.db.models.hospital import Hospital
+from django.views.decorators.http import require_GET
+from django.db.models import Q
 
 def infectious_stat(request):
     qs = InfectiousStat.objects.all().values(
@@ -48,3 +52,26 @@ def infectious_stat(request):
          "diseases_json": diseases_json,},
         
     )
+@require_GET
+def hospital_search(request):
+    q = request.GET.get("q", "").strip()
+
+    if not q:
+        return JsonResponse({"results": []})
+
+    qs = (
+        Hospital.objects
+        .filter(Q(name__icontains=q))
+        .order_by("name")
+    )
+
+    results = [
+        {
+            "id": h.pk,
+            "name": h.name,
+            "address": h.address,
+        }
+        for h in qs
+    ]
+
+    return JsonResponse({"results": results})

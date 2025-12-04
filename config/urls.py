@@ -32,6 +32,11 @@ urlpatterns = [
 
     # 메인 홈페이지
     path('', include('apps.core.urls')),
+
+    # 희원가입
+    path('accounts/', include('apps.accounts.urls')),
+    path('', include('apps.social_auth.urls')),  # 카카오 로그인 경로
+
     # 감염병 통계 & 병원 페이지
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
     

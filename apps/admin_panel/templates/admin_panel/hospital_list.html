@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>병원 목록 - CareBridge 관리자</title>
+  <!-- Bootstrap CSS (먼저 로드하여 커스텀 CSS로 오버라이드 가능) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
   <link rel="stylesheet" href="{% static 'admin_panel/css/hospital_list.css' %}">
 </head>
@@ -193,53 +195,69 @@
 
     <!-- 선택 병원 상세정보 -->
     {% if selected_hospital %}
-    <div class="user-detail-section">
-      <h3 class="detail-title">선택 병원 상세정보</h3>
-      <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-label">병원명</span>
-          <span class="detail-value">{{ selected_hospital.name }}</span>
+    <div class="user-detail-section card shadow-sm">
+      <div class="card-body">
+        <h3 class="detail-title card-title border-bottom pb-3 mb-4">선택 병원 상세정보</h3>
+        <div class="detail-grid row g-3">
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원명</span>
+              <div class="detail-value">{{ selected_hospital.name }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원ID</span>
+              <div class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">병원PW</span>
+              <div class="detail-value">
+                {% if selected_hospital.hos_password and selected_hospital.hos_password != "-" %}
+                  {{ selected_hospital.hos_password|slice:":1" }}{% for i in selected_hospital.hos_password|slice:"1:" %}*{% endfor %}
+                {% else %}
+                  -
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">전화번호</span>
+              <div class="detail-value">{{ selected_hospital.tel|default:"-" }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">주소</span>
+              <div class="detail-value">{{ selected_hospital.address }}</div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">총 의사수</span>
+              <div class="detail-value">
+                {% if selected_hospital.doctor_count %}
+                  {{ selected_hospital.doctor_count }}명
+                {% elif selected_hospital.dr_total %}
+                  {{ selected_hospital.dr_total }}명
+                {% else %}
+                  0명
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          {% if selected_hospital.category_name %}
+          <div class="col-md-12">
+            <div class="detail-item">
+              <span class="detail-label d-block fw-bold">상세소개</span>
+              <div class="detail-value">{{ selected_hospital.category_name }}</div>
+            </div>
+          </div>
+          {% endif %}
         </div>
-        <div class="detail-item">
-          <span class="detail-label">병원ID</span>
-          <span class="detail-value">{{ selected_hospital.hos_name|default:"-" }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">병원PW</span>
-          <span class="detail-value">
-            {% if selected_hospital.hos_password and selected_hospital.hos_password != "-" %}
-              {{ selected_hospital.hos_password|slice:":1" }}{% for i in selected_hospital.hos_password|slice:"1:" %}*{% endfor %}
-            {% else %}
-              -
-            {% endif %}
-          </span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">전화번호</span>
-          <span class="detail-value">{{ selected_hospital.tel|default:"-" }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">주소</span>
-          <span class="detail-value">{{ selected_hospital.address }}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-label">총 의사수</span>
-          <span class="detail-value">
-            {% if selected_hospital.doctor_count %}
-              {{ selected_hospital.doctor_count }}명
-            {% elif selected_hospital.dr_total %}
-              {{ selected_hospital.dr_total }}명
-            {% else %}
-              0명
-            {% endif %}
-          </span>
-        </div>
-        {% if selected_hospital.category_name %}
-        <div class="detail-item full-width">
-          <span class="detail-label">상세소개</span>
-          <span class="detail-value">{{ selected_hospital.category_name }}</span>
-        </div>
-        {% endif %}
       </div>
     </div>
     {% else %}

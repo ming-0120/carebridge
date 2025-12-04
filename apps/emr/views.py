@@ -374,7 +374,7 @@ def api_create_medical_record(request):
         order_datetime=timezone.now(),
         start_datetime=global_start,
         stop_datetime=global_end,
-        notes=None,
+        notes= prescriptions[0].get("note") if prescriptions else None,
         medical_record_id=record.medical_record_id
     )
 
@@ -416,20 +416,50 @@ def api_create_medical_record(request):
     reservation_type = request.POST.get("reservation_type")
     reservation_memo = request.POST.get("reservation_memo")
 
+    # ------------------------------------------------
+    # 예약 시간 유효성 검사 + 예약 datetime 생성
+    # ------------------------------------------------
+
     reserved_at = None
     reserved_end = None
 
-    if reservation_date:
-        # 문자열을 datetime으로 변환
-        naive_dt = datetime.strptime(reservation_date, "%Y-%m-%dT%H:%M")
+    date_str = request.POST.get("reservation_date")      # "2025-12-04T12:00" 가능
+    hour_str = request.POST.get("reservation_hour")      # "12" 또는 빈값
 
-        # timezone aware 로 변환
-        if timezone.is_naive(naive_dt):
-            reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+    if date_str:
+
+        # reservation_date 가 datetime-local 형태인 경우
+        if "T" in date_str:
+            naive_dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M")
+
         else:
-            reserved_at = naive_dt
+            # 날짜만 있는 경우 (hour_str 사용)
+            naive_dt = datetime.strptime(f"{date_str}T{hour_str}:00", "%Y-%m-%dT%H:%M")
 
+        hour = naive_dt.hour
+
+        # 점심시간 제외
+        if hour == 13:
+            return JsonResponse({"error": "13시는 예약 불가"}, status=400)
+
+        # 운영시간 체크
+        if hour < 9 or hour > 17:
+            return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
+
+        # 중복 체크
+        exists = Reservations.objects.filter(
+            slot__doctor_id=doctor_id,
+            reserved_at__date=naive_dt.date(),
+            reserved_at__hour=naive_dt.hour
+        ).exists()
+
+        if exists:
+            return JsonResponse({"error": "이미 예약된 시간입니다"}, status=400)
+        
+        # 5) timezone-aware 변환
+        reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
         reserved_end = reserved_at + timezone.timedelta(hours=1)
+
 
     # ------------------------------
     # 예약 저장

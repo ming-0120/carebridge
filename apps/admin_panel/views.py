@@ -181,20 +181,78 @@ def user_list(request):
         else:
             # 오름차순 또는 기본: 페이지네이션 기준
             number = start_index + idx
+        
+        # 주민번호를 생년월일로 변환
+        birth_date = None
+        if user.resident_reg_no and len(user.resident_reg_no) >= 7:
+            reg_no = user.resident_reg_no
+            year_prefix = reg_no[6:7]
+            yy = reg_no[0:2]
+            mm = reg_no[2:4]
+            dd = reg_no[4:6]
+            
+            # 월과 일 유효성 검증 (월: 01-12, 일: 01-31)
+            try:
+                month_int = int(mm)
+                day_int = int(dd)
+                
+                if 1 <= month_int <= 12 and 1 <= day_int <= 31:
+                    # 성별 구분: 남자(1,3), 여자(2,4)
+                    # 1,2: 1900년대, 3,4: 2000년대
+                    if year_prefix in ['1', '2']:
+                        yyyy = '19' + yy
+                    elif year_prefix in ['3', '4']:
+                        yyyy = '20' + yy
+                    else:
+                        yyyy = yy
+                    
+                    birth_date = f'{yyyy}.{mm}.{dd}'
+            except ValueError:
+                pass
+        
         users_with_number.append({
             'user': user,
-            'number': number
+            'number': number,
+            'birth_date': birth_date
         })
     
     # 선택된 사용자 정보
     selected_user = None
     favorite_hospitals = []
+    birth_date = None
     if selected_user_id:
         try:
             selected_user = Users.objects.get(user_id=selected_user_id, withdrawal='0', role='USER')
             # 즐겨찾기 병원 조회
             favorites = UserFavorite.objects.filter(user=selected_user)
             favorite_hospitals = [fav.hos.name for fav in favorites if hasattr(fav, 'hos')]
+            
+            # 주민번호를 생년월일로 변환
+            if selected_user.resident_reg_no and len(selected_user.resident_reg_no) >= 7:
+                reg_no = selected_user.resident_reg_no
+                year_prefix = reg_no[6:7]
+                yy = reg_no[0:2]
+                mm = reg_no[2:4]
+                dd = reg_no[4:6]
+                
+                # 월과 일 유효성 검증 (월: 01-12, 일: 01-31)
+                try:
+                    month_int = int(mm)
+                    day_int = int(dd)
+                    
+                    if 1 <= month_int <= 12 and 1 <= day_int <= 31:
+                        # 성별 구분: 남자(1,3), 여자(2,4)
+                        # 1,2: 1900년대, 3,4: 2000년대
+                        if year_prefix in ['1', '2']:
+                            yyyy = '19' + yy
+                        elif year_prefix in ['3', '4']:
+                            yyyy = '20' + yy
+                        else:
+                            yyyy = yy
+                        
+                        birth_date = f'{yyyy}.{mm}.{dd}'
+                except ValueError:
+                    pass
         except Users.DoesNotExist:
             pass
     
@@ -210,6 +268,7 @@ def user_list(request):
         'search_keyword': search_keyword,
         'selected_user': selected_user,
         'favorite_hospitals': favorite_hospitals,
+        'birth_date': birth_date,
         'total_users_count': total_users_count,
         'search_result_count': search_result_count,
         'sort_field': sort_field,
@@ -749,16 +808,27 @@ def create_user_dummy_data(request):
     # 시작 번호 설정 (기존 번호 다음부터)
     start_num = max_num + 1
     
-    # 더미 사용자 데이터 템플릿
+    # 더미 사용자 데이터 템플릿 (시, 군/구, 동 포함)
+    address_data = {
+        '서울특별시 강남구': ['역삼동', '삼성동', '청담동', '논현동', '압구정동', '신사동', '대치동', '도곡동'],
+        '서울특별시 서초구': ['반포동', '잠원동', '방배동', '양재동', '서초동', '내곡동', '염곡동', '신원동'],
+        '서울특별시 송파구': ['잠실동', '문정동', '방이동', '오금동', '석촌동', '삼전동', '가락동', '거여동'],
+        '경기도 성남시 분당구': ['정자동', '서현동', '이매동', '야탑동', '판교동', '백현동', '구미동', '운중동'],
+        '인천광역시 남동구': ['구월동', '간석동', '만수동', '장수동', '서창동', '논현동', '도림동', '고잔동'],
+        '부산광역시 해운대구': ['우동', '좌동', '중동', '송정동', '반송동', '재송동', '반여동', '석대동'],
+        '대전광역시 서구': ['둔산동', '용문동', '탄방동', '괴정동', '가장동', '도마동', '정림동', '변동'],
+        '광주광역시 남구': ['봉선동', '주월동', '방림동', '송하동', '양림동', '사동', '구동', '월산동'],
+    }
+    
     user_templates = [
-        {'name': '김철수', 'gender': 'M', 'address': '서울특별시 강남구'},
-        {'name': '이영희', 'gender': 'W', 'address': '서울특별시 서초구'},
-        {'name': '박민수', 'gender': 'M', 'address': '서울특별시 송파구'},
-        {'name': '최지영', 'gender': 'W', 'address': '경기도 성남시'},
-        {'name': '정대현', 'gender': 'M', 'address': '인천광역시'},
-        {'name': '한소연', 'gender': 'W', 'address': '부산광역시'},
-        {'name': '윤성호', 'gender': 'M', 'address': '대전광역시'},
-        {'name': '강미영', 'gender': 'W', 'address': '광주광역시'},
+        {'name': '김철수', 'gender': 'M', 'city_district': '서울특별시 강남구'},
+        {'name': '이영희', 'gender': 'W', 'city_district': '서울특별시 서초구'},
+        {'name': '박민수', 'gender': 'M', 'city_district': '서울특별시 송파구'},
+        {'name': '최지영', 'gender': 'W', 'city_district': '경기도 성남시 분당구'},
+        {'name': '정대현', 'gender': 'M', 'city_district': '인천광역시 남동구'},
+        {'name': '한소연', 'gender': 'W', 'city_district': '부산광역시 해운대구'},
+        {'name': '윤성호', 'gender': 'M', 'city_district': '대전광역시 서구'},
+        {'name': '강미영', 'gender': 'W', 'city_district': '광주광역시 남구'},
     ]
     
     created_count = 0
@@ -770,17 +840,43 @@ def create_user_dummy_data(request):
         if Users.objects.filter(username=username).exists():
             continue
         
-        # 주민번호 생성 (앞자리: 6자리, 뒷자리: 7자리, 뒷자리 첫 자리는 1~2만)
-        front_reg = f'{random.randint(500000, 999999)}'
-        first_digit = random.choice([1, 2])  # 뒷자리 첫 자리는 1 또는 2
+        # 주민번호 생성 (YYMMDD-GXXXXXX 형식)
+        # 앞자리: YYMMDD (년월일)
+        # 1950년~2024년 범위로 랜덤 생성
+        year_range = random.choice(['1900s', '2000s'])
+        if year_range == '1900s':
+            yy = random.randint(50, 99)  # 1950년~1999년
+            # 뒷자리 첫 자리: 성별에 따라 (남자: 1, 여자: 2) - 1900년대
+            if template['gender'] == 'M':
+                first_digit = 1  # 남자
+            else:
+                first_digit = 2  # 여자
+        else:  # 2000s
+            yy = random.randint(0, 24)  # 2000년~2024년
+            # 뒷자리 첫 자리: 성별에 따라 (남자: 3, 여자: 4) - 2000년대
+            if template['gender'] == 'M':
+                first_digit = 3  # 남자
+            else:
+                first_digit = 4  # 여자
+        
+        mm = random.randint(1, 12)  # 월: 1-12
+        dd = random.randint(1, 31)  # 일: 1-31
+        front_reg = f'{yy:02d}{mm:02d}{dd:02d}'
+        
         back_reg = f'{first_digit}{random.randint(0, 999999):06d}'  # 나머지 6자리
-        resident_reg_no = f'{front_reg}-{back_reg}'
+        resident_reg_no = f'{front_reg}{back_reg}'  # 하이픈 없이 저장
         
         # 이메일 생성
         email = f'{username}@gmail.com' if (start_num + i) % 2 == 1 else f'{username}@naver.com'
         
         # 전화번호 생성
         phone = f'010-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}'
+        
+        # 주소 생성 (시, 군/구, 동 포함)
+        city_district = template['city_district']
+        dong_list = address_data.get(city_district, ['동'])
+        dong = random.choice(dong_list)
+        address = f'{city_district} {dong}'
         
         # 사용자 생성
         user = Users.objects.create(
@@ -792,7 +888,7 @@ def create_user_dummy_data(request):
             gender=template['gender'],
             resident_reg_no=resident_reg_no,
             mail_confirm='Y',
-            address=template['address'],
+            address=address,
             provider='local',
             role='USER',
             withdrawal='0',
