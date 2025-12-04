@@ -31,7 +31,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # 기본 설정들
-DEBUG = env('DEBUG', default=False)
+DEBUG = env('DEBUG', default=True)
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u')
 # 카카오 관련 설정
 KAKAO_REST_API_KEY = env('KAKAO_REST_API_KEY', default='')
