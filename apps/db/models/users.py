@@ -18,7 +18,7 @@ class Users(models.Model):
     email = models.CharField(max_length=100)
     resident_reg_no = models.CharField(max_length=20)
     mail_confirm = models.CharField(max_length=1, choices=MAIL_CONFIRM_CHOICES)
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=500)
     provider = models.CharField(
         max_length=10,
         choices=PROVIDER_CHOICES,
