@@ -35,49 +35,16 @@
                         <th>최근 방문일자</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr data-patient-id="P0000001" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>홍길동</td>
-                        <td>남</td>
-                        <td>1974-02-19</td>
-                        <td>2025-10-18</td>
+                    <tbody>
+                    {% for p in patients %}
+                    <tr data-patient-id="{{ p.user_id }}" onclick="selectPatient(this)">
+                        <td>정약용</td> <!-- 담당의는 미정이므로 임시 고정 -->
+                        <td>{{ p.name }}</td>
+                        <td>{{ p.gender }}</td>
+                        <td>{{ p.birth_date }}</td>
+                        <td>최근 방문일자 없음</td>
                     </tr>
-                    <tr data-patient-id="P0000002" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>홍길순</td>
-                        <td>여</td>
-                        <td>2001-06-01</td>
-                        <td>2025-05-27</td>
-                    </tr>
-                    <tr data-patient-id="P0000003" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>홍길순</td>
-                        <td>여</td>
-                        <td>2010-04-12</td>
-                        <td>2024-12-29</td>
-                    </tr>
-                    <tr data-patient-id="P0000004" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>홍길동</td>
-                        <td>남</td>
-                        <td>1988-04-12</td>
-                        <td>2025-08-08</td>
-                    </tr>
-                    <tr data-patient-id="P0000005" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>이순신</td>
-                        <td>남</td>
-                        <td>1970-07-05</td>
-                        <td>2025-11-25</td>
-                    </tr>
-                    <tr data-patient-id="P0000006" onclick="selectPatient(this)">
-                        <td>정약용</td>
-                        <td>유관순</td>
-                        <td>여</td>
-                        <td>2000-03-01</td>
-                        <td>2025-11-20</td>
-                    </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

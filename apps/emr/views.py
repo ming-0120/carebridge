@@ -10,7 +10,9 @@ from django.utils import timezone
 from apps.db.models.slot_reservation import Reservations
 from django.db import connection
 from django.db.models import Q
+from apps.db.models import Users
 import xml.etree.ElementTree as ET
+
 from apps.db.models import (
     MedicalRecord,
     MedicineOrders,
@@ -120,18 +122,16 @@ def lab_record_creation(request):
 # 진료기록 작성 화면
 # ---------------------------------------------------------
 def medical_record_creation(request):
-    return render(request, 'emr/medical_record_creation.html')
+    patient_id = request.GET.get("patient_id")
+    return render(request, 'emr/medical_record_creation.html', {
+        "patient_id": patient_id
+    })
+
 
 
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
-
-def doctor_screen_dashboard(request):
-    return render(request, 'emr/doctor_screen_dashboard.html')
-
-def hospital_staff_dashboard(request):
-    return render(request, 'emr/hospital_staff_dashboard.html')
 
 def lab_record_creation(request):
     return render(request, 'emr/lab_record_creation.html')
@@ -165,24 +165,49 @@ def treatment_record_verification(request):
 # 과거 진료기록 조회 화면
 # ---------------------------------------------------------
 def view_previous_medical_records(request):
-    return render(request, "emr/previous_medical_records.html")
+    return render(request, "emr/view_previous_medical_records.html")
 
 
 # ---------------------------------------------------------
 # 약품 검색 API
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# 약품 검색 API (외부 API 버전)
+# ---------------------------------------------------------
 @require_GET
 def api_search_medicine(request):
-    q = request.GET.get("q", "").strip()
-
-    if q == "":
+    query = request.GET.get("q", "").strip()
+    if not query:
         return JsonResponse({"results": []})
 
-    rows = MedicineData.objects.filter(order_name__icontains=q)[:50]
+    service_key = "7o7cPo1AJvy3VxggWsMo/ZVdslwCi1Ebcm6LQ36QOIkQTgFNRBGfKkzq1Ug7LhWkxdmmhjnW1zM76UZA7cOo1A=="
 
-    data = [{"name": r.order_name, "code": r.order_code} for r in rows]
+    url = (
+        "https://apis.data.go.kr/1471000/MdcinGrnIdntfcInfoService03/getMdcinGrnIdntfcInfoList03?"
+        f"serviceKey={service_key}"
+        f"&item_name={query}"
+        f"&pageNo=1"
+        f"&numOfRows=50"
+        f"&type=json"
+    )
 
-    return JsonResponse({"results": data})
+    response = requests.get(url)
+    data = response.json()
+
+    items = (
+        data.get("body", {})
+            .get("items", [])
+    )
+
+    results = []
+    for item in items:
+        name = item.get("ITEM_NAME")
+        code = item.get("ITEM_SEQ")
+        if name and code:
+            results.append({"name": name, "code": code})
+
+    return JsonResponse({"results": results})
+
 
 
 # ---------------------------------------------------------
@@ -291,7 +316,6 @@ def api_create_medical_record(request):
     elif order_type == "treatment":
         TreatmentProcedures.objects.create(
             execution_datetime=timezone.now(),
-            status="pending",
             medical_record=record
         )
     # ------------------------------------------------
@@ -408,6 +432,46 @@ def treatment_data_search(request):
             'sickNm': item.find('sickNm').text
         })
 
+
     return JsonResponse({
         'treatment_datas': datas
     })
+
+def patient_search_list_view(request):
+    # role='patient' 인 사용자만 조회
+    patients = Users.objects.filter(role='patient').values(
+        'user_id', 'name', 'gender', 'birth_date'
+    )
+
+    return render(request, "emr/patient_search_list.html", {
+        "patients": patients
+    })
+    
+def api_search_patient(request):
+    keyword = request.GET.get("keyword", "").strip()
+
+    if keyword == "":
+        return JsonResponse({"results": []})
+
+    rows = Users.objects.filter(
+        Q(name__icontains=keyword) |
+        Q(resident_reg_no__startswith=keyword),
+        role='patient'
+    ).values('user_id', 'name', 'gender', 'resident_reg_no')
+
+    results = []
+    for r in rows:
+        rrn = r["resident_reg_no"]
+        dob = None
+        if rrn and len(rrn) >= 8:
+            dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+
+        results.append({
+            "user_id": r["user_id"],
+            "name": r["name"],
+            "gender": r["gender"],
+            "birth_date": dob,
+        })
+
+    return JsonResponse({"results": results})
+

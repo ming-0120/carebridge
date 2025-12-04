@@ -32,21 +32,38 @@ function selectPatient(rowElement) {
 }
 
 
-function performSearch() {
-    const keyword = document.getElementById('keyword').value;
-    alert(`"${keyword}"로 환자 검색을 실행합니다.`);
-}
+async function performSearch() {
+    const keyword = document.getElementById('keyword').value.trim();
 
-
-function goToRecordPage() {
-    const selectedRow = document.querySelector('#patientTable tr.selected');
-
-    if (selectedRow) {
-        const patientId = selectedRow.getAttribute('data-patient-id');
-        const patientName = document.getElementById('pName').textContent;
-
-        alert(`환자(${patientName}, ${patientId})의 진료기록 조회 화면으로 이동합니다.`);
-    } else {
-        alert('조회할 환자를 먼저 선택하십시오.');
+    if (!keyword) {
+        alert("검색어를 입력하세요.");
+        return;
     }
+
+    const response = await fetch(`/mstaff/api/patient/search/?keyword=${keyword}`);
+    const data = await response.json();
+
+    const tbody = document.querySelector('#patientTable tbody');
+    tbody.innerHTML = ""; // 기존 목록 초기화
+
+    if (!data.results || data.results.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='5'>검색 결과 없음</td></tr>";
+        return;
+    }
+
+    data.results.forEach(p => {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-patient-id", p.user_id);
+        tr.onclick = function () { selectPatient(this); };
+
+        tr.innerHTML = `
+            <td>정약용</td>
+            <td>${p.name}</td>
+            <td>${p.gender}</td>
+            <td>${p.birth_date}</td>
+            <td>최근 방문 없음</td>
+        `;
+        tbody.appendChild(tr);
+    });
 }
+
