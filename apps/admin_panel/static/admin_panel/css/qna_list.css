@@ -1,6 +1,7 @@
-/* ========= 1:1 문의 관리 페이지 전용 CSS ========= */
+/* ========= 1:1 문의 목록 페이지 전용 CSS ========= */
 /* 공통 CSS는 admin_common.css를 참조하세요 */
 
+/* 문의 관리 헤더 */
 .qna-header {
   display: flex;
   justify-content: space-between;
@@ -8,6 +9,8 @@
   margin-bottom: 24px;
   padding-bottom: 16px;
   border-bottom: 2px solid #e1e4ec;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .qna-title {
@@ -17,6 +20,19 @@
   margin: 0;
 }
 
+/* 헤더 버튼 컨테이너 */
+.qna-header > div {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* 삭제 폼 인라인 표시 */
+.delete-form {
+  display: inline;
+}
+
+/* 버튼 스타일 */
 .btn-delete {
   padding: 10px 20px;
   background-color: #EF4444;
@@ -27,16 +43,39 @@
   font-weight: 600;
   cursor: pointer;
   transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-block;
 }
 
 .btn-delete:hover {
   background-color: #DC2626;
 }
 
+/* 더미 데이터 생성 버튼 (초록색) */
+.btn-create-dummy {
+  background-color: #10B981 !important;
+}
+
+.btn-create-dummy:hover {
+  background-color: #059669 !important;
+}
+
+/* 더미 데이터 삭제 버튼 (빨간색) */
+.btn-delete-dummy {
+  background-color: #EF4444 !important;
+}
+
+.btn-delete-dummy:hover {
+  background-color: #DC2626 !important;
+}
+
+/* 문의 테이블 스타일 (admin_common.css의 .user-table 스타일 상속) */
 .qna-table {
   width: 100%;
+  min-width: 600px;
   border-collapse: collapse;
   font-size: 14px;
+  table-layout: auto;
 }
 
 .qna-table thead {
@@ -56,6 +95,7 @@
   border-bottom: 1px solid #f0f0f0;
 }
 
+/* 문의 테이블 행 스타일 */
 .qna-row {
   cursor: pointer;
   transition: background-color 0.2s;
@@ -65,36 +105,70 @@
   background-color: #F8FAFF;
 }
 
-.qna-row.selected {
+.qna-row:active {
   background-color: #E9F1FF;
 }
 
-/* 체크박스가 체크된 행의 스타일 - 행 선택 색상과 통일 */
 .qna-row.checkbox-checked {
   background-color: #E9F1FF;
+  box-shadow: inset 3px 0 0 0 #2196F3;
 }
 
 .qna-row.checkbox-checked:hover {
   background-color: #E9F1FF;
 }
 
+/* 상태 배지 스타일 */
 .status-badge {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-}
-
-.status-waiting {
-  background-color: #F59E0B;
-  color: #fff;
+  white-space: nowrap;
 }
 
 .status-completed {
-  background-color: #10B981;
-  color: #fff;
+  background-color: #10B981 !important;
+  color: #fff !important;
 }
 
+.status-waiting {
+  background-color: #F59E0B !important;
+  color: #fff !important;
+}
 
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .qna-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
 
+  .qna-title {
+    font-size: 20px;
+  }
+
+  .qna-header > div {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-delete {
+    width: 100%;
+    text-align: center;
+  }
+
+  .qna-table {
+    font-size: 12px;
+    min-width: 600px;
+  }
+
+  .qna-table th,
+  .qna-table td {
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+}

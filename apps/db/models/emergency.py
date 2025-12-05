@@ -115,7 +115,8 @@ class ErStatusStaging(models.Model):
 # ==========================================
 class ErMessage(models.Model):
     msg_id = models.AutoField(primary_key=True)
-    status = models.ForeignKey(ErStatus, on_delete=models.CASCADE)
+    status = models.ForeignKey('ErStatus', on_delete=models.CASCADE)
+    # ENUM('MKioskTy1','MKioskTy2',...,'MKioskTy7')
     type_code = models.CharField(max_length=20, null=True, blank=True)
     message = models.TextField(null=True, blank=True)
     updated_at = models.DateTimeField(null=True, blank=True)

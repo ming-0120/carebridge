@@ -144,6 +144,15 @@ function confirmDeleteQnaDummy() {
 }
 
 // 페이지 로드 시 선택된 항목 업데이트 및 행 클릭 이벤트 설정
+
+/**
+ * 1:1 문의 목록 페이지 JavaScript
+ * 
+ * 문의 목록 페이지의 JavaScript 로직
+ * 공통 함수는 admin_common.js를 참조하세요
+ */
+
+// 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners();
   attachSortListeners();
@@ -160,4 +169,3 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
-

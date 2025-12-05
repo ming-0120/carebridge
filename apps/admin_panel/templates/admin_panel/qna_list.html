@@ -40,10 +40,10 @@
     <!-- 문의 관리 헤더 -->
     <div class="qna-header">
       <h1 class="qna-title">1:1 문의 관리</h1>
-      <div style="display: flex; gap: 10px;">
-        <a href="{% url 'create_qna_dummy' %}" class="btn-delete" style="background-color: #10B981; text-decoration: none; display: inline-block;">더미 데이터 생성</a>
-        <a href="{% url 'delete_qna_dummy' %}" class="btn-delete" id="deleteQnaDummyBtn" style="background-color: #EF4444; text-decoration: none; display: inline-block;">더미 데이터 삭제</a>
-        <form method="post" action="{% url 'qna_list' %}" id="deleteForm" style="display: inline;">
+      <div>
+        <a href="{% url 'create_qna_dummy' %}" class="btn-delete btn-create-dummy">더미 데이터 생성</a>
+        <a href="{% url 'delete_qna_dummy' %}" class="btn-delete btn-delete-dummy" id="deleteQnaDummyBtn">더미 데이터 삭제</a>
+        <form method="post" action="{% url 'qna_list' %}" id="deleteForm" class="delete-form">
           {% csrf_token %}
           <input type="hidden" name="action" value="delete">
           <input type="hidden" name="qna_ids" id="qnaIdsInput" value="">

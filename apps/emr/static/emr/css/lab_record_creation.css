@@ -88,11 +88,10 @@ h2 {
     display: flex;
     gap: 10px;
 }
-.input-with-button input,
-.input-with-button select {
+
+.input-with-button input{
     width: 100%;
-    padding: 10px;
-    border: 1px solid #ced4da;
+    padding: 10px;;
     border-radius: 4px;
     box-sizing: border-box;
 }

@@ -38,7 +38,7 @@
             <div class="info-item"><strong>P:</strong> {{ medical_record.plan }}</div>
         </div>
 
-        <form name="frmTreatment" class="card" method="post" action="/mstaff/treatment_verify/">
+        <form name="frmTreatment" class="card" method="post" action="{% url 'treatment_verify' %}">
             {% csrf_token %}
             <h3>시술/처치 기록 입력 (2)</h3>
             <input type="hidden" name="medical_record_id" value="{{ medical_record.medical_record_id }}">
@@ -52,20 +52,27 @@
                     <div class="form-group">
                         <label for="procedureName">시술/처치 명칭 및 코드</label>
                         <div class="input-with-button">
-                            <input type="text" name="procedureName" id="procedureName" value="결핵" disabled required>
-                            <input type="text" name="procedureCode" id="procedureCode" value="2025087777" disabled required>
+                            <input type="text" name="procedureName" id="procedureName" {% if order.status != "Pending" %} value="{{ order.procedure_name }}" {% endif %} readonly required>
+                            <input type="text" name="procedureCode" id="procedureCode" {% if order.status != "Pending" %} value="{{ order.procedure_code }}" {% endif %} readonly required>
                             <button class="search-btn" id="searchProcedureBtn" type="button" style="width: 100px;" onclick="openProcedureSearchModal()">검색</button>
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="procedureSite">시술/처치 부위</label>
-                        <input type="text" name="procedureSite" id="procedureSite">
+                        {% if order.status != 'Pending' %}
+                            <input type="text" name="procedureSite" id="procedureSite" value="{{ order.treatment_site }}" readonly>
+                        {% else %}
+                            <input type="text" name="procedureSite" id="procedureSite">
+                        {% endif %}
+                        
                     </div>
                     
                     <div class="form-group">
                         <label for="startTime">시작 시각</label>
-                        <input type="text" id="startTime" disabled placeholder="시술 시작 시 자동 기록">
+                        <input type="text" id="startTime" disabled placeholder="시술 시작 시 자동 기록"
+                            {% if order.status != 'Pending' %} value="{{ order.execution_datetime }}" {% endif %}
+                        >
                     </div>
 
                     <div class="form-group">
@@ -77,7 +84,9 @@
                 <div>
                     <div class="form-group">
                         <label for="specialNotes">특이사항 메모</label>
-                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"></textarea>
+                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"
+                            {% if order.status == 'Completed' %} readonly {% endif %}
+                        >{% if order.result_notes != None %}{{ order.result_notes }}{% endif %}</textarea>
                     </div>
                 </div>
                 
