@@ -69,6 +69,50 @@ function removePrescriptionBlock(btn) {
 async function prepareSubmit() {
 
     /* 기존 JSON 생성/숨겨진 필드 저장 로직은 그대로 유지 */
+    const blocks = document.querySelectorAll(".prescription-block");
+    prescriptionList = [];
+
+    blocks.forEach(block => {
+        const name = block.querySelector(".drugName").value;
+        const code = block.querySelector(".drugCode").value;
+        const freq = block.querySelector(".freqInput").value;
+        const dose = block.querySelector(".doseInput").value;
+        const note = block.querySelector(".noteInput").value;
+
+        if (!name || !code) return;
+
+        prescriptionList.push({
+            drug_name: name,
+            drug_code: code,
+            frequency: freq,
+            dose: dose,
+            note: note
+        });
+    });
+
+    /* ------------------------
+       2) 검사/치료 오더 JSON 생성
+    ------------------------ */
+
+    const orderType = document.getElementById("orderType").value;
+    const emergencyFlag = document.querySelector("input[name='emergency_flag']:checked")?.value || null;
+
+    const globalStart = document.getElementById("globalStartDate").value;
+    const globalEnd = document.getElementById("globalEndDate").value;
+
+    // dict 형태로 강제 — Django의 json.loads() → dict OK
+    const orderObject = {
+        start_date: globalStart,
+        end_date: globalEnd,
+        order_type: orderType || null,
+        emergency_flag: emergencyFlag
+    };
+
+    /* ------------------------
+       3) 숨겨진 필드에 JSON 문자열 저장
+    ------------------------ */
+    document.getElementById("prescriptions").value = JSON.stringify(prescriptionList);
+    document.getElementById("orders").value = JSON.stringify(orderObject);
 
     // --- 여기부터 수정 ---
     const form = document.getElementById("recordForm");

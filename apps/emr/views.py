@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import JsonResponse
 import os
 from dotenv import load_dotenv
@@ -174,9 +174,100 @@ def medical_record_creation(request):
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
-
+@csrf_exempt
 def lab_record_creation(request):
-    return render(request, 'emr/lab_record_creation.html')
+    if request.method == "GET":
+        order_id = request.GET['order_id']
+        user_id = request.GET['user_id']
+        record_id = request.GET['medical_record_id']
+        files = []
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = LabOrders.objects.get(lab_order_id=int(order_id))
+
+            try:
+                files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+            except:
+                print('error')
+        except:
+            print('error')
+
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+            'files': files,
+        }
+
+        return render(request, 'emr/lab_record_creation.html', context)
+    elif request.method == "POST":
+        order_id = request.POST['order_id']
+        user_id = request.POST['user_id']
+        record_id = request.POST['medical_record_id']
+        current_status = request.POST['current_status']
+        lab_name = request.POST['labName']
+        lab_code = request.POST['labCode']
+        specimen_type = request.POST['specimenType']
+        special_notes = request.POST['specialNotes']
+        uploaded_files = request.FILES.getlist('fileAttachment')
+        files = []
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = LabOrders.objects.get(lab_order_id=int(order_id))
+            if current_status == 'Pending':
+                order.status = 'Sampled'
+                order.lab_nm = lab_name
+                order.lab_cd = lab_code
+                order.specimen_cd = specimen_type
+                order.requisition_note = special_notes
+                order.status_datetime = datetime.now()
+
+                order.save()
+
+                for file in uploaded_files:
+                    labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
+                    labUpload.save()
+
+                try:
+                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+                except:
+                    print('error')
+                
+                
+            elif current_status == 'Sampled':
+                order.status_datetime = datetime.now()
+                order.status = 'Completed'
+                order.requisition_note = special_notes
+
+                try:
+                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+                except:
+                    print('error')
+
+
+
+        except:
+            print('error')
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+            'files': files,
+        }
+
+        if (order.status == 'Completed'):
+            return redirect('/mstaff/hospital_dashboard/')
+        else:
+            return render(request, 'emr/lab_record_creation.html')
+
+        
+        
 
 def medical_record_inquiry(request):
     return render(request, "emr/medical_record_inquiry.html")
@@ -227,6 +318,10 @@ def treatment_record_verification(request):
         user_id = request.POST['user_id']
         record_id = request.POST['medical_record_id']
         current_status = request.POST['current_status']
+        procedure_name = request.POST['procedureName']
+        procedure_code = request.POST['procedureCode']
+        procedure_site = request.POST['procedureSite']
+        special_notes = request.POST['specialNotes']
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -235,10 +330,15 @@ def treatment_record_verification(request):
             if current_status == 'Pending':
                 order.status = 'In progress'
                 order.execution_datetime = datetime.now()
+                order.procedure_code = procedure_code
+                order.procedure_name = procedure_name
+                order.result_notes = special_notes
+                order.treatment_site = procedure_site
                 order.save()
             elif current_status == 'In progress':
                 order.status = 'Completed'
                 order.completion_datetime = datetime.now()
+                order.result_notes = special_notes
                 order.save()
         except:
             print('error')
@@ -249,8 +349,10 @@ def treatment_record_verification(request):
             'order': order,
         }
 
-
-        return render(request, "emr/treatment_record_verification.html", context)
+        if (order.status == 'Completed'):
+            return redirect('/mstaff/hospital_dashboard/')
+        else:
+            return render(request, "emr/treatment_record_verification.html", context)
 
 # ---------------------------------------------------------
 # 과거 진료기록 조회 화면
