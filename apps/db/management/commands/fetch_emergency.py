@@ -8,40 +8,68 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
-from apps.db.models.emergency import (ErInfo,ErStatus,ErStatusStaging,)
+from apps.db.models.emergency import (
+    ErInfo,
+    ErStatus,
+    ErStatusStaging,
+)
 
 API_KEY = settings.OPENAPI_SERVICE_KEY
+
+# 실시간 병상 API (V4 최신)
 BASE_URL_A = (
     "https://apis.data.go.kr/B552657/ErmctInfoInqireService/"
     "getEmrrmRltmUsefulSckbdInfoInqire"
 )
 
+# 기본정보 API (분만실 여부 확인용)
+BASE_URL_BASIC = (
+    "https://apis.data.go.kr/B552657/ErmctInfoInqireService/"
+    "getEgytBassInfoInqire"
+)
+
 ###########################################################
-# 공통 유틸
+# 공통 함수
 ###########################################################
+
 def safe_int(value):
+    """정수 변환. '', None, 이상값 → None"""
     if value is None:
         return None
-    if isinstance(value, int):
-        return value
-    s = str(value).strip()
-    if s == "":
-        return None
     try:
+        s = str(value).strip()
+        if s == "":
+            return None
         return int(s)
-    except ValueError:
+    except:
         return None
 
 
 def yn_to_bool(value):
+    """Y/N → True/False/None"""
     if value is None:
         return None
-    s = str(value).strip().upper()
-    if s == "Y":
+    v = str(value).strip().upper()
+    if v == "Y":
         return True
-    if s == "N":
+    if v == "N":
         return False
     return None
+
+
+def parse_hvdate(item):
+    """hvidate → datetime 변환"""
+    raw = item.get("hvidate") or item.get("hvdate")
+    if not raw:
+        return timezone.now()
+
+    raw = str(raw).strip()
+    try:
+        dt = datetime.strptime(raw, "%Y%m%d%H%M%S")
+    except:
+        return timezone.now()
+
+    return timezone.make_aware(dt)
 
 
 def fetch_api(url, params):
@@ -53,152 +81,162 @@ def fetch_api(url, params):
         print(f"[ERROR] 요청 실패: {url} / {e}")
         return []
 
+    # 디버그 출력 유지
+    print("\n=== REQUEST URL ===")
+    print(response.url)
+    print("=== STATUS ===")
+    print(response.status_code)
+    print("=== RAW XML (앞부분) ===")
+    print(response.text[:2000])
+    print("==========================\n")
+
     if response.status_code != 200:
-        print(f"[ERROR] API HTTP 오류 {response.status_code}: {url}")
+        print(f"[ERROR] HTTP {response.status_code}")
         return []
 
     try:
         data = xmltodict.parse(response.text)
-    except Exception as e:
-        print(f"[ERROR] XML 파싱 오류: {url} / {e}")
+    except:
+        print("[ERROR] XML 파싱 실패")
         return []
 
-    root = data.get("response")
-    if not root:
+    response_root = data.get("response")
+    if not response_root:
         return []
 
-    body = root.get("body")
+    body = response_root.get("body")
     if not body:
         return []
 
+    # items가 없으면 → 빈 리스트 반환
     items_root = body.get("items")
     if not items_root:
         return []
 
-    items = items_root.get("item", [])
+    items = items_root.get("item")
+    if not items:
+        return []
+
     if isinstance(items, dict):
         return [items]
-    if items is None:
-        return []
 
     return items
 
 
-def get_region_pairs():
-    return (
+
+###########################################################
+# 기본정보 API - 분만실 여부
+###########################################################
+
+def get_basic_info(hpid):
+    params = {
+        "HPID": hpid,
+        "pageNo": 1,
+        "numOfRows": 1,
+    }
+    items = fetch_api(BASE_URL_BASIC, params)
+    if not items:
+        return {}
+    return items[0]
+
+
+###########################################################
+# A. 실시간 병상 API 파싱
+###########################################################
+
+def parse_api_A():
+    print("[1] 실시간 병상 API 호출 시작…")
+
+    results = []
+
+    regions = (
         ErInfo.objects
         .values_list("er_sido", "er_sigungu")
         .distinct()
         .order_by("er_sido", "er_sigungu")
     )
 
-
-def parse_hvdate(item):
-    raw = item.get("hvidate") or item.get("hvdate")
-    if not raw:
-        return timezone.now()
-
-    raw = str(raw).strip()
-    try:
-        dt = datetime.strptime(raw, "%Y%m%d%H%M%S")
-    except ValueError:
-        return timezone.now()
-
-    return timezone.make_aware(dt)
-
-
-###########################################################
-# A. 실시간 병상 API 파싱
-###########################################################
-def parse_api_A():
-    print("[1] A API 호출…")
-    print("[A] 시도 + 시군구 반복 호출 시작")
-
-    results = []
-
-    for sido, sigungu in get_region_pairs():
+    for sido, sigungu in regions:
         params = {
             "STAGE1": sido,
             "STAGE2": sigungu,
             "pageNo": 1,
-            "numOfRows": 100,
+            "numOfRows": 200,
         }
 
+        print(f"[A] 요청 지역: {sido} {sigungu}")
         items = fetch_api(BASE_URL_A, params)
+
         if not items:
-            print(f"[INFO] 데이터 없음: {sido} {sigungu}")
+            print(f"[A] → 데이터 없음: {sido} {sigungu}")
             continue
 
         for it in items:
-            print("=== RAW XML ITEM ===")
-            print(it)
-            print("=====================")
-
             hpid = it.get("hpid")
             if not hpid:
                 continue
 
-            hvdate = parse_hvdate(it)
-
             row = {
                 "hpid": hpid,
-                "hvdate": hvdate,
+                "hvdate": parse_hvdate(it),
 
-                # 병상 데이터
-                "hv2": safe_int(it.get("hv2")),
-                "hv3": safe_int(it.get("hv3")),
-                "hv4": safe_int(it.get("hv4")),
-                "hv5": safe_int(it.get("hv5")),
-                "hv6": safe_int(it.get("hv6")),
-                "hv7": safe_int(it.get("hv7")),
-                "hv8": safe_int(it.get("hv8")),
-                "hv9": safe_int(it.get("hv9")),
-                "hv11": safe_int(it.get("hv11")),
-                "hvcc": safe_int(it.get("hvcc")),
-                "hvncc": safe_int(it.get("hvncc")),
-                "hvicc": safe_int(it.get("hvicc")),
+                # 일반 응급실
+                "hvec": safe_int(it.get("hvec")),
+                "hvs01": safe_int(it.get("hvs01")),
 
-                # 장비 여부
-                "hvctayn": (it.get("hvctayn") or "").strip()[:1],
-                "hvmriayn": (it.get("hvmriayn") or "").strip()[:1],
-                "hvangioayn": (it.get("hvangioayn") or "").strip()[:1],
-                "hvventiayn": (it.get("hvventiayn") or "").strip()[:1],
+                # 소아 응급실
+                "hv28": safe_int(it.get("hv28")),
+                "hvs02": safe_int(it.get("hvs02")),
+
+                # 분만실(숫자 없음 → Boolean 후보)
+                "birth_flag": it.get("hv7"),
+
+                # 음압 격리
+                "hv29": safe_int(it.get("hv29")),
+                "hvs03": safe_int(it.get("hvs03")),
+
+                # 일반 격리
+                "hv30": safe_int(it.get("hv30")),
+                "hvs04": safe_int(it.get("hvs04")),
+
+                # 코호트 격리
+                "hv27": safe_int(it.get("hv27")),
+
+                # 장비
+                "hvctayn": it.get("hvctayn"),
+                "hvmriayn": it.get("hvmriayn"),
+                "hvecmoayn": it.get("hvecmoayn"),
+                "hvventiayn": it.get("hvventiayn"),
             }
-
-            # 합산값
-            row["sum_emer_all"] = (row["hv2"] or 0) + (row["hv3"] or 0)
-            row["sum_emer_child"] = row["hv3"] or 0
-            row["sum_birth"] = row["hv7"] or 0
-            row["sum_iso_neg"] = row["hvcc"] or 0
-            row["sum_iso_gen"] = row["hvncc"] or 0
-            row["sum_iso_cohort"] = row["hvicc"] or 0
 
             results.append(row)
 
-    print(f"[A] 병상 데이터 수집 완료 (총 {len(results)}개)")
+    print(f"[A] 실시간 병상 데이터 수집 완료: {len(results)}건")
     return results
 
 
 ###########################################################
-# 메인 커맨드
+# 메인 Command
 ###########################################################
+
 class Command(BaseCommand):
-    help = "실시간 응급실 병상/장비 정보 수집 (staging → main 병합)"
+    help = "실시간 병상 데이터 → staging → main 병합"
 
     @transaction.atomic
     def handle(self, *args, **options):
 
+        ####################################################
+        # 1) 실시간 병상 데이터 A API 수집
+        ####################################################
         rows_A = parse_api_A()
 
-        print("[MERGE] Staging 초기화 후 병합")
+        ####################################################
+        # 2) STAGING 초기화 후 INSERT
+        ####################################################
         ErStatusStaging.objects.all().delete()
-
+        staging_bulk = []
         seen = set()
-        staging_objs = []
 
-        # ----------------------------------------------------
-        # STAGING INSERT
-        # ----------------------------------------------------
         for row in rows_A:
 
             key = (row["hpid"], row["hvdate"])
@@ -207,80 +245,94 @@ class Command(BaseCommand):
             seen.add(key)
 
             try:
-                er_info = ErInfo.objects.get(hpid=row["hpid"])
+                er = ErInfo.objects.get(hpid=row["hpid"])
             except ErInfo.DoesNotExist:
                 continue
 
-            staging_objs.append(
+            staging_bulk.append(
                 ErStatusStaging(
-                    hospital=er_info,
+                    hospital=er,
                     hvdate=row["hvdate"],
 
-                    hv31=row["hv2"],
-                    hvs03=row["hv3"],
+                    hvec=row["hvec"],
+                    hvs01=row["hvs01"],
 
-                    hv36=row["hv3"],
-                    hvs04=row["hv3"],
+                    hv28=row["hv28"],
+                    hvs02=row["hvs02"],
 
-                    hv7=row["hv7"],
-                    hvs05=row["hv7"],
+                    birth_flag=row["birth_flag"],
 
-                    hv11=row["hv11"],
-                    hvs06=row["hv11"],
+                    hv29=row["hv29"],
+                    hvs03=row["hvs03"],
 
-                    hv5=row["hv5"],
-                    hvs38=row["hv5"],
+                    hv30=row["hv30"],
+                    hvs04=row["hvs04"],
+
+                    hv27=row["hv27"],
 
                     hvctayn=row["hvctayn"],
                     hvmriayn=row["hvmriayn"],
-                    hvangioayn=row["hvangioayn"],
+                    hvecmoayn=row["hvecmoayn"],
                     hvventiayn=row["hvventiayn"],
                 )
             )
 
-        ErStatusStaging.objects.bulk_create(staging_objs, batch_size=500)
+        ErStatusStaging.objects.bulk_create(staging_bulk, batch_size=400)
+        print(f"[STAGING] 저장 완료: {len(staging_bulk)}건")
 
-        ###########################################################
-        # MAIN 테이블 병합
-        ###########################################################
+        ####################################################
+        # 3) STAGING → MAIN 병합
+        ####################################################
         for st in ErStatusStaging.objects.select_related("hospital"):
+
+            # 기본정보 API 기반 최종 분만실 여부
+            basic = get_basic_info(st.hospital.hpid)
+
+            obst_raw = (
+                basic.get("dutyObstYn")
+                or basic.get("hperyn")
+                or basic.get("dutyHayn")
+            )
+
+            if obst_raw:
+                birth_bool = yn_to_bool(obst_raw)
+            else:
+                birth_bool = yn_to_bool(st.birth_flag)
 
             ErStatus.objects.update_or_create(
                 er=st.hospital,
                 hvdate=st.hvdate,
                 defaults={
-
                     # 일반 응급실
-                    "er_general_available": st.hv31,
-                    "er_general_total": st.hvs03,
+                    "er_general_available": st.hvec,
+                    "er_general_total": st.hvs01,
 
                     # 소아 응급실
-                    "er_child_available": st.hv36,
-                    "er_child_total": st.hvs04,
+                    "er_child_available": st.hv28,
+                    "er_child_total": st.hvs02,
 
-                    # 분만실
-                    "birth_available": st.hv7,
-                    "birth_total": st.hvs05,
+                    # 분만실 Boolean
+                    "birth_available": birth_bool,
 
                     # 음압 격리
-                    "negative_pressure_available": st.hv11,
-                    "negative_pressure_total": st.hvs06,
+                    "negative_pressure_available": st.hv29,
+                    "negative_pressure_total": st.hvs03,
+
+                    # 일반 격리
+                    "isolation_general_available": st.hv30,
+                    "isolation_general_total": st.hvs04,
 
                     # 코호트 격리
-                    "isolation_cohort_available": st.hv5,
-                    "isolation_cohort_total": st.hvs38,
-
-                    # 일반 격리 — API 제공 X → None
-                    "isolation_general_available": None,
-                    "isolation_general_total": None,
+                    "isolation_cohort_available": st.hv27,
+                    # "isolation_cohort_total": None,
 
                     # 장비 여부
-                    "has_ct": (st.hvctayn == "Y"),
-                    "has_mri": (st.hvmriayn == "Y"),
-                    "has_angio": (st.hvangioayn == "Y"),
-                    "has_ventilator": (st.hvventiayn == "Y"),
+                    "has_ct": yn_to_bool(st.hvctayn),
+                    "has_mri": yn_to_bool(st.hvmriayn),
+                    "has_ecmo": yn_to_bool(st.hvecmoayn),
+                    "has_ventilator": yn_to_bool(st.hvventiayn),
                 }
             )
 
-
-            print(f"[완료] 총 {ErStatus.objects.count()}개 상태 데이터 저장/갱신 완료")
+        total = ErStatus.objects.count()
+        print(f"[MAIN] 병합 완료 – 총 {total}개 저장됨")

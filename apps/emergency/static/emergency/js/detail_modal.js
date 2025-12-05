@@ -7,70 +7,198 @@ function openHospitalDetail(erId) {
     .then(res => res.json())
     .then(data => {
 
-      // Header
+      // Header: 병원명 + 주소
       document.getElementById("detail-title").innerText = data.er_name;
-      document.getElementById("detail-meta").innerText =
-        `${data.er_address}${data.distance ? " · " + data.distance + "km" : ""}`;
+      document.getElementById("detail-address").innerText = data.er_address || "";
 
-      // Tags
+      // Tags: CT, MRI, 분만실
       const tagWrap = document.getElementById("detail-tags");
-      tagWrap.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join("");
+      if (data.tags && data.tags.length > 0) {
+        tagWrap.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join("");
+      } else {
+        tagWrap.innerHTML = "";
+      }
 
-      // Message banner
+      // Message banner: ErMessage 표시
       const banner = document.getElementById("detail-banner");
-      if (data.messages && data.messages.length > 0) {
-        banner.innerText = data.messages[0];
+      if (data.message) {
+        banner.innerText = data.message;
         banner.classList.remove("hidden");
       } else {
         banner.classList.add("hidden");
       }
 
-      // 병상 상태 적용
-      fillCircle("er", data.status.er_general_available, data.status.er_general_total);
-      fillCircle("child", data.status.er_child_available, data.status.er_child_total);
-      fillCircle("birth", data.status.birth_available, data.status.birth_total);
-      fillCircle("negative", data.status.negative_pressure_available, data.status.negative_pressure_total);
-      fillCircle("isolation", data.status.isolation_available, data.status.isolation_total);
-      fillCircle("cohort", data.status.cohort_available, data.status.cohort_total);
+      // 병상 상태 적용 (테이블 형태)
+      fillStatusRow("er", data.status?.er_general_available, data.status?.er_general_total);
+      fillStatusRow("child", data.status?.er_child_available, data.status?.er_child_total);
+      fillStatusRow("birth", data.status?.birth_available, data.status?.birth_total);
+      fillStatusRow("negative", data.status?.negative_pressure_available, data.status?.negative_pressure_total);
+      fillStatusRow("isolation", data.status?.isolation_general_available, data.status?.isolation_general_total);
+      fillStatusRow("cohort", data.status?.isolation_cohort_available, data.status?.isolation_cohort_total);
+
+      // AI 리뷰 요약
+      updateAiReview(data.ai_review);
+
+      // 지도 및 길찾기 버튼
+      setupMap(data.er_lat, data.er_lng, data.er_address);
+    })
+    .catch(err => {
+      console.error("상세 정보 로딩 실패:", err);
     });
 }
 
 
-// 상태 원형 UI 생성 (가용 수 기반)
-function fillCircle(key, available, total) {
-  const circleEl = document.getElementById(`circle-${key}`);
-  const countEl = document.getElementById(`${key}-count`);
+// 상태 행 채우기 (원형 그래프 + 상태 텍스트 + 숫자)
+function fillStatusRow(key, available, total) {
+  const circleContainer = document.getElementById(`status-circle-${key}`);
+  const statusTextEl = document.getElementById(`status-text-${key}`);
+  const statusCountEl = document.getElementById(`status-count-${key}`);
 
-  // 숫자 표기
-  countEl.innerText = `${available ?? "-"} / ${total ?? "-"}`;
+  // 원형 그래프 생성 (main.html과 동일한 방식)
+  circleContainer.innerHTML = "";
+  
+  if (total !== null && total !== undefined && total >= 0 && available !== null && available !== undefined) {
+    const pct = total > 0 ? (available / total) * 100 : 0;
+    const circumference = 2 * Math.PI * 20; // r = 20
+    const dashLength = (pct / 100) * circumference;
+    const dashArray = `${dashLength.toFixed(2)}, ${circumference.toFixed(2)}`;
 
-  // 색상 초기화
-  circleEl.classList.remove("circle-good", "circle-warn", "circle-full", "circle-empty");
+    let colorClass = "none";
+    if (pct >= 70) {
+      colorClass = "green";
+    } else if (pct >= 30) {
+      colorClass = "orange";
+    } else if (pct > 0) {
+      colorClass = "red";
+    }
 
-  // 1) 정보없음
-  if (available === null || available === undefined) {
-    circleEl.classList.add("circle-empty");
-    circleEl.innerText = "정보없음";
-    return;
+    // 원형 그래프 생성 (main.html의 _circle_cell.html과 동일한 구조)
+    circleContainer.innerHTML = `
+      <div class="status-circle ${colorClass}">
+        <svg>
+          <circle class="meter ${pct === 0 ? 'none' : ''}"
+            cx="24" cy="24" r="20"
+            stroke-dasharray="${dashArray}"
+            stroke="#e0e0e0"
+            fill="none"
+            stroke-width="4"
+            stroke-linecap="round">
+          </circle>
+        </svg>
+        <span class="label">${available}/${total}</span>
+      </div>
+    `;
+
+    // 상태 텍스트
+    let statusText = "";
+    if (available === null || available === undefined) {
+      statusText = "정보없음";
+    } else if (available === 0) {
+      statusText = "포화";
+    } else if (total === null || total === 0) {
+      statusText = available === 1 ? "주의" : "여유";
+    } else {
+      const ratio = available / total;
+      if (ratio < 0.3) {
+        statusText = "주의";
+      } else if (ratio >= 0.7) {
+        statusText = "원활";
+      } else {
+        statusText = "보통";
+      }
+    }
+    statusTextEl.innerText = statusText;
+
+    // 숫자 표시
+    statusCountEl.innerText = `${available ?? "-"}/${total ?? "-"}`;
+  } else {
+    // 정보 없음 (main.html의 _circle_cell.html과 동일한 구조)
+    circleContainer.innerHTML = `
+      <div class="status-circle none">
+        <svg>
+          <circle class="meter none"
+            cx="24" cy="24" r="20"
+            stroke-dasharray="0, 125.66"
+            stroke="#e0e0e0"
+            fill="none"
+            stroke-width="4"
+            stroke-linecap="round">
+          </circle>
+        </svg>
+        <span class="label">-</span>
+      </div>
+    `;
+    statusTextEl.innerText = "정보없음";
+    statusCountEl.innerText = "-/-";
   }
+}
 
-  // 2) 포화
-  if (available === 0) {
-    circleEl.classList.add("circle-full");
-    circleEl.innerText = "포화";
-    return;
+
+// AI 리뷰 요약 업데이트
+function updateAiReview(aiReview) {
+  const reviewContent = document.getElementById("detail-review-content");
+  const sentimentDiv = document.getElementById("review-sentiment");
+  const summaryText = document.getElementById("review-summary-text");
+
+  if (aiReview && aiReview.summary) {
+    // 감성 분석 표시
+    if (aiReview.positive_ratio !== null && aiReview.negative_ratio !== null) {
+      const positivePercent = Math.round(aiReview.positive_ratio * 100);
+      const negativePercent = Math.round(aiReview.negative_ratio * 100);
+      
+      document.getElementById("positive-percent").innerText = `${positivePercent}%`;
+      document.getElementById("negative-percent").innerText = `${negativePercent}%`;
+
+      // 시각적 바 생성 (10개 칸 기준)
+      const positiveBars = Math.round(positivePercent / 10);
+      const negativeBars = Math.round(negativePercent / 10);
+      
+      const positiveBarsEl = document.getElementById("positive-bars");
+      const negativeBarsEl = document.getElementById("negative-bars");
+      
+      positiveBarsEl.innerHTML = "";
+      negativeBarsEl.innerHTML = "";
+      
+      for (let i = 0; i < positiveBars; i++) {
+        positiveBarsEl.innerHTML += '<div class="bar-item"></div>';
+      }
+      for (let i = 0; i < negativeBars; i++) {
+        negativeBarsEl.innerHTML += '<div class="bar-item"></div>';
+      }
+
+      sentimentDiv.classList.remove("hidden");
+    } else {
+      sentimentDiv.classList.add("hidden");
+    }
+
+    // 핵심 한줄 요약
+    summaryText.innerText = aiReview.summary;
+  } else {
+    sentimentDiv.classList.add("hidden");
+    summaryText.innerText = "리뷰 데이터 준비중...";
   }
+}
 
-  // 3) 주의 (가용 1)
-  if (available === 1) {
-    circleEl.classList.add("circle-warn");
-    circleEl.innerText = "주의";
-    return;
+
+// 지도 및 길찾기 설정
+function setupMap(lat, lng, address) {
+  const mapDiv = document.getElementById("detail-map");
+  const navBtn = document.getElementById("detail-navigation-btn");
+
+  if (lat && lng) {
+    // 카카오맵 길찾기 URL 생성
+    const kakaoMapUrl = `https://map.kakao.com/link/to/${encodeURIComponent(address)},${lat},${lng}`;
+    navBtn.onclick = () => {
+      window.open(kakaoMapUrl, '_blank');
+    };
+
+    // 지도 표시 (간단한 이미지 또는 iframe)
+    // 실제 구현 시 카카오맵 API를 사용할 수 있음
+    mapDiv.innerHTML = `<div style="width:100%; height:260px; background:#dcdcdc; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#666;">지도 표시 영역<br>(위도: ${lat}, 경도: ${lng})</div>`;
+  } else {
+    mapDiv.innerHTML = '<div style="width:100%; height:260px; background:#dcdcdc; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#666;">위치 정보 없음</div>';
+    navBtn.onclick = null;
   }
-
-  // 4) 여유 (가용 2 이상)
-  circleEl.classList.add("circle-good");
-  circleEl.innerText = "여유";
 }
 
 

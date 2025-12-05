@@ -8,7 +8,8 @@ import math
 import json
 from collections import defaultdict
 
-from apps.db.models.emergency import ErInfo, ErStatus
+from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
+from apps.db.models.review import AiReview
 
 
 def _haversine_km(lat1, lon1, lat2, lon2):
@@ -345,63 +346,101 @@ def get_sigungu(request):
 
 def hospital_detail_json(request, er_id: int):
     """
-    상세 모달에서 사용하는 병원 상세 + 시간대별 병상 현황 JSON API
-    - URL: /emergency/hospitals/<er_id>/detail-json/
-    - 반환 데이터 예시:
+    상세 모달에서 사용하는 병원 상세 정보 JSON API
+    - URL: /emergency/detail/<er_id>/
+    - 반환 데이터:
       {
         "er_name": "...",
         "er_address": "...",
         "er_lat": ...,
         "er_lng": ...,
-        "statuses": [
-          {
-            "hvdate": "2025-12-03 12:30",
-            "er_general_total": 10,
-            "er_general_available": 3,
-            ...
-          },
+        "has_ct": true/false,
+        "has_mri": true/false,
+        "has_birth": true/false,
+        "status": {
+          "er_general_available": ...,
+          "er_general_total": ...,
           ...
-        ]
+        },
+        "message": "...",  # ErMessage의 message 필드
+        "ai_review": {
+          "summary": "...",
+          "positive_ratio": 0.7,
+          "negative_ratio": 0.3
+        }
       }
     """
     er_info = get_object_or_404(ErInfo, er_id=er_id)
 
-    status_qs = (
+    # 최신 상태 정보 가져오기
+    latest_status = (
         ErStatus.objects
         .filter(er=er_info)
-        .order_by("hvdate")
-        .values(
-            "hvdate",
-            "er_general_total",
-            "er_general_available",
-            "er_child_total",
-            "er_child_available",
-            "birth_total",
-            "birth_available",
-            "negative_pressure_total",
-            "negative_pressure_available",
-            "isolation_general_total",
-            "isolation_general_available",
-            "isolation_cohort_total",
-            "isolation_cohort_available",
-        )
+        .order_by("-hvdate")
+        .first()
     )
 
+    # ErMessage 가져오기 (최신 상태와 연결된 메시지)
+    er_message = None
+    if latest_status:
+        er_message = (
+            ErMessage.objects
+            .filter(status=latest_status)
+            .first()
+        )
 
-    status_list = []
-    for row in status_qs:
-        hvdate = row["hvdate"]
-        row_dict = dict(row)
-        # datetime -> 문자열 변환 (JS에서 그대로 그래프에 쓰기 편하게)
-        row_dict["hvdate"] = hvdate.strftime("%Y-%m-%d %H:%M")
-        status_list.append(row_dict)
+    # AiReview 가져오기
+    ai_review = None
+    try:
+        ai_review = AiReview.objects.get(er=er_info)
+    except AiReview.DoesNotExist:
+        pass
+
+    # 상태 데이터 준비
+    status_data = {}
+    if latest_status:
+        status_data = {
+            "er_general_available": latest_status.er_general_available,
+            "er_general_total": latest_status.er_general_total,
+            "er_child_available": latest_status.er_child_available,
+            "er_child_total": latest_status.er_child_total,
+            "birth_available": latest_status.birth_available,
+            "birth_total": latest_status.birth_total,
+            "negative_pressure_available": latest_status.negative_pressure_available,
+            "negative_pressure_total": latest_status.negative_pressure_total,
+            "isolation_general_available": latest_status.isolation_general_available,
+            "isolation_general_total": latest_status.isolation_general_total,
+            "isolation_cohort_available": latest_status.isolation_cohort_available,
+            "isolation_cohort_total": latest_status.isolation_cohort_total,
+        }
+
+    # 장비 정보
+    has_ct = latest_status.has_ct if latest_status else False
+    has_mri = latest_status.has_mri if latest_status else False
+    has_birth = latest_status.birth_total is not None and latest_status.birth_total > 0 if latest_status else False
+
+    # 태그 리스트 생성
+    tags = []
+    if has_ct:
+        tags.append("CT")
+    if has_mri:
+        tags.append("MRI")
+    if has_birth:
+        tags.append("분만실")
 
     data = {
         "er_name": er_info.er_name,
         "er_address": er_info.er_address,
         "er_lat": er_info.er_lat,
         "er_lng": er_info.er_lng,
-        "statuses": status_list,
+        "tags": tags,
+        "status": status_data,
+        "message": er_message.message if er_message and er_message.message else None,
+        "ai_review": {
+            "summary": ai_review.summary if ai_review and ai_review.summary else None,
+            "positive_ratio": float(ai_review.positive_ratio) if ai_review and ai_review.positive_ratio is not None else None,
+            "negative_ratio": float(ai_review.negative_ratio) if ai_review and ai_review.negative_ratio is not None else None,
+        } if ai_review else None,
     }
 
     return JsonResponse(data)
