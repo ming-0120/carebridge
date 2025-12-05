@@ -1,31 +1,34 @@
+const checkUsernameBtn = document.getElementById("check-username-btn");
 
-document.getElementById("check-username-btn").addEventListener("click", function () {
-    const usernameInput = document.getElementById("id_username");
-    const username = usernameInput.value.trim();
-    const msgEl = document.getElementById("username-msg");
+if (checkUsernameBtn) {
+  checkUsernameBtn.addEventListener("click", function () {
+      const usernameInput = document.getElementById("id_username");
+      const username = usernameInput.value.trim();
+      const msgEl = document.getElementById("username-msg");
 
-    if (username.length === 0) {
-        msgEl.textContent = "아이디를 입력해주세요.";
-        msgEl.style.color = "red";
-        return;
-    }
+      if (username.length === 0) {
+          msgEl.textContent = "아이디를 입력해주세요.";
+          msgEl.style.color = "red";
+          return;
+      }
 
-    fetch(`/accounts/check-username/?username=${encodeURIComponent(username)}`)
-        .then(res => res.json())
-        .then(data => {
-            if (data.exists) {
-                msgEl.textContent = "이미 사용 중인 아이디입니다.";
-                msgEl.style.color = "red";
-            } else {
-                msgEl.textContent = "사용 가능한 아이디입니다.";
-                msgEl.style.color = "green";
-            }
-        })
-        .catch(() => {
-            msgEl.textContent = "중복 확인 중 오류가 발생했습니다.";
-            msgEl.style.color = "red";
-        });
-});
+      fetch(`/accounts/check-username/?username=${encodeURIComponent(username)}`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.exists) {
+                  msgEl.textContent = "이미 사용 중인 아이디입니다.";
+                  msgEl.style.color = "red";
+              } else {
+                  msgEl.textContent = "사용 가능한 아이디입니다.";
+                  msgEl.style.color = "green";
+              }
+          })
+          .catch(() => {
+              msgEl.textContent = "중복 확인 중 오류가 발생했습니다.";
+              msgEl.style.color = "red";
+          });
+  });
+}
 
 // 전화번호 자동 하이픈
 const phoneInput = document.getElementById('id_phone');
@@ -190,26 +193,39 @@ if (pw1 && pw2) {
   pw2.addEventListener('input', checkPwMatch);
   pw2.addEventListener('blur', checkPwMatch);
 }
-const termsAll = document.getElementById("terms_all");
+const termsAll  = document.getElementById("terms_all");
 const termItems = document.querySelectorAll(".terms-list input[type='checkbox']");
 
-// 전체 동의 클릭 시 → 모든 체크박스 변경
-termsAll.addEventListener("change", function () {
-    termItems.forEach(chk => {
-        chk.checked = termsAll.checked;
-    });
-});
+if (termsAll && termItems.length > 0) {
+  // 전체 동의 클릭 시 → 모든 체크박스 변경
+  termsAll.addEventListener("change", function () {
+      termItems.forEach(chk => {
+          chk.checked = termsAll.checked;
+      });
+  });
 
-// 개별 체크박스 변경 시 → 전체 동의 상태 업데이트
-termItems.forEach(chk => {
-    chk.addEventListener("change", function () {
-        const allChecked = Array.from(termItems).every(item => item.checked);
-        termsAll.checked = allChecked;
-    });
-});
+  // 개별 체크박스 변경 시 → 전체 동의 상태 업데이트
+  termItems.forEach(chk => {
+      chk.addEventListener("change", function () {
+          const allChecked = Array.from(termItems).every(item => item.checked);
+          termsAll.checked = allChecked;
+      });
+  });
+}
+// === submit 이벤트는 한 번만 등록 ===
 // === submit 이벤트는 한 번만 등록 ===
 if (form) {
   form.addEventListener('submit', function (e) {
+
+    // ★ 0) provider=kakao면 모든 검증 스킵하고 그대로 submit
+    const urlParams = new URLSearchParams(window.location.search);
+    const providerFromURL = urlParams.get("provider");
+
+    if (providerFromURL === "kakao") {
+      // kakao 가입은 비밀번호/주민등록번호 없음 → 그대로 통과
+      return;
+    }
+
     // 1) 비밀번호 규칙 + 일치 검사
     const validRule  = checkPwRule();
     const validMatch = checkPwMatch();
@@ -406,7 +422,48 @@ if (hospitalResultsBody) {
     if (hospitalIdHidden) {
       hospitalIdHidden.value = id;
     }
-
     closeHospitalModal();
   });
 }
+function openPostcodeSearch() {
+    new daum.Postcode({
+        oncomplete: function(data) {
+            var addr = '';
+            var extraAddr = '';
+
+            if (data.userSelectedType === 'R') {
+                addr = data.roadAddress;
+            } else {
+                addr = data.jibunAddress;
+            }
+            if (data.userSelectedType === 'R') {
+                if (data.bname !== '' && /[동|로|가]$/g.test(data.bname)) {
+                    extraAddr += data.bname;
+                }
+                if (data.buildingName !== '' && data.apartment === 'Y') {
+                    extraAddr += (extraAddr !== '' ? ', ' + data.buildingName : data.buildingName);
+                }
+            }
+            document.getElementById('addr_num').value = data.zonecode;
+            document.getElementById('addr').value = addr;
+            document.getElementById('addr_detail').focus();
+            updateFullAddress();
+        }
+    }).open();
+}
+
+function updateFullAddress() {
+    const zip = document.getElementById('addr_num').value;
+    const address = document.getElementById('addr').value;
+    const detail = document.getElementById('addr_detail').value;
+
+    document.getElementById('address_full').value =
+        `[${zip}] ${address} ${detail}`.trim();
+}
+
+// 상세주소 입력 시 hidden 값 업데이트
+document.addEventListener("input", function(e) {
+    if (e.target.id === "addr_detail") {
+        updateFullAddress();
+    }
+});

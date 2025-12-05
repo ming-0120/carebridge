@@ -6,10 +6,92 @@ let currentDrugBlock = null;
 let selectedDrug = null;
 
 /* --------------------------
+   예약 가능한 기본 시간 목록
+-------------------------- */
+const TIME_SLOTS = [
+    "09:00",
+    "10:00",
+    "11:00",
+    "12:00",
+    "14:00",
+    "15:00",
+    "16:00",
+    "17:00"
+];
+
+/* --------------------------
+   시간 선택 모달 열기
+-------------------------- */
+function openTimeModal() {
+    const dateVal = document.getElementById("reservationDate").value;
+
+    if (!dateVal) {
+        alert("예약 날짜를 먼저 선택하세요.");
+        return;
+    }
+
+    // 날짜가 있으면 예약된 시간 조회 후 그 결과로 모달 구성
+    fetchReservedHoursForModal(dateVal);
+    document.getElementById("timeSelectModal").style.visibility = "visible";
+}
+
+/* --------------------------
+   모달용 예약 시간 조회
+-------------------------- */
+async function fetchReservedHoursForModal(dateVal) {
+    try {
+        const res = await fetch(`/mstaff/api/reserved-hours/?doctor_id=1&date=${dateVal}`);
+        const data = await res.json();
+
+        const reserved = new Set(data.reserved_hours || []);
+        buildTimeGrid(reserved);
+
+    } catch (err) {
+        console.error("예약 시간 조회 실패:", err);
+    }
+}
+
+/* --------------------------
+   시간 목록을 버튼 형태로 렌더링
+-------------------------- */
+function buildTimeGrid(reservedSet) {
+    const grid = document.getElementById("timeGrid");
+    grid.innerHTML = "";
+
+    TIME_SLOTS.forEach(t => {
+        const hour = parseInt(t.split(":")[0]);  // 예: "09:00" → 9
+
+        const btn = document.createElement("button");
+        btn.classList.add("time-btn");
+        btn.textContent = t;
+
+        if (reservedSet.has(hour)) {
+            btn.classList.add("disabled");
+            btn.disabled = true;
+        } else {
+            btn.onclick = () => selectTime(t);
+        }
+
+        grid.appendChild(btn);
+    });
+}
+
+/* --------------------------
+   시간 선택 처리
+-------------------------- */
+function selectTime(t) {
+    // "09:00" → "09"
+    document.getElementById("reservation_hour").value = t.substring(0, 2);
+
+    // 모달 닫기
+    closeModal("timeSelectModal");
+}
+
+
+/* --------------------------
    처방 입력칸 추가
 -------------------------- */
 function addPrescriptionForm() {
-
     const container = document.getElementById("prescriptionContainer");
 
     const block = document.createElement("div");
@@ -68,7 +150,7 @@ function removePrescriptionBlock(btn) {
 -------------------------- */
 async function prepareSubmit() {
 
-    /* 기존 JSON 생성/숨겨진 필드 저장 로직은 그대로 유지 */
+    /* ------------------------ 1) 처방전 리스트 수집 ------------------------ */
     const blocks = document.querySelectorAll(".prescription-block");
     prescriptionList = [];
 
@@ -90,17 +172,14 @@ async function prepareSubmit() {
         });
     });
 
-    /* ------------------------
-       2) 검사/치료 오더 JSON 생성
-    ------------------------ */
-
+    /* ------------------------ 2) 검사/치료 오더 JSON 생성 ------------------------ */
     const orderType = document.getElementById("orderType").value;
-    const emergencyFlag = document.querySelector("input[name='emergency_flag']:checked")?.value || null;
+    const emergencyFlag =
+        document.querySelector("input[name='emergency_flag']:checked")?.value || null;
 
     const globalStart = document.getElementById("globalStartDate").value;
     const globalEnd = document.getElementById("globalEndDate").value;
 
-    // dict 형태로 강제 — Django의 json.loads() → dict OK
     const orderObject = {
         start_date: globalStart,
         end_date: globalEnd,
@@ -108,13 +187,11 @@ async function prepareSubmit() {
         emergency_flag: emergencyFlag
     };
 
-    /* ------------------------
-       3) 숨겨진 필드에 JSON 문자열 저장
-    ------------------------ */
+    /* ------------------------ 3) 숨겨진 필드 저장 ------------------------ */
     document.getElementById("prescriptions").value = JSON.stringify(prescriptionList);
     document.getElementById("orders").value = JSON.stringify(orderObject);
 
-    // --- 여기부터 수정 ---
+    /* ------------------------ 4) 제출 ------------------------ */
     const form = document.getElementById("recordForm");
     const formData = new FormData(form);
 
@@ -126,16 +203,12 @@ async function prepareSubmit() {
     const data = await response.json();
 
     if (response.status === 400 && data.error) {
-        alert(data.error);   // 이미 예약된 시간입니다
+        alert(data.error);
         return;
     }
 
     alert("저장되었습니다.");
-
-    // 필요 시 상세 페이지로 이동 (URL은 원하는 구조로 교체 가능)
-    // window.location.href = `/mstaff/medical-record/${data.medical_record_id}/detail/`;
 }
-
 
 /* --------------------------
    약품 검색 모달
@@ -146,13 +219,12 @@ function openDrugSearchModal(btn) {
 
     document.getElementById("drugSearchModal").style.visibility = "visible";
 
-    // 기존 선택 강조 제거
     document.querySelectorAll("#drugResultTable tbody tr")
         .forEach(r => r.classList.remove("selected"));
 }
 
 /* --------------------------
-   약품 검색 API 호출
+   약품 검색 API
 -------------------------- */
 async function performSearch() {
     const query = document.getElementById("drugNameInput").value;
@@ -175,19 +247,15 @@ async function performSearch() {
 
     data.results.forEach(item => {
         const tr = document.createElement("tr");
-
         tr.dataset.code = item.code;
         tr.dataset.name = item.name;
 
-        tr.onclick = function () {
-            selectDrug(this);
-        };
+        tr.onclick = () => selectDrug(tr);
 
         tr.innerHTML = `
             <td>${item.name}</td>
             <td>${item.code}</td>
         `;
-
         tbody.appendChild(tr);
     });
 }
@@ -211,14 +279,8 @@ function selectDrug(row) {
    선택 반영
 -------------------------- */
 function confirmSelection() {
-
     if (!selectedDrug) {
         alert("약품을 선택하세요.");
-        return;
-    }
-
-    if (!currentDrugBlock) {
-        alert("오류: 현재 블록을 찾을 수 없습니다.");
         return;
     }
 
@@ -233,25 +295,11 @@ function closeModal(id) {
 }
 
 /* --------------------------
-   검사 선택 시 응급 옵션 표시
+   검사 선택 시 응급 여부 표시
 -------------------------- */
 function toggleEmergencyOption() {
     const orderType = document.getElementById("orderType").value;
     const emergencyBox = document.getElementById("emergencyWrapper");
 
-    if (orderType === "lab") {
-        emergencyBox.style.display = "block";
-    } else {
-        emergencyBox.style.display = "none";
-    }
-}
-
-function buildReservationDateTime() {
-    const day = document.getElementById("reservationDate").value;
-    const hour = document.getElementById("reservationHour").value;
-
-    if (!day || !hour) return null;
-
-    // YYYY-MM-DDTHH:00 형태로 조립
-    return `${day}T${hour}:00`;
+    emergencyBox.style.display = orderType === "lab" ? "block" : "none";
 }
