@@ -1,21 +1,40 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.utils import timezone
-from datetime import timedelta
-from django.db.models import Count, Sum, Q
-from django.core.paginator import Paginator
-from django.db import connection
-from django.template.loader import render_to_string
-from django.http import JsonResponse
+"""
+관리자 패널 뷰 함수들
+- 대시보드, 사용자/의사/병원 목록, 승인 대기, 1:1 문의 관리 기능 제공
+- AJAX 요청 처리 및 페이지네이션 지원
+"""
+
+# Django 기본 기능
+from django.shortcuts import render, redirect, get_object_or_404  # 템플릿 렌더링, 리다이렉트, 객체 조회 또는 404 에러
+from django.utils import timezone  # 시간대를 고려한 현재 시간/날짜 처리
+from datetime import timedelta  # 날짜/시간 연산 (예: 7일 전 계산)
+
+# Django ORM 기능
+from django.db.models import Count, Sum, Q  # 집계 함수(Count, Sum), 복잡한 쿼리 조건(Q)
+from django.core.paginator import Paginator  # 페이지네이션 처리
+from django.db import connection  # 원시 SQL 쿼리 실행 (더미 데이터 생성 시 사용)
+
+# Django 템플릿 및 HTTP 응답
+from django.template.loader import render_to_string  # 템플릿을 문자열로 렌더링 (AJAX 응답용)
+from django.http import JsonResponse  # JSON 형식 HTTP 응답 (AJAX 요청 처리)
+
+# 데이터베이스 모델
 from apps.db.models import Users, Doctors, Hospital, Qna, DailyVisit, UserFavorite, Department
-import json
-import re
+
+# Python 표준 라이브러리
+import json  # JSON 데이터 처리 (차트 데이터 직렬화)
+import re  # 정규표현식 (더미 데이터 생성 시 패턴 매칭)
 
 # Create your views here.
 
 def dashboard(request):
     """
     관리자 대시보드 뷰
+    - 오늘 가입한 사용자 수, 검증 완료된 의사 수, 총 병원 수 등 통계 정보 제공
+    - 최근 7일간 방문자 수 그래프 데이터 생성
+    - 웹/모바일 가입자 구분 통계 제공
     """
+    # 오늘 날짜 및 시간 범위 설정
     today = timezone.now().date()
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -46,15 +65,27 @@ def dashboard(request):
     
     # 5. 7일 방문자 수 (최근 7일간 일일 방문자 수 합계) - 그래프용으로만 사용
     weekly_visitors = DailyVisit.objects.filter(
-        visit_date__gte=week_ago,
-        visit_date__lte=today
-    ).aggregate(total=Sum('visit_count'))
-    weekly_visitors_count = weekly_visitors['total'] or 0
+        visit_date__gte=week_ago,  # week_ago 이상 (이후 날짜)
+        visit_date__lte=today      # today 이하 (이전 날짜)
+    ).aggregate(total=Sum('visit_count'))  # visit_count 필드의 합계 계산
+    weekly_visitors_count = weekly_visitors['total'] or 0  # 결과값 추출, 없으면 0
     
     # 6. 미처리 1:1 문의 (답변이 없는 문의)
+    # Qna.objects: Qna 모델의 모든 객체에 접근
+    # .filter(reply__isnull=True): reply 필드가 None(비어있음)인 문의만 필터링
+    #   - reply__isnull=True: reply 필드가 NULL인 경우 (답변이 아직 작성되지 않음)
+    #   - reply__isnull=False: reply 필드에 값이 있는 경우 (답변이 작성됨)
+    # .count(): 필터링된 결과의 개수를 반환 (정수형)
+    # 결과: 답변이 아직 작성되지 않은 문의의 총 개수
     pending_qna_count = Qna.objects.filter(reply__isnull=True).count()
     
     # 7. 의사 승인 대기 (검증되지 않은 의사)
+    # Doctors.objects: Doctors 모델의 모든 객체에 접근
+    # .filter(verified=False): verified 필드가 False인 의사만 필터링
+    #   - verified=False: 검증되지 않은 의사 (승인 대기 중인 의사)
+    #   - verified=True: 검증 완료된 의사 (승인된 의사)
+    # .count(): 필터링된 결과의 개수를 반환 (정수형)
+    # 결과: 아직 승인되지 않은(검증 대기 중인) 의사의 총 개수
     pending_doctors_count = Doctors.objects.filter(verified=False).count()
     
     # 8. 평균 대기 일수 (검증되지 않은 의사들의 평균 대기 일수)
@@ -66,24 +97,49 @@ def dashboard(request):
         avg_waiting_days = 0
     
     # 9. 오늘 가입한 회원 (웹/모바일 구분 - provider로 구분)
+    # 웹으로 가입한 사용자 수 (일반 회원가입)
+    # Users.objects: Users 모델의 모든 객체에 접근
+    # .filter(created_at__date=today): 오늘 날짜에 가입한 사용자만 필터링
+    #   - created_at__date=today: created_at 필드의 날짜 부분이 오늘과 일치하는 경우
+    # .filter(provider='local'): provider 필드가 'local'인 사용자만 필터링
+    #   - provider='local': 일반 회원가입으로 가입한 사용자 (웹 가입)
+    # .filter(withdrawal='0'): 탈퇴하지 않은 사용자만 필터링
+    #   - withdrawal='0': 탈퇴하지 않은 사용자
+    #   - withdrawal='1': 탈퇴한 사용자
+    # .count(): 필터링된 결과의 개수를 반환 (정수형)
+    # 결과: 오늘 일반 회원가입으로 가입한 사용자의 총 개수
     new_users_web = Users.objects.filter(
-        created_at__date=today,
-        provider='local',
-        withdrawal='0'
+        created_at__date=today,  # 오늘 날짜에 가입한 사용자
+        provider='local',        # 일반 회원가입 (웹 가입)
+        withdrawal='0'           # 탈퇴하지 않은 사용자
     ).count()
     
+    # 모바일로 가입한 사용자 수 (소셜 로그인)
+    # Users.objects: Users 모델의 모든 객체에 접근
+    # .filter(created_at__date=today): 오늘 날짜에 가입한 사용자만 필터링
+    #   - created_at__date=today: created_at 필드의 날짜 부분이 오늘과 일치하는 경우
+    # .filter(provider__in=['kakao', 'naver']): provider 필드가 'kakao' 또는 'naver'인 사용자만 필터링
+    #   - provider__in=['kakao', 'naver']: 카카오 또는 네이버 소셜 로그인으로 가입한 사용자 (모바일 가입)
+    #   - provider='local': 일반 회원가입 (웹 가입)
+    # .filter(withdrawal='0'): 탈퇴하지 않은 사용자만 필터링
+    #   - withdrawal='0': 탈퇴하지 않은 사용자
+    #   - withdrawal='1': 탈퇴한 사용자
+    # .count(): 필터링된 결과의 개수를 반환 (정수형)
+    # 결과: 오늘 소셜 로그인(카카오/네이버)으로 가입한 사용자의 총 개수
     new_users_mobile = Users.objects.filter(
-        created_at__date=today,
-        provider__in=['kakao', 'naver'],
-        withdrawal='0'
+        created_at__date=today,              # 오늘 날짜에 가입한 사용자
+        provider__in=['kakao', 'naver'],     # 카카오 또는 네이버 소셜 로그인 (모바일 가입)
+        withdrawal='0'                        # 탈퇴하지 않은 사용자
     ).count()
     
     # 10. 7일 이용자 그래프 데이터 (최근 7일간 일일 방문자 수)
+    # Chart.js에서 사용할 수 있도록 JSON 형식으로 데이터 준비
     visitor_chart_data = {
         'labels': [],
         'values': []
     }
     
+    # 6일 전부터 오늘까지의 데이터 수집
     for i in range(6, -1, -1):  # 6일 전부터 오늘까지
         date = today - timedelta(days=i)
         date_str = date.strftime('%m/%d')
@@ -95,6 +151,7 @@ def dashboard(request):
         visitor_chart_data['labels'].append(date_str)
         visitor_chart_data['values'].append(count)
     
+    # 템플릿에 전달할 컨텍스트 데이터
     context = {
         'new_users_count': new_users_count,
         'verified_doctors_count': verified_doctors_count,
@@ -106,7 +163,7 @@ def dashboard(request):
         'avg_waiting_days': avg_waiting_days,
         'new_users_web': new_users_web,
         'new_users_mobile': new_users_mobile,
-        'visitor_chart_data': json.dumps(visitor_chart_data),
+        'visitor_chart_data': json.dumps(visitor_chart_data),  # JSON 문자열로 변환하여 전달
     }
     
     return render(request, 'admin_panel/dashboard.html', context)
@@ -115,6 +172,11 @@ def dashboard(request):
 def user_list(request):
     """
     사용자 목록 페이지 뷰
+    - 일반 사용자(role='USER') 목록 조회
+    - 검색 기능 (사용자명, 이름, 이메일, 전화번호)
+    - 정렬 기능 (다양한 필드 기준)
+    - 페이지네이션 (페이지당 5개)
+    - AJAX 요청 시 상세 정보만 반환
     """
     # 검색 조건 및 키워드
     search_type = request.GET.get('search_type', '')
@@ -125,7 +187,7 @@ def user_list(request):
     sort_field = request.GET.get('sort', '')
     sort_order = request.GET.get('order', 'desc')
     
-    # 정렬 필드 매핑
+    # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
         'user_id': 'user_id',  # No. 정렬용
         'username': 'username',
@@ -182,7 +244,7 @@ def user_list(request):
             # 오름차순 또는 기본: 페이지네이션 기준
             number = start_index + idx
         
-        # 주민번호를 생년월일로 변환
+        # 주민번호를 생년월일로 변환 (표시용)
         birth_date = None
         if user.resident_reg_no and len(user.resident_reg_no) >= 7:
             reg_no = user.resident_reg_no
@@ -216,7 +278,7 @@ def user_list(request):
             'birth_date': birth_date
         })
     
-    # 선택된 사용자 정보
+    # 선택된 사용자 정보 (상세 정보 표시용)
     selected_user = None
     favorite_hospitals = []
     birth_date = None
@@ -293,6 +355,11 @@ def user_list(request):
 def doctor_list(request):
     """
     의사 목록 페이지 뷰
+    - 모든 의사 목록 조회
+    - 검색 기능 (이름, 의사ID, 면허번호, 진료과, 병원명)
+    - 정렬 기능 (다양한 필드 기준)
+    - 페이지네이션 (페이지당 5개)
+    - AJAX 요청 시 상세 정보만 반환
     """
     # 검색 조건 및 키워드
     search_type = request.GET.get('search_type', '')
@@ -303,7 +370,7 @@ def doctor_list(request):
     sort_field = request.GET.get('sort', '')
     sort_order = request.GET.get('order', 'desc')
     
-    # 정렬 필드 매핑
+    # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
         'doctor_id': 'doctor_id',  # No. 정렬용
         'name': 'user__name',
@@ -316,7 +383,7 @@ def doctor_list(request):
         'created_at': 'user__created_at',
     }
     
-    # 기본 쿼리셋 (모든 의사)
+    # 기본 쿼리셋 (모든 의사, 관련 객체 미리 로드)
     doctors = Doctors.objects.select_related('user', 'hos', 'dep').all()
     
     # 정렬 적용
@@ -368,7 +435,7 @@ def doctor_list(request):
             'number': number
         })
     
-    # 선택된 의사 정보
+    # 선택된 의사 정보 (상세 정보 표시용)
     selected_doctor = None
     if selected_doctor_id:
         try:
@@ -410,6 +477,11 @@ def doctor_list(request):
 def hospital_list(request):
     """
     병원 목록 페이지 뷰
+    - 모든 병원 목록 조회 (의사 수 포함)
+    - 검색 기능 (병원명, 지역, 전화번호, 병원ID)
+    - 정렬 기능 (다양한 필드 기준)
+    - 페이지네이션 (페이지당 5개)
+    - AJAX 요청 시 상세 정보만 반환
     """
     # 검색 조건 및 키워드
     search_type = request.GET.get('search_type', '')
@@ -420,7 +492,7 @@ def hospital_list(request):
     sort_field = request.GET.get('sort', '')
     sort_order = request.GET.get('order', 'desc')
     
-    # 정렬 필드 매핑
+    # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
         'hos_id': 'hos_id',  # No. 정렬용
         'hos_name': 'hos_name',
@@ -482,7 +554,7 @@ def hospital_list(request):
             'number': number
         })
     
-    # 선택된 병원 정보
+    # 선택된 병원 정보 (상세 정보 표시용)
     selected_hospital = None
     if selected_hospital_id:
         try:
@@ -525,12 +597,17 @@ def hospital_list(request):
 def approval_pending(request):
     """
     의사 승인 대기 페이지 뷰
+    - 검증되지 않은 의사(verified=False) 목록 조회
+    - 면허번호와 주민번호 뒷자리 일치 여부 검증
+    - 승인/거절 처리 (POST 요청)
+    - 정렬 기능 및 페이지네이션 지원
+    - AJAX 요청 시 상세 정보만 반환
     """
     # 정렬 파라미터
     sort_field = request.GET.get('sort', '')
     sort_order = request.GET.get('order', 'asc')
     
-    # 정렬 필드 매핑
+    # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
         'doctor_id': 'doctor_id',  # No. 정렬용
         'name': 'user__name',
@@ -541,7 +618,7 @@ def approval_pending(request):
         'created_at': 'user__created_at',
     }
     
-    # 검증되지 않은 의사들 조회
+    # 검증되지 않은 의사들 조회 (관련 객체 미리 로드)
     pending_doctors = Doctors.objects.filter(verified=False).select_related(
         'user', 'hos', 'dep'
     )
@@ -623,9 +700,10 @@ def approval_pending(request):
         
         if doctor_ids:
             if action == 'approve':
+                # 승인 처리: verified=True로 업데이트
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).update(verified=True)
             elif action == 'reject':
-                # 거절 처리 (필요시 추가 로직)
+                # 거절 처리: 의사 데이터 삭제
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).delete()
         
         return redirect('approval_pending')
@@ -656,6 +734,10 @@ def approval_pending(request):
 def qna_list(request):
     """
     1:1 문의 목록 페이지 뷰
+    - 모든 문의 목록 조회
+    - 삭제 처리 (POST 요청)
+    - 정렬 기능 (기본: 답변 대기 상태가 먼저)
+    - 페이지네이션 (페이지당 5개)
     """
     # 삭제 처리 (POST 요청)
     if request.method == 'POST':
@@ -673,7 +755,7 @@ def qna_list(request):
     sort_field = request.GET.get('sort', '')
     sort_order = request.GET.get('order', 'asc')
     
-    # 정렬 필드 매핑
+    # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
         'qna_id': 'qna_id',  # No. 정렬용
         'name': 'user__name',
@@ -683,7 +765,7 @@ def qna_list(request):
         'created_at': 'created_at',
     }
     
-    # 기본 쿼리셋 (모든 문의)
+    # 기본 쿼리셋 (모든 문의, 사용자 정보 미리 로드)
     qnas = Qna.objects.select_related('user').all()
     
     # 정렬 적용
@@ -760,8 +842,10 @@ def qna_list(request):
 def qna_detail(request, qna_id):
     """
     1:1 문의 상세 페이지 뷰
+    - 문의 상세 정보 조회
+    - 답변 저장 처리 (POST 요청)
     """
-    # 문의 조회
+    # 문의 조회 (사용자 정보 미리 로드)
     qna = get_object_or_404(Qna.objects.select_related('user'), qna_id=qna_id)
     
     # 답변 저장 처리 (POST 요청)
@@ -787,6 +871,9 @@ def qna_detail(request, qna_id):
 def create_user_dummy_data(request):
     """
     더미 사용자 데이터 생성
+    - 테스트용 사용자 데이터 생성 (8명)
+    - 주민번호, 이메일, 전화번호 자동 생성
+    - created_at을 오늘 날짜로 설정
     """
     from django.contrib.auth.hashers import make_password
     import random
@@ -909,8 +996,10 @@ def create_user_dummy_data(request):
 def create_doctor_dummy_data(request):
     """
     더미 의사 데이터 생성
-    전공과: 내과(IM), 외과(GS), 정형외과(OR), 소아과(PD), 이비인후과(EN)
-    면허번호: 전공과 영어코드 + 주민번호 뒷자리
+    - 테스트용 의사 데이터 생성 (5명)
+    - 전공과: 내과(IM), 외과(GS), 정형외과(OR), 소아과(PD), 이비인후과(EN)
+    - 면허번호: 전공과 영어코드 + 주민번호 뒷자리
+    - 첫 번째 의사는 면허번호와 주민번호가 일치하지 않도록 설정 (테스트용)
     """
     from django.contrib.auth.hashers import make_password
     import random
@@ -1066,6 +1155,8 @@ def create_doctor_dummy_data(request):
 def create_qna_dummy_data(request):
     """
     더미 1:1 문의 데이터 생성
+    - 테스트용 문의 데이터 생성 (5개)
+    - 일부는 답변이 있는 문의, 일부는 답변이 없는 문의로 생성
     """
     from datetime import timedelta
     import random
@@ -1134,7 +1225,7 @@ def create_qna_dummy_data(request):
 def delete_qna_dummy_data(request):
     """
     더미 1:1 문의 데이터 삭제
-    제목이 '더미 문의'로 시작하는 문의들 삭제
+    - 제목이 '더미 문의'로 시작하는 문의들 삭제
     """
     # 더미 문의 삭제 (제목이 '더미 문의'로 시작)
     deleted_count = 0
@@ -1152,7 +1243,7 @@ def delete_qna_dummy_data(request):
 def delete_user_dummy_data(request):
     """
     더미 사용자 데이터 삭제
-    username이 'user'로 시작하고 role='USER'인 사용자들 삭제
+    - username이 'user'로 시작하고 role='USER'인 사용자들 삭제
     """
     from django.db.models import Q
     
@@ -1175,7 +1266,8 @@ def delete_user_dummy_data(request):
 def delete_doctor_dummy_data(request):
     """
     더미 의사 데이터 삭제
-    username이 'doctor'로 시작하는 의사들 삭제 (Doctors와 Users 모두)
+    - username이 'doctor'로 시작하는 의사들 삭제 (Doctors와 Users 모두)
+    - CASCADE로 Users도 함께 삭제됨
     """
     # 더미 의사 삭제 (username이 'doctor'로 시작)
     deleted_count = 0
@@ -1191,5 +1283,3 @@ def delete_doctor_dummy_data(request):
             deleted_count += 1
     
     return redirect('doctor_list')
-
-

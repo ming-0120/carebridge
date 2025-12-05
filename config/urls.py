@@ -16,16 +16,6 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.shortcuts import redirect
-from django.http import HttpResponsePermanentRedirect
-
-def admin_panel_redirect(request, path=''):
-    """admin-panel/로 접근 시 admin_panel/로 리다이렉트"""
-    query_string = request.GET.urlencode()
-    redirect_url = f'/admin_panel/{path}'
-    if query_string:
-        redirect_url += f'?{query_string}'
-    return HttpResponsePermanentRedirect(redirect_url)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -44,9 +34,8 @@ urlpatterns = [
     path('emergency/', include('apps.emergency.urls')),
     
     # 관리자 페이지
-    path('admin_panel/', include('apps.admin_panel.urls')),
-    path('admin-panel/', lambda request: admin_panel_redirect(request, '')),  # 하이픈으로 접근 시 언더스코어로 리다이렉트
-    path('admin-panel/<path:path>', admin_panel_redirect),  # 하이픈으로 접근 시 언더스코어로 리다이렉트  
+    # URL 규칙: 언더스코어(_) 사용
+    path('admin_panel/', include('apps.admin_panel.urls')),  
     
     # 의사 EMR
     path('mstaff/', include('apps.emr.urls')),
