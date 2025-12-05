@@ -81,18 +81,31 @@
 
         {# 음압격리 #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
 
         {# 일반격리 #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.isolation_available total=st.isolation_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
 
         {# 코호트격리 #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.cohort_available total=st.cohort_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
+
 
         <div class="favorite">★</div>
       </div>
