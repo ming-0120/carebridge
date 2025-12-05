@@ -162,9 +162,6 @@ LAST_LOGIN_FIELD = None
 OPENAPI_SERVICE_KEY = os.getenv("OPENAPI_SERVICE_KEY")
 
 from dotenv import load_dotenv
-import urllib.parse
-
 load_dotenv()
 
 RAW_API_KEY = os.getenv("OPENAPI_SERVICE_KEY")
-OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')
