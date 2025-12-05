@@ -11,7 +11,6 @@ from apps.db.models.hospital import Hospital
 from apps.db.models.users import Users
 from apps.db.models.doctor import Doctors
 
-
 @require_http_methods(["GET", "POST"])
 def login_view(request):
     next_url = request.GET.get('next') or request.POST.get('next') or '/'
@@ -66,21 +65,35 @@ def login_view(request):
 
 @require_http_methods(["GET", "POST"])
 def register_view(request):
-    if request.method == "GET":
-        role = request.GET.get("role", "patient")  # 기본값: patient
+    # ---------- 공통: 카카오 임시 정보 ----------
+    kakao_tmp = request.session.get("kakao_tmp")
+    from_kakao = kakao_tmp is not None
 
-        # 병원 / 진료과 목록 템플릿으로 전달
+    if request.method == "GET":
+        role = request.GET.get("role", "patient")          # 기본값: patient
+        provider = request.GET.get("provider", "local")    # local 또는 kakao
+
         hospitals = Hospital.objects.all()
         departments = Department.objects.all()
 
-        return render(request, "accounts/register.html", {
+        context = {
             "role": role,
             "hospitals": hospitals,
             "departments": departments,
-        })
+            "provider": provider,
+            "from_kakao": False,
+        }
+
+        if provider == "kakao" and from_kakao:
+            context["from_kakao"] = True
+            context["kakao_email"] = kakao_tmp.get("email", "")
+            context["kakao_name"] = kakao_tmp.get("name", "")
+
+        return render(request, "accounts/register.html", context)
 
     # ---------- POST 처리 시작 ----------
     role = request.POST.get("role", "patient").strip()
+    provider = request.POST.get("provider", "local").strip()  # hidden 으로 넘기기
 
     username = request.POST.get("username", "").strip()
     name = request.POST.get("name", "").strip()
@@ -91,28 +104,54 @@ def register_view(request):
     mail_confirm = request.POST.get("mail_confirm", "N")
     password1 = request.POST.get("password1", "")
     password2 = request.POST.get("password2", "")
-    address = ""  # 아직 폼에 없으니 기본값
+
+    address = ""
 
     # 의사 전용 필드
     license_no = request.POST.get("license_number", "").strip()
-    hospital_id = request.POST.get("hospital_id")       # name="hospital_id"
-    department_id = request.POST.get("department_id")   # name="department_id"
-    profil_url = request.POST.get("profile_image")
+    hospital_id = request.POST.get("hospital_id")
+    department_id = request.POST.get("department_id")
 
-    # 1) 기본 검증 ----------------------
-    if password1 != password2:
-        messages.error(request, "비밀번호가 서로 다릅니다.")
-        return redirect("register")
+    profil_url = request.POST.get("profil_url", "").strip()
 
-    if not username:
+    # 1) 역할별 주소 세팅 ----------------------
+    if role == "patient":
+        address = request.POST.get("address", "").strip()
+    else:  # doctor
+        if hospital_id:
+            hospital = Hospital.objects.filter(pk=hospital_id).first()
+            address = hospital.address if hospital else ""
+        else:
+            address = ""
+
+    # 2) 기본 검증 -----------------------------
+    # (1) 비밀번호: local 가입만 검사
+    if provider == "local":
+        if password1 != password2:
+            messages.error(request, "비밀번호가 서로 다릅니다.")
+            return redirect("register")
+
+    # (2) 아이디: local 은 필수, kakao 는 비워두면 자동 생성
+    if provider == "local" and not username:
         messages.error(request, "아이디를 입력해주세요.")
         return redirect("register")
 
-    if Users.objects.filter(username=username).exists():
+    # 카카오인 경우 최종 username 결정
+    if provider == "kakao" and from_kakao:
+        kakao_id = kakao_tmp.get("provider_id")
+        if not kakao_id:
+            messages.error(request, "카카오 정보가 유효하지 않습니다. 다시 시도해주세요.")
+            return redirect("login")
+        final_username = username or f'kakao_{kakao_id}'
+    else:
+        final_username = username
+
+    # (3) 아이디 중복 검사 (local / kakao 모두 적용)
+    if Users.objects.filter(username=final_username).exists():
         messages.error(request, "이미 사용 중인 아이디입니다.")
         return redirect("register")
 
-    # 의사일 때 추가 검증
+    # (4) 의사일 때 추가 검증
     if role == "doctor":
         if not hospital_id:
             messages.error(request, "병원을 선택해주세요.")
@@ -126,21 +165,43 @@ def register_view(request):
 
     try:
         with transaction.atomic():
-            # 2) Users 생성 ----------------
-            user = Users.objects.create(
-                username=username,
-                password=make_password(password1),   # 지금 구조에서는 평문 그대로 사용 중이므로 그대로 둠
-                name=name,
-                gender=gender,
-                phone=phone,
-                email=email,
-                resident_reg_no=resident_reg_no,
-                mail_confirm=mail_confirm,
-                address=address,
-                role=role,
-            )
+            # 3) Users 생성 ----------------
+            if provider == "kakao" and from_kakao:
+                kakao_id = kakao_tmp.get("provider_id")
+                kakao_email = kakao_tmp.get("email", "")
 
-            # 3) 의사라면 Doctors 생성 -------
+                user = Users.objects.create(
+                    username=final_username,
+                    password="",  # 소셜 로그인: 비밀번호 사용 안 함
+                    name=name,
+                    gender=gender,
+                    phone=phone,                    # 템플릿에서 빼면 빈 문자열
+                    email=kakao_email,
+                    resident_reg_no=resident_reg_no, # 템플릿에서 빼면 빈 문자열
+                    mail_confirm=mail_confirm,
+                    address=address,
+                    role=role,
+                    provider="kakao",
+                    provider_id=kakao_id,
+                    provider_email=kakao_email,
+                )
+            else:
+                # 일반 로컬 회원가입
+                user = Users.objects.create(
+                    username=final_username,
+                    password=make_password(password1),
+                    name=name,
+                    gender=gender,
+                    phone=phone,
+                    email=email,
+                    resident_reg_no=resident_reg_no,
+                    mail_confirm=mail_confirm,
+                    address=address,
+                    role=role,
+                    provider="local",
+                )
+
+            # 4) 의사라면 Doctors 생성 -------
             if role == "doctor":
                 Doctors.objects.create(
                     user=user,
@@ -148,17 +209,19 @@ def register_view(request):
                     verified=False,
                     memo="",
                     profil_url=profil_url,
-                    hos_id=hospital_id,      # FK: Hospital(hos_id)
-                    dep_id=department_id,    # FK: Department(dep_id)
+                    hos_id=hospital_id,
+                    dep_id=department_id,
                 )
 
     except Exception as e:
         messages.error(request, f"회원가입 중 오류가 발생했습니다: {e}")
         return redirect("register")
 
-    # messages.success(request, "회원가입이 완료되었습니다. 로그인 해주세요.")
-    return redirect("login")
+    # 카카오 임시 세션 정리
+    if "kakao_tmp" in request.session:
+        del request.session["kakao_tmp"]
 
+    return redirect("login")
 
 def check_username(request):
     username = request.GET.get('username', '').strip()
