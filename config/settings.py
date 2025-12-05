@@ -159,11 +159,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LAST_LOGIN_FIELD = None
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-
 OPENAPI_SERVICE_KEY = os.getenv("OPENAPI_SERVICE_KEY")
 
 from dotenv import load_dotenv

@@ -1,1 +1,250 @@
 
+/* ========= 의사 승인 대기 페이지 전용 CSS ========= */
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* Bootstrap 충돌 방지 - 기존 테이블 스타일 보호 */
+.approval-table {
+  /* Bootstrap 기본 스타일 오버라이드 */
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.approval-table th,
+.approval-table td {
+  padding: 12px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.approval-table thead {
+  background-color: #F8FAFF !important;
+}
+
+/* Bootstrap 충돌 방지 - 기존 버튼 스타일 보호 */
+.btn-approve,
+.btn-reject {
+  /* Bootstrap 버튼 스타일 오버라이드 */
+  display: inline-block !important;
+  padding: 10px 20px !important;
+  background-color: inherit !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+.btn-approve {
+  background-color: #10B981 !important;
+  color: #fff !important;
+}
+
+.btn-approve:hover {
+  background-color: #059669 !important;
+}
+
+.btn-reject {
+  background-color: #EF4444 !important;
+  color: #fff !important;
+}
+
+.btn-reject:hover {
+  background-color: #DC2626 !important;
+}
+
+.approval-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+.approval-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin-bottom: 8px;
+}
+
+.approval-count {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.approval-subtitle {
+  font-size: 14px;
+  color: #999;
+}
+
+.approval-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.btn-approve {
+  padding: 10px 20px;
+  background-color: #10B981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-approve:hover {
+  background-color: #059669;
+}
+
+.btn-reject {
+  padding: 10px 20px;
+  background-color: #EF4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-reject:hover {
+  background-color: #DC2626;
+}
+
+.approval-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.approval-table thead {
+  background-color: #F8FAFF;
+}
+
+.approval-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1B3C73;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+.approval-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.approval-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.approval-row:hover {
+  background-color: #F8FAFF;
+}
+
+.approval-row.selected {
+  background-color: #E9F1FF;
+}
+
+/* 면허번호와 주민번호 뒷자리가 일치하지 않는 의사 행 스타일 */
+.approval-row.invalid-license {
+  background-color: #FEE2E2;
+}
+
+.approval-row.invalid-license:hover {
+  background-color: #FECACA;
+}
+
+.approval-row.invalid-license.selected {
+  background-color: #FCA5A5;
+}
+
+/* 체크박스가 체크된 행의 스타일 - 행 선택 색상과 통일 */
+.approval-row.checkbox-checked {
+  background-color: #E9F1FF;
+}
+
+.approval-row.checkbox-checked:hover {
+  background-color: #E9F1FF;
+}
+
+/* 체크박스가 체크되고 invalid-license인 경우 */
+.approval-row.invalid-license.checkbox-checked {
+  background-color: #FCA5A5;
+}
+
+.approval-row.invalid-license.checkbox-checked:hover {
+  background-color: #FCA5A5;
+}
+
+/* Bootstrap card와 통합된 상세정보 섹션 */
+.approval-detail-section {
+  margin-top: 32px;
+  border: none !important; /* Bootstrap 기본 border 오버라이드 */
+}
+
+.approval-detail-section .card-body {
+  padding: 32px !important;
+}
+
+.approval-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3C73;
+  /* Bootstrap의 border-bottom pb-3 mb-4 클래스 사용 */
+}
+
+.approval-detail-message {
+  margin: 0;
+  /* Bootstrap의 alert alert-info 클래스 사용 */
+}
+
+/* Bootstrap grid와 통합 */
+.approval-detail-grid {
+  /* Bootstrap의 row g-3 클래스 사용 */
+}
+
+.approval-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  border: 1px solid #6B7280;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #FFFFFF;
+}
+
+.approval-detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.approval-detail-label {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 700;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: none;
+  border-bottom: 1px solid #6B7280;
+  border-radius: 8px 8px 0 0;
+  margin: 0;
+}
+
+.approval-detail-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: none;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  margin: 0;
+}
