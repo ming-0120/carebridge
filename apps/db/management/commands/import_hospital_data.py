@@ -88,7 +88,6 @@ class Command(BaseCommand):
 
             # 🔽 기존:
             # body = data.get("response", {}).get("body", {})
-            # items = body.get("items", {}).get("item", [])
             # if isinstance(items, dict):
             #     items = [items]
 

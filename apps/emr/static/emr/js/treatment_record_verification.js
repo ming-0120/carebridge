@@ -36,13 +36,12 @@ function updateStatus(newStatus) {
             alert('처치부위는 필수 입력값입니다.')
             return;
         }
-
+        $('#procedureSite').attr("disabled", false);
         $("form[name='frmTreatment']").submit();
 
     } else if (newStatus === 'Completed') {
-        completionTime.value = getCurrentTime();
-        // currentState = 'Completed';
-        alert('시술이 완료되었습니다.');
+        $('#procedureSite').attr("disabled", false);
+        $("form[name='frmTreatment']").submit();
     }
 
     // updateButtonVisibility();

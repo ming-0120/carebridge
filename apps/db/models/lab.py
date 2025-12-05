@@ -36,7 +36,7 @@ class LabOrders(models.Model):
 
 class LabUpload(models.Model):
     lab_upload_id = models.AutoField(primary_key=True)
-    uploadedFile = models.CharField(max_length=255)
+    uploadedFile = models.FileField(upload_to="lab/")
     original_name = models.CharField(max_length=255)
     datetimeOfUpload = models.DateTimeField(auto_now_add=True)
     lab_order = models.ForeignKey('LabOrders', on_delete=models.CASCADE)

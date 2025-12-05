@@ -23,15 +23,13 @@
         <input type="hidden" id="prescriptions" name="prescriptions">
         <input type="hidden" id="orders" name="orders">
 
-        <input type="hidden" id="reservation_datetime" name="reservation_date">
-
         <!-- 기본 값 -->
         <input type="hidden" name="patient_id" value="1">
         <input type="hidden" name="doctor_id" value="1">
         <input type="hidden" name="hos_id" value="1">
 
         <div class="container">
-            <h2> 진료 기록 작성</h2>
+            <h2>진료 기록 작성</h2>
 
             <div class="patient-header-info">
                 <span><strong>환자명:</strong> 홍길순</span>
@@ -103,7 +101,7 @@
                     </div>
                 </div>
 
-                <!--  처방전 영역 시작 -->
+                <!-- 처방전 영역 -->
                 <div class="card prescription-area">
                     <div class="section-title">처방전 작성</div>
 
@@ -134,8 +132,6 @@
 
                     <div class="form-group">
                         <label for="orderType">오더 종류</label>
-
-                        <!-- order_type name 제거해야 JS → orders JSON 구조 유지됨 -->
                         <select id="orderType" onchange="toggleEmergencyOption()">
                             <option value="">선택</option>
                             <option value="treatment">치료/처치</option>
@@ -143,12 +139,10 @@
                         </select>
                     </div>
 
-                    <!-- 검사 선택 시 표시 -->
                     <div id="emergencyWrapper" style="display:none;">
                         <label class="emergency-label">응급 여부</label>
 
                         <div class="radio-line">
-                            <!-- 반드시 같은 name 필요 -->
                             <input type="radio" id="emergencyY" name="emergency_flag" value="yes">
                             <label for="emergencyY">예</label>
 
@@ -162,23 +156,23 @@
                     <div class="section-title">예약 설정</div>
 
                     <div class="form-group">
-                        <label for="reservationDate">예약 일시</label>
-                        <!-- 날짜 -->
+                        <label for="reservationDate">예약 날짜</label>
                         <input type="date" id="reservationDate" name="reservation_date_day">
+                    </div>
 
-                        <!-- 시간 (정각만 선택) -->
-                        <select id="reservationHour" name="reservation_hour">
-                            <option value="">시간 선택</option>
-                            <option value="09">09:00</option>
-                            <option value="10">10:00</option>
-                            <option value="11">11:00</option>
-                            <option value="12">12:00</option>
-                            <!-- 점심시간 제외 -->
-                            <option value="14">14:00</option>
-                            <option value="15">15:00</option>
-                            <option value="16">16:00</option>
-                            <option value="17">17:00</option>
-                        </select>
+                    <div class="form-group">
+                        <label>예약 시간</label>
+
+                        <!-- 실제 서버로 보내는 값 -->
+                        <input type="hidden" id="reservation_hour" name="reservation_hour">
+
+                        <!-- 시간 모달을 여는 버튼 -->
+                        <button type="button" class="btn-time-select" onclick="openTimeModal()">
+                            시간 선택
+                        </button>
+
+                        <!-- 선택된 시간 표시 -->
+                        <span id="selectedTimeLabel" style="margin-left:10px; font-weight:bold;"></span>
                     </div>
 
                     <div class="form-group">
@@ -203,7 +197,9 @@
         </div>
     </form>
 
-    <!-- 모달 -->
+    <!-- ================================
+         약품 검색 모달 (1개만 유지)
+    ================================= -->
     <div class="modal-overlay" id="drugSearchModal">
         <div class="modal-content">
 
@@ -229,6 +225,27 @@
             <div class="modal-footer">
                 <button class="btn-cancel-6page" type="button" onclick="closeModal('drugSearchModal')">취소</button>
                 <button class="btn-confirm-6page" type="button" onclick="confirmSelection()">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================================
+         예약 시간 선택 모달
+    ================================= -->
+    <div class="modal-overlay" id="timeSelectModal">
+        <div class="modal-content">
+
+            <div class="modal-header">예약 시간 선택</div>
+
+            <div class="modal-body">
+                <div id="timeGrid" class="time-grid"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel-6page" type="button" onclick="closeModal('timeSelectModal')">
+                    닫기
+                </button>
             </div>
 
         </div>

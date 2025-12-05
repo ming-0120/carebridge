@@ -1,18 +1,25 @@
-from django.shortcuts import render
+from django.shortcuts import render,redirect
 from django.http import JsonResponse
-import os
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from datetime import datetime, date
-import requests, json
-from django.utils import timezone
-from apps.db.models.slot_reservation import Reservations
+from datetime import datetime, date, time, timezone as dt_timezone
 from django.db import connection
 from django.db.models import Q
 from apps.db.models import Users
+from pytz import timezone as tz
+from apps.db.models import Reservations
+from django.utils import timezone
+import requests, json
+import os
 import xml.etree.ElementTree as ET
 
+KST = tz("Asia/Seoul")
+
+
+# ----------------------------
+# 중복 제거: Reservations 단일 import
+# ----------------------------
 from apps.db.models import (
     MedicalRecord,
     MedicineOrders,
@@ -28,6 +35,44 @@ from apps.db.models import (
 )
 
 load_dotenv()
+
+@require_GET
+def api_reserved_hours(request):
+    doctor_id = request.GET.get("doctor_id")
+    date_str = request.GET.get("date")
+
+    if not doctor_id or not date_str:
+        return JsonResponse({"error": "doctor_id, date 필요"}, status=400)
+
+    target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+
+    # KST 날짜 범위 생성
+    start_kst = timezone.make_aware(
+        datetime.combine(target_date, datetime.min.time()),
+        KST
+    )
+    end_kst = timezone.make_aware(
+        datetime.combine(target_date, datetime.max.time()),
+        KST
+    )
+
+    # UTC 변환 (Django 5.2에서는 timezone.utc 제거됨 → dt_timezone.utc 사용)
+    start_utc = start_kst.astimezone(dt_timezone.utc)
+    end_utc   = end_kst.astimezone(dt_timezone.utc)
+
+    # UTC 범위로 DB 조회
+    qs = Reservations.objects.filter(
+        slot__doctor_id=doctor_id,
+        reserved_at__gte=start_utc,
+        reserved_at__lte=end_utc
+    ).values_list("reserved_at", flat=True)
+
+    reserved_hours = []
+    for dt in qs:
+        local_dt = dt.astimezone(KST)
+        reserved_hours.append(local_dt.hour)
+
+    return JsonResponse({"reserved_hours": reserved_hours})
 
 
 # ---------------------------------------------------------
@@ -66,6 +111,7 @@ def doctor_screen_dashboard(request):
     }
 
     return render(request, 'emr/doctor_screen_dashboard.html', datas)
+
 
 
 # ---------------------------------------------------------
@@ -152,14 +198,6 @@ def hospital_staff_dashboard(request):
     return render(request, 'emr/hospital_staff_dashboard.html', context)
 
 
-
-# ---------------------------------------------------------
-# 검사 입력 화면
-# ---------------------------------------------------------
-def lab_record_creation(request):
-    return render(request, "emr/lab_record_creation.html")
-
-
 # ---------------------------------------------------------
 # 진료기록 작성 화면
 # ---------------------------------------------------------
@@ -175,33 +213,119 @@ def medical_record_creation(request):
 # 추가해야 하는 나머지 View (템플릿만 연결)
 # -------------------------------------------------------------------
 
+@csrf_exempt
 def lab_record_creation(request):
-    return render(request, 'emr/lab_record_creation.html')
+    if request.method == "GET":
+        order_id = request.GET['order_id']
+        user_id = request.GET['user_id']
+        record_id = request.GET['medical_record_id']
+        files = []
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = LabOrders.objects.get(lab_order_id=int(order_id))
+
+            try:
+                files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+            except:
+                print('error')
+        except:
+            print('error')
+
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+            'files': files,
+        }
+
+        return render(request, 'emr/lab_record_creation.html', context)
+    elif request.method == "POST":
+        order_id = request.POST['order_id']
+        user_id = request.POST['user_id']
+        record_id = request.POST['medical_record_id']
+        current_status = request.POST['current_status']
+        lab_name = request.POST['labName']
+        lab_code = request.POST['labCode']
+        specimen_type = request.POST['specimenType']
+        special_notes = request.POST['specialNotes']
+        uploaded_files = request.FILES.getlist('fileAttachment')
+        files = []
+
+        try:
+            user = Users.objects.get(user_id=user_id)
+            medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
+            order = LabOrders.objects.get(lab_order_id=int(order_id))
+            if current_status == 'Pending':
+                order.status = 'Sampled'
+                order.lab_nm = lab_name
+                order.lab_cd = lab_code
+                order.specimen_cd = specimen_type
+                order.requisition_note = special_notes
+                order.status_datetime = datetime.now()
+
+                order.save()
+
+                for file in uploaded_files:
+                    labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
+                    labUpload.save()
+
+                try:
+                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+                except:
+                    print('error')
+                
+                
+            elif current_status == 'Sampled':
+                order.status_datetime = datetime.now()
+                order.status = 'Completed'
+                order.requisition_note = special_notes
+
+                try:
+                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+                except:
+                    print('error')
+
+
+
+        except:
+            print('error')
+
+        context = {
+            'user': user,
+            'medical_record': medical_record,
+            'order': order,
+            'files': files,
+        }
+
+        if (order.status == 'Completed'):
+            return redirect('/mstaff/hospital_dashboard/')
+        else:
+            return render(request, 'emr/lab_record_creation.html')
+
+        
 
 def medical_record_inquiry(request):
     return render(request, "emr/medical_record_inquiry.html")
 
-
-# ---------------------------------------------------------
-# 환자 검색 화면
-# ---------------------------------------------------------
 def patient_search_list(request):
     return render(request, "emr/patient_search_list.html")
 
-
-# ---------------------------------------------------------
-# 오늘의 환자 목록
-# ---------------------------------------------------------
 def today_patient_list(request):
     return render(request, "emr/today_patient_list.html")
 
+def view_previous_medical_records(request):
+    return render(request, "emr/view_previous_medical_records.html")
+
+
 
 # ---------------------------------------------------------
-# 치료/처치 기록 검증 화면
+# 치료/처치 기록 검증
 # ---------------------------------------------------------
 @csrf_exempt
 def treatment_record_verification(request):
-
     if request.method == "GET":
         order_id = request.GET['order_id']
         user_id = request.GET['user_id']
@@ -227,6 +351,10 @@ def treatment_record_verification(request):
         user_id = request.POST['user_id']
         record_id = request.POST['medical_record_id']
         current_status = request.POST['current_status']
+        procedure_name = request.POST['procedureName']
+        procedure_code = request.POST['procedureCode']
+        procedure_site = request.POST['procedureSite']
+        special_notes = request.POST['specialNotes']
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -235,10 +363,15 @@ def treatment_record_verification(request):
             if current_status == 'Pending':
                 order.status = 'In progress'
                 order.execution_datetime = datetime.now()
+                order.procedure_code = procedure_code
+                order.procedure_name = procedure_name
+                order.result_notes = special_notes
+                order.treatment_site = procedure_site
                 order.save()
             elif current_status == 'In progress':
                 order.status = 'Completed'
                 order.completion_datetime = datetime.now()
+                order.result_notes = special_notes
                 order.save()
         except:
             print('error')
@@ -249,8 +382,10 @@ def treatment_record_verification(request):
             'order': order,
         }
 
-
-        return render(request, "emr/treatment_record_verification.html", context)
+        if (order.status == 'Completed'):
+            return redirect('/mstaff/hospital_dashboard/')
+        else:
+            return render(request, "emr/treatment_record_verification.html", context)
 
 # ---------------------------------------------------------
 # 과거 진료기록 조회 화면
@@ -261,9 +396,6 @@ def view_previous_medical_records(request):
 
 # ---------------------------------------------------------
 # 약품 검색 API
-# ---------------------------------------------------------
-# ---------------------------------------------------------
-# 약품 검색 API (외부 API 버전)
 # ---------------------------------------------------------
 @require_GET
 def api_search_medicine(request):
@@ -285,10 +417,7 @@ def api_search_medicine(request):
     response = requests.get(url)
     data = response.json()
 
-    items = (
-        data.get("body", {})
-            .get("items", [])
-    )
+    items = data.get("body", {}).get("items", [])
 
     results = []
     for item in items:
@@ -302,16 +431,13 @@ def api_search_medicine(request):
 
 
 # ---------------------------------------------------------
-# 진료기록 + 처방 + 검사 + 치료 오더 저장 API
+# 진료기록 + 처방 + 오더 + 예약 저장
 # ---------------------------------------------------------
 @csrf_exempt
 def api_create_medical_record(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=400)
 
-    # ------------------------------
-    # 기본 진료 정보
-    # ------------------------------
     record_type = request.POST.get("record_type")
     ptnt_div_cd = request.POST.get("ptnt_div_cd")
     subjective = request.POST.get("subjective")
@@ -324,24 +450,15 @@ def api_create_medical_record(request):
     doctor_id = request.POST.get("doctor_id")
     hos_id = request.POST.get("hos_id")
 
-    # ------------------------------
-    # 처방 리스트
-    # ------------------------------
     prescriptions_raw = request.POST.get("prescriptions", "[]")
     prescriptions = json.loads(prescriptions_raw)
 
-    # ------------------------------
-    # 투약기간 + 검사/치료 오더
-    # ------------------------------
     orders_raw = request.POST.get("orders", "{}")
     orders = json.loads(orders_raw)
 
-    # 날짜 하루 밀림 방지용 변환 함수
     def safe_date(date_str):
         if not date_str:
             return None
-        # HTML date → 00:00으로 오면 timezone 변환 시 하루 밀림 발생
-        # 이를 방지하기 위해 '12:00' 고정
         return datetime.strptime(date_str + " 12:00", "%Y-%m-%d %H:%M")
 
     global_start = safe_date(orders.get("start_date"))
@@ -368,19 +485,16 @@ def api_create_medical_record(request):
     )
 
     # ------------------------------
-    # 처방전(MedicineOrders)
+    # 처방전 생성
     # ------------------------------
     med_order = MedicineOrders.objects.create(
         order_datetime=timezone.now(),
         start_datetime=global_start,
         stop_datetime=global_end,
-        notes= prescriptions[0].get("note") if prescriptions else None,
+        notes=prescriptions[0].get("note") if prescriptions else None,
         medical_record_id=record.medical_record_id
     )
 
-    # ------------------------------
-    # 약품(MedicineData)
-    # ------------------------------
     for p in prescriptions:
         MedicineData.objects.create(
             order_code=p.get("drug_code"),
@@ -400,7 +514,6 @@ def api_create_medical_record(request):
             medical_record_id=record.medical_record_id
         )
 
-
     # ------------------------------
     # 치료 오더
     # ------------------------------
@@ -409,63 +522,45 @@ def api_create_medical_record(request):
             execution_datetime=timezone.now(),
             medical_record=record
         )
-    # ------------------------------------------------
-    # 예약 정보 읽기
-    # ------------------------------------------------
-    reservation_date = request.POST.get("reservation_date")
+
+    # ------------------------------
+    # 예약 데이터 처리
+    # ------------------------------
     reservation_type = request.POST.get("reservation_type")
     reservation_memo = request.POST.get("reservation_memo")
-
-    # ------------------------------------------------
-    # 예약 시간 유효성 검사 + 예약 datetime 생성
-    # ------------------------------------------------
-
     reserved_at = None
     reserved_end = None
 
-    date_str = request.POST.get("reservation_date")      # "2025-12-04T12:00" 가능
-    hour_str = request.POST.get("reservation_hour")      # "12" 또는 빈값
+    date_str = request.POST.get("reservation_date_day")
+    hour_str = request.POST.get("reservation_hour")
 
-    if date_str:
+    if date_str and hour_str:
+        naive_dt = datetime.strptime(
+            f"{date_str} {hour_str}:00",
+            "%Y-%m-%d %H:%M"
+        )
 
-        # reservation_date 가 datetime-local 형태인 경우
-        if "T" in date_str:
-            naive_dt = datetime.strptime(date_str, "%Y-%m-%dT%H:%M")
+        reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
+        reserved_end = reserved_at + timezone.timedelta(hours=1)
 
-        else:
-            # 날짜만 있는 경우 (hour_str 사용)
-            naive_dt = datetime.strptime(f"{date_str}T{hour_str}:00", "%Y-%m-%dT%H:%M")
+        local_hour = reserved_at.astimezone(timezone.get_current_timezone()).hour
 
-        hour = naive_dt.hour
-
-        # 점심시간 제외
-        if hour == 13:
+        if local_hour == 13:
             return JsonResponse({"error": "13시는 예약 불가"}, status=400)
 
-        # 운영시간 체크
-        if hour < 9 or hour > 17:
+        if local_hour < 9 or local_hour > 17:
             return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
 
-        # 중복 체크
+
         exists = Reservations.objects.filter(
             slot__doctor_id=doctor_id,
-            reserved_at__date=naive_dt.date(),
-            reserved_at__hour=naive_dt.hour
+            reserved_at=reserved_at
         ).exists()
 
         if exists:
             return JsonResponse({"error": "이미 예약된 시간입니다"}, status=400)
-        
-        # 5) timezone-aware 변환
-        reserved_at = timezone.make_aware(naive_dt, timezone.get_current_timezone())
-        reserved_end = reserved_at + timezone.timedelta(hours=1)
 
-
-    # ------------------------------
-    # 예약 저장
-    # ------------------------------
     if reserved_at:
-        # time_slots 에서 slot_id 확보 또는 생성
         slot_id = get_or_create_slot_id(int(doctor_id), reserved_at, reserved_end)
 
         Reservations.objects.create(
@@ -474,26 +569,26 @@ def api_create_medical_record(request):
             slot_type=1 if reservation_type == "consultation" else 2,
             notes=reservation_memo,
             user_id=patient_id,
-            slot_id=slot_id   # ← 이 값이 FK 제약을 항상 만족한다
+            slot_id=slot_id
         )
+
 
     return JsonResponse({
         "result": "ok",
         "medical_record_id": record.medical_record_id
     })
 
+
+
+# ---------------------------------------------------------
+# 슬롯 생성 함수
+# ---------------------------------------------------------
 def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
-    """
-    reservations.slot_id 가 참조할 time_slots.slot_id 를
-    DB에 직접 SELECT/INSERT 해서 확보하는 함수.
-    스키마는 건드리지 않고 데이터만 추가한다.
-    """
     slot_date = reserved_at.date()
     start_time = reserved_at.time()
     end_time = reserved_end.time()
 
     with connection.cursor() as cursor:
-        # 1) 기존 슬롯 있는지 확인
         cursor.execute(
             """
             SELECT slot_id
@@ -510,7 +605,6 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
         if row:
             return row[0]
 
-        # 2) 없으면 새로 생성
         now = timezone.now()
         cursor.execute(
             """
@@ -523,18 +617,22 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
         )
         return cursor.lastrowid
 
+
+
+# ---------------------------------------------------------
+# 검사/치료 검색 API
+# ---------------------------------------------------------
 def lab_data_search(request):
     search = request.GET.get('search', '')
 
     datas = []
-    if (search == ''):
+    if search == '':
         datas = list(LabData.objects.all().values())
     else:
-        datas = list(LabData.objects.filter(Q(lab_name__icontains=search)|Q(lab_code__icontains=search)).values())
+        datas = list(LabData.objects.filter(Q(lab_name__icontains=search) | Q(lab_code__icontains=search)).values())
 
-    return JsonResponse({
-        'lab_datas': datas
-    })
+    return JsonResponse({'lab_datas': datas})
+
 
 def treatment_data_search(request):
     search = request.GET.get('search', '')
@@ -553,21 +651,21 @@ def treatment_data_search(request):
             'sickNm': item.find('sickNm').text
         })
 
+    return JsonResponse({'treatment_datas': datas})
 
-    return JsonResponse({
-        'treatment_datas': datas
-    })
 
+
+# ---------------------------------------------------------
+# 환자 검색
+# ---------------------------------------------------------
 def patient_search_list_view(request):
-    # role='patient' 인 사용자만 조회
     patients = Users.objects.filter(role='patient').values(
         'user_id', 'name', 'gender', 'birth_date'
     )
 
-    return render(request, "emr/patient_search_list.html", {
-        "patients": patients
-    })
-    
+    return render(request, "emr/patient_search_list.html", {"patients": patients})
+
+
 def api_search_patient(request):
     keyword = request.GET.get("keyword", "").strip()
 
@@ -597,48 +695,36 @@ def api_search_patient(request):
     return JsonResponse({"results": results})
 
 
+
+# ---------------------------------------------------------
+# 나이 계산
+# ---------------------------------------------------------
 def calculate_age_from_rrn(rrn_string, age_type='korean'):
-    """
-    주민등록번호 문자열을 받아 나이를 계산합니다.
-    :param rrn_string: 'YYMMDD-GXXXXXX' 형태의 주민등록번호
-    :param age_type: 'man' (만 나이) 또는 'korean' (세는 나이)
-    :return: 계산된 나이 (정수)
-    """
-    
-    # 1. 생년월일 및 성별 코드 추출
     birth_date_part = rrn_string[:6]
     gender_code = rrn_string[7]
 
-    # 2. 세기 결정 (1900년대 vs 2000년대)
     if gender_code in ('1', '2', '5', '6', '9', '0'):
-        # 19xx년생 (1, 2, 9, 0) 또는 18xx년생 (5, 6)
         if gender_code in ('1', '2', '9', '0'):
-             century_prefix = 19
-        else: # 5, 6
-             century_prefix = 18
-    else: # 3, 4, 7, 8 (20xx년생)
+            century_prefix = 19
+        else:
+            century_prefix = 18
+    else:
         century_prefix = 20
 
-    # 3. 완전한 생년월일 생성
     birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
     birth_month = int(birth_date_part[2:4])
     birth_day = int(birth_date_part[4:6])
 
     today = date.today()
-    
-    # 4. 나이 계산 로직
+
     if age_type == 'man':
-        ## 📌 만 나이 계산 (국제 표준)
-        # (현재 연도 - 출생 연도)에서, 아직 생일이 지나지 않았으면 1을 뺌
         age = today.year - birth_year
         if (today.month, today.day) < (birth_month, birth_day):
             age -= 1
         return age
-        
+
     elif age_type == 'korean':
-        ## 📌 세는 나이 계산 (한국식 나이)
-        # (현재 연도 - 출생 연도) + 1
         return today.year - birth_year + 1
-        
+
     else:
         raise ValueError("age_type은 'man' 또는 'korean'이어야 합니다.")

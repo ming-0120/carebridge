@@ -55,8 +55,10 @@ def calculate_congestion_score(status):
         status.negative_pressure_available, status.negative_pressure_total
     )
     isolation_rate = get_availability_rate(
-        status.isolation_available, status.isolation_total
+        status.isolation_general_available,
+        status.isolation_general_total,
     )
+
     birth_rate = get_availability_rate(
         status.birth_available, status.birth_total
     )
@@ -378,12 +380,13 @@ def hospital_detail_json(request, er_id: int):
             "birth_available",
             "negative_pressure_total",
             "negative_pressure_available",
-            "isolation_total",
-            "isolation_available",
-            "cohort_total",
-            "cohort_available",
+            "isolation_general_total",
+            "isolation_general_available",
+            "isolation_cohort_total",
+            "isolation_cohort_available",
         )
     )
+
 
     status_list = []
     for row in status_qs:

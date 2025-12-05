@@ -114,7 +114,9 @@
                     </thead>
                     <tbody>
                         {% for lab in lab_order %}
-                            <tr>
+                            <tr 
+                                class="{% if lab.lab.is_urgent == True %} emergency-row {% endif %}"
+                            >
                                 <td>{{ lab.user.name }}</td>
                                 <td>{{ lab.user_age }}</td>
                                 <td>
