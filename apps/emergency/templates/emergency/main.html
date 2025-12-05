@@ -51,72 +51,54 @@
   </div>
 
   {% for hos in hospitals %}
-    {% with st=hos.statuses.last %}
+    {% with st=hos.latest_status %}
       <div class="row" data-er-id="{{ hos.er_id }}" onclick="openHospitalDetail('{{ hos.er_id }}')">
 
         <div>
           <div class="h-name">{{ hos.er_name }}</div>
           <div class="h-subinfo">
-            {{ hos.er_sido }} {{ hos.er_sigungu }}
             {% if hos.distance_km %}
-              | {{ hos.distance_km }}km
-            {% else %}
-              | {{ hos.er_address }}
+              {{ hos.distance_km|floatformat:1 }}km | 
             {% endif %}
+            {{ hos.er_sido }} {{ hos.er_sigungu }}
           </div>
         </div>
 
-        <!-- 일반 응급 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'er_general' }}">
-            {{ st|status_label:'er_general' }}
-          </div>
-          {{ st.er_general_available|default_if_none:"-" }} / {{ st.er_general_total|default_if_none:"-" }}
+        {# 응급실 일반 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <!-- 소아 응급 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'er_child' }}">
-            {{ st|status_label:'er_child' }}
-          </div>
-          {{ st.er_child_available|default_if_none:"-" }} / {{ st.er_child_total|default_if_none:"-" }}
+        {# 응급실 소아 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <!-- 분만실 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'birth' }}">
-            {{ st|status_label:'birth' }}
-          </div>
-          {{ st.birth_available|default_if_none:"-" }} / {{ st.birth_total|default_if_none:"-" }}
+        {# 분만실 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <!-- 음압격리 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'negative' }}">
-            {{ st|status_label:'negative' }}
-          </div>
-          {{ st.negative_pressure_available|default_if_none:"-" }} / {{ st.negative_pressure_total|default_if_none:"-" }}
+        {# 음압격리 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <!-- 일반격리 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'isolation' }}">
-            {{ st|status_label:'isolation' }}
-          </div>
-          {{ st.isolation_available|default_if_none:"-" }} / {{ st.isolation_total|default_if_none:"-" }}
+        {# 일반격리 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.isolation_available total=st.isolation_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <!-- 코호트 -->
-        <div class="status-wrap">
-          <div class="circle {{ st|status_color:'cohort' }}">
-            {{ st|status_label:'cohort' }}
-          </div>
-          {{ st.cohort_available|default_if_none:"-" }} / {{ st.cohort_total|default_if_none:"-" }}
+        {# 코호트격리 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.cohort_available total=st.cohort_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
         </div>
 
-        <div class="favorite">☆</div>
+        <div class="favorite">★</div>
       </div>
     {% endwith %}
+  {% empty %}
+  <div style="padding:24px;">표시할 병원 데이터가 없습니다.</div>
   {% endfor %}
 
 </div>
@@ -136,9 +118,48 @@
     url.searchParams.set("sort", "distance");
     window.location.href = url.toString();
   }
+  
+  // -------------------------
+  // sessionStorage에서 위치 정보 읽어서 서버에 전달 (URL에는 추가하지 않음)
+  // -------------------------
+  (function() {
+    const userLat = sessionStorage.getItem("user_lat");
+    const userLng = sessionStorage.getItem("user_lng");
+    
+    // sessionStorage에 위치 정보가 있고, URL에 없으면 서버에 전달
+    if (userLat && userLng) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.get("lat") && !urlParams.get("lng")) {
+        // 위치 정보를 서버에 전달하기 위해 AJAX로 요청
+        // 서버는 요청 헤더에서 위치 정보를 읽어서 처리
+        fetch(window.location.pathname + window.location.search, {
+          method: 'GET',
+          headers: {
+            'X-User-Lat': userLat,
+            'X-User-Lng': userLng,
+            'X-Requested-With': 'XMLHttpRequest',
+          }
+        })
+        .then(response => response.text())
+        .then(html => {
+          // 응답을 파싱하여 병원 목록만 업데이트
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newTableBox = doc.querySelector('.table-box');
+          if (newTableBox) {
+            const currentTableBox = document.querySelector('.table-box');
+            if (currentTableBox) {
+              currentTableBox.innerHTML = newTableBox.innerHTML;
+            }
+          }
+        })
+        .catch(err => console.error('위치 정보 전달 실패:', err));
+      }
+    }
+  })();
 </script>
 
-<!-- home.js: 위치 → lat/lng 파라미터 설정 -->
+<!-- home.js: 위치 → sessionStorage에만 저장 (URL에는 추가하지 않음) -->
 <script src="{% static 'core/js/home.js' %}"></script>
 
 {% endblock %}

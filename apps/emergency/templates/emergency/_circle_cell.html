@@ -1,0 +1,59 @@
+{% load status_filters %}
+
+{% if total != None and total >= 0 %}
+    {% with pct=available|percent:total %}
+    <div class="status-wrap">
+        <div class="circle
+            {% if pct >= 70 %}
+                green
+            {% elif pct >= 30 %}
+                orange
+            {% elif pct > 0 %}
+                red
+            {% else %}
+                none
+            {% endif %}
+        ">
+            <svg>
+                <circle class="meter
+                    {% if pct == 0 %}none{% endif %}
+                "
+                    cx="24" cy="24" r="20"
+                    stroke-dasharray="{{ available|circle_dasharray:total }}"
+                    stroke="#e0e0e0"
+                    fill="none"
+                    stroke-width="4"
+                    stroke-linecap="round">
+                </circle>
+            </svg>
+
+            <span class="label">
+                {% if available != None and total != None and total > 0 %}
+                    {{ available }}/{{ total }}
+                {% elif available != None %}
+                    {{ available }}
+                {% else %}
+                    0
+                {% endif %}
+            </span>
+        </div>
+    </div>
+    {% endwith %}
+{% else %}
+    <div class="status-wrap">
+        <div class="circle none">
+            <svg>
+                <circle class="meter none"
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="0, 125.66"
+                        stroke="#e0e0e0"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
+                </circle>
+            </svg>
+            <span class="label">-</span>
+        </div>
+    </div>
+{% endif %}
+

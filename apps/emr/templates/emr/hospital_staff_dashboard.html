@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>병원내 의료진 대시보드 (11페이지 수정본)</title>
 
-    {% load static %}
     <link rel="stylesheet" href="{% static 'emr/css/hospital_staff_dashboard.css' %}">
 </head>
 <body>
@@ -27,17 +26,17 @@
             <div class="card status-box">
                 <h3>치료 대기</h3>
                 <div class="status-counts">
-                    <div class="count-item pending">대기 <strong>6명</strong></div>
-                    <div class="count-item inprogress">진행중 <strong>6명</strong></div>
+                    <div class="count-item pending">대기 <strong>{{ treatment_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong>{{ treatment_inprogress_count }}명</strong></div>
                 </div>
             </div>
             
             <div class="card status-box">
                 <h3>검사 대기</h3>
                 <div class="status-counts">
-                    <div class="count-item pending">대기 <strong>3명</strong></div>
-                    <div class="count-item inprogress">진행중 <strong>3명</strong></div>
-                    <div class="count-item emergency">응급 <strong>3명</strong></div>
+                    <div class="count-item pending">대기 <strong>{{ lab_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong>{{ lab_sampled_count }}명</strong></div>
+                    <div class="count-item emergency">응급 <strong>{{ lab_is_urgent_count }}명</strong></div>
                 </div>
             </div>
             
@@ -58,27 +57,45 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr onclick="goToRecord('Treatment', '홍길동1', 'PENDING')">
-                            <td>홍길동1</td>
-                            <td>45</td>
-                            <td>남</td>
-                            <td>홍길동2</td>
-                            <td><button class="status-button status-pending">PENDING</button></td>
-                        </tr>
-                        <tr onclick="goToRecord('Treatment', '홀길동2', 'IN_PROGRESS')">
-                            <td>홀길동2</td>
-                            <td>45</td>
-                            <td>여</td>
-                            <td>홍길동3</td>
-                            <td><button class="status-button status-inprogress">IN_PROGRESS</button></td>
-                        </tr>
-                        <tr>
-                            <td>홍길동4</td>
-                            <td>45</td>
-                            <td>남</td>
-                            <td>홍길동2</td>
-                            <td><span class="status-completed">COMPLETED</span></td>
-                        </tr>
+                        {% for treatment in treatment_order %}
+                            <tr>
+                                <td>{{ treatment.user.name }}</td>
+                                <td>{{ treatment.user_age }}</td>
+                                <td>
+                                    {% if treatment.user.gender == 'F' %}
+                                        여
+                                    {% else %}
+                                        남
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{treatment.doctor_info.name}}
+                                </td>
+                                <td>
+                                    <button 
+                                        class="status-button 
+                                            {% if treatment.treatment.status == 'Pending' %}
+                                                status-pending
+                                            {% else %} 
+                                                status-inprogress
+                                            {% endif %}"
+                                        
+                                        onclick="goToRecord(
+                                            'Treatment', 
+                                            '{{ treatment.treatment.treatment_id }}', 
+                                            '{{ treatment.user.user_id }}', 
+                                            '{{treatment.record_id}}'
+                                        )"
+                                    >
+                                        {% if treatment.treatment.status == 'Pending' %}
+                                            PENDING
+                                        {% else %} 
+                                            IN PROGRESS
+                                        {% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
@@ -96,27 +113,45 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>홍길동1</td>
-                            <td>45</td>
-                            <td>남</td>
-                            <td>홍길동2</td>
-                            <td><button class="status-button status-pending">PENDING</button></td>
-                        </tr>
-                        <tr class="emergency-row" onclick="goToRecord('Lab', '홍길동2', 'SAMPLED')">
-                            <td>홍길동2</td>
-                            <td>45</td>
-                            <td>여</td>
-                            <td>홍길동3</td>
-                            <td><button class="status-button status-sampled">SAMPLED</button></td>
-                        </tr>
-                        <tr>
-                            <td>홍길동4</td>
-                            <td>45</td>
-                            <td>남</td>
-                            <td>홍길동2</td>
-                            <td><span class="status-completed">COMPLETED</span></td>
-                        </tr>
+                        {% for lab in lab_order %}
+                            <tr>
+                                <td>{{ lab.user.name }}</td>
+                                <td>{{ lab.user_age }}</td>
+                                <td>
+                                    {% if lab.user.gender == 'F' %}
+                                        여
+                                    {% else %}
+                                        남
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{lab.doctor_info.name}}
+                                </td>
+                                <td>
+                                    <button 
+                                        class="status-button 
+                                            {% if lab.lab.status == 'Pending' %}
+                                                status-pending
+                                            {% else %} 
+                                                status-sampled
+                                            {% endif %}"
+                                        
+                                        onclick="goToRecord(
+                                            'Lab', 
+                                            '{{ lab.lab.lab_order_id }}', 
+                                            '{{ lab.user.user_id }}', 
+                                            '{{lab.record_id}}',
+                                        )"
+                                    >
+                                        {% if lab.lab.status == 'Pending' %}
+                                            PENDING
+                                        {% else %} 
+                                            SAMPLED
+                                        {% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

@@ -66,61 +66,32 @@ function removePrescriptionBlock(btn) {
 /* --------------------------
    submit 전 데이터 정리
 -------------------------- */
-function prepareSubmit() {
+async function prepareSubmit() {
 
-    /* ------------------------
-       1) 처방전 리스트 수집
-    ------------------------ */
-    const blocks = document.querySelectorAll(".prescription-block");
-    prescriptionList = [];
+    /* 기존 JSON 생성/숨겨진 필드 저장 로직은 그대로 유지 */
 
-    blocks.forEach(block => {
-        const name = block.querySelector(".drugName").value;
-        const code = block.querySelector(".drugCode").value;
-        const freq = block.querySelector(".freqInput").value;
-        const dose = block.querySelector(".doseInput").value;
-        const note = block.querySelector(".noteInput").value;
+    // --- 여기부터 수정 ---
+    const form = document.getElementById("recordForm");
+    const formData = new FormData(form);
 
-        if (!name || !code) return;
-
-        prescriptionList.push({
-            drug_name: name,
-            drug_code: code,
-            frequency: freq,
-            dose: dose,
-            note: note
-        });
+    const response = await fetch("/mstaff/api/medical-record/create/", {
+        method: "POST",
+        body: formData
     });
 
-    /* ------------------------
-       2) 검사/치료 오더 JSON 생성
-    ------------------------ */
+    const data = await response.json();
 
-    const orderType = document.getElementById("orderType").value;
-    const emergencyFlag = document.querySelector("input[name='emergency_flag']:checked")?.value || null;
+    if (response.status === 400 && data.error) {
+        alert(data.error);   // 이미 예약된 시간입니다
+        return;
+    }
 
-    const globalStart = document.getElementById("globalStartDate").value;
-    const globalEnd = document.getElementById("globalEndDate").value;
+    alert("저장되었습니다.");
 
-    // dict 형태로 강제 — Django의 json.loads() → dict OK
-    const orderObject = {
-        start_date: globalStart,
-        end_date: globalEnd,
-        order_type: orderType || null,
-        emergency_flag: emergencyFlag
-    };
-
-    /* ------------------------
-       3) 숨겨진 필드에 JSON 문자열 저장
-    ------------------------ */
-    document.getElementById("prescriptions").value = JSON.stringify(prescriptionList);
-    document.getElementById("orders").value = JSON.stringify(orderObject);
-
-    /* ------------------------
-       4) 폼 제출
-    ------------------------ */
-    document.getElementById("recordForm").submit();
+    // 필요 시 상세 페이지로 이동 (URL은 원하는 구조로 교체 가능)
+    // window.location.href = `/mstaff/medical-record/${data.medical_record_id}/detail/`;
 }
+
 
 /* --------------------------
    약품 검색 모달
@@ -229,4 +200,14 @@ function toggleEmergencyOption() {
     } else {
         emergencyBox.style.display = "none";
     }
+}
+
+function buildReservationDateTime() {
+    const day = document.getElementById("reservationDate").value;
+    const hour = document.getElementById("reservationHour").value;
+
+    if (!day || !hour) return null;
+
+    // YYYY-MM-DDTHH:00 형태로 조립
+    return `${day}T${hour}:00`;
 }

@@ -8,7 +8,7 @@ class TreatmentProcedures(models.Model):
     procedure_name = models.CharField(max_length=255, null=True, blank=True)
     execution_datetime = models.DateTimeField(null=True, blank=True)
     completion_datetime = models.DateTimeField(null=True, blank=True)
-    status = models.CharField(max_length=20, choices=TREATMENT_STATUS_CHOICES)
+    status = models.CharField(max_length=20, choices=TREATMENT_STATUS_CHOICES, default='Pending')
     treatment_site = models.CharField(max_length=100, null=True, blank=True)
     result_notes = models.TextField(null=True, blank=True)
 

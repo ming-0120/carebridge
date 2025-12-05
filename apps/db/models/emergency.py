@@ -19,7 +19,7 @@ class ErInfo(models.Model):
 
 
 class ErStatus(models.Model):
-    er = models.ForeignKey(ErInfo, on_delete=models.CASCADE)
+    er = models.ForeignKey(ErInfo, on_delete=models.CASCADE, related_name='statuses')
 
     hvdate = models.DateTimeField()
 
