@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>CareBridge 병원 찾기</title>
+
+    <!-- 카카오 지도 SDK -->
+    <script type="text/javascript"
+            src="//dapi.kakao.com/v2/maps/sdk.js?appkey=07a1ee90c6bb59b57c894dd5312eca93&libraries=services"></script>
+    <link rel="stylesheet" href="{% static 'reservations/css/main.css' %}">
+</head>
+<body>
+    {% include "core/_header.html" %}
+    <div class="page">
+        <!-- (1) 진료과 메뉴 -->
+        <div class="main">
+            <aside class="sidebar">
+                <button class="dept-btn active" data-dept="내과">내과</button>
+                <button class="dept-btn" data-dept="외과">외과</button>
+                <button class="dept-btn" data-dept="정형외과">정형외과</button>
+                <button class="dept-btn" data-dept="이비인후과">이비인후과</button>
+                <button class="dept-btn" data-dept="소아과">소아과</button>
+            </aside>
+
+            <!-- (2) 지도 -->
+            <section class="map-wrapper">
+                <div id="map"></div>
+            </section>
+        </div>
+
+        <!-- (3) 병원 카드 리스트 -->
+        <section class="card-section">
+            <div class="card-row" id="hospitalCards">
+                <!-- JS로 카드가 채워진다 -->
+            </div>
+        </section>
+    </div>
+
+    <!-- 병원 상세 모달 -->
+    <div id="hospitalModal" class="modal hidden">
+        <form id="reservationForm" method="post" action="{% url 'reservation_page' %}">
+            {% csrf_token %}
+            <input type="hidden" name="hospital_id" id="reservationHospitalId">
+        </form>        
+        <div class="modal-backdrop"></div>
+        <div class="modal-dialog">
+            <button class="modal-favorite" type="button">★</button>
+            <div class="modal-content">
+                <table class="modal-info-table">
+                    <tbody>
+                    <tr>
+                        <th>병원이름</th>
+                        <td class="modal-hospital-name"></td>
+                        <th>진료과목</th>
+                        <td class="modal-dept"></td>
+                    </tr>
+                    <tr>
+                        <th>시도 명</th>
+                        <td class="modal-city"></td>
+                        <th>전화번호</th>
+                        <td class="modal-phone"></td>
+                    </tr>
+                    <tr>
+                        <th>영업시간</th>
+                        <td class="modal-hours" colspan="3"></td>
+                    </tr>
+                    <tr>
+                        <th>주소</th>
+                        <td class="modal-address" colspan="3"></td>
+                    </tr>
+                    <tr>
+                        <th>평점</th>
+                        <td class="modal-rating" colspan="3"></td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div class="modal-footer">
+                    <button id="modalReserveBtn" type="button" class="btn-primary">예약하기</button>
+                    <button id="modalCancelBtn" type="button" class="btn-secondary">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+  const TOGGLE_FAVORITE_URL = "{% url 'toggle_favorite' %}";
+</script>
+    <!-- 병원 데이터 JSON (id 포함) -->
+    <script id="hospital-data" type="application/json">
+        {{ hospital_json|safe }}
+    </script>
+    <script src="{% static 'reservations/js/main.js' %}"></script>
+</body>
+</html>

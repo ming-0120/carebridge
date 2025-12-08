@@ -55,7 +55,7 @@ def login_view(request):
 
     # 실제 로그인 처리
     request.session['user_id'] = user.user_id
-    request.session['username'] = user.username
+    request.session['username'] = user.name
     request.session['role'] = user.role
 
     # 관리자 역할 체크 (role 값은 'ADMIN' - 대문자)

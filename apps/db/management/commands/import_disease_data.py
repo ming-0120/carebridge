@@ -2,9 +2,8 @@ from datetime import date, datetime
 from django.core.management.base import BaseCommand
 from django.db import transaction
 import requests
-
 from apps.db.models.statistic import InfectiousStat
-from apps.db.models.disease import DimDisease  # FK 기준 테이블
+from apps.db.models.disease import DimDisease 
 
 SERVICE_KEY = "8661f2737274c1d3578553e84076849efd87c7076b1cc5c8fe54183dae94c09c"
 
@@ -21,7 +20,7 @@ class Command(BaseCommand):
     }
 
     def handle(self, *args, **options):
-        target_year = datetime.now().year - 1
+        target_year = datetime.now().year
         self.stdout.write(self.style.NOTICE(f"[INFO] target_year = {target_year}"))
 
         gender_min_val = 10
