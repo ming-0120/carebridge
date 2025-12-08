@@ -21,6 +21,7 @@ urlpatterns = [
     path("patient_search_list/", views.patient_search_list_view, name="patient_search_list"),
     path("api/patient/search/", views.api_search_patient),
     path("api/reserved-hours/", views.api_reserved_hours, name="reserved_hours"),
+    path('set_doctor_memo/', views.set_doctor_memo, name='set_doctor_memo')
 
 ]
         

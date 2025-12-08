@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-from datetime import datetime, date, time, timezone as dt_timezone
+from datetime import datetime, date, time, timezone as dt_timezone, timedelta
 from django.db import connection
 from django.db.models import Q
 from apps.db.models import Users
@@ -13,6 +13,10 @@ from django.utils import timezone
 import requests, json
 import os
 import xml.etree.ElementTree as ET
+from django.core import serializers
+from django.db.models import Count
+from django.db.models import DateField
+from django.db.models.functions import Cast
 
 KST = tz("Asia/Seoul")
 
@@ -32,6 +36,7 @@ from apps.db.models import (
     TreatmentProcedures,
     Reservations,
     Doctors,
+    TimeSlots,
 )
 
 load_dotenv()
@@ -106,8 +111,68 @@ def doctor_screen_dashboard(request):
             'name': data['dateName']
         })
 
+    doctor = {}
+    users = []
+    try:
+        doctor = Doctors.objects.get(doctor_id=1)
+        # users = list(Users.objects.filter(
+        #     reservations__slot__doctor_id=doctor.doctor_id,
+        #     reservations__slot__slot_date=date.today()
+        # ))
+
+        users = list(Reservations.objects.filter(
+            # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=date.today() 
+        ).select_related(
+            # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
+            'user', 
+            'slot' 
+        ).order_by(
+            # 정렬: TimeSlots의 start_time을 기준으로 오름차순 정렬
+            'slot__start_time' 
+        ))
+        
+        
+    except:
+        print('error')
+
+    try:
+        now = datetime.now() 
+        seven_days_ago_date = now.date() - timedelta(days=7)
+        start_of_period = datetime.combine(seven_days_ago_date, time.min)
+        end_of_period = now
+
+        daily_stats = list(MedicalRecord.objects.filter(
+            hos_id=doctor.hos_id,
+            record_datetime__gte=start_of_period,
+            record_datetime__lte=end_of_period
+        ).annotate(
+            record_date=Cast('record_datetime', output_field=DateField())
+        ).values('record_date').annotate(
+            count=Count('medical_record_id')
+        ).order_by('record_date'))
+
+        labels = []  # 날짜 (x축)
+        data = []    # 진료 건수 (y축)
+        
+        for item in daily_stats:
+            labels.append(item['record_date'].strftime('%Y-%m-%d'))
+            data.append(item['count'])
+            
+        medical_record_chart_data = {
+            'labels': labels,
+            'data': data,
+        }
+
+    except:
+        print('error')
+
     datas = {
-        'holidays': json.dumps(holidays)
+        'holidays': json.dumps(holidays),
+        'users': users,
+        'doctor': doctor,
+        'medical_record_chart': medical_record_chart_data,
     }
 
     return render(request, 'emr/doctor_screen_dashboard.html', datas)
@@ -129,12 +194,11 @@ def hospital_staff_dashboard(request):
         medical_records = Hospital.objects.get(hos_id=1).medicalrecord_set.all()
         for record in medical_records:
             try:
-                print(str(date.today()))
                 lab = LabOrders.objects.exclude(
                     status__in=['Completed']
                 ).get(
                     medical_record__pk=record.medical_record_id,
-                    order_datetime__contains=str(date.today()),
+                    order_datetime__contains=str(date.today())
                 )
                 user = Users.objects.get(user_id=record.user.user_id)
                 doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
@@ -253,7 +317,6 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
-
         try:
             user = Users.objects.get(user_id=user_id)
             medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
@@ -267,24 +330,20 @@ def lab_record_creation(request):
                 order.status_datetime = datetime.now()
 
                 order.save()
-
-                for file in uploaded_files:
-                    labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
-                    labUpload.save()
-
-                try:
-                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
-                except:
-                    print('error')
-                
                 
             elif current_status == 'Sampled':
                 order.status_datetime = datetime.now()
                 order.status = 'Completed'
                 order.requisition_note = special_notes
 
+                order.save()
+
+                for file in uploaded_files:
+                    labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
+                    labUpload.save()
+
                 try:
-                    files = list(LabOrders.objects.filter(medical_record__medical_record_id=order.lab_order_id))
+                    files = list(LabUpload.objects.filter(lab_order__pk=order.lab_order_id))
                 except:
                     print('error')
 
@@ -293,17 +352,28 @@ def lab_record_creation(request):
         except:
             print('error')
 
-        context = {
-            'user': user,
-            'medical_record': medical_record,
-            'order': order,
-            'files': files,
-        }
+        user_data = serializers.serialize('json', [user])
+        medical_record_data = serializers.serialize('json', [medical_record])
+        order_data = serializers.serialize('json', [order])
+        files_data = serializers.serialize('json', files)
 
-        if (order.status == 'Completed'):
-            return redirect('/mstaff/hospital_dashboard/')
-        else:
-            return render(request, 'emr/lab_record_creation.html')
+        python_user_data = json.loads(user_data)
+        python_medical_record_data = json.loads(medical_record_data)
+        python_order_data = json.loads(order_data)
+        python_files_data = json.loads(files_data)
+
+        files_dict_data = [item['fields'] for item in python_files_data]
+        print(python_user_data[0]['fields'])
+        python_user_data[0]['fields']['user_id'] = python_user_data[0]['pk']
+        python_medical_record_data[0]['fields']['medical_record_id'] = python_medical_record_data[0]['pk']
+        python_order_data[0]['fields']['lab_order_id'] = python_order_data[0]['pk']
+
+        return JsonResponse({
+            'user': python_user_data[0]['fields'],
+            'medical_record': python_medical_record_data[0]['fields'],
+            'order': python_order_data[0]['fields'],
+            'files': files_dict_data,
+        })
 
         
 
@@ -694,6 +764,20 @@ def api_search_patient(request):
 
     return JsonResponse({"results": results})
 
+@csrf_exempt
+def set_doctor_memo(request):
+    memo = request.POST['memo']
+    doctor_id = request.POST['doctor_id']
+
+    try:
+        doctor = Doctors.objects.get(doctor_id=doctor_id)
+        doctor.memo = memo
+        doctor.save()
+    except:
+        print('error')
+    
+
+    return JsonResponse({"result": 'Ok'})
 
 
 # ---------------------------------------------------------
@@ -728,3 +812,39 @@ def calculate_age_from_rrn(rrn_string, age_type='korean'):
 
     else:
         raise ValueError("age_type은 'man' 또는 'korean'이어야 합니다.")
+    
+
+def extract_birth_date(reg_num):
+    # 입력된 주민등록번호에서 하이픈(-)을 제거하고 숫자만 남깁니다.
+    reg_num = reg_num.replace('-', '').strip()
+
+    if len(reg_num) != 13 or not reg_num.isdigit():
+        return "오류: 올바른 주민등록번호 형식이 아닙니다."
+
+    # 1. 생년월일 부분 (앞 6자리)
+    yy = reg_num[0:2]
+    mm = reg_num[2:4]
+    dd = reg_num[4:6]
+    
+    # 2. 성별/세기 구분 번호 (7번째 자리)
+    century_digit = reg_num[6]
+    
+    # 3. 세기 결정 (가장 일반적인 경우: 1900년대와 2000년대)
+    if century_digit in ('1', '2', '5', '6'):
+        # 1, 2, 7, 8: 1900년대 (1, 2는 내국인, 7, 8은 외국인)
+        # 7, 8은 외국인 등록번호에서 사용되었으나, 최근에는 5, 6으로 대체됨
+        year_prefix = '19'
+    elif century_digit in ('3', '4', '5', '6'):
+        # 3, 4, 5, 6: 2000년대 (3, 4는 내국인, 5, 6은 외국인)
+        year_prefix = '20'
+    elif century_digit in ('9', '0'):
+         # 9, 0: 1800년대 (매우 희귀)
+        year_prefix = '18'
+    else:
+        return "오류: 유효하지 않은 성별 구분 번호입니다."
+    
+    # 최종 생년월일 문자열 조합
+    full_year = year_prefix + yy
+    birth_date = f"{full_year}-{mm}-{dd}"
+    
+    return birth_date

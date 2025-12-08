@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -12,14 +13,16 @@
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js'></script>
     <!-- fullcalendar 언어 CDN -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js'></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
         let holidays = "{{ holidays | escape }}"
+        const doctor_id = "{{ doctor.doctor_id }}"
         function htmlDecode(input) {
             const doc = new DOMParser().parseFromString(input, "text/html");
             return doc.documentElement.textContent;
         }
 
-        holidays = JSON.parse(htmlDecode(holidays))
+        holidays = JSON.parse(htmlDecode(holidays));
     </script>
 </head>
 <body>
@@ -49,38 +52,19 @@
         </div>
 
         <div class="card patient-list">
-            <h3>오늘의 환자 (4명)</h3>
-            <div class="patient-list-item" onclick="alert('홍길동1 환자 진료 작성 페이지로 이동')">
-                <h4>성명: 홍길동1</h4>
-                <p>생년월일: 2002.01.20 | 성별: 여</p>
-            </div>
-            <div class="patient-list-item" onclick="alert('홍길동2 환자 진료 작성 페이지로 이동')">
-                <h4>성명: 홍길동2</h4>
-                <p>생년월일: 2002.01.01 | 성별: 남</p>
-            </div>
-            <div class="patient-list-item" onclick="alert('홍길동3 환자 진료 작성 페이지로 이동')">
-                <h4>성명: 홍길동3</h4>
-                <p>생년월일: 1998.01.22 | 성별: 여</p>
-            </div>
-            <div class="patient-list-item" onclick="alert('홍길동4 환자 진료 작성 페이지로 이동')">
-                <h4>성명: 홍길동4</h4>
-                <p>생년월일: 1944.10.25 | 성별: 남</p>
-            </div>
-            <div style="max-height: 200px; overflow-y: auto;">
-                 <div class="patient-list-item" onclick="alert('추가 환자1 진료 작성 페이지로 이동')">
-                    <h4>성명: 홍길동5</h4>
-                    <p>생년월일: 2010.05.01 | 성별: 남</p>
+            <h3>예약 환자 (4명)</h3>
+            {% for user in users %}
+                <div class="patient-list-item" onclick="">
+                    <h4>성명: {{ user.user.name }}</h4>
+                    <p>생년월일: {{ user.user.resident_reg_no | rrn_to_birthdate }} | 성별: {% if user.user.gender == 'F' %}여{% else %}남{% endif %}</p>
+                    <p>예약시간: {{ user.slot.start_time }}</p>
                 </div>
-                <div class="patient-list-item" onclick="alert('추가 환자2 진료 작성 페이지로 이동')">
-                    <h4>성명: 홍길동6</h4>
-                    <p>생년월일: 1977.11.11 | 성별: 여</p>
-                </div>
-            </div>
+            {% endfor %}
         </div>
 
         <div class="card memo">
             <h3>📝 메모</h3>
-            <textarea id="doctorMemo" onblur="saveMemo()">메모입니다</textarea>
+            <textarea id="doctorMemo" onblur="saveMemo()">{% if doctor.memo != None %}{{doctor.memo}}{% endif %}</textarea>
             <p style="font-size: 12px; color: #28a745; text-align: right;">(마우스 커서 이탈 시 자동 저장)</p>
         </div>
 
@@ -98,7 +82,7 @@
             <h3>📊 7일간 환자의 진료 및 오더 통계</h3>
             <div class="chart-container">
                 <div class="chart-placeholder">
-                                        <br> (7일간 환자 진료, 검사, 치료 수 통계)
+                    <canvas id="dailyStatsChart"></canvas>
                 </div>
             </div>
         </div>
@@ -113,5 +97,66 @@
     </div>
 
     <script src="{% static 'emr/js/doctor_screen_dashboard.js' %}"></script>
+    <script>
+        window.onload = function() {
+            const ctx = document.getElementById('dailyStatsChart').getContext('2d');
+
+            var chart = new Chart(ctx, {
+                
+                // The type of chart we want to create
+                type: 'bar',
+            
+                // The data for our dataset
+                data: {
+                    labels: ['1월','2월','3월','4월','5월','6월'],
+                    datasets: [{
+                        label: '라인 그래프1',
+                        type : 'line',         // 'line' type
+                        fill : false,         // 채우기 없음
+                        lineTension : 0.2,  // 0이면 꺾은선 그래프, 숫자가 높을수록 둥글해짐
+                        pointRadius : 0,    // 각 지점에 포인트 주지 않음
+                        backgroundColor: 'rgb(255, 153, 0)',
+                        borderColor: 'rgb(255, 153, 0)',
+                        data: [40, 50, 60, 70, 80, 90]
+                    }, {
+                        label: '라인 그래프2',
+                        type : 'line',
+                        fill : false,
+                        lineTension : 0.2,
+                        pointRadius : 0,
+                        backgroundColor: 'rgb(255, 204, 0)',
+                        borderColor: 'rgb(255, 204, 0)',
+                        data: [100, 120, 150, 100, 180, 200]
+                    }]
+                },
+            
+                // Configuration options
+                options: {
+                    legend: {
+                        labels: {
+                            fontColor: 'white' // label color
+                            }
+                        },
+                    scales: {
+                        // y축
+                        yAxes: [{
+                            stacked: true,
+                            ticks: {
+                                fontColor:'white' // y축 폰트 color
+                            }
+                        }],
+                        // x축
+                        xAxes: [{
+                            stacked: true,
+                            ticks: {
+                                fontColor:'white' // x축 폰트 color
+                            }
+                        }]
+                    }
+                }
+            });
+        }
+        
+    </script>
 </body>
 </html>
