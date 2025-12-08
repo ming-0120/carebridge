@@ -78,6 +78,10 @@ def dashboard(request):
     - 최근 7일간 방문자 수 그래프 데이터 생성
     - 웹/모바일 가입자 구분 통계 제공
     """
+    # 관리자 권한 체크
+    user_role = request.session.get('role', '')
+    if user_role != 'ADMIN':
+        return redirect('/')
     # 오늘 날짜 및 시간 범위 설정
     today = timezone.now().date()
     today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -1497,8 +1501,10 @@ def approval_pending(request):
     # page_obj.paginator.per_page: 페이지당 항목 수 (공통 함수에서 생성된 paginator 객체 접근)
     start_index = (page_obj.number - 1) * page_obj.paginator.per_page + 1
     for idx, doctor in enumerate(page_obj):
-        # 면허번호에서 전공과 코드(2자리) 제거한 뒷자리 추출
-        license_back = doctor.license_no[2:] if len(doctor.license_no) > 2 else ''
+        # 면허번호에서 전공과 코드(2자리)와 $ 기호 제거한 뒷자리 추출
+        # 면허번호 형식: 영어코드$주민번호7자리 (예: IM$1234567)
+        # 영어코드 2자리 + $ 1자리 = 3자리 제거
+        license_back = doctor.license_no[3:] if len(doctor.license_no) > 3 else ''
         
         # 주민번호에서 뒷자리 추출 (하이픈 기준)
         resident_reg_no = doctor.user.resident_reg_no
@@ -2272,7 +2278,20 @@ def create_user_dummy_data(request):
     #   - 기존 사용자와 중복되지 않도록 보장
     start_num = max_num + 1
     
-    # 더미 사용자 데이터 템플릿 (시, 군/구, 동 포함)
+    # 성씨 목록
+    surnames = ['김', '이', '박', '최', '유', '조', '가', '임', '하', '성', '정', '강', '고', '윤', '손', '오', '한', '백', '전', '서', '문', '남']
+    
+    # 이름 목록
+    given_names = [
+        '지우', '서준', '민서', '하준', '유진', '예린', '세영', '도윤', '아린', '시온',
+        '나연', '태훈', '다온', '하림', '윤호', '예슬', '지안', '현아', '건우', '세아',
+        '주원', '민재', '소연', '지유', '서아', '연우', '라희', '지호', '다혜', '나윤',
+        '태영', '규민', '세나', '아현', '준영', '은서', '도하', '민혁', '현지', '아준',
+        '윤아', '지훈', '채원', '효린', '준서', '예나', '수아', '소민', '한별', '현우',
+        '다솔', '라온', '민호', '하연', '윤재', '시윤', '민아', '아라', '태민', '유림'
+    ]
+    
+    # 주소 데이터 (시, 군/구, 동 포함)
     address_data = {
         '서울특별시 강남구': ['역삼동', '삼성동', '청담동', '논현동', '압구정동', '신사동', '대치동', '도곡동'],
         '서울특별시 서초구': ['반포동', '잠원동', '방배동', '양재동', '서초동', '내곡동', '염곡동', '신원동'],
@@ -2284,16 +2303,36 @@ def create_user_dummy_data(request):
         '광주광역시 남구': ['봉선동', '주월동', '방림동', '송하동', '양림동', '사동', '구동', '월산동'],
     }
     
-    user_templates = [
-        {'name': '김철수', 'gender': 'M', 'city_district': '서울특별시 강남구'},
-        {'name': '이영희', 'gender': 'W', 'city_district': '서울특별시 서초구'},
-        {'name': '박민수', 'gender': 'M', 'city_district': '서울특별시 송파구'},
-        {'name': '최지영', 'gender': 'W', 'city_district': '경기도 성남시 분당구'},
-        {'name': '정대현', 'gender': 'M', 'city_district': '인천광역시 남동구'},
-        {'name': '한소연', 'gender': 'W', 'city_district': '부산광역시 해운대구'},
-        {'name': '윤성호', 'gender': 'M', 'city_district': '대전광역시 서구'},
-        {'name': '강미영', 'gender': 'W', 'city_district': '광주광역시 남구'},
-    ]
+    # 지역 목록
+    city_districts = list(address_data.keys())
+    
+    # 더미 사용자 데이터 생성 (8명씩, 동명이인 없이)
+    user_templates = []
+    used_names = set()  # 이미 사용된 이름 조합을 추적
+    
+    for i in range(8):
+        # 성씨와 이름을 랜덤으로 조합하여 동명이인 방지
+        while True:
+            surname = random.choice(surnames)
+            given_name = random.choice(given_names)
+            full_name = f'{surname}{given_name}'
+            
+            # 동명이인이 없으면 사용
+            if full_name not in used_names:
+                used_names.add(full_name)
+                break
+        
+        # 지역 할당 (순환)
+        city_district = city_districts[i % len(city_districts)]
+        
+        # 성별 랜덤 할당
+        gender = random.choice(['M', 'W'])
+        
+        user_templates.append({
+            'name': full_name,
+            'gender': gender,
+            'city_district': city_district
+        })
     
     created_count = 0
     for i, template in enumerate(user_templates):
@@ -2368,6 +2407,40 @@ def create_user_dummy_data(request):
         created_count += 1
     
     return redirect('user_list')
+
+
+def create_admin_account(request):
+    """
+    관리자 계정 생성
+    - 관리자 계정 생성 (admin01, 비밀번호 1234, role='ADMIN')
+    """
+    from django.contrib.auth.hashers import make_password
+    
+    # 관리자 계정이 이미 존재하는지 확인
+    if Users.objects.filter(username='admin01', role='ADMIN').exists():
+        # 이미 존재하면 업데이트 (비밀번호만 변경)
+        admin_user = Users.objects.get(username='admin01', role='ADMIN')
+        admin_user.password = make_password('1234')
+        admin_user.save()
+        return redirect('admin_dashboard')
+    
+    # 관리자 계정 생성
+    admin_user = Users.objects.create(
+        username='admin01',
+        password=make_password('1234'),
+        name='관리자',
+        email='admin01@carebridge.com',
+        phone='010-0000-0000',
+        gender='M',
+        resident_reg_no='000000-0000000',
+        mail_confirm='Y',
+        address='서울특별시',
+        provider='local',
+        role='ADMIN',
+        withdrawal='0',
+    )
+    
+    return redirect('admin_dashboard')
 
 
 def create_doctor_dummy_data(request):
@@ -2580,14 +2653,50 @@ def create_doctor_dummy_data(request):
     #   - username 고유성 제약 조건을 만족
     start_num = max_num + 1
     
-    # 더미 의사 데이터 템플릿 (5명씩 생성)
-    doctor_templates = [
-        {'name': '김의사', 'gender': 'M', 'department': '내과'},
-        {'name': '이의사', 'gender': 'M', 'department': '외과'},
-        {'name': '박의사', 'gender': 'M', 'department': '정형외과'},
-        {'name': '최의사', 'gender': 'W', 'department': '소아과'},
-        {'name': '정의사', 'gender': 'M', 'department': '이비인후과'},
+    # 성씨 목록
+    surnames = ['김', '이', '박', '최', '유', '조', '가', '임', '하', '성', '정', '강', '고', '윤', '손', '오', '한', '백', '전', '서', '문', '남']
+    
+    # 이름 목록
+    given_names = [
+        '지우', '서준', '민서', '하준', '유진', '예린', '세영', '도윤', '아린', '시온',
+        '나연', '태훈', '다온', '하림', '윤호', '예슬', '지안', '현아', '건우', '세아',
+        '주원', '민재', '소연', '지유', '서아', '연우', '라희', '지호', '다혜', '나윤',
+        '태영', '규민', '세나', '아현', '준영', '은서', '도하', '민혁', '현지', '아준',
+        '윤아', '지훈', '채원', '효린', '준서', '예나', '수아', '소민', '한별', '현우',
+        '다솔', '라온', '민호', '하연', '윤재', '시윤', '민아', '아라', '태민', '유림'
     ]
+    
+    # 전공과 목록
+    departments_list = ['내과', '외과', '정형외과', '소아과', '이비인후과']
+    
+    # 더미 의사 데이터 생성 (5명씩, 동명이인 없이)
+    doctor_templates = []
+    used_names = set()  # 이미 사용된 이름 조합을 추적
+    
+    for i in range(5):
+        # 성씨와 이름을 랜덤으로 조합하여 동명이인 방지
+        while True:
+            surname = random.choice(surnames)
+            given_name = random.choice(given_names)
+            full_name = f'{surname}{given_name}'
+            
+            # 동명이인이 없으면 사용
+            if full_name not in used_names:
+                used_names.add(full_name)
+                break
+        
+        # 전공과 할당 (순환)
+        department = departments_list[i % len(departments_list)]
+        
+        # 성별 랜덤 할당 (대략적인 성별 구분을 위해 이름의 마지막 글자로 판단하거나 랜덤)
+        # 간단하게 랜덤으로 할당
+        gender = random.choice(['M', 'W'])
+        
+        doctor_templates.append({
+            'name': full_name,
+            'gender': gender,
+            'department': department
+        })
     
     created_count = 0
     for i, template in enumerate(doctor_templates):
@@ -2614,10 +2723,10 @@ def create_doctor_dummy_data(request):
             # back_reg와 다를 때까지 반복
             while wrong_back_reg == back_reg:
                 wrong_back_reg = f'{first_digit}{random.randint(0, 999999):06d}'
-            license_no = f"{dept.dep_code}{wrong_back_reg}"
+            license_no = f"{dept.dep_code}${wrong_back_reg}"
         else:
             # 나머지는 정상적으로 주민번호 뒷자리와 일치
-            license_no = f"{dept.dep_code}{back_reg}"
+            license_no = f"{dept.dep_code}${back_reg}"
         
         # 이메일 생성
         email = f'{username}@hospital.com'

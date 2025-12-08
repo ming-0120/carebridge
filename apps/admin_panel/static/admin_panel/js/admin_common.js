@@ -1246,6 +1246,70 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
 }
 
 /**
+ * 범용 테이블 행 클릭 이벤트 연결 함수
+ * 
+ * 목적: 테이블 행에 클릭 이벤트 리스너를 연결하는 공통 함수
+ *   - 코드 재사용: 여러 목록 페이지에서 동일한 로직을 재사용
+ *   - 유지보수성: 공통 로직 변경 시 모든 페이지에 자동 반영
+ * 
+ * @param {string} rowSelector - 테이블 행 선택자 (예: '.user-row[data-user-id]')
+ * @param {string} dataAttrName - 데이터 속성 이름 (예: 'data-user-id')
+ * @param {Function} selectFunction - 선택 함수 (예: selectUser, selectDoctor, selectHospital)
+ * 
+ * @example
+ * attachTableRowListeners('.user-row[data-user-id]', 'data-user-id', selectUser);
+ */
+function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
+  const rows = document.querySelectorAll(rowSelector);
+  
+  rows.forEach(row => {
+    row.removeEventListener('click', row._clickHandler);
+    const itemId = row.getAttribute(dataAttrName);
+    
+    if (itemId) {
+      row._clickHandler = function(e) {
+        const target = e.target;
+        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('input, button')) {
+          return;
+        }
+        
+        e.preventDefault();
+        e.stopPropagation();
+        
+        selectFunction(e, parseInt(itemId));
+      };
+      row.addEventListener('click', row._clickHandler);
+    }
+  });
+}
+
+/**
+ * 범용 정렬 링크 이벤트 연결 함수
+ * 
+ * 목적: 테이블 헤더의 정렬 링크에 클릭 이벤트 리스너를 연결하는 공통 함수
+ *   - 코드 재사용: 여러 목록 페이지에서 동일한 로직을 재사용
+ *   - 유지보수성: 공통 로직 변경 시 모든 페이지에 자동 반영
+ * 
+ * @example
+ * attachSortListeners();
+ */
+function attachSortListeners() {
+  const sortLinks = document.querySelectorAll('a[data-sort-field]');
+  
+  sortLinks.forEach(link => {
+    link.removeEventListener('click', link._sortHandler);
+    link._sortHandler = function(e) {
+      e.preventDefault();
+      const sortField = link.getAttribute('data-sort-field');
+      const currentSort = link.getAttribute('data-current-sort') || '';
+      const currentOrder = link.getAttribute('data-current-order') || 'desc';
+      handleSortClick(sortField, currentSort, currentOrder);
+    };
+    link.addEventListener('click', link._sortHandler);
+  });
+}
+
+/**
  * 페이지네이션 링크 생성 (검색 파라미터 유지)
  * 
  * 목적: 페이지네이션 링크를 생성하면서 검색 및 정렬 파라미터를 유지
@@ -2063,26 +2127,11 @@ function handlePaginationAjax(e, url) {
     attachPaginationListeners();
     
     // ========= 테이블 행 클릭 이벤트 다시 연결 =========
-    // 목적: 새로 추가된 테이블 행에 클릭 이벤트 리스너를 다시 연결
-    //   - 페이지네이션으로 새로운 테이블 행이 추가되면 기존 이벤트 리스너가 사라짐
-    //   - 새로 추가된 행에 클릭 이벤트를 다시 연결하여 상세 정보 표시 기능 유지
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 행 클릭 기능이 정상 작동
-    // 
-    // typeof attachTableRowListeners === 'function': 함수 존재 여부 확인
-    //   - typeof: 변수의 타입을 확인하는 연산자
-    //   - attachTableRowListeners: 테이블 행에 이벤트 리스너를 연결하는 함수
-    //   - 'function': 함수 타입을 나타내는 문자열
-    //   - 목적: 함수가 정의되어 있는지 확인 (안전성)
-    //   - 이유: 모든 페이지에 이 함수가 정의되어 있지 않을 수 있음
-    //   - 예: 일부 페이지는 테이블 행 클릭 기능이 없을 수 있음
-    if (typeof attachTableRowListeners === 'function') {
-      // attachTableRowListeners(): 테이블 행에 클릭 이벤트 리스너 연결
-      //   - 목적: 새로 추가된 테이블 행에 클릭 이벤트 리스너 연결
-      //   - 동작: 모든 테이블 행을 찾아서 각각에 클릭 이벤트 리스너 추가
-      //   - 결과: 행 클릭 시 상세 정보가 AJAX로 표시됨
-      attachTableRowListeners();
-    }
-    // 주의: attachTableRowListeners 함수가 없으면 실행하지 않음 (에러 방지)
+    // 주의: attachTableRowListeners와 attachSortListeners는 각 페이지별 JS 파일에서 호출해야 합니다.
+    //   - 이유: 각 페이지마다 다른 파라미터(rowSelector, idAttribute, selectFunction)가 필요하기 때문입니다.
+    //   - 각 페이지별 JS 파일의 DOMContentLoaded 또는 handlePaginationAjax 완료 후에 호출하세요.
+    //   - 예: attachTableRowListeners('.user-row[data-user-id]', 'data-user-id', selectUser);
+    //   - 예: attachSortListeners();
     
     // ========= 체크박스 이벤트 다시 연결 =========
     // 목적: 새로 추가된 체크박스에 이벤트 리스너를 다시 연결
@@ -2525,6 +2574,23 @@ document.addEventListener('DOMContentLoaded', function() {
   //     4. 링크 클릭 시 handlePaginationAjax 함수 호출
   //   - 결과: 페이지네이션 링크 클릭 시 AJAX로 페이지 이동
   attachPaginationListeners();
+  
+  // ========= 로그아웃 버튼 이벤트 리스너 =========
+  // 목적: 로그아웃 버튼 클릭 시 확인 창을 표시하고 로그아웃 처리
+  const logoutBtn = document.getElementById('logoutBtn');
+  
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // 확인 창 표시
+      if (confirm('로그아웃을 하시겠습니까?')) {
+        // 예 버튼: 로그아웃 처리 (메인 화면으로 이동)
+        window.location.href = '/accounts/logout/';
+      }
+      // 아니오 버튼: 아무 작업도 하지 않음 (현재 페이지 유지)
+    });
+  }
   
   // ========= 컨테이너 내부 휠 스크롤 방지 =========
   // 목적: 컨테이너 내부에서 마우스 휠 스크롤을 방지하는 기능 호출 (현재는 비활성화됨)
