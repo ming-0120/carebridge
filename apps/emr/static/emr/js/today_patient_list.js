@@ -1,9 +1,44 @@
 function searchPatients() {
     const query = document.getElementById('searchQuery').value;
-    alert(`"${query}"(으)로 환자 리스트를 조회합니다.`);
+
+    fetch(`/mstaff/api/today-patients/?q=${encodeURIComponent(query)}`)
+        .then(res => res.json())
+        .then(data => renderPatientList(data.patients));
 }
 
-function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDiag, ordersExist) {
+function renderPatientList(patients) {
+    const tbody = document.getElementById('patientListBody');
+    tbody.innerHTML = "";
+
+    patients.forEach(p => {
+        const tr = document.createElement('tr');
+
+        tr.onclick = () => selectPatient(
+            tr, 
+            p.name, 
+            p.gender, 
+            p.dob, 
+            p.visit,
+            p.dept,
+            p.doctor,
+            p.recent_diag,
+            p.order_detail    
+        );
+
+
+        tr.innerHTML = `
+            <td>${p.name}</td>
+            <td>${p.gender}</td>
+            <td>${p.dob}</td>
+            <td>${p.visit}</td>
+        `;
+
+        tbody.appendChild(tr);
+    });
+}
+
+
+function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDiag, orderDetail) {
 
     document.querySelectorAll('#patientListBody tr')
         .forEach(r => r.classList.remove('selected'));
@@ -21,9 +56,9 @@ function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDi
 
     document.getElementById('summaryRecentDiagnosis').textContent = recentDiag;
 
-    document.getElementById('summaryOrderExists').innerHTML = ordersExist
-        ? `<strong>오더 유무:</strong> <span style="color:#dc3545;font-weight:bold;">처방·검사 있음</span>`
-        : `<strong>오더 유무:</strong> 없음`;
+    document.getElementById('summaryOrderExists').innerHTML =
+        `<strong>오더 유무:</strong> ${orderDetail}`;
+
 }
 
 function goToCreateRecord() {
