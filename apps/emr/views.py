@@ -6,13 +6,15 @@ from django.views.decorators.http import require_GET
 from datetime import datetime, date, time, timezone as dt_timezone, timedelta
 from django.db import connection
 from django.db.models import Q
-from apps.db.models import Users
 from pytz import timezone as tz
-from apps.db.models import Reservations
 from django.utils import timezone
+from django.utils.timezone import localdate
+from apps.db.models import MedicalRecord, Users, Doctors, Reservations, LabOrders, TreatmentProcedures
 import requests, json
 import os
 import xml.etree.ElementTree as ET
+from django.db.models import F
+from django.db.models.functions import Abs
 from django.core import serializers
 from django.db.models import Count
 from django.db.models import DateField
@@ -337,6 +339,13 @@ def lab_record_creation(request):
                 order.requisition_note = special_notes
 
                 order.save()
+                
+            elif current_status == 'Sampled':
+                order.status_datetime = datetime.now()
+                order.status = 'Completed'
+                order.requisition_note = special_notes
+
+                order.save()
 
                 for file in uploaded_files:
                     labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
@@ -462,6 +471,109 @@ def treatment_record_verification(request):
 # ---------------------------------------------------------
 def view_previous_medical_records(request):
     return render(request, "emr/view_previous_medical_records.html")
+
+
+# ---------------------------------------------------------
+# 오늘의 환자 리스트 검색
+# ---------------------------------------------------------
+@require_GET
+def api_today_patients(request):
+    q = request.GET.get("q", "").strip()
+    today = localdate()  # 오늘 날짜 (KST 기준)
+
+    # 1) 검색 대상 사용자 필터링 (이름 / 주민번호 일부)
+    matched_users = Users.objects.filter(
+        Q(name__icontains=q) |
+        Q(resident_reg_no__icontains=q)
+    ).values_list("user_id", flat=True)
+
+    # 2) 오늘(slot_date = today) 예약 잡힌 사용자
+    reservations = (
+        Reservations.objects.filter(
+            user_id__in=matched_users,
+            slot__slot_date=today,
+        )
+        .select_related(
+            "user",
+            "slot",
+            "slot__doctor",
+            "slot__doctor__user",
+        )
+        .order_by("slot__start_time")
+    )
+
+    result = []
+    for r in reservations:
+        u = r.user
+        s = r.slot
+        d = s.doctor
+
+        # --------------------------
+        # ① 오늘 제외한 가장 최근 진료기록 1개 가져오기
+        # --------------------------
+        # 오늘 00:00(KST) 기준 datetime 생성
+        today_start = timezone.make_aware(
+            datetime.combine(today, time.min),
+            timezone.get_current_timezone()
+        )
+
+        # 오늘 이전의 가장 최근 진료기록 조회
+        recent_record = (
+            MedicalRecord.objects
+            .filter(
+                user=u,
+                record_datetime__lt=today_start   # ← date 비교가 아닌 명확한 datetime 비교
+            )
+            .order_by('-record_datetime')
+            .first()
+        )
+
+
+        if recent_record:
+            recent_diag = recent_record.record_datetime.date().isoformat()
+        else:
+            recent_diag = ""
+
+
+        # --------------------------
+        # ② 최근 진료기록 기반 오더 유무 계산
+        # --------------------------
+        has_lab = False
+        has_treat = False
+
+        if recent_record:
+            has_lab = LabOrders.objects.filter(medical_record=recent_record).exists()
+            has_treat = TreatmentProcedures.objects.filter(medical_record=recent_record).exists()
+
+        # 4-case output
+        if has_lab and has_treat:
+            order_summary = "치료/처치 및 검사 있음"
+        elif has_treat:
+            order_summary = "치료/처치 있음"
+        elif has_lab:
+            order_summary = "검사 있음"
+        else:
+            order_summary = "없음"
+
+        # --------------------------
+        # ③ JSON 결과 구성
+        # --------------------------
+        result.append({
+            "name": u.name,
+            "gender": u.gender,
+            "dob": u.resident_reg_no[:8],
+            "visit": str(s.slot_date),
+            "time": str(s.start_time)[:5],
+            "dept": d.dep.dep_name if d and hasattr(d, "dep") and d.dep else "",
+            "doctor": d.user.name if d else "",
+            "recent_diag": recent_diag or "",
+            "order_detail": order_summary,
+            "has_order": (order_summary != "없음"),   # ★ 여기 1줄만 추가
+        })
+
+    return JsonResponse({"patients": result})
+
+
 
 
 # ---------------------------------------------------------
@@ -633,7 +745,7 @@ def api_create_medical_record(request):
     if reserved_at:
         slot_id = get_or_create_slot_id(int(doctor_id), reserved_at, reserved_end)
 
-        Reservations.objects.create(
+        reservation = Reservations.objects.create(
             reserved_at=reserved_at,
             reserved_end=reserved_end,
             slot_type=1 if reservation_type == "consultation" else 2,
@@ -642,13 +754,37 @@ def api_create_medical_record(request):
             slot_id=slot_id
         )
 
+        # -----------------------------------------------------
+        # ★ 오늘 날짜 예약이면 오늘 날짜 medical_record 자동 생성
+        # -----------------------------------------------------
+        today = localdate()
+
+        # reserved_at은 aware datetime → 날짜만 비교
+        if reserved_at.date() == today:
+            exists_today_record = MedicalRecord.objects.filter(
+                user_id=patient_id,
+                record_datetime__date=today
+            ).exists()
+
+            if not exists_today_record:
+                MedicalRecord.objects.create(
+                    record_type="consult",
+                    ptnt_div_cd="N",
+                    record_datetime=timezone.now(),
+                    doctor_id=doctor_id,
+                    hos_id=hos_id,
+                    user_id=patient_id,
+                    assessment="",
+                    subjective="",
+                    objective="",
+                    plan="",
+                    record_content=""
+                )
 
     return JsonResponse({
         "result": "ok",
         "medical_record_id": record.medical_record_id
     })
-
-
 
 # ---------------------------------------------------------
 # 슬롯 생성 함수
