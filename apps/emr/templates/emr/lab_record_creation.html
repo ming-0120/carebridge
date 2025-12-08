@@ -6,11 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>검사 기록 작성</title>
 
-    {% load static %}
     <link rel="stylesheet" href="{% static 'emr/css/lab_record_creation.css' %}">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script>
         let currentState = "{{ order.status }}";
+        let select = "{{order.specimen_cd}}"
+        console.log(currentState);
     </script>
 </head>
 <body>
@@ -50,17 +51,21 @@
                     <div class="form-group">
                         <label for="labName">검사 항목명</label>
                         <div class="input-with-button">
-                            <input type="text" name="labName" id="labName" style="background-color: #a3a5a7;" readonly>
-                            <input type="text" name="labCode" id="labCode" style="background-color: #a3a5a7;" readonly>
-                            <button type="button" class="search-btn" style="width: 100px;" onclick="openLabSearchModal()">검색</button>
+                            <input type="text" name="labName" id="labName" style="background-color: #a3a5a7;" {% if order.status != "Pending" %} value="{{order.lab_nm}}" {% endif %} readonly>
+                            <input type="text" name="labCode" id="labCode" style="background-color: #a3a5a7;" {% if order.status != "Pending" %} value="{{order.lab_cd}}" {% endif %} readonly>
+
+                            {% if order.status == "Pending" %}
+                                <button type="button" class="search-btn" style="width: 100px;" onclick="openLabSearchModal()">검색</button>
+                            {% endif %}
+                            
                         </div>
                     </div>
                     
                     <div class="form-group">
                         <label for="specimenType">검체 유형 코드</label>
                         <div class="input-with-button">
-                            <select name="specimenType" id="specimenType">
-                                <option value="None" selected>없음</option>
+                            <select name="specimenType" id="specimenType" {% if order.status != 'Pending' %} readonly {% endif %}>
+                                <option value="None">없음</option>
                                 <option value="BLD">BLD (전혈)</option>
                                 <option value="PLAS">PLAS (혈장)</option>
                                 <option value="UR">UR (소변)</option>
@@ -77,15 +82,19 @@
 
                     <div class="form-group">
                         <label for="specialNotes">특이사항 메모</label>
-                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"></textarea>
+                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"
+                            {% if order.status == 'Completed' %} readonly {% endif %}
+                        >{% if order.requisition_note != None %}{{ order.requisition_note }}{% endif %}</textarea>
                     </div>
                 </div>
-
+                        
                 <div>
                     <div class="form-group">
                         <label>첨부파일</label>
                         <input type="file" name="fileAttachment" id="fileAttachment" style="display: none;" onchange="addAttachment(this)" multiple>
-                        <button class="search-btn attach-btn" type="button" onclick="document.getElementById('fileAttachment').click()">첨부파일</button>
+                        {% if order.status == 'Sampled' %}
+                            <button class="search-btn attach-btn" type="button" onclick="document.getElementById('fileAttachment').click()">첨부파일</button>
+                        {% endif %}
                     </div>
 
                     <div class="form-group">
@@ -102,7 +111,7 @@
                 {% elif order.status == 'Sampled' %}
                     <button class="status-button btn-completed" type="button" id="btnCompleted" onclick="updateStatus('Completed')">COMPLETED</button>
                 {% endif %}
-                <button class="status-button btn-next" type="button" id="btnNext" onclick="goToNextPatient()">다음환자</button>
+                <!-- <button class="status-button btn-next" type="button" id="btnNext" onclick="goToNextPatient()">다음환자</button> -->
             </div>
         </form>
     </div>
