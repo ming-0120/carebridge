@@ -2,9 +2,15 @@ let selectedDate = undefined;
 let currentYear = new Date().getFullYear();
 function saveMemo() {
     const memoContent = document.getElementById('doctorMemo').value;
-    // 실제 환경에서는 서버나 로컬 스토리지에 저장
-    console.log("메모 자동 저장됨:", memoContent);
-    // alert('메모가 저장되었습니다.');
+
+    const url = "/mstaff/set_doctor_memo/";
+    const formData = new FormData();
+    formData.append('memo', memoContent);
+    formData.append('doctor_id', doctor_id);
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+    });
 }
 
 window.onload = function() {
@@ -41,5 +47,64 @@ window.onload = function() {
         },
     });
     calendar.render();
+
+    const dates = getLastSevenDays();
+    const ctx = document.getElementById('dailyStatsChart').getContext('2d');
+
+    new Chart(ctx, {
+            type: 'line', // 라인 차트 (추이 분석에 유리)
+            data: {
+                labels: chartData.labels, // X축: 날짜
+                datasets: [{
+                    label: '라인 그래프2',
+                    type : 'line',
+                    fill : false,
+                    lineTension : 0.2,
+                    pointRadius : 0,
+                    backgroundColor: 'rgb(255, 204, 0)',
+                    borderColor: 'rgb(255, 204, 0)',
+                    data: [100, 120, 150, 100, 180, 200]
+                }
+                    
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '진료 건수'
+                        }
+                    }
+                }
+            }
+        });
 }
 
+function getLastSevenDays() {
+    const dates = [];
+    
+    // 7일간 반복 (0부터 6까지 총 7번)
+    for (let i = 0; i < 7; i++) {
+        // 1. 현재 날짜 객체를 생성합니다. (루프가 돌 때마다 현재 시점을 복사)
+        const d = new Date();
+        
+        // 2. 현재 날짜에서 i일 만큼 뺌 (i=0: 오늘, i=1: 어제, ..., i=6: 6일 전)
+        d.setDate(d.getDate() - i); 
+
+        // 3. YYYY-MM-DD 형식으로 포맷팅
+        const year = d.getFullYear();
+        // getMonth()는 0부터 시작하므로 +1을 해주고, padStart로 두 자릿수를 맞춥니다.
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+
+        // 4. 배열의 맨 뒤(i=0)가 아닌 맨 앞(i=6)부터 채워서 날짜 순서를 오름차순으로 맞춥니다.
+        // 예를 들어, 12월 8일인 경우: ['12-02', '12-03', ..., '12-08'] 순서로 저장됩니다.
+        dates.unshift(`${year}-${month}-${day}`);
+    }
+
+    return dates;
+}

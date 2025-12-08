@@ -17,4 +17,4 @@ from .favorite import UserFavorite
 from .qna import Qna
 from .daily_visit import DailyVisit
 from .medical_newsletter import MedicalNewsletter
-from .emergency import ErInfo, ErStatus, ErStatusStaging, ErMessage  # ← 실제 파일/클래스 이름에 맞게 수정
+from .emergency import ErInfo

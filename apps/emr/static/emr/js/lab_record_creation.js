@@ -77,7 +77,7 @@ function removeAttachment(button, uniqueId) {
 }
 
 /* 검사 상태 업데이트 */
-function updateStatus(newStatus) {
+async function updateStatus(newStatus) {
     const formData = new FormData();
     if (newStatus === 'Sampled') {
         // startTime.value = getCurrentTime();
@@ -94,22 +94,52 @@ function updateStatus(newStatus) {
         formData.append('current_status', $('#current_status').val());
         formData.append('labName', $('#labName').val());
         formData.append('labCode', $('#labCode').val());
-        formData.append('specimenType', $("#frmLab>[name=specimenType]>option:selected").val());
+        formData.append('specimenType', $("#specimenType option:selected").val())
         formData.append('specialNotes', $('#specialNotes').val());
 
         for (const file of fileList) {
             formData.append('fileAttachment', file); 
         }
 
-        const url = 'http://127.0.0.1:8000/mstaff/lab_record/'
-        fetch(url, {
+        const url = '/mstaff/lab_record/'
+        const response = await fetch(url, {
             method: 'POST',
             body: formData,
-        })
+        });
+
+        const data = await response.json();
+
+        if (response.status == 200) {
+            user_id = data.user.user_id;
+            medical_record_id = data.medical_record.medical_record_id;
+            order_id = data.order.lab_order_id;
+
+            window.location.href = `/mstaff/lab_record/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}`;
+        }
 
     } else if (newStatus === 'Completed') {
+        formData.append('order_id', $('#order_id').val());
+        formData.append('user_id', $('#user_id').val());
+        formData.append('medical_record_id', $('#medical_record_id').val());
+        formData.append('current_status', $('#current_status').val());
+        formData.append('labName', $('#labName').val());
+        formData.append('labCode', $('#labCode').val());
+        formData.append('specimenType', $("#specimenType option:selected").val())
+        formData.append('specialNotes', $('#specialNotes').val());
 
-        $("form[name='frmLab']").submit();
+        for (const file of fileList) {
+            formData.append('fileAttachment', file); 
+        }
+
+        const url = '/mstaff/lab_record/'
+        const response = await fetch(url, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (response.status == 200) {
+            window.location.href = "/mstaff/hospital_dashboard/";
+        }
     }
 }
 
@@ -132,7 +162,7 @@ function closeModal(id) {
 /* 검색 기능 (Mock) */
 async function labPerformSearch() {
     const query = document.getElementById('labNameInput').value;
-    const url = `http://127.0.0.1:8000/mstaff/lab_data_search/?search=${query}`;
+    const url = `/mstaff/lab_data_search/?search=${query}`;
     const response = await fetch(url);
     const datas = await response.json();
     const table = [];
@@ -175,4 +205,7 @@ function confirmSelection() {
 
 document.addEventListener('DOMContentLoaded', () => {
     // document.getElementById('btnCompleted').disabled = true;
+    if (select != 'None') {
+        $(`#specimenType option[value=${select}]`).prop("selected", true);
+    } 
 });

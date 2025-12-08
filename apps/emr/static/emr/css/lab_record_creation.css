@@ -275,3 +275,8 @@ h2 {
     background-color: #007bff;
     color: white;
 }
+
+select[readonly] {
+  background-color: #ddd;
+  pointer-events: none;
+}

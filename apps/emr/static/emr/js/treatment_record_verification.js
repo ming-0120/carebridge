@@ -89,7 +89,7 @@ function closeModal(id) {
 // 모달 검색
 async function treatmentPerformSearch() {
     const q = document.getElementById('procedureNameInput').value;
-    url = `http://127.0.0.1:8000/mstaff/treatment_data_search/?search=${q}`
+    url = `/mstaff/treatment_data_search/?search=${q}`
     
     const response = await fetch(url);
     const datas = await response.json();
