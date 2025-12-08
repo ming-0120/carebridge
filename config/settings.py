@@ -162,11 +162,6 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LAST_LOGIN_FIELD = None
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-]
-
-
 OPENAPI_SERVICE_KEY = os.getenv("OPENAPI_SERVICE_KEY")
 
 from dotenv import load_dotenv
