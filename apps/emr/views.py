@@ -155,17 +155,14 @@ def doctor_screen_dashboard(request):
             count=Count('medical_record_id')
         ).order_by('record_date'))
 
-        labels = []  # 날짜 (x축)
-        data = []    # 진료 건수 (y축)
+        medical_record_chart_data = []
         
         for item in daily_stats:
-            labels.append(item['record_date'].strftime('%Y-%m-%d'))
-            data.append(item['count'])
-            
-        medical_record_chart_data = {
-            'labels': labels,
-            'data': data,
-        }
+            medical_chart = {
+                'labels': item['record_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            medical_record_chart_data.append(medical_chart)
 
     except:
         print('error')
@@ -174,7 +171,7 @@ def doctor_screen_dashboard(request):
         'holidays': json.dumps(holidays),
         'users': users,
         'doctor': doctor,
-        'medical_record_chart': medical_record_chart_data,
+        'medical_record_chart': json.dumps(medical_record_chart_data),
     }
 
     return render(request, 'emr/doctor_screen_dashboard.html', datas)

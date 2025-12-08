@@ -47,41 +47,6 @@ window.onload = function() {
         },
     });
     calendar.render();
-
-    const dates = getLastSevenDays();
-    const ctx = document.getElementById('dailyStatsChart').getContext('2d');
-
-    new Chart(ctx, {
-            type: 'line', // 라인 차트 (추이 분석에 유리)
-            data: {
-                labels: chartData.labels, // X축: 날짜
-                datasets: [{
-                    label: '라인 그래프2',
-                    type : 'line',
-                    fill : false,
-                    lineTension : 0.2,
-                    pointRadius : 0,
-                    backgroundColor: 'rgb(255, 204, 0)',
-                    borderColor: 'rgb(255, 204, 0)',
-                    data: [100, 120, 150, 100, 180, 200]
-                }
-                    
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: '진료 건수'
-                        }
-                    }
-                }
-            }
-        });
 }
 
 function getLastSevenDays() {

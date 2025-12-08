@@ -16,6 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
         let holidays = "{{ holidays | escape }}"
+        let medical_record_chart = "{{ medical_record_chart | escape }}"
         const doctor_id = "{{ doctor.doctor_id }}"
         function htmlDecode(input) {
             const doc = new DOMParser().parseFromString(input, "text/html");
@@ -23,6 +24,8 @@
         }
 
         holidays = JSON.parse(htmlDecode(holidays));
+        medical_record_chart = JSON.parse(htmlDecode(medical_record_chart));
+        console.log(medical_record_chart)
     </script>
 </head>
 <body>
@@ -100,6 +103,12 @@
     <script>
         window.onload = function() {
             const ctx = document.getElementById('dailyStatsChart').getContext('2d');
+            const dates = getLastSevenDays();
+            const medical_record_chart_data = [];
+            
+            for (date of dates) {
+                const foundMedicalChart = me
+            }
 
             var chart = new Chart(ctx, {
                 
@@ -108,9 +117,9 @@
             
                 // The data for our dataset
                 data: {
-                    labels: ['1월','2월','3월','4월','5월','6월'],
+                    labels: dates,
                     datasets: [{
-                        label: '라인 그래프1',
+                        label: '진료',
                         type : 'line',         // 'line' type
                         fill : false,         // 채우기 없음
                         lineTension : 0.2,  // 0이면 꺾은선 그래프, 숫자가 높을수록 둥글해짐
@@ -129,31 +138,6 @@
                         data: [100, 120, 150, 100, 180, 200]
                     }]
                 },
-            
-                // Configuration options
-                options: {
-                    legend: {
-                        labels: {
-                            fontColor: 'white' // label color
-                            }
-                        },
-                    scales: {
-                        // y축
-                        yAxes: [{
-                            stacked: true,
-                            ticks: {
-                                fontColor:'white' // y축 폰트 color
-                            }
-                        }],
-                        // x축
-                        xAxes: [{
-                            stacked: true,
-                            ticks: {
-                                fontColor:'white' // x축 폰트 color
-                            }
-                        }]
-                    }
-                }
             });
         }
         
