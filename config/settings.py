@@ -156,15 +156,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LAST_LOGIN_FIELD = None
+
 
 OPENAPI_SERVICE_KEY = os.getenv("OPENAPI_SERVICE_KEY")
 
 from dotenv import load_dotenv
+import urllib.parse
+
 load_dotenv()
 
 RAW_API_KEY = os.getenv("OPENAPI_SERVICE_KEY")
+OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')

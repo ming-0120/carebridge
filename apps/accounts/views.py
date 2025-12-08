@@ -58,8 +58,9 @@ def login_view(request):
     request.session['username'] = user.username
     request.session['role'] = user.role
 
-    if user.role == 'admin':
-        return redirect('/manager/dashboard/')
+    # 관리자 역할 체크 (role 값은 'ADMIN' - 대문자)
+    if user.role == 'ADMIN':
+        return redirect('/admin_panel/')
 
     return redirect(next_url)
 
@@ -231,7 +232,7 @@ def check_username(request):
     exists = Users.objects.filter(username=username).exists()
     return JsonResponse({'exists': exists})
 
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def logout_view(request):
     user = request.user
     kakao_access_token = getattr(user, "access_token", None)
