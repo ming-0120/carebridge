@@ -476,15 +476,13 @@ def view_previous_medical_records(request):
 @require_GET
 def api_today_patients(request):
     q = request.GET.get("q", "").strip()
-    today = localdate()  # 오늘 날짜 (KST 기준)
+    today = localdate()
 
-    # 1) 검색 대상 사용자 필터링 (이름 / 주민번호 일부)
     matched_users = Users.objects.filter(
         Q(name__icontains=q) |
         Q(resident_reg_no__icontains=q)
     ).values_list("user_id", flat=True)
 
-    # 2) 오늘(slot_date = today) 예약 잡힌 사용자
     reservations = (
         Reservations.objects.filter(
             user_id__in=matched_users,
@@ -495,83 +493,72 @@ def api_today_patients(request):
             "slot",
             "slot__doctor",
             "slot__doctor__user",
+            "slot__doctor__dep",
         )
         .order_by("slot__start_time")
     )
 
     result = []
+
     for r in reservations:
         u = r.user
         s = r.slot
         d = s.doctor
 
-        # --------------------------
-        # ① 오늘 제외한 가장 최근 진료기록 1개 가져오기
-        # --------------------------
-        # 오늘 00:00(KST) 기준 datetime 생성
+        # 오늘 이전 기록 중 가장 최근
         today_start = timezone.make_aware(
             datetime.combine(today, time.min),
             timezone.get_current_timezone()
         )
 
-        # 오늘 이전의 가장 최근 진료기록 조회
         recent_record = (
             MedicalRecord.objects
-            .filter(
-                user=u,
-                record_datetime__lt=today_start   # ← date 비교가 아닌 명확한 datetime 비교
-            )
+            .filter(user=u, record_datetime__lt=today_start)
             .order_by('-record_datetime')
             .first()
         )
 
+        recent_diag = recent_record.record_datetime.date().isoformat() if recent_record else ""
 
-        if recent_record:
-            recent_diag = recent_record.record_datetime.date().isoformat()
-        else:
-            recent_diag = ""
+        # -----------------------------------------------------
+        # 오더 유무 계산 (해당 환자의 모든 기록 기준)
+        # -----------------------------------------------------
+        # medical_record_id 리스트 전체 확보
+        all_records = MedicalRecord.objects.filter(user=u).values_list("medical_record_id", flat=True)
 
+        # Lab Completed 여부
+        lab_completed = LabOrders.objects.filter(
+            medical_record_id__in=all_records,
+            status="Completed"
+        ).exists()
 
-        # --------------------------
-        # ② 최근 진료기록 기반 오더 유무 계산
-        # --------------------------
-        has_lab = False
-        has_treat = False
+        # Treatment Completed 여부
+        treat_completed = TreatmentProcedures.objects.filter(
+            medical_record_id__in=all_records,
+            status="Completed"
+        ).exists()
 
-        if recent_record:
-            has_lab = LabOrders.objects.filter(medical_record=recent_record).exists()
-            has_treat = TreatmentProcedures.objects.filter(medical_record=recent_record).exists()
-
-        # 4-case output
-        if has_lab and has_treat:
-            order_summary = "치료/처치 및 검사 있음"
-        elif has_treat:
-            order_summary = "치료/처치 있음"
-        elif has_lab:
-            order_summary = "검사 있음"
+        if lab_completed or treat_completed:
+            order_summary = "있음"
         else:
             order_summary = "없음"
 
-        # --------------------------
-        # ③ JSON 결과 구성
-        # --------------------------
+        # -----------------------------------------------------
+        # JSON 반환
+        # -----------------------------------------------------
         result.append({
             "name": u.name,
             "gender": u.gender,
             "dob": u.resident_reg_no[:8],
             "visit": str(s.slot_date),
             "time": str(s.start_time)[:5],
-            "dept": d.dep.dep_name if d and hasattr(d, "dep") and d.dep else "",
+            "dept": d.dep.dep_name if d and d.dep else "",
             "doctor": d.user.name if d else "",
-            "recent_diag": recent_diag or "",
+            "recent_diag": recent_diag,
             "order_detail": order_summary,
-            "has_order": (order_summary != "없음"),   # ★ 여기 1줄만 추가
         })
 
     return JsonResponse({"patients": result})
-
-
-
 
 # ---------------------------------------------------------
 # 약품 검색 API

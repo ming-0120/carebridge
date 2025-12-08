@@ -4,7 +4,7 @@ from .users import Users
 from .hospital import Hospital
 from .department import Department
 from .disease import DimDisease
-__all__ = ["ErInfo","ErStatus","ErStatusStaging","ErMessage",] # 모델을 노출시키되, import는 하지 않음
+# __all__ = ["ErInfo","ErStatus","ErStatusStaging","ErMessage",] # 모델을 노출시키되, import는 하지 않음
 from .doctor import Doctors
 from .medical_record import MedicalRecord
 from .slot_reservation import TimeSlots, Reservations
