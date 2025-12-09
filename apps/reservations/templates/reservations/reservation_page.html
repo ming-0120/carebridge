@@ -1,0 +1,109 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ hospital.name }} 예약</title>
+
+    <!-- 페이지 전용 CSS -->
+    <link rel="stylesheet" href="{% static 'reservations/css/reservation.css' %}">
+
+    <!-- FullCalendar CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js"></script>
+    <!-- FullCalendar 한국어 -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js"></script>
+    <script>
+        const HOLIDAYS = {{ holidays|safe }};
+    </script>
+</head>
+<body>
+    {% include "core/_header.html" %}
+
+    <main class="reservation-layout">
+        <!-- 1. 왼쪽 : 진료과 리스트(예시) -->
+        <aside class="dept-list">
+            <h3>진료과</h3>
+           <ul>
+                {% for dep in departments %}
+                    <li class="
+                        {% if selected_department and selected_department.dep_id == dep.dep_id %}
+                            active
+                        {% else %}
+                            disabled
+                        {% endif %}
+                    ">
+                        {% if selected_department and selected_department.dep_id == dep.dep_id %}
+                            <span>{{ dep.dep_name }}</span>
+                        {% else %}
+                            <a href="?department_id={{ dep.dep_id }}">{{ dep.dep_name }}</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        </aside>        
+        <!-- 2. 오른쪽 메인 영역 -->
+        <section class="reservation-main">
+
+            <!-- (1) 의사 카드 리스트 -->
+            <section class="doctor-list">
+                {% for doctor in doctors %}
+                    <div class="doctor-card" data-doctor-id="{{ doctor.doctor_id }}">
+                        <div class="doctor-image">
+                            <img src="{% static 'accounts/img/default_profile.png' %}" alt="doctor">
+                        </div>
+                        <div class="doctor-info">
+                            <div>전공과: {{ doctor.dep.name }}</div>
+                            <div>성함: {{ doctor.user.name }}</div>
+                        </div>
+                        <button type="button" class="btn-select-doctor">
+                            선택하기
+                        </button>
+                    </div>
+                {% empty %}
+                    <p>등록된 의사가 없습니다.</p>
+                {% endfor %}
+            </section>
+
+            <!-- (2) 예약 달력 -->
+            <section class="calendar-wrap">
+                <h3>예약 달력</h3>
+                <div id="calendar"></div>
+            </section>
+
+            <!-- (3) 시간 선택 (타임슬롯) -->
+            <section class="time-select">
+                <h3>오전</h3>
+                <div class="time-row am-row">
+                    <!-- JS로 오전 슬롯 버튼이 채워짐 -->
+                </div>
+
+                <h3>오후</h3>
+                <div class="time-row pm-row">
+                    <!-- JS로 오후 슬롯 버튼이 채워짐 -->
+                </div>
+            </section>
+
+            <!-- (4) 예약하기 폼 -->
+            <section class="submit-section">
+                <form method="post" action="{% url 'reservation_confirm' %}">
+                    {% csrf_token %}
+                    <!-- 선택된 슬롯 -->
+                    <input type="hidden" name="slot_id" id="selectedSlotId">
+                    <!-- 선택된 의사 (실제로는 slot으로 doctor까지 알 수 있지만 필요하면 유지) -->
+                    <input type="hidden" name="doctor_id" id="selectedDoctorId"
+                           value="{% if selected_doctor %}{{ selected_doctor.doctor_id }}{% endif %}">
+                    <!-- 선택된 날짜 (필요 시) -->
+                    <input type="hidden" name="selected_date" id="selectedDate">
+                
+                    <button type="submit" class="btn-reserve">예약하기</button>
+                </form>
+            </section>
+
+        </section>
+    </main>
+
+    <!-- 페이지 전용 JS -->
+    <script src="{% static 'reservations/js/reservation_page.js' %}"></script>
+</body>
+</html>

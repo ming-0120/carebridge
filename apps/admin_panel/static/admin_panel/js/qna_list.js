@@ -420,7 +420,7 @@ function deleteSelected() {
  * // 테이블 행 클릭 시 자동 호출
  * goToQnaDetail(1);
  * // 결과:
- * // 1. 문의 ID 1의 상세 페이지 URL 생성: /admin_panel/qna/1/
+ * // 1. 문의 ID 1의 상세 페이지 URL 생성: /admin_panel/qna_detail/1/
  * // 2. 해당 URL로 페이지 이동
  */
 function goToQnaDetail(qnaId) {
@@ -460,16 +460,16 @@ function goToQnaDetail(qnaId) {
   //   - URL 생성: 템플릿 리터럴을 사용하여 동적으로 URL 생성
   //   - 네비게이션: 생성된 URL로 페이지 이동
   // 
-  // const url = `/admin_panel/qna/${qnaId}/`: 문의 상세 페이지 URL 생성
+  // const url = `/admin_panel/qna_detail/${qnaId}/`: 문의 상세 페이지 URL 생성
   //   - 템플릿 리터럴: 백틱(`)을 사용하여 문자열과 변수를 결합
-  //   - `/admin_panel/qna/`: 문의 상세 페이지의 기본 경로
+  //   - `/admin_panel/qna_detail/`: 문의 상세 페이지의 기본 경로
   //   - ${qnaId}: 문의 ID 변수를 문자열에 삽입
   //   - `/`: URL 경로의 끝
   //   - 반환값: 문의 상세 페이지 URL (문자열)
-  //     → 예: "/admin_panel/qna/1/" (문의 ID가 1인 경우)
-  //     → 예: "/admin_panel/qna/2/" (문의 ID가 2인 경우)
+  //     → 예: "/admin_panel/qna_detail/1/" (문의 ID가 1인 경우)
+  //     → 예: "/admin_panel/qna_detail/2/" (문의 ID가 2인 경우)
   //   - 목적: 문의 상세 페이지로 이동하기 위한 URL 생성
-  const url = `/admin_panel/qna/${qnaId}/`;
+  const url = `/admin_panel/qna_detail/${qnaId}/`;
   
   // ========= 이동할 URL 로그 출력 =========
   // 목적: 생성된 URL을 콘솔에 출력하여 디버깅에 도움
@@ -1474,6 +1474,14 @@ document.addEventListener('DOMContentLoaded', function() {
   //     3. 행 클릭 시 해당 문의의 상세 페이지로 이동
   //   - 목적: 페이지 로드 시 테이블 행 클릭 기능 활성화
   attachTableRowListeners();
+  
+  // ========= 페이지네이션 후 이벤트 리스너 재연결 함수 =========
+  // 목적: 페이지네이션 완료 후 테이블 행 클릭 이벤트 리스너를 다시 연결
+  //   - handlePaginationAjax 함수에서 호출됨
+  //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
+  window.reattachTableRowListeners = function() {
+    attachTableRowListeners();
+  };
   
   // ========= 정렬 링크 클릭 이벤트 리스너 연결 =========
   // 목적: 테이블 헤더의 정렬 링크에 클릭 이벤트 리스너를 연결

@@ -26,9 +26,15 @@ urlpatterns = [
     # 희원가입
     path('accounts/', include('apps.accounts.urls')),
     path('', include('apps.social_auth.urls')),  # 카카오 로그인 경로
+    
+    path("api/chat/", include("apps.chatbot.urls")),  # ← 추가
+    path("reservations/", include("apps.reservations.urls")),
 
     # 감염병 통계 & 병원 페이지
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
+
+    # 마이페이지
+    path('mypage/', include('apps.mypage.urls')),  # ← 이게 중요!!
     
     # 실시간 응급실 조회 전용 라우팅
     path('emergency/', include('apps.emergency.urls')),

@@ -266,7 +266,8 @@
           - action: {% url 'doctor_list' %} - 의사 목록 URL (자기 자신)
           - CSS 클래스: search-form (검색 폼 스타일)
       -->
-      <form method="get" action="{% url 'doctor_list' %}" class="search-form">
+      <form method="post" action="{% url 'doctor_list' %}" class="search-form">
+        {% csrf_token %}
         <!-- 
           검색 조건 선택 드롭다운
           
@@ -406,7 +407,7 @@
         <tbody>
           {% for item in doctors_with_number %}
           {% with doctor=item.doctor %}
-          <tr data-doctor-id="{{ doctor.doctor_id }}" class="user-row">
+          <tr data-doctor-id="{{ doctor.doctor_id }}" class="doctor-row">
             <td>{{ item.number }}</td>
             <td>{{ doctor.user.username|default:"-" }}</td>
             <td>{{ doctor.user.name }}</td>
@@ -470,69 +471,99 @@
     <div class="user-detail-section card shadow-sm">
       <div class="card-body">
         <h3 class="detail-title card-title border-bottom pb-3 mb-4">선택 의사 상세정보</h3>
-        <div class="detail-grid row g-3">
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">이름</span>
-              <div class="detail-value">{{ selected_doctor.user.name }}</div>
+        <div class="doctor-detail-grid">
+          <!-- 첫 번째 줄: 이름, 의사ID, 승인상태 (3열) -->
+          <div class="doctor-detail-row doctor-detail-row-3">
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">이름</span>
+                <div class="detail-value">{{ selected_doctor.user.name }}</div>
+              </div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">의사ID</span>
-              <div class="detail-value">{{ selected_doctor.user.username|default:"-" }}</div>
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">의사ID</span>
+                <div class="detail-value">{{ selected_doctor.user.username|default:"-" }}</div>
+              </div>
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">면허번호</span>
-              <div class="detail-value">{{ selected_doctor.license_no }}</div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">전공과</span>
-              <div class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">주근무 병원</span>
-              <div class="detail-value">{{ selected_doctor.hos.name|default:"-" }}{% if selected_doctor.dep.dep_name %} {{ selected_doctor.dep.dep_name }}{% endif %}</div>
-            </div>
-          </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">승인상태</span>
-              <div class="detail-value">
-                {% if selected_doctor.verified %}
-                  <span class="status-badge status-approved">승인</span>
-                  {% if selected_doctor.user.created_at %}
-                    ({{ selected_doctor.user.created_at|date:"Y.m.d" }} 승인완료)
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">승인상태</span>
+                <div class="detail-value">
+                  {% if selected_doctor.verified %}
+                    <span class="status-badge status-approved">승인</span>
+                    {% if selected_doctor.user.created_at %}
+                      ({{ selected_doctor.user.created_at|date:"Y.m.d" }} 승인완료)
+                    {% endif %}
+                  {% else %}
+                    <span class="status-badge status-pending">대기</span>
                   {% endif %}
-                {% else %}
-                  <span class="status-badge status-pending">대기</span>
-                {% endif %}
+                </div>
               </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">전화번호</span>
-              <div class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</div>
+          
+          <!-- 두 번째 줄: 면허번호, 주민번호 (2열) -->
+          <div class="doctor-detail-row doctor-detail-row-2">
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">면허번호</span>
+                <div class="detail-value">{{ selected_doctor.license_no }}</div>
+              </div>
+            </div>
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">주민번호</span>
+                <div class="detail-value">
+                  {% if selected_doctor.user.resident_reg_no %}
+                    {% with reg_no=selected_doctor.user.resident_reg_no|cut:"-" %}{{ reg_no|slice:":6" }}-{{ reg_no|slice:"6:" }}{% endwith %}
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </div>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">이메일</span>
-              <div class="detail-value">{{ selected_doctor.user.email|default:"-" }}</div>
+          
+          <!-- 세 번째 줄: 주근무 병원, 전공과 (2열) -->
+          <div class="doctor-detail-row doctor-detail-row-2">
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">주근무 병원</span>
+                <div class="detail-value">{{ selected_doctor.hos.name|default:"-" }}</div>
+              </div>
+            </div>
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">전공과</span>
+                <div class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</div>
+              </div>
             </div>
           </div>
+          
+          <!-- 네 번째 줄: 전화번호, 이메일 (2열) -->
+          <div class="doctor-detail-row doctor-detail-row-2">
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">전화번호</span>
+                <div class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</div>
+              </div>
+            </div>
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">이메일</span>
+                <div class="detail-value">{{ selected_doctor.user.email|default:"-" }}</div>
+              </div>
+            </div>
+          </div>
+          
           {% if selected_doctor.memo %}
-          <div class="col-md-12">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">한줄 메모</span>
-              <div class="detail-value">{{ selected_doctor.memo }}</div>
+          <div class="doctor-detail-row doctor-detail-row-1">
+            <div class="doctor-detail-col">
+              <div class="detail-item">
+                <span class="detail-label d-block fw-bold">한줄 메모</span>
+                <div class="detail-value">{{ selected_doctor.memo }}</div>
+              </div>
             </div>
           </div>
           {% endif %}
@@ -541,7 +572,7 @@
     </div>
     {% else %}
     <!-- 상세 정보 영역이 없을 때도 공간 유지 (스크롤 이동 방지) -->
-    <div class="doctor-detail-section placeholder-hidden"></div>
+    <div class="user-detail-section placeholder-hidden"></div>
     {% endif %}
   </div>
 

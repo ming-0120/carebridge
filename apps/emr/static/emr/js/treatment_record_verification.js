@@ -51,13 +51,13 @@ function updateStatus(newStatus) {
 function updateButtonVisibility() {
     const btnStart = document.getElementById('btnStart');
     const btnComplete = document.getElementById('btnComplete');
-    const btnNext = document.getElementById('btnNext');
+    // const btnNext = document.getElementById('btnNext');
     const site = document.getElementById('procedureSite');
     const searchBtn = document.getElementById('searchProcedureBtn');
 
     btnStart.style.display = 'none';
     btnComplete.style.display = 'none';
-    btnNext.style.display = 'none';
+    // btnNext.style.display = 'none';
     site.disabled = false;
     searchBtn.disabled = false;
 
@@ -68,7 +68,7 @@ function updateButtonVisibility() {
         site.disabled = true;
         searchBtn.disabled = true;
     } else if (currentState === 'Completed') {
-        btnNext.style.display = 'inline-block';
+        // btnNext.style.display = 'inline-block';
         site.disabled = true;
         searchBtn.disabled = true;
     }
@@ -89,8 +89,11 @@ function closeModal(id) {
 // 모달 검색
 async function treatmentPerformSearch() {
     const q = document.getElementById('procedureNameInput').value;
-    url = `/mstaff/treatment_data_search/?search=${q}`
+    url = `/mstaff/treatment_data_search/?search=${q}`;
     
+    $('#layerPopup').css('display', 'block');
+    $('#search').hide();
+
     const response = await fetch(url);
     const datas = await response.json();
     const table = [];
@@ -103,6 +106,9 @@ async function treatmentPerformSearch() {
             </tr>
         `);
     }
+
+    $('#layerPopup').css('display', 'none');
+    $('#search').show();
 
     $('#procedureResultTable tbody').html(table.join('\n'));
 }

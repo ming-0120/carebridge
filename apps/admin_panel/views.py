@@ -10,7 +10,7 @@ from django.utils import timezone  # 시간대를 고려한 현재 시간/날짜
 from datetime import timedelta  # 날짜/시간 연산 (예: 7일 전 계산)
 
 # Django ORM 기능
-from django.db.models import Count, Sum, Q  # 집계 함수(Count, Sum), 복잡한 쿼리 조건(Q)
+from django.db.models import Count, Sum, Q, Case, When, F, IntegerField  # 집계 함수(Count, Sum), 복잡한 쿼리 조건(Q), 조건부 표현식(Case, When), 필드 참조(F)
 from django.core.paginator import Paginator  # 페이지네이션 처리
 from django.db import connection  # 원시 SQL 쿼리 실행 (더미 데이터 생성 시 사용)
 
@@ -29,12 +29,27 @@ import re  # 정규표현식 (더미 데이터 생성 시 패턴 매칭)
 
 # ========= 공통 유틸리티 함수 =========
 
+def get_request_param(request, param_name, default=''):
+    """
+    GET 또는 POST 요청에서 파라미터 값을 가져오는 공통 함수
+    POST 우선, 없으면 GET 사용
+    
+    Args:
+        request: HTTP 요청 객체
+        param_name: 파라미터 이름
+        default: 기본값 (기본값: 빈 문자열)
+    
+    Returns:
+        파라미터 값 또는 기본값
+    """
+    return request.POST.get(param_name) or request.GET.get(param_name, default)
+
 def paginate_queryset(request, queryset, per_page=5):
     """
     쿼리셋을 페이지네이션 처리하는 공통 함수
     
     Args:
-        request: HTTP 요청 객체 (GET 파라미터에서 page 번호를 가져옴)
+        request: HTTP 요청 객체 (GET 또는 POST 파라미터에서 page 번호를 가져옴)
         queryset: 페이지네이션할 쿼리셋
         per_page: 페이지당 항목 수 (기본값: 5)
     
@@ -50,11 +65,11 @@ def paginate_queryset(request, queryset, per_page=5):
     # Paginator(queryset, per_page): 쿼리셋을 페이지당 per_page개씩 나누는 페이지네이터 생성
     paginator = Paginator(queryset, per_page)
     
-    # 현재 페이지 번호 가져오기
-    # request.GET.get('page', 1): URL 파라미터에서 'page' 값을 가져옴
-    #   - 'page': URL 파라미터 이름 (예: ?page=2)
+    # 현재 페이지 번호 가져오기 (POST 우선, 없으면 GET)
+    # get_request_param(request, 'page', 1): POST 또는 GET 파라미터에서 'page' 값을 가져옴
+    #   - 'page': 파라미터 이름 (예: ?page=2 또는 POST 데이터)
     #   - 1: 기본값 (page 파라미터가 없으면 1페이지)
-    page_number = request.GET.get('page', 1)
+    page_number = get_request_param(request, 'page', 1)
     
     # 현재 페이지의 객체들 가져오기
     # paginator.get_page(page_number): 페이지 번호에 해당하는 페이지 객체 반환
@@ -310,40 +325,36 @@ def user_list(request):
     # 예: /admin_panel/users/?search_type=username&search_keyword=홍길동
     
     # 검색 타입 (어떤 필드로 검색할지)
-    # request.GET: URL 쿼리 파라미터를 담은 딕셔너리 (예: ?search_type=username)
-    # .get('search_type', ''): 'search_type' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 가능한 값: 'username' (사용자명), 'name' (이름), 'email' (이메일), 'phone' (전화번호)
     # 예: search_type = 'username' → 사용자명으로 검색
-    search_type = request.GET.get('search_type', '')
+    search_type = get_request_param(request, 'search_type', '')
     
     # 검색 키워드 (실제 검색어)
-    # request.GET.get('search_keyword', ''): 'search_keyword' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 사용자가 검색창에 입력한 텍스트
     # 예: search_keyword = '홍길동' → '홍길동'을 포함하는 사용자 검색
-    search_keyword = request.GET.get('search_keyword', '')
+    search_keyword = get_request_param(request, 'search_keyword', '')
     
     # 선택된 사용자 ID (상세 정보 표시용)
-    # request.GET.get('user_id', ''): 'user_id' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 사용자가 목록에서 특정 사용자 행을 클릭했을 때 전달되는 사용자 ID
-    # 예: /admin_panel/users/?user_id=123 → ID가 123인 사용자의 상세 정보 표시
-    selected_user_id = request.GET.get('user_id', '')
+    selected_user_id = get_request_param(request, 'user_id', '')
     
     # ========= 정렬 파라미터 =========
-    # URL 쿼리 파라미터에서 정렬 관련 정보 추출
-    # 예: /admin_panel/users/?sort=created_at&order=desc
+    # POST 우선, 없으면 GET에서 가져옴
     
     # 정렬 필드 (어떤 필드로 정렬할지)
-    # request.GET.get('sort', ''): 'sort' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
     # 가능한 값: 'user_id', 'username', 'name', 'email', 'phone', 'gender', 'resident_reg_no', 'address', 'created_at'
     # 예: sort_field = 'created_at' → 가입일 기준으로 정렬
-    sort_field = request.GET.get('sort', '')
+    sort_field = get_request_param(request, 'sort', '')
     
     # 정렬 순서 (오름차순/내림차순)
-    # request.GET.get('order', 'desc'): 'order' 파라미터 값을 가져오고, 없으면 'desc' 반환 (기본값: 내림차순)
+    # 기본값: 'desc' (내림차순)
     # 가능한 값: 'asc' (오름차순), 'desc' (내림차순)
     # 예: sort_order = 'desc' → 내림차순 정렬 (최신순, 큰 값부터)
     # 예: sort_order = 'asc' → 오름차순 정렬 (오래된 순, 작은 값부터)
-    sort_order = request.GET.get('order', 'desc')
+    sort_order = get_request_param(request, 'order', 'desc')
     
     # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
@@ -394,6 +405,7 @@ def user_list(request):
     # ========= 검색 필터 적용 =========
     # 사용자가 검색 조건과 검색어를 입력한 경우에만 필터 적용
     # search_type과 search_keyword가 모두 존재할 때만 검색 수행
+    # 검색조건이 "검색조건" (value="")으로 선택되어 있으면 전체 목록 표시 (검색 수행 안 함)
     
     if search_type and search_keyword:
         # 검색어 앞뒤 공백 제거
@@ -404,6 +416,7 @@ def user_list(request):
         
         # 공백 제거 후에도 검색어가 비어있지 않은 경우에만 필터 적용
         # 빈 문자열('')이면 검색하지 않음 (모든 사용자 표시)
+        # 검색조건이 "검색조건" (value="")이면 search_type이 빈 문자열이므로 여기까지 도달하지 않음
         if search_keyword:
             # 검색 타입에 따라 다른 필드로 검색
             # Django ORM의 __icontains: 대소문자 구분 없이 부분 일치 검색
@@ -435,6 +448,11 @@ def user_list(request):
     # 공통 유틸리티 함수를 사용하여 페이지네이션 처리
     # paginate_queryset(): 쿼리셋을 페이지네이션하고 페이지 객체와 전체 개수를 반환
     page_obj, total_count = paginate_queryset(request, users, per_page=5)
+    
+    # ========= 신규 가입 유저 확인용 날짜 범위 =========
+    # 오늘 날짜 기준으로 신규 가입 유저 여부 확인 (00:00:00 ~ 23:59:59)
+    today_start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = timezone.now().replace(hour=23, minute=59, second=59, microsecond=999999)
     
     # 각 항목의 번호 계산 (정렬 방향에 따라)
     users_with_number = []
@@ -531,13 +549,63 @@ def user_list(request):
                 # 예: mm='ab' 또는 dd='xx'인 경우 변환 실패
                 pass
         
+        # ========= 신규 가입 유저 확인 =========
+        # 오늘 날짜 기준으로 신규 가입 유저 여부 확인
+        # 오늘: 00:00:00 ~ 23:59:59 사이에 가입한 유저
+        is_new_user = user.created_at >= today_start and user.created_at <= today_end if user.created_at else False
+        
+        # ========= 주소 처리 (목록용: 동까지만 표시) =========
+        # 목적: 목록에서는 주소를 "동"까지만 표시하여 간결하게 표시
+        #   - 상세 정보에서는 전체 주소가 표시됨
+        #   - 주소에서 "동"이 포함된 경우 "동"까지만 추출
+        #   - 예: "서울특별시 강남구 역삼동 123-45" → "서울특별시 강남구 역삼동"
+        address_short = None
+        if user.address:
+            if '동' in user.address:
+                # "동"이 포함된 경우 "동"까지만 추출
+                # find(): 문자열에서 "동"의 위치를 찾음
+                dong_index = user.address.find('동')
+                if dong_index != -1:
+                    # "동"까지 포함하여 추출 (dong_index + 1: "동" 문자 포함)
+                    address_short = user.address[:dong_index + 1]
+                else:
+                    address_short = user.address
+            else:
+                # "동"이 없으면 전체 주소 사용
+                address_short = user.address
+        
         # 사용자 정보를 딕셔너리로 구성하여 리스트에 추가
         # users_with_number: 번호와 생년월일이 포함된 사용자 정보 리스트
         users_with_number.append({
             'user': user,              # 사용자 객체
             'number': number,           # 목록에서의 번호 (페이지네이션 기준)
-            'birth_date': birth_date    # 생년월일 (변환 성공 시 'YYYY.MM.DD', 실패 시 None)
+            'birth_date': birth_date,   # 생년월일 (변환 성공 시 'YYYY.MM.DD', 실패 시 None)
+            'is_new_user': is_new_user, # 신규 가입 유저 여부 (오늘 가입한 유저: True)
+            'address_short': address_short  # 주소 (동까지만, 목록 표시용)
         })
+    
+    # ========= 신규 가입 유저 우선 정렬 =========
+    # 목적: 신규 가입 유저(오늘 가입한 유저)를 목록 상단에 표시
+    #   - 사용자 경험(UX) 개선: 신규 가입 유저를 먼저 확인할 수 있도록 함
+    #   - 정렬 기준: is_new_user가 True인 항목을 먼저 배치
+    #   - Python 레벨 정렬: 리스트를 정렬하여 신규 가입 유저가 먼저 오도록 함
+    # 
+    # sorted(users_with_number, key=lambda x: (not x['is_new_user'], x['user'].created_at), reverse=True): 리스트 정렬
+    #   - sorted(): 리스트를 정렬하여 새로운 정렬된 리스트 반환
+    #   - key: 정렬 기준을 지정하는 함수
+    #     → lambda x: (not x['is_new_user'], x['user'].created_at)
+    #     → not x['is_new_user']: 신규 가입 유저(True)가 False로 변환되어 먼저 정렬됨
+    #       → is_new_user=True → not True = False (0)
+    #       → is_new_user=False → not False = True (1)
+    #       → False < True 이므로 신규 가입 유저가 먼저 옴
+    #     → x['user'].created_at: 같은 신규 가입 유저 그룹 내에서는 가입일 기준 정렬
+    #   - reverse=True: 내림차순 정렬 (최신순)
+    #   - 결과: 신규 가입 유저가 먼저 오고, 그 다음 일반 유저가 최신순으로 정렬됨
+    users_with_number = sorted(
+        users_with_number, 
+        key=lambda x: (not x['is_new_user'], x['user'].created_at if x['user'].created_at else timezone.now()), 
+        reverse=True
+    )
     
     # 선택된 사용자 정보 (상세 정보 표시용)
     selected_user = None
@@ -674,7 +742,7 @@ def user_list(request):
     # AJAX 요청인 경우 처리
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         # user_id 파라미터가 있으면 행 클릭으로 간주하여 상세 정보만 반환
-        # page 파라미터가 있어도 user_id가 있으면 행 클릭이므로 상세 정보만 반환
+        # page 파라미터가 있어도 user_id가 있으면 행 클릭으로 처리 (2페이지에서 행 클릭 시에도 상세 정보 반환)
         if selected_user_id:
             detail_html = render_to_string('admin_panel/user_list_detail.html', context, request=request)
             return JsonResponse({'detail_html': detail_html})
@@ -698,36 +766,40 @@ def doctor_list(request):
     # 예: /admin_panel/doctors/?search_type=name&search_keyword=홍길동
     
     # 검색 타입 (어떤 필드로 검색할지)
-    # request.GET: URL 쿼리 파라미터를 담은 딕셔너리 (예: ?search_type=name)
-    # .get('search_type', ''): 'search_type' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 가능한 값: 'name' (이름), 'doctor_id' (의사ID), 'license_no' (면허번호), 'department' (진료과), 'hospital' (병원명)
     # 예: search_type = 'name' → 이름으로 검색
-    search_type = request.GET.get('search_type', '')
+    search_type = get_request_param(request, 'search_type', '')
     
     # 검색 키워드 (실제 검색어)
-    # request.GET.get('search_keyword', ''): 'search_keyword' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 사용자가 검색창에 입력한 텍스트
     # 예: search_keyword = '홍길동' → '홍길동'을 포함하는 의사 검색
-    search_keyword = request.GET.get('search_keyword', '')
+    search_keyword = get_request_param(request, 'search_keyword', '')
     
     # 선택된 의사 ID (상세 정보 표시용)
-    # request.GET.get('doctor_id', ''): 'doctor_id' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
+    # POST 우선, 없으면 GET에서 가져옴
     # 사용자가 목록에서 특정 의사 행을 클릭했을 때 전달되는 의사 ID
-    # 예: /admin_panel/doctors/?doctor_id=123 → ID가 123인 의사의 상세 정보 표시
-    selected_doctor_id = request.GET.get('doctor_id', '')
+    selected_doctor_id = get_request_param(request, 'doctor_id', '')
+    # 문자열을 정수로 변환 (빈 문자열이면 None으로 처리)
+    if selected_doctor_id:
+        try:
+            selected_doctor_id = int(selected_doctor_id)
+        except (ValueError, TypeError):
+            selected_doctor_id = None
+    else:
+        selected_doctor_id = None
     
     # ========= 정렬 파라미터 =========
-    # URL 쿼리 파라미터에서 정렬 관련 정보 추출
-    # 예: /admin_panel/doctors/?sort=created_at&order=desc
+    # POST 우선, 없으면 GET에서 가져옴
     
     # 정렬 필드 (어떤 필드로 정렬할지)
-    # request.GET.get('sort', ''): 'sort' 파라미터 값을 가져오고, 없으면 빈 문자열('') 반환
     # 가능한 값: 'doctor_id', 'name', 'username', 'license_no', 'department', 'hospital', 'email', 'verified', 'created_at'
     # 예: sort_field = 'created_at' → 가입일 기준으로 정렬
-    sort_field = request.GET.get('sort', '')
+    sort_field = get_request_param(request, 'sort', '')
     
     # 정렬 순서 (오름차순/내림차순)
-    # request.GET.get('order', 'desc'): 'order' 파라미터 값을 가져오고, 없으면 'desc' 반환 (기본값: 내림차순)
+    # 기본값: 'desc' (내림차순)
     # 가능한 값: 'asc' (오름차순), 'desc' (내림차순)
     # 예: sort_order = 'desc' → 내림차순 정렬 (최신순, 큰 값부터)
     # 예: sort_order = 'asc' → 오름차순 정렬 (오래된 순, 작은 값부터)
@@ -823,6 +895,7 @@ def doctor_list(request):
     # ========= 검색 필터 적용 =========
     # 사용자가 검색 조건과 검색어를 입력한 경우에만 필터 적용
     # search_type과 search_keyword가 모두 존재할 때만 검색 수행
+    # 검색조건이 "검색조건" (value="")으로 선택되어 있으면 전체 목록 표시 (검색 수행 안 함)
     
     if search_type and search_keyword:
         # 검색어 앞뒤 공백 제거
@@ -833,6 +906,7 @@ def doctor_list(request):
         
         # 공백 제거 후에도 검색어가 비어있지 않은 경우에만 필터 적용
         # 빈 문자열('')이면 검색하지 않음 (모든 의사 표시)
+        # 검색조건이 "검색조건" (value="")이면 search_type이 빈 문자열이므로 여기까지 도달하지 않음
         if search_keyword:
             # 검색 타입에 따라 다른 필드로 검색
             # Django ORM의 __icontains: 대소문자 구분 없이 부분 일치 검색
@@ -1016,67 +1090,29 @@ def doctor_list(request):
     # 페이지 전체를 새로고침하지 않고 필요한 부분만 동적으로 업데이트하기 위해 사용
     # 예: 사용자가 목록의 행을 클릭하면 상세 정보만 업데이트, 페이지는 그대로 유지
     
-    # X-Requested-With 헤더 확인
-    # request.headers.get('X-Requested-With'): HTTP 요청 헤더에서 'X-Requested-With' 값을 가져옴
-    #   - 일반 브라우저 요청: None 또는 다른 값
-    #   - AJAX 요청: 'XMLHttpRequest' (jQuery, fetch API 등이 자동으로 설정)
-    #   - 이 헤더를 통해 일반 페이지 요청과 AJAX 요청을 구분
-    #   - 예: JavaScript에서 fetch()로 요청하면 자동으로 'XMLHttpRequest' 헤더가 포함됨
+    # AJAX 요청인 경우 처리
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # AJAX 요청인 경우
-        
-        # selected_doctor_id가 있는 경우: 사용자가 목록의 특정 행을 클릭한 것으로 간주
         # doctor_id 파라미터가 있으면 행 클릭으로 간주하여 상세 정보만 반환
-        # page 파라미터가 있어도 doctor_id가 있으면 행 클릭이므로 상세 정보만 반환
-        #   - 예: URL에 ?doctor_id=1&page=2가 있어도 doctor_id가 있으면 행 클릭으로 처리
-        #   - 이유: 사용자가 특정 의사를 선택했으므로 상세 정보만 업데이트하면 됨
+        # page 파라미터가 있어도 doctor_id가 있으면 행 클릭으로 처리 (2페이지에서 행 클릭 시에도 상세 정보 반환)
         if selected_doctor_id:
-            # 상세 정보 템플릿을 HTML 문자열로 렌더링
-            # render_to_string(): 템플릿을 렌더링하여 HTML 문자열로 반환 (HttpResponse 객체가 아님)
-            #   - 'admin_panel/doctor_list_detail.html': 상세 정보를 표시할 템플릿 파일
-            #   - context: 템플릿에 전달할 데이터 (selected_doctor 등 포함)
-            #   - request=request: 템플릿에서 request 객체를 사용할 수 있도록 전달
-            #     → 템플릿에서 {% url %} 태그나 request.user 등을 사용할 수 있음
-            # 반환값: 렌더링된 HTML 문자열 (예: '<div>의사 상세 정보...</div>')
-            detail_html = render_to_string('admin_panel/doctor_list_detail.html', context, request=request)
+            # selected_doctor가 None이면 빈 HTML 반환
+            if not selected_doctor:
+                return JsonResponse({'detail_html': ''})
             
-            # JSON 형식으로 응답 반환
-            # JsonResponse(): JSON 형식의 HTTP 응답을 생성하는 Django 클래스
-            #   - {'detail_html': detail_html}: JSON 객체 (키: 'detail_html', 값: HTML 문자열)
-            #   - JavaScript에서 response.json()으로 받으면 {detail_html: '<div>...</div>'} 형태
-            #   - JavaScript에서 받은 후 DOM에 삽입하여 상세 정보 영역만 업데이트
-            #   - 예: document.getElementById('detail-area').innerHTML = response.detail_html
-            # 반환값: JSON 응답 (Content-Type: application/json)
-            #   - 이 return 문이 실행되면 함수가 종료되고, 아래의 render()는 실행되지 않음
-            return JsonResponse({'detail_html': detail_html})
-        
-        # selected_doctor_id가 없는 경우: 페이지네이션이나 다른 AJAX 요청
+            try:
+                detail_html = render_to_string('admin_panel/doctor_list_detail.html', context, request=request)
+                return JsonResponse({'detail_html': detail_html})
+            except Exception as e:
+                # 템플릿 렌더링 에러 발생 시 에러 정보 반환
+                import traceback
+                error_detail = traceback.format_exc()
+                return JsonResponse({
+                    'error': str(e),
+                    'detail': error_detail
+                }, status=500)
         # doctor_id가 없으면 페이지네이션이므로 전체 HTML 반환
         # 이 경우는 일반 페이지 렌더링으로 처리
-        #   - 예: 페이지 번호를 클릭하여 다른 페이지로 이동하는 경우
-        #   - 현재는 구현되지 않았지만, 필요시 여기서 페이지네이션 HTML만 반환할 수 있음
-        #   - 현재는 아래의 render()로 일반 페이지 렌더링 처리
     
-    # ========= 일반 페이지 렌더링 (AJAX 요청이 아닌 경우) =========
-    # 브라우저에서 직접 URL을 입력하거나, 일반 링크를 클릭한 경우
-    # 페이지 전체를 새로고침하여 전체 HTML을 반환
-    
-    # 디버깅용 출력 (개발 중에만 사용, 프로덕션에서는 제거 권장)
-    # print('두번째'): 콘솔에 '두번째' 문자열 출력
-    #   - 이 함수가 실행되었는지 확인하기 위한 디버깅 코드
-    #   - 실제 프로덕션 환경에서는 제거하거나 로깅 시스템으로 대체 권장
-    print('두번째')
-    
-    # 전체 페이지 렌더링
-    # render(): 템플릿을 렌더링하여 HttpResponse 객체를 반환하는 Django 함수
-    #   - request: HTTP 요청 객체 (템플릿에서 request.user 등을 사용할 수 있도록 전달)
-    #   - 'admin_panel/doctor_list.html': 렌더링할 템플릿 파일 경로
-    #     → apps/admin_panel/templates/admin_panel/doctor_list.html 파일을 찾음
-    #   - context: 템플릿에 전달할 데이터 딕셔너리
-    #     → 템플릿에서 {{ 변수명 }} 형식으로 접근 가능
-    # 반환값: HttpResponse 객체 (HTML 응답)
-    #   - 브라우저에 전체 HTML 페이지가 전송됨
-    #   - 템플릿이 렌더링되어 의사 목록, 검색 폼, 페이지네이션 등이 모두 포함된 HTML 생성
     return render(request, 'admin_panel/doctor_list.html', context)
 
 
@@ -1089,14 +1125,22 @@ def hospital_list(request):
     - 페이지네이션 (페이지당 5개)
     - AJAX 요청 시 상세 정보만 반환
     """
-    # 검색 조건 및 키워드
-    search_type = request.GET.get('search_type', '')
-    search_keyword = request.GET.get('search_keyword', '')
-    selected_hospital_id = request.GET.get('hospital_id', '')
+    # 검색 조건 및 키워드 (POST 우선, 없으면 GET)
+    search_type = get_request_param(request, 'search_type', '')
+    search_keyword = get_request_param(request, 'search_keyword', '')
+    selected_hospital_id = get_request_param(request, 'hospital_id', '')
+    # 문자열을 정수로 변환 (빈 문자열이면 None으로 처리)
+    if selected_hospital_id:
+        try:
+            selected_hospital_id = int(selected_hospital_id)
+        except (ValueError, TypeError):
+            selected_hospital_id = None
+    else:
+        selected_hospital_id = None
     
-    # 정렬 파라미터
-    sort_field = request.GET.get('sort', '')
-    sort_order = request.GET.get('order', 'desc')
+    # 정렬 파라미터 (POST 우선, 없으면 GET)
+    sort_field = get_request_param(request, 'sort', '')
+    sort_order = get_request_param(request, 'order', 'desc')
     
     # ========= 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑) =========
     # 사용자가 URL 파라미터로 전달한 정렬 필드명을 실제 데이터베이스 모델 필드명으로 변환
@@ -1134,6 +1178,12 @@ def hospital_list(request):
         #   - 병원 전화번호로 정렬할 때 사용
         'tel': 'tel',
         
+        # 의사 수 정렬
+        # 'doctor_count': annotate로 추가된 의사 수 필드
+        #   - doctor_count: annotate(doctor_count=Count('doctors'))로 추가된 필드
+        #   - 병원에 소속된 의사 수로 정렬할 때 사용
+        'doctor_count': 'doctor_count',
+        
         # 생성일 정렬
         # 'created_at': Hospital 모델의 created_at 필드
         #   - created_at: Hospital 모델의 직접 필드
@@ -1163,18 +1213,36 @@ def hospital_list(request):
     #   - 성능 최적화: 한 번의 쿼리로 병원 정보와 의사 수를 함께 가져옴
     #     → 각 병원마다 의사 수를 조회하는 N+1 쿼리 문제를 방지
     hospitals = Hospital.objects.annotate(
-        doctor_count=Count('doctors')
+        doctor_count=Count('doctors'),
+        # 의사 수 정렬용 필드: doctor_count가 0보다 크면 doctor_count 사용, 그렇지 않으면 dr_total 사용
+        # Case/When: 조건에 따라 다른 값을 반환
+        #   - doctor_count > 0이면 doctor_count 사용
+        #   - 그렇지 않으면 dr_total 사용 (dr_total도 없으면 0)
+        doctor_count_for_sort=Case(
+            When(doctor_count__gt=0, then=F('doctor_count')),
+            default=Case(
+                When(dr_total__isnull=False, then=F('dr_total')),
+                default=0,
+                output_field=IntegerField()
+            ),
+            output_field=IntegerField()
+        )
     ).all()
     
     # 정렬 적용
     if sort_field and sort_field in sort_fields:
         order_prefix = '-' if sort_order == 'desc' else ''
-        hospitals = hospitals.order_by(f'{order_prefix}{sort_fields[sort_field]}')
+        # 의사 수 정렬인 경우 doctor_count_for_sort 사용
+        if sort_field == 'doctor_count':
+            hospitals = hospitals.order_by(f'{order_prefix}doctor_count_for_sort')
+        else:
+            hospitals = hospitals.order_by(f'{order_prefix}{sort_fields[sort_field]}')
     else:
         # 기본 정렬: 최신순
         hospitals = hospitals.order_by('-created_at')
     
     # 검색 필터 적용
+    # 검색조건이 "검색조건" (value="")으로 선택되어 있으면 전체 목록 표시 (검색 수행 안 함)
     if search_type and search_keyword:
         search_keyword = search_keyword.strip()
         if search_keyword:
@@ -1206,9 +1274,46 @@ def hospital_list(request):
         else:
             # 오름차순 또는 기본: 페이지네이션 기준
             number = start_index + idx
+        # ========= 주소 처리 (목록용: 첫 번째 쉼표까지만 표시) =========
+        # 목적: 목록에서는 주소를 첫 번째 쉼표까지만 표시하여 간결하게 표시
+        #   - 상세 정보에서는 전체 주소가 표시됨
+        #   - 주소에서 첫 번째 쉼표(,)가 있는 경우 쉼표까지만 추출
+        #   - 예: "세종특별자치시 한누리대로 331, 2층, 3층" → "세종특별자치시 한누리대로 331"
+        address_short = None
+        if hospital.address:
+            if ',' in hospital.address:
+                # 첫 번째 쉼표의 위치를 찾아서 그 앞까지만 추출
+                comma_index = hospital.address.find(',')
+                if comma_index != -1:
+                    address_short = hospital.address[:comma_index]
+                else:
+                    address_short = hospital.address
+            else:
+                # 쉼표가 없으면 전체 주소 사용
+                address_short = hospital.address
+        
+        # ========= 개원일 포맷팅 (yyyy.mm.dd 형식) =========
+        # 목적: 개원일을 yyyy.mm.dd 형식으로 포맷팅
+        #   - estb_date가 yyyymmdd 형식인 경우 yyyy.mm.dd로 변환
+        #   - 예: "20200623" → "2020.06.23"
+        estb_date_formatted = None
+        if hospital.estb_date:
+            estb_date_str = str(hospital.estb_date)
+            # yyyymmdd 형식인지 확인 (8자리 숫자)
+            if len(estb_date_str) == 8 and estb_date_str.isdigit():
+                year = estb_date_str[:4]
+                month = estb_date_str[4:6]
+                day = estb_date_str[6:8]
+                estb_date_formatted = f'{year}.{month}.{day}'
+            else:
+                # 이미 포맷팅된 형식이거나 다른 형식이면 그대로 사용
+                estb_date_formatted = estb_date_str
+        
         hospitals_with_number.append({
             'hospital': hospital,
-            'number': number
+            'number': number,
+            'address_short': address_short,  # 주소 (목록용: 첫 번째 쉼표까지만)
+            'estb_date_formatted': estb_date_formatted  # 개원일 (yyyy.mm.dd 형식)
         })
     
     # ========= 선택된 병원 정보 (상세 정보 표시용) =========
@@ -1242,6 +1347,23 @@ def hospital_list(request):
             selected_hospital = Hospital.objects.annotate(
                 doctor_count=Count('doctors')
             ).get(hos_id=selected_hospital_id)
+            
+            # ========= 선택된 병원의 개원일 포맷팅 =========
+            # 목적: 선택된 병원의 개원일을 yyyy.mm.dd 형식으로 포맷팅
+            #   - 템플릿에서 사용하기 위해 객체에 속성으로 추가
+            if selected_hospital.estb_date:
+                estb_date_str = str(selected_hospital.estb_date)
+                # yyyymmdd 형식인지 확인 (8자리 숫자)
+                if len(estb_date_str) == 8 and estb_date_str.isdigit():
+                    year = estb_date_str[:4]
+                    month = estb_date_str[4:6]
+                    day = estb_date_str[6:8]
+                    selected_hospital.estb_date_formatted = f'{year}.{month}.{day}'
+                else:
+                    # 이미 포맷팅된 형식이거나 다른 형식이면 그대로 사용
+                    selected_hospital.estb_date_formatted = estb_date_str
+            else:
+                selected_hospital.estb_date_formatted = None
         except Hospital.DoesNotExist:
             # 해당 hos_id를 가진 병원이 존재하지 않는 경우
             # 예외 처리: selected_hospital은 None으로 유지 (에러 발생하지 않음)
@@ -1340,12 +1462,25 @@ def hospital_list(request):
     
     # AJAX 요청인 경우 처리
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        # hospital_id 파라미터가 있고, page 파라미터가 없으면 상세 정보만 반환 (행 클릭)
-        # page 파라미터가 있으면 페이지네이션이므로 전체 HTML 반환
+        # hospital_id 파라미터가 있으면 행 클릭으로 간주하여 상세 정보만 반환
+        # page 파라미터가 있어도 hospital_id가 있으면 행 클릭으로 처리 (2페이지에서 행 클릭 시에도 상세 정보 반환)
         if selected_hospital_id:
-            detail_html = render_to_string('admin_panel/hospital_list_detail.html', context, request=request)
-            return JsonResponse({'detail_html': detail_html})
-        # 그 외의 경우 (페이지네이션 등)는 전체 HTML 반환
+            # selected_hospital이 None이면 빈 HTML 반환
+            if not selected_hospital:
+                return JsonResponse({'detail_html': ''})
+            
+            try:
+                detail_html = render_to_string('admin_panel/hospital_list_detail.html', context, request=request)
+                return JsonResponse({'detail_html': detail_html})
+            except Exception as e:
+                # 템플릿 렌더링 에러 발생 시 에러 정보 반환
+                import traceback
+                error_detail = traceback.format_exc()
+                return JsonResponse({
+                    'error': str(e),
+                    'detail': error_detail
+                }, status=500)
+        # hospital_id가 없으면 페이지네이션이므로 전체 HTML 반환
         # 이 경우는 일반 페이지 렌더링으로 처리
     
     return render(request, 'admin_panel/hospital_list.html', context)
@@ -1360,9 +1495,9 @@ def approval_pending(request):
     - 정렬 기능 및 페이지네이션 지원
     - AJAX 요청 시 상세 정보만 반환
     """
-    # 정렬 파라미터
-    sort_field = request.GET.get('sort', '')
-    sort_order = request.GET.get('order', 'asc')
+    # 정렬 파라미터 (POST 우선, 없으면 GET)
+    sort_field = get_request_param(request, 'sort', '')
+    sort_order = get_request_param(request, 'order', 'asc')
     
     # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
@@ -1433,17 +1568,63 @@ def approval_pending(request):
         #     → 하지만 현재 코드는 'user__created_at'이므로 오래된 순서로 정렬됨
         pending_doctors = pending_doctors.order_by('user__created_at')
     
+    # ========= 유효하지 않은 면허번호를 가진 의사를 우선 표시하기 위한 정렬 =========
+    # 목적: 유효하지 않은 면허번호를 가진 의사를 1페이지에 우선 표시
+    #   - 페이지네이션 전에 전체 의사의 면허번호 유효성을 확인하여 정렬
+    #   - 유효하지 않은 의사가 먼저 오도록 정렬하여 1페이지에 우선 표시
+    
+    # 모든 의사를 리스트로 변환하여 검증
+    all_doctors = list(pending_doctors)
+    doctors_with_validation_temp = []
+    
+    for doctor in all_doctors:
+        # 면허번호에서 전공과 코드(2자리)와 $ 기호 제거한 뒷자리 추출
+        license_back = doctor.license_no[3:] if len(doctor.license_no) > 3 else ''
+        
+        # 주민번호에서 뒷자리 추출 (하이픈 기준)
+        resident_reg_no = doctor.user.resident_reg_no
+        if '-' in resident_reg_no:
+            resident_back = resident_reg_no.split('-')[1] if len(resident_reg_no.split('-')) > 1 else ''
+        else:
+            resident_back = resident_reg_no[-7:] if len(resident_reg_no) >= 7 else ''
+        
+        # 일치 여부 확인
+        is_valid_license = (license_back == resident_back)
+        
+        doctors_with_validation_temp.append({
+            'doctor': doctor,
+            'is_valid_license': is_valid_license
+        })
+    
+    # 유효하지 않은 면허번호를 가진 의사를 먼저 정렬
+    #   - is_valid_license가 False인 의사가 먼저 오도록 정렬
+    doctors_with_validation_temp.sort(key=lambda x: x['is_valid_license'])
+    
+    # 정렬된 의사 ID 리스트 생성
+    ordered_doctor_ids = [item['doctor'].doctor_id for item in doctors_with_validation_temp]
+    
+    # ID 순서대로 의사를 다시 정렬 (Case 문 사용)
+    from django.db.models import Case, When, IntegerField
+    if ordered_doctor_ids:
+        order_case = Case(
+            *[When(doctor_id=doctor_id, then=pos) for pos, doctor_id in enumerate(ordered_doctor_ids)],
+            default=len(ordered_doctor_ids),
+            output_field=IntegerField()
+        )
+        pending_doctors = pending_doctors.order_by(order_case)
+    
     # ========= 선택된 의사 ID =========
     # 사용자가 목록에서 특정 의사를 클릭했을 때 해당 의사의 상세 정보를 표시하기 위한 데이터
     # 또는 페이지에 처음 접근했을 때 기본으로 선택할 의사 결정
     
     # URL 파라미터에서 의사 ID 가져오기
-    # request.GET.get('doctor_id', ''): HTTP GET 요청의 쿼리 파라미터에서 'doctor_id' 값을 가져옴
-    #   - 'doctor_id': URL 파라미터 이름 (예: ?doctor_id=1)
+    # POST 우선, 없으면 GET에서 의사 ID 가져오기
+    # get_request_param(request, 'doctor_id', ''): POST 또는 GET 요청에서 'doctor_id' 값을 가져옴
+    #   - 'doctor_id': 파라미터 이름 (예: ?doctor_id=1 또는 POST 데이터)
     #   - '': 기본값 (doctor_id 파라미터가 없으면 빈 문자열 반환)
-    #   - 사용자가 목록의 특정 행을 클릭하면 해당 의사의 doctor_id가 URL에 포함됨
+    #   - 사용자가 목록의 특정 행을 클릭하면 해당 의사의 doctor_id가 전달됨
     #   - AJAX 요청 시 상세 정보만 반환하기 위해 사용
-    selected_doctor_id = request.GET.get('doctor_id', '')
+    selected_doctor_id = get_request_param(request, 'doctor_id', '')
     
     # 선택된 의사 객체 초기화
     # selected_doctor: 사용자가 선택한 의사의 상세 정보를 저장할 변수
@@ -1493,6 +1674,8 @@ def approval_pending(request):
     # ========= 페이지네이션 (페이지당 5개) =========
     # 공통 유틸리티 함수를 사용하여 페이지네이션 처리
     # paginate_queryset(): 쿼리셋을 페이지네이션하고 페이지 객체와 전체 개수를 반환
+    # 주의: 위에서 유효하지 않은 면허번호를 가진 의사가 먼저 오도록 정렬했으므로,
+    #       페이지네이션 시 1페이지에 유효하지 않은 의사가 우선 표시됨
     page_obj, total_count = paginate_queryset(request, pending_doctors, per_page=5)
     
     # 면허번호와 주민번호 뒷자리 일치 여부 확인 및 번호 계산 (각 의사에 대해)
@@ -1816,9 +1999,9 @@ def qna_list(request):
             # 결과: 삭제 처리 후 문의 목록 페이지가 새로고침되어 변경사항이 반영됨
             return redirect('qna_list')
     
-    # 정렬 파라미터 (기본값 없음 - 기본 정렬 사용)
-    sort_field = request.GET.get('sort', '')
-    sort_order = request.GET.get('order', 'asc')
+    # 정렬 파라미터 (POST 우선, 없으면 GET)
+    sort_field = get_request_param(request, 'sort', '')
+    sort_order = get_request_param(request, 'order', 'asc')
     
     # 정렬 필드 매핑 (URL 파라미터와 실제 모델 필드 매핑)
     sort_fields = {
@@ -2375,11 +2558,25 @@ def create_user_dummy_data(request):
         # 전화번호 생성
         phone = f'010-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}'
         
-        # 주소 생성 (시, 군/구, 동 포함)
+        # 주소 생성 (시, 군/구, 동 포함 + 상세 주소)
         city_district = template['city_district']
         dong_list = address_data.get(city_district, ['동'])
         dong = random.choice(dong_list)
-        address = f'{city_district} {dong}'
+        
+        # 상세 주소 생성 (동 뒤에 추가할 상세 주소)
+        # 예: "123-45", "456-78", "아파트 101동 101호", "빌라 201호" 등
+        detail_addresses = [
+            f'{random.randint(100, 999)}-{random.randint(10, 99)}',
+            f'{random.randint(1, 99)}-{random.randint(100, 999)}',
+            f'아파트 {random.randint(101, 999)}동 {random.randint(101, 999)}호',
+            f'빌라 {random.randint(201, 999)}호',
+            f'{random.randint(1, 50)}번지',
+            f'상가 {random.randint(1, 5)}층 {random.randint(101, 999)}호',
+        ]
+        detail_address = random.choice(detail_addresses)
+        
+        # 전체 주소 생성 (동 + 상세 주소)
+        address = f'{city_district} {dong} {detail_address}'
         
         # 사용자 생성
         user = Users.objects.create(

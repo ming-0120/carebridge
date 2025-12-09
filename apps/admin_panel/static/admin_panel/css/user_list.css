@@ -53,3 +53,27 @@
   border-radius: 4px;
   font-size: 12px;
 }
+
+/* 
+  ========= 신규 가입 유저 행 스타일 =========
+  
+  목적: 오늘 가입한 신규 유저의 행을 다른 색상으로 표시하여 구분
+    - 사용자 경험(UX) 개선: 신규 가입 유저를 시각적으로 쉽게 구분
+    - 배경색 변경: 연한 파란색 배경으로 신규 가입 유저를 표시
+  
+  적용 대상:
+    - .new-user-row: 신규 가입 유저 행에 추가되는 클래스
+    - 오늘 가입한 유저 (created_at이 오늘 날짜인 유저)
+*/
+
+.new-user-row {
+  background-color: #e3f2fd !important; /* 연한 파란색 배경 */
+}
+
+.new-user-row:hover {
+  background-color: #bbdefb !important; /* 호버 시 조금 더 진한 파란색 */
+}
+
+.new-user-row.selected {
+  background-color: #90caf9 !important; /* 선택된 신규 가입 유저 행 */
+}

@@ -172,7 +172,16 @@ function confirmDeleteDoctorDummy() {
  */
 document.addEventListener('DOMContentLoaded', function() {
   // 공통 함수 사용
-  attachTableRowListeners('.user-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
+  attachTableRowListeners('.doctor-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
+  
+  // ========= 페이지네이션 후 이벤트 리스너 재연결 함수 =========
+  // 목적: 페이지네이션 완료 후 테이블 행 클릭 이벤트 리스너를 다시 연결
+  //   - handlePaginationAjax 함수에서 호출됨
+  //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
+  window.reattachTableRowListeners = function() {
+    attachTableRowListeners('.doctor-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
+  };
+  
   attachSortListeners();
   
   // ========= URL 파라미터에서 선택된 의사 ID 확인 =========
@@ -318,6 +327,63 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   // 주의: deleteBtn이 null이면 이벤트 리스너를 연결하지 않음
+  
+  // ========= 검색조건 변경 시 검색어 초기화 =========
+  // 목적: 검색조건 드롭다운이 변경되면 검색어를 초기화하고 전체 목록으로 이동
+  //   - 사용자 경험(UX) 개선: 검색조건 변경 시 이전 검색어를 자동으로 초기화하여 혼란 방지
+  // 
+  // const searchTypeSelect = document.querySelector('select[name="search_type"]'): 검색조건 드롭다운 찾기
+  //   - querySelector: CSS 선택자로 요소를 찾는 메서드
+  //   - 'select[name="search_type"]': name 속성이 "search_type"인 select 요소
+  //   - 반환값: HTMLElement 객체 또는 null (요소가 없으면)
+  const searchTypeSelect = document.querySelector('select[name="search_type"]');
+  
+  // 검색조건 드롭다운이 존재하는 경우에만 이벤트 리스너 연결
+  if (searchTypeSelect) {
+    // ========= change 이벤트 리스너 연결 =========
+    // 목적: 검색조건이 변경되면 검색어를 초기화하고 전체 목록으로 이동
+    searchTypeSelect.addEventListener('change', function() {
+      // ========= 검색어 입력 필드 초기화 =========
+      // 목적: 검색조건이 변경되면 검색어 입력 필드를 비워서 초기 상태로 복원
+      // 
+      // const searchKeywordInput = document.querySelector('input[name="search_keyword"]'): 검색어 입력 필드 찾기
+      //   - querySelector: CSS 선택자로 요소를 찾는 메서드
+      //   - 'input[name="search_keyword"]': name 속성이 "search_keyword"인 input 요소
+      //   - 반환값: HTMLElement 객체 또는 null (요소가 없으면)
+      const searchKeywordInput = document.querySelector('input[name="search_keyword"]');
+      
+      // 검색어 입력 필드가 존재하면 값 초기화
+      if (searchKeywordInput) {
+        // ========= 검색어 입력 필드 값 초기화 =========
+        // 목적: 검색어 입력 필드의 값을 빈 문자열로 설정하여 초기화
+        //   - value: input 요소의 value 속성을 빈 문자열('')로 설정
+        //   - 목적: 검색조건이 변경되면 이전 검색어를 제거
+        searchKeywordInput.value = '';
+      }
+      
+      // ========= 검색조건이 "검색조건" (빈 값)인 경우 전체 목록으로 이동 =========
+      // 목적: 검색조건이 "검색조건" (value="")으로 변경되면 검색어 없이 전체 목록을 보여주기 위해 페이지 이동
+      // 
+      // if (!this.value || this.value === ''): 검색조건이 빈 값인지 확인
+      //   - this.value: 현재 선택된 옵션의 value 속성
+      //   - 빈 문자열('')이면 검색조건이 "검색조건" (기본값)으로 설정된 것
+      //   - 목적: 검색조건이 "검색조건"으로 변경되면 전체 목록으로 이동
+      if (!this.value || this.value === '') {
+        // ========= URL에서 검색 파라미터 제거하고 전체 목록으로 이동 =========
+        // 목적: 검색조건이 "검색조건"으로 변경되면 검색 파라미터를 제거하고 전체 목록을 보여주기 위해 페이지 이동
+        // 
+        // window.location.href = window.location.pathname: 현재 URL에서 쿼리 파라미터를 제거하고 기본 경로로 이동
+        //   - window.location.pathname: 현재 URL의 경로 부분만 가져옴 (예: '/admin_panel/doctor_list/')
+        //   - window.location.href: 전체 URL을 설정하여 페이지 이동
+        //   - 목적: 검색 파라미터를 제거하고 전체 목록을 보여주기 위해 페이지 이동
+        //   - 결과: 검색조건과 검색어가 모두 제거된 상태로 페이지가 다시 로드됨
+        window.location.href = window.location.pathname;
+      }
+      // 주의: 검색조건이 실제 값(예: 'name', 'doctor_id' 등)으로 선택된 경우에는 페이지 이동하지 않음
+      //   - 사용자가 새로운 검색어를 입력할 수 있도록 검색어 입력 필드만 초기화
+    });
+  }
+  // 주의: searchTypeSelect가 null이면 이벤트 리스너를 연결하지 않음
 });
 
 

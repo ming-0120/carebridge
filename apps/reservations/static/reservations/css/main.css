@@ -1,0 +1,211 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f5f5;
+}
+.page {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: #ffffff;
+    min-height: 100vh;
+}
+/* 상단 헤더 */
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    background: #f0f0f0;
+    border-bottom: 1px solid #ddd;
+}
+.logo {
+    font-weight: 700;
+}
+.nav {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+}
+.nav span {
+    cursor: pointer;
+}
+.nav span.active {
+    font-weight: 600;
+    border-bottom: 2px solid #333;
+}
+.user-info {
+    font-size: 14px;
+}
+/* 메인 레이아웃 */
+.main {
+    display: flex;
+    padding: 16px 16px 0;
+}
+/* (1) 진료과 사이드바 */
+.sidebar {
+    width: 140px;
+    border: 1px solid #ddd;
+    background: #fff;
+}
+.dept-btn {
+    width: 100%;
+    padding: 12px;
+    border: 0;
+    border-bottom: 1px solid #ddd;
+    background: #fff;
+    font-size: 14px;
+    text-align: center;
+    cursor: pointer;
+}
+.dept-btn.active {
+    background: #ffe9cf;
+    font-weight: 600;
+}
+/* (2) 지도 영역 */
+.map-wrapper {
+    flex: 1;
+    margin-left: 12px;
+    border: 1px solid #ddd;
+    background: #eee;
+    height: 420px;
+}
+#map {
+    width: 100%;
+    height: 100%;
+}
+/* (3) 병원 카드 영역 */
+.card-section {
+    margin: 16px;
+    margin-top: 8px;
+    border-top: 1px solid #000;
+    padding-top: 12px;
+}
+.card-row {
+    display: flex;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 12px;
+}
+.hospital-card {
+    min-width: 260px;
+    border-radius: 20px;
+    border: 2px solid #000;
+    background: #fff;
+    padding: 16px;
+    flex-shrink: 0;
+}
+.hospital-name {
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.rating {
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+.rating span.stars {
+    margin-left: 4px;
+}
+.hospital-desc {
+    font-size: 12px;
+    line-height: 1.6;
+}
+/* === 모달 공통 === */
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: inherit;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+/* 중앙 박스 */
+.modal-dialog {
+    position: relative;
+    background: #ffffff;
+    border-radius: 32px;
+    padding: 32px 40px 28px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+    min-width: 640px;
+    max-width: 900px;
+    z-index: 1001;
+}
+
+/* 별 아이콘 */
+.modal-favorite {
+    float:right;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    cursor: pointer;
+    color: #ccc;           /* 기본: 회색 별 */
+    padding: 0;
+}
+
+.modal-favorite.active {
+    color: #ffd400;        /* 즐겨찾기: 노란 별 */
+}
+
+/* 내용 */
+.modal-info-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+.modal-info-table th,
+.modal-info-table td {
+    border: 1px solid #d0d0d0;
+    padding: 10px 12px;
+}
+
+.modal-info-table th {
+    width: 120px;
+    background-color: #f8f8f8;
+    text-align: center;
+    font-weight: 600;
+}
+
+.modal-info-table td {
+    background-color: #ffffff;
+}
+
+/* 하단 버튼 */
+.modal-footer {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+    min-width: 140px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    border: 1px solid #333;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.modal-footer .btn-primary {
+    background-color: #ffffff;
+}
+
+.modal-footer .btn-secondary {
+    background-color: #ffe4e4;
+}

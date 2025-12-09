@@ -97,153 +97,73 @@ function navigateWithParams(url, params) {
  * @param {string} paramName - URL 파라미터 이름 (기본값: 'id')
  */
 function selectItem(event, itemId, paramName = 'id') {
-  const url = new URL(window.location.href);
-  url.searchParams.set(paramName, itemId);
-  // 페이지 파라미터 유지 (현재 페이지에서 선택)
+  // 이벤트가 있으면 기본 동작 차단 (추가 보안)
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+  }
   
-  // 이벤트 발생 시점의 스크롤 위치 저장
-  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set(paramName, itemId);
   
-  // ========= 스크롤 위치를 강제로 고정하는 함수 (Promise 기반) =========
-  // 목적: AJAX로 DOM을 업데이트한 후에도 스크롤 위치를 원래대로 복원
-  //   - DOM 업데이트 시 브라우저가 자동으로 스크롤 위치를 조정하는 것을 방지
-  //   - 사용자가 보고 있던 위치를 유지하여 UX 개선
+  // ========= 상세 정보 섹션으로 스크롤 이동 함수 =========
+  // 목적: 상세 정보 섹션이 보이도록 스크롤을 이동
+  //   - 사용자 경험(UX) 개선: 행 클릭 시 상세 정보가 보이도록 자동으로 스크롤
   //   - Promise 기반으로 비동기 처리하여 DOM 업데이트 완료 후 실행
   // 
-  // @param {number} position - 복원할 스크롤 위치 (픽셀 단위)
-  //   - 예: 500 (페이지 상단에서 500px 아래)
-  //   - 0이면 페이지 상단
+  // @param {HTMLElement} detailSection - 상세 정보 섹션 요소
+  //   - 스크롤을 이동할 대상 요소
   // 
-  // @returns {Promise<boolean>} - 스크롤 복원 완료를 나타내는 Promise
-  //   - resolve(true): 스크롤 복원 성공
-  //   - 비동기 처리로 DOM 업데이트와 스크롤 복원을 분리
-  const restoreScroll = (position) => {
-    // ========= Promise로 스크롤 복원 로직 감싸기 =========
-    // new Promise(resolve => {...}): Promise 객체 생성
-    //   - resolve: Promise를 성공 상태로 만드는 함수
-    //   - 목적: 비동기 작업을 Promise로 처리하여 DOM 업데이트 완료 후 실행
-    //   - 장점: await 또는 .then()으로 스크롤 복원 완료를 기다릴 수 있음
-    return new Promise(resolve => {
-      // ========= 실제 스크롤 복원 로직 =========
-      // doRestore: 스크롤 위치를 복원하는 내부 함수
-      //   - setTimeout으로 감싸져 있어 DOM 업데이트 완료 후 실행됨
-      const doRestore = () => {
-        // ========= 모든 가능한 방법으로 스크롤 위치 설정 =========
-        // 브라우저마다 스크롤 위치를 설정하는 방법이 다를 수 있으므로
-        // 여러 방법을 모두 시도하여 호환성 확보
-        
-        // window.scrollTo(x, y): 윈도우를 지정된 좌표로 스크롤
-        //   - x: 가로 스크롤 위치 (0 = 왼쪽 끝)
-        //   - y: 세로 스크롤 위치 (position = 복원할 위치)
-        //   - 표준 방법이지만 모든 브라우저에서 완벽하게 동작하지 않을 수 있음
-        window.scrollTo(0, position);
-        
-        // document.documentElement.scrollTop: HTML 요소의 스크롤 위치 설정
-        //   - document.documentElement: <html> 요소
-        //   - scrollTop: 요소의 상단에서 스크롤된 거리 (픽셀 단위)
-        //   - 일부 브라우저(특히 구형 브라우저)에서 사용
-        document.documentElement.scrollTop = position;
-        
-        // document.body.scrollTop: body 요소의 스크롤 위치 설정
-        //   - document.body: <body> 요소
-        //   - scrollTop: 요소의 상단에서 스크롤된 거리 (픽셀 단위)
-        //   - 일부 브라우저(특히 구형 브라우저)에서 사용
-        //   - 주의: 최신 브라우저에서는 document.documentElement.scrollTop을 사용
-        document.body.scrollTop = position;
-        
-        // ========= 현재 스크롤 위치 확인 =========
-        // window.pageYOffset: 현재 세로 스크롤 위치 (픽셀 단위)
-        //   - 표준 방법이지만 구형 브라우저에서는 지원하지 않을 수 있음
-        //   - || 연산자로 대체 방법 제공 (fallback)
-        // 
-        // document.documentElement.scrollTop: HTML 요소의 현재 스크롤 위치
-        //   - 최신 브라우저에서 주로 사용
-        // 
-        // document.body.scrollTop: body 요소의 현재 스크롤 위치
-        //   - 구형 브라우저에서 사용
-        // 
-        // || 연산자: 첫 번째 truthy 값을 반환
-        //   - 예: window.pageYOffset이 0이면 falsy이므로 다음 값 확인
-        //   - 예: window.pageYOffset이 500이면 truthy이므로 500 반환
-        // 목적: 브라우저 호환성을 위해 여러 방법을 시도
-        const currentPos = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-        
-        // ========= 복원 성공 여부 확인 =========
-        // Math.abs(currentPos - position): 현재 위치와 목표 위치의 차이 (절댓값)
-        //   - 예: currentPos=505, position=500 → 차이=5
-        //   - 예: currentPos=510, position=500 → 차이=10
-        // 
-        // <= 5: 차이가 5픽셀 이하이면 성공으로 간주
-        //   - 이유: 브라우저의 반올림, 픽셀 단위 변환 등으로 정확히 일치하지 않을 수 있음
-        //   - 5픽셀 이내의 오차는 허용 (사용자가 느끼기 어려운 수준)
-        if (Math.abs(currentPos - position) <= 5) {
-          // ========= 스크롤 복원 성공 =========
-          // resolve(true): Promise를 성공 상태로 만들고 true 반환
-          //   - .then() 또는 await로 이 함수를 호출한 곳에서 성공을 감지할 수 있음
-          //   - 스크롤 위치가 정확히 복원되었음을 알림
-          resolve(true); // 성공
-        } else {
-          // ========= 스크롤 복원 실패 시 재시도 =========
-          // 스크롤 위치가 정확히 복원되지 않은 경우
-          //   - DOM 업데이트가 완전히 끝나지 않았을 수 있음
-          //   - 브라우저의 레이아웃 재계산이 아직 진행 중일 수 있음
-          // 
-          // requestAnimationFrame(callback): 다음 리페인트 전에 콜백 실행
-          //   - 브라우저의 렌더링 사이클과 동기화
-          //   - DOM 업데이트와 레이아웃 재계산이 완료된 후 실행됨
-          //   - 목적: 브라우저가 레이아웃을 완전히 계산한 후 다시 스크롤 복원 시도
-          requestAnimationFrame(() => {
-            // ========= 재시도: 다시 모든 방법으로 스크롤 위치 설정 =========
-            // requestAnimationFrame 내부에서 다시 스크롤 위치 설정
-            //   - 브라우저의 레이아웃 재계산이 완료된 후이므로 성공 확률이 높음
-            window.scrollTo(0, position);
-            document.documentElement.scrollTop = position;
-            document.body.scrollTop = position;
-            
-            // ========= 재시도 후 성공으로 간주 =========
-            // resolve(true): 재시도 후 성공으로 간주
-            //   - 실제로 정확히 복원되었는지 다시 확인하지 않음
-            //   - requestAnimationFrame 후에는 대부분 성공하므로 추가 확인 생략
-            //   - 성능 최적화: 무한 루프 방지
-            resolve(true); // 재시도 후 성공으로 간주
-          });
-        }
-      };
+  // @returns {Promise<boolean>} - 스크롤 이동 완료를 나타내는 Promise
+  //   - resolve(true): 스크롤 이동 성공
+  const scrollToDetailSection = (detailSection) => {
+    if (!detailSection) {
+      return;
+    }
+    
+    const scrollToElement = () => {
+      const rect = detailSection.getBoundingClientRect();
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+      const targetPosition = rect.top + scrollTop - 20;
       
-      // ========= DOM 업데이트 완료 대기 =========
-      // setTimeout(doRestore, 50): 50ms 후에 doRestore 함수 실행
-      //   - 50ms: DOM 업데이트가 완료되기까지의 최소 대기 시간
-      //   - 목적: DOM 업데이트와 레이아웃 재계산이 완료된 후 스크롤 복원
-      //   - 이유:
-      //     → DOM을 업데이트하면 브라우저가 레이아웃을 재계산함
-      //     → 레이아웃 재계산 중에는 스크롤 위치가 불안정할 수 있음
-      //     → 50ms 지연으로 레이아웃 재계산 완료를 기다림
-      //   - 트레이드오프:
-      //     → 너무 짧으면: 레이아웃 재계산이 완료되지 않아 스크롤 복원 실패 가능
-      //     → 너무 길면: 사용자가 스크롤 이동을 느낄 수 있음 (UX 저하)
-      //     → 50ms는 대부분의 경우 적절한 균형점
-      // DOM 업데이트가 완료된 후 실행되도록 50ms 지연
-      setTimeout(doRestore, 50);
+      window.scrollTo({
+        top: targetPosition,
+        behavior: 'smooth'
+      });
+    };
+    
+    scrollToElement();
+    setTimeout(scrollToElement, 100);
+    requestAnimationFrame(() => {
+      setTimeout(scrollToElement, 50);
     });
   };
   
   // ========= AJAX로 상세 정보만 업데이트 (페이지 새로고침 없음) =========
-  // 목적: 전체 페이지를 새로고침하지 않고 상세 정보 영역만 동적으로 업데이트
-  //   - 사용자 경험(UX) 개선: 페이지 새로고침 없이 빠른 응답
-  //   - 스크롤 위치 유지: 페이지 새로고침 시 스크롤이 상단으로 이동하는 것을 방지
-  //   - 네트워크 효율: 필요한 데이터만 요청하여 대역폭 절약
-  // 
-  // fetch API: 네트워크 요청을 수행하는 최신 JavaScript API
-  //   - XMLHttpRequest의 현대적인 대안
-  //   - Promise 기반으로 비동기 처리
-  //   - 더 간결하고 읽기 쉬운 코드
-  fetch(url.toString(), {
+  // CSRF 토큰 가져오기
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
+  
+  // FormData 생성 (POST 요청용)
+  const formData = new FormData();
+  formData.append(paramName, itemId);
+  if (csrfToken) {
+    formData.append('csrfmiddlewaretoken', csrfToken);
+  }
+  
+  fetch(url.pathname, {
     // ========= HTTP 요청 설정 =========
     // method: HTTP 요청 메서드
-    //   - 'GET': 서버에서 데이터를 가져오는 요청 (읽기 전용)
-    //   - POST, PUT, DELETE 등 다른 메서드도 사용 가능
-    //   - GET 요청은 데이터를 URL 파라미터로 전달
-    method: 'GET',
+    //   - 'POST': 서버에 데이터를 전송하는 요청
+    //   - POST 요청은 데이터를 요청 본문(body)에 전달
+    method: 'POST',
+    
+    // body: 요청 본문 데이터
+    //   - FormData: 폼 데이터를 전송하기 위한 객체
+    body: formData,
     
     // headers: HTTP 요청 헤더 설정
     //   - 서버에 추가 정보를 전달하는 키-값 쌍
@@ -265,102 +185,20 @@ function selectItem(event, itemId, paramName = 'id') {
   //     → json(): JSON 형식의 응답 본문을 파싱하여 Promise 반환
   //     → text(): 텍스트 형식의 응답 본문을 반환하는 Promise
   .then(response => {
-    // ========= 응답 본문을 JSON으로 파싱 =========
-    // response.json(): 응답 본문을 JSON 형식으로 파싱
-    //   - 반환값: Promise<Object> (파싱된 JSON 객체를 담은 Promise)
-    //   - 서버에서 JSON 형식으로 데이터를 반환한다고 가정
-    //   - 예: {'detail_html': '<div>...</div>', 'status': 'success'} 형식
-    //   - 주의: 응답이 유효한 JSON이 아니면 에러 발생
-    //   - 비동기 처리: JSON 파싱이 완료될 때까지 기다림
     return response.json();
   })
-  // ========= JSON 데이터 처리 (두 번째 then) =========
-  // .then(async (data) => {...}): JSON 파싱이 완료되면 실행
-  //   - data: 서버에서 반환한 JSON 객체 (파싱된 데이터)
-  //     → 예: {detail_html: '<div>...</div>', status: 'success'}
-  //     → detail_html: 상세 정보를 표시할 HTML 문자열
-  //   - async: 비동기 함수로 선언 (await 사용 가능)
-  //   - 목적: 서버에서 받은 데이터를 사용하여 DOM을 업데이트
+  .catch(error => {
+    console.error('fetch 에러 발생:', error);
+    throw error;
+  })
   .then(async (data) => {
-    // ========= 스크롤 위치 다시 확인 (DOM 업데이트 전) =========
-    // 목적: DOM 업데이트 전에 현재 스크롤 위치를 최종적으로 확인
-    //   - AJAX 요청 중에 사용자가 스크롤을 움직였을 수 있음
-    //   - 최신 스크롤 위치를 반영하여 정확한 복원 보장
-    
-    // window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop
-    //   - 현재 스크롤 위치를 가져오는 방법 (브라우저 호환성 고려)
-    //   - window.pageYOffset: 표준 방법 (최신 브라우저)
-    //   - document.documentElement.scrollTop: HTML 요소의 스크롤 위치
-    //   - document.body.scrollTop: body 요소의 스크롤 위치 (구형 브라우저)
-    //   - || 연산자: 첫 번째 truthy 값을 반환
-    //   - 반환값: 현재 스크롤 위치 (픽셀 단위, 숫자)
-    const scrollBeforeUpdate = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-    
-    // ========= 최종 스크롤 위치 결정 =========
-    // finalScrollPosition: DOM 업데이트 후 복원할 최종 스크롤 위치
-    //   - scrollBeforeUpdate > 0: 현재 스크롤 위치가 0보다 크면 (스크롤이 내려가 있으면)
-    //     → scrollBeforeUpdate 사용 (최신 스크롤 위치 반영)
-    //   - scrollBeforeUpdate <= 0: 현재 스크롤 위치가 0이면 (페이지 상단에 있으면)
-    //     → currentScrollPosition 사용 (이벤트 발생 시점의 스크롤 위치)
-    // 
-    // 목적: 사용자가 스크롤을 움직이지 않았으면 이벤트 발생 시점의 위치 사용,
-    //       사용자가 스크롤을 움직였으면 최신 위치 사용
-    // 
-    // 예시:
-    //   - 이벤트 발생 시점: currentScrollPosition = 500
-    //   - AJAX 요청 중 사용자가 스크롤: scrollBeforeUpdate = 600
-    //   - 결과: finalScrollPosition = 600 (최신 위치 사용)
-    // 
-    //   - 이벤트 발생 시점: currentScrollPosition = 500
-    //   - AJAX 요청 중 사용자가 스크롤 안 함: scrollBeforeUpdate = 500
-    //   - 결과: finalScrollPosition = 500 (원래 위치 사용)
-    const finalScrollPosition = scrollBeforeUpdate > 0 ? scrollBeforeUpdate : currentScrollPosition;
-    
-    // ========= MutationObserver로 DOM 변경 감지하여 스크롤 복원 =========
-    // 목적: DOM이 변경될 때마다 자동으로 스크롤 위치를 복원
-    //   - DOM 업데이트는 비동기적으로 발생할 수 있음
-    //   - MutationObserver는 DOM 변경을 감지하여 콜백 실행
-    //   - DOM 변경이 완료된 후 스크롤 복원을 보장
-    // 
-    // MutationObserver: DOM 트리의 변경사항을 감지하는 API
-    //   - 생성자: new MutationObserver(callback)
-    //   - callback: DOM 변경이 감지되면 실행되는 함수
-    //   - 장점: DOM 변경을 실시간으로 감지하여 반응 가능
-    //   - 사용 예: 요소 추가/제거, 속성 변경, 텍스트 변경 등
-    const observer = new MutationObserver(() => {
-      // ========= DOM 변경 감지 시 스크롤 복원 =========
-      // restoreScroll(finalScrollPosition): 스크롤 위치를 복원하는 함수 호출
-      //   - finalScrollPosition: 복원할 스크롤 위치
-      //   - 반환값: Promise<boolean> (비동기 처리)
-      // 
-      // .catch(() => {}): Promise가 실패해도 에러를 무시
-      //   - catch: Promise가 reject되면 실행되는 핸들러
-      //   - () => {}: 빈 함수 (에러를 무시하고 아무 동작도 하지 않음)
-      //   - 목적: 스크롤 복원 실패가 전체 로직을 중단시키지 않도록 함
-      //   - 이유: 스크롤 복원은 부가 기능이므로 실패해도 페이지 동작에는 영향 없음
-      restoreScroll(finalScrollPosition).catch(() => {}); // 에러 무시
-    });
     
     // ========= 상세 정보 영역 요소 조회 =========
     // 목적: DOM 업데이트를 위해 필요한 요소들을 미리 조회
     //   - 상세 정보를 표시할 영역을 찾아서 내용을 업데이트
     //   - 요소가 없으면 새로 생성
     
-    // document.querySelector(...): CSS 선택자로 요소를 찾는 메서드
-    //   - '.user-detail-section, .doctor-detail-section, ...': 여러 클래스 중 하나라도 일치하는 요소 선택
-    //     → 쉼표(,)로 구분된 선택자는 OR 조건 (하나라도 일치하면 선택)
-    //   - 반환값: 첫 번째로 일치하는 요소 (Element 객체) 또는 null (없으면)
-    // 
-    // 선택자 설명:
-    //   - .user-detail-section: 사용자 목록의 상세 정보 영역
-    //   - .doctor-detail-section: 의사 목록의 상세 정보 영역
-    //   - .hospital-detail-section: 병원 목록의 상세 정보 영역
-    //   - .approval-detail-section: 승인 대기 목록의 상세 정보 영역
-    // 
-    // 목적: 현재 페이지의 상세 정보 영역을 찾아서 업데이트할 준비
-    //   - 요소가 있으면: 기존 내용을 새 내용으로 교체
-    //   - 요소가 없으면: 새로 생성하여 추가
-    const currentDetailSection = document.querySelector('.user-detail-section, .doctor-detail-section, .hospital-detail-section, .approval-detail-section');
+    const currentDetailSection = document.querySelector('.user-detail-section');
     
     // document.querySelector('.container'): 컨테이너 요소 조회
     //   - .container: 페이지의 메인 컨테이너 요소
@@ -370,39 +208,6 @@ function selectItem(event, itemId, paramName = 'id') {
     //   - currentDetailSection이 없으면 container에 새로 추가
     //   - container는 페이지의 메인 레이아웃 컨테이너
     const container = document.querySelector('.container');
-    
-    // ========= MutationObserver 관찰 시작 =========
-    // 목적: DOM 변경을 감지하여 스크롤 위치를 자동으로 복원
-    //   - observer.observe(): MutationObserver가 특정 요소의 변경을 감지하기 시작
-    //   - DOM 업데이트가 발생하면 자동으로 스크롤 복원 함수 호출
-    // 
-    // 조건: currentDetailSection 또는 container가 존재할 때만 관찰 시작
-    //   - currentDetailSection || container: 둘 중 하나라도 존재하면 true
-    //   - 이유: 관찰할 요소가 없으면 에러 발생하므로 사전 확인 필요
-    if (currentDetailSection || container) {
-      // observer.observe(target, options): MutationObserver가 특정 요소를 관찰하기 시작
-      //   - target: 관찰할 요소 (currentDetailSection 또는 container)
-      //     → currentDetailSection || container: currentDetailSection이 있으면 사용, 없으면 container 사용
-      //   - options: 관찰할 변경사항의 종류를 지정하는 객체
-      observer.observe(currentDetailSection || container, {
-        // childList: true - 자식 요소의 추가/제거를 감지
-        //   - 예: 요소가 추가되거나 제거될 때 콜백 실행
-        //   - 목적: 상세 정보 영역이 추가/제거될 때 스크롤 복원
-        childList: true,
-        
-        // subtree: true - 하위 트리 전체의 변경을 감지
-        //   - 예: 자식 요소의 자식 요소까지 모두 감지
-        //   - 목적: 상세 정보 영역 내부의 내용 변경도 감지
-        //   - 주의: 성능에 영향을 줄 수 있으므로 필요한 경우에만 사용
-        subtree: true,
-        
-        // attributes: false - 속성 변경을 감지하지 않음
-        //   - 예: class, id, data-* 속성 변경은 감지하지 않음
-        //   - 목적: 속성 변경은 스크롤에 영향을 주지 않으므로 불필요한 감지 방지
-        //   - 성능 최적화: 불필요한 콜백 호출 방지
-        attributes: false
-      });
-    }
     
     // ========= 서버에서 받은 HTML 데이터로 DOM 업데이트 =========
     // data.detail_html: 서버에서 반환한 상세 정보 HTML 문자열
@@ -427,11 +232,7 @@ function selectItem(event, itemId, paramName = 'id') {
       //   - 주의: XSS 공격에 취약하지만, 서버에서 신뢰할 수 있는 데이터이므로 사용
       tempDiv.innerHTML = data.detail_html;
       
-      // tempDiv.querySelector(...): 파싱된 HTML에서 상세 정보 영역 요소 찾기
-      //   - '.user-detail-section, .doctor-detail-section, ...': 여러 클래스 중 하나라도 일치하는 요소 선택
-      //   - 반환값: 첫 번째로 일치하는 요소 (Element 객체) 또는 null (없으면)
-      //   - 목적: 서버에서 받은 HTML에서 실제 상세 정보 영역만 추출
-      const newDetailSection = tempDiv.querySelector('.user-detail-section, .doctor-detail-section, .hospital-detail-section, .approval-detail-section');
+      const newDetailSection = tempDiv.querySelector('.user-detail-section');
       
       // ========= 상세 정보 영역이 있는 경우 =========
       // newDetailSection: 서버에서 받은 HTML에 상세 정보 영역이 있는지 확인
@@ -439,91 +240,28 @@ function selectItem(event, itemId, paramName = 'id') {
         // ========= 기존 상세 정보 영역이 있는 경우 =========
         // currentDetailSection: 현재 페이지에 상세 정보 영역이 이미 존재하는지 확인
         if (currentDetailSection) {
-          // ========= 승인 대기 목록의 경우 (특별 처리) =========
-          // currentDetailSection.classList.contains('approval-detail-section')
-          //   - 승인 대기 목록의 상세 정보 영역인지 확인
-          //   - 승인 대기 목록은 항상 상세 정보 영역이 존재하므로 구조를 유지하고 내용만 업데이트
-          if (currentDetailSection.classList.contains('approval-detail-section')) {
-            // 승인대기 목록은 섹션이 항상 존재하므로 내용만 업데이트
-            // currentDetailSection.innerHTML: 기존 상세 정보 영역의 내용을 새 내용으로 교체
-            //   - newDetailSection.innerHTML: 서버에서 받은 새로운 상세 정보 내용
-            //   - 동작: 기존 내용을 완전히 제거하고 새 내용으로 교체
-            //   - 목적: 구조는 유지하고 내용만 업데이트하여 스크롤 이동 최소화
-            currentDetailSection.innerHTML = newDetailSection.innerHTML;
-            
-            // DOM 업데이트 후 비동기 스크롤 복원
-            // restoreScroll(finalScrollPosition): 스크롤 위치를 복원하는 함수 호출
-            //   - finalScrollPosition: 복원할 스크롤 위치
-            //   - .then(): Promise가 완료되면 실행 (비동기 처리)
-            restoreScroll(finalScrollPosition).then(() => {
-              // 복원 완료 후 추가 안전장치 (선택 사항)
-            });
-          } else {
+          // ========= 모든 목록의 경우 (일반 처리) =========
+          {
             // ========= 다른 목록의 경우 (일반 처리) =========
             // 다른 목록은 innerHTML만 업데이트하여 스크롤 이동 방지
             // 클래스와 구조는 유지하고 내용만 변경
             
             // 현재 클래스명 저장 (나중에 비교하기 위함)
-            // currentDetailSection.className: 요소의 모든 클래스 이름을 문자열로 반환
-            //   - 예: 'user-detail-section active'
-            //   - 목적: 클래스가 변경되었는지 확인하여 필요시 업데이트
             const currentClasses = currentDetailSection.className;
             
             // 새 클래스명 저장
-            // newDetailSection.className: 서버에서 받은 새 요소의 클래스 이름
-            //   - 예: 'user-detail-section'
-            //   - 목적: 기존 클래스와 비교하여 변경사항 반영
             const newClasses = newDetailSection.className;
             
-            // 스크롤 위치 저장 (DOM 업데이트 전에 저장)
-            // finalScrollPosition: 복원할 최종 스크롤 위치
-            const savedScroll = finalScrollPosition;
-            
-            // ========= 스크롤 동작을 일시적으로 비활성화 =========
-            // 목적: 브라우저의 자동 스크롤 동작을 방지하여 스크롤 위치 유지
-            //   - scroll-behavior: CSS 속성으로 스크롤 동작 방식을 제어
-            //   - 'smooth': 부드러운 스크롤 (기본값일 수 있음)
-            //   - 'auto': 즉시 스크롤 (자동 조정 방지)
-            
-            // 원래 스크롤 동작 저장 (나중에 복원하기 위함)
-            // document.documentElement.style.scrollBehavior: HTML 요소의 스크롤 동작 설정
-            const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-            
-            // 스크롤 동작을 'auto'로 설정 (자동 조정 방지)
-            document.documentElement.style.scrollBehavior = 'auto';
-            document.body.style.scrollBehavior = 'auto';
-            
-            // ========= 핵심 개선: DOM 변경 전에 위치를 고정하고, 변경 직후 복원 시도를 비동기적으로 처리 =========
-            // currentDetailSection.innerHTML: 기존 상세 정보 영역의 내용을 새 내용으로 교체
-            //   - newDetailSection.innerHTML: 서버에서 받은 새로운 상세 정보 내용
-            //   - 동작: 기존 내용을 완전히 제거하고 새 내용으로 교체
-            //   - 주의: 이 시점에 브라우저가 레이아웃을 재계산하므로 스크롤 위치가 변경될 수 있음
-            //   - 해결: 스크롤 동작을 'auto'로 설정하여 자동 조정 방지
+            // innerHTML 업데이트
             currentDetailSection.innerHTML = newDetailSection.innerHTML;
             
-            // ========= 클래스 업데이트 (변경된 경우) =========
-            // currentClasses !== newClasses: 클래스가 변경되었는지 확인
-            //   - 예: 'user-detail-section' → 'user-detail-section active'
-            //   - 목적: 서버에서 받은 새 클래스를 반영
+            // 클래스 업데이트 (변경된 경우)
             if (currentClasses !== newClasses) {
-              // currentDetailSection.className: 요소의 클래스 이름을 새 클래스로 교체
-              //   - newClasses: 서버에서 받은 새 클래스 이름
-              //   - 동작: 기존 클래스를 모두 제거하고 새 클래스로 교체
               currentDetailSection.className = newClasses;
             }
             
-            // ========= 스크롤 동작 복원 =========
-            // 원래 스크롤 동작으로 복원 (사용자 경험 유지)
-            document.documentElement.style.scrollBehavior = originalScrollBehavior;
-            document.body.style.scrollBehavior = originalScrollBehavior;
-            
-            // innerHTML 업데이트 후 비동기 복원 호출
-            // restoreScroll(savedScroll): 스크롤 위치를 복원하는 함수 호출
-            //   - savedScroll: DOM 업데이트 전에 저장한 스크롤 위치
-            //   - .then(): Promise가 완료되면 실행 (비동기 처리)
-            restoreScroll(savedScroll).then(() => {
-              // 복원 완료 후 추가 안전장치 (선택 사항)
-            });
+            // 상세 정보 섹션으로 스크롤 이동
+            scrollToDetailSection(currentDetailSection);
           }
         } else if (container) {
           // ========= 상세 정보 영역이 없으면 추가 (스크롤 위치 고정하면서) =========
@@ -531,107 +269,28 @@ function selectItem(event, itemId, paramName = 'id') {
           //   - 상세 정보 영역이 아직 생성되지 않았으므로 새로 추가해야 함
           //   - container에 추가하여 레이아웃 유지
           
-          // 숨겨진 플레이스홀더가 있는지 확인 (placeholder-hidden 클래스 사용)
-          // container.querySelector(...): 컨테이너 내에서 숨겨진 플레이스홀더 찾기
-          //   - '.user-detail-section.placeholder-hidden, ...': 여러 클래스 조합 중 하나라도 일치하는 요소 선택
-          //   - placeholder-hidden: 숨겨진 플레이스홀더를 나타내는 클래스
-          //   - 목적: 페이지네이션 등으로 인해 숨겨진 플레이스홀더가 있을 수 있음
-          const hiddenPlaceholder = container.querySelector('.user-detail-section.placeholder-hidden, .doctor-detail-section.placeholder-hidden, .hospital-detail-section.placeholder-hidden');
+          const hiddenPlaceholder = container.querySelector('.user-detail-section.placeholder-hidden');
           
           if (hiddenPlaceholder) {
-            // ========= 플레이스홀더가 있으면 내용만 업데이트 =========
-            // 숨겨진 플레이스홀더가 존재하는 경우
-            //   - 플레이스홀더의 내용을 새 상세 정보로 교체
-            //   - placeholder-hidden 클래스를 제거하여 표시
-            
-            // 스크롤 위치 저장
-            const savedScroll = finalScrollPosition;
-            
-            // 스크롤 동작을 일시적으로 비활성화
-            const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-            document.documentElement.style.scrollBehavior = 'auto';
-            document.body.style.scrollBehavior = 'auto';
-            
-            // 내용 업데이트 (placeholder-hidden 클래스 제거)
-            // hiddenPlaceholder.innerHTML: 플레이스홀더의 내용을 새 상세 정보로 교체
-            //   - newDetailSection.innerHTML: 서버에서 받은 새로운 상세 정보 내용
+            // 플레이스홀더가 있으면 내용만 업데이트
             hiddenPlaceholder.innerHTML = newDetailSection.innerHTML;
-            
-            // 클래스명 업데이트 (placeholder-hidden 제거, 실제 클래스만 유지)
-            // hiddenPlaceholder.className: 플레이스홀더의 클래스를 새 클래스로 교체
-            //   - newDetailSection.className: 서버에서 받은 새 클래스 이름
-            //   - 동작: placeholder-hidden 클래스가 제거되고 실제 클래스만 유지
-            //   - 예: 'user-detail-section placeholder-hidden' → 'user-detail-section'
             hiddenPlaceholder.className = newDetailSection.className;
             
-            // 스크롤 동작 복원
-            document.documentElement.style.scrollBehavior = originalScrollBehavior;
-            document.body.style.scrollBehavior = originalScrollBehavior;
-            
-            // 업데이트 후 비동기 스크롤 복원
-            restoreScroll(savedScroll).then(() => {
-              // 복원 완료 후 추가 안전장치 (선택 사항)
-            });
+            // 상세 정보 섹션으로 스크롤 이동
+            scrollToDetailSection(hiddenPlaceholder);
           } else {
-            // ========= 플레이스홀더가 없으면 새로 추가 =========
-            // 숨겨진 플레이스홀더가 없는 경우
-            //   - 상세 정보 영역을 처음부터 새로 생성하여 추가
-            //   - container에 추가하여 레이아웃 유지
-            
-            // 스크롤 위치 저장
-            const savedScroll = finalScrollPosition;
-            
-            // 요소 추가 전에 스크롤을 완전히 고정
-            // 스크롤 동작을 일시적으로 비활성화
-            const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-            document.documentElement.style.scrollBehavior = 'auto';
-            document.body.style.scrollBehavior = 'auto';
-            
-            // 요소 추가
-            // container.appendChild(newDetailSection): 컨테이너에 새 상세 정보 영역 추가
-            //   - newDetailSection: 서버에서 받은 새 상세 정보 영역 요소
-            //   - 동작: 컨테이너의 마지막 자식으로 추가
-            //   - 주의: 이 시점에 브라우저가 레이아웃을 재계산하므로 스크롤 위치가 변경될 수 있음
+            // 플레이스홀더가 없으면 새로 추가
             container.appendChild(newDetailSection);
             
-            // 스크롤 동작 복원
-            document.documentElement.style.scrollBehavior = originalScrollBehavior;
-            document.body.style.scrollBehavior = originalScrollBehavior;
-            
-            // 추가 후 비동기 스크롤 복원
-            restoreScroll(savedScroll).then(() => {
-              // 복원 완료 후 추가 안전장치 (선택 사항)
-            });
+            // 상세 정보 섹션으로 스크롤 이동
+            scrollToDetailSection(newDetailSection);
           }
         }
-      } else if (currentDetailSection && !currentDetailSection.classList.contains('approval-detail-section')) {
-        // ========= 상세 정보가 없으면 제거 =========
-        // newDetailSection이 없고 currentDetailSection이 있는 경우
-        //   - 서버에서 상세 정보를 반환하지 않았으므로 기존 상세 정보 영역 제거
-        //   - 승인 대기 목록은 제외 (항상 상세 정보 영역이 존재해야 함)
-        // 
-        // 조건:
-        //   - currentDetailSection: 기존 상세 정보 영역이 존재
-        //   - !currentDetailSection.classList.contains('approval-detail-section'): 승인 대기 목록이 아님
-        
-        // currentDetailSection.remove(): 요소를 DOM에서 제거
-        //   - 동작: 요소와 모든 자식 요소를 DOM 트리에서 제거
-        //   - 주의: 이 시점에 브라우저가 레이아웃을 재계산하므로 스크롤 위치가 변경될 수 있음
+      } else if (currentDetailSection) {
+        // 상세 정보가 없으면 제거
         currentDetailSection.remove();
-        
-        // 제거 후 비동기 스크롤 복원
-        restoreScroll(finalScrollPosition).then(() => {
-          // 복원 완료 후 추가 안전장치 (선택 사항)
-        });
       }
     }
-    
-    // ========= MutationObserver 관찰 중지 =========
-    // observer.disconnect(): MutationObserver의 관찰을 중지
-    //   - 목적: DOM 업데이트가 완료되었으므로 더 이상 관찰할 필요 없음
-    //   - 성능 최적화: 불필요한 콜백 호출 방지
-    //   - 메모리 관리: Observer를 정리하여 메모리 누수 방지
-    observer.disconnect();
     
     // ========= 선택된 행 스타일 업데이트 =========
     // 목적: 사용자가 클릭한 행을 시각적으로 강조 표시
@@ -671,28 +330,8 @@ function selectItem(event, itemId, paramName = 'id') {
     //     → 사용자가 뒤로가기 버튼을 눌러도 이전 상태로 돌아갈 수 있음
     //     → URL을 복사하여 다른 사람과 공유 가능
     //     → 북마크를 추가하면 현재 상태가 저장됨
-    //   - 주의: 페이지 새로고침을 하면 서버에서 해당 URL로 페이지를 로드함
     window.history.pushState({}, '', url.toString());
     
-    // ========= 최종 스크롤 복원 (DOM 안정화 후) =========
-    // 목적: DOM 업데이트가 완전히 안정화된 후 최종적으로 스크롤 위치를 한 번 더 복원
-    //   - DOM 업데이트, 레이아웃 재계산, 리페인트 등이 모두 완료된 후 실행
-    //   - 이전의 스크롤 복원 시도들이 실패했을 경우를 대비한 안전장치
-    //   - 사용자 경험(UX) 개선: 스크롤 위치가 정확히 유지되도록 보장
-    // 
-    // restoreScroll(finalScrollPosition): 스크롤 위치를 복원하는 함수 호출
-    //   - finalScrollPosition: 복원할 최종 스크롤 위치 (픽셀 단위)
-    //   - 반환값: Promise<boolean> (비동기 처리)
-    //   - 동작:
-    //     1. 50ms 지연 후 스크롤 위치 복원 시도
-    //     2. 모든 가능한 방법으로 스크롤 위치 설정
-    //     3. 복원 성공 여부 확인
-    //     4. 실패 시 requestAnimationFrame으로 재시도
-    //   - 주의: 이 함수는 Promise를 반환하지만 여기서는 await하지 않음
-    //     → 비동기로 실행되므로 다른 코드 실행을 블로킹하지 않음
-    //     → DOM 안정화를 기다리기 위해 약간의 지연이 있지만, 전체 로직은 계속 진행됨
-    // **개선: DOM이 안정화될 때까지 기다렸다가 최종적으로 한 번 더 복원**
-    restoreScroll(finalScrollPosition);
   })
   // ========= 에러 처리 (catch 블록) =========
   // 목적: AJAX 요청이나 데이터 처리 중 발생한 에러를 처리
@@ -735,6 +374,17 @@ function selectItem(event, itemId, paramName = 'id') {
     // 오류 발생 시 일반 페이지 이동으로 폴백
     window.location.href = url.toString();
   });
+  } catch (error) {
+    console.error('selectItem 에러:', error);
+    // 에러 발생 시에도 페이지 이동 시도
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set(paramName, itemId);
+      window.location.href = url.toString();
+    } catch (urlError) {
+      console.error('URL 생성 에러:', urlError);
+    }
+  }
 }
 
 /**
@@ -1231,18 +881,93 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
   //     5. 검색 파라미터 유지
   const url = getSortUrl(sortField, actualCurrentSort, actualCurrentOrder);
   
-  // ========= 페이지 이동 =========
-  // window.location.href: 브라우저의 현재 URL을 변경하여 페이지 이동
-  //   - url: 생성된 정렬 URL (문자열)
-  //   - 동작: 브라우저가 해당 URL로 전체 페이지를 새로고침하여 이동
-  //     → 서버에서 정렬된 데이터를 포함한 전체 HTML 페이지를 받아와서 렌더링
-  //     → 스크롤 위치는 페이지 상단으로 이동
-  //     → 페이지 상태는 초기화됨
-  //   - 결과: 정렬된 목록이 표시됨 (검색 조건은 유지됨)
-  //   - 주의: AJAX가 아닌 일반 페이지 이동이므로 전체 페이지가 새로고침됨
-  //     → 스크롤 위치는 초기화됨
-  //     → 페이지 상태는 초기화됨
-  window.location.href = url;
+  // ========= AJAX POST 요청으로 정렬 처리 =========
+  // URL 파싱 및 FormData 생성
+  const urlObj = new URL(url, window.location.origin);
+  const formData = new FormData();
+  
+  // URL 파라미터를 FormData에 추가
+  urlObj.searchParams.forEach((value, key) => {
+    formData.append(key, value);
+  });
+  
+  // CSRF 토큰 추가
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
+  if (csrfToken) {
+    formData.append('csrfmiddlewaretoken', csrfToken);
+  }
+  
+  // 현재 스크롤 위치 저장
+  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  
+  // AJAX 요청
+  fetch(urlObj.pathname, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  })
+  .then(response => {
+    if (response.headers.get('content-type')?.includes('text/html')) {
+      return response.text();
+    }
+    return response.json();
+  })
+  .then(data => {
+    // HTML 응답인 경우
+    if (typeof data === 'string') {
+      // 임시 DOM 요소 생성 및 HTML 파싱
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = data;
+      
+      // 테이블 컨테이너 업데이트
+      const tableContainer = document.querySelector('.table-container');
+      const newTableContainer = tempDiv.querySelector('.table-container');
+      if (tableContainer && newTableContainer) {
+        tableContainer.innerHTML = newTableContainer.innerHTML;
+      }
+      
+      // 페이지네이션 업데이트
+      const paginationContainer = document.querySelector('.pagination');
+      const newPaginationContainer = tempDiv.querySelector('.pagination');
+      if (paginationContainer && newPaginationContainer) {
+        paginationContainer.innerHTML = newPaginationContainer.innerHTML;
+      } else if (paginationContainer && !newPaginationContainer) {
+        paginationContainer.innerHTML = '';
+      }
+      
+      // 상세 정보 섹션 제거 (정렬 시 초기화)
+      const detailSection = document.querySelector('.user-detail-section, .doctor-detail-section, .hospital-detail-section, .approval-detail-section');
+      if (detailSection) {
+        detailSection.remove();
+      }
+      
+      // 페이지네이션 리스너 재연결
+      attachPaginationListeners();
+      
+      // 정렬 링크 리스너 재연결
+      attachSortListeners();
+      
+      // 테이블 행 리스너 재연결
+      if (typeof window.reattachTableRowListeners === 'function') {
+        window.reattachTableRowListeners();
+      }
+      
+      // 스크롤 위치 복원
+      window.scrollTo(0, currentScrollPosition);
+      
+      // URL 업데이트 (히스토리 관리, 파라미터는 제거)
+      window.history.pushState({}, '', urlObj.pathname);
+    }
+  })
+  .catch(error => {
+    console.error('정렬 요청 오류:', error);
+    // 에러 발생 시 기본 이동으로 폴백
+    window.location.href = url;
+  });
 }
 
 /**
@@ -1261,24 +986,33 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
  */
 function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
   const rows = document.querySelectorAll(rowSelector);
-  
-  rows.forEach(row => {
+
+  rows.forEach((row) => {
     row.removeEventListener('click', row._clickHandler);
     const itemId = row.getAttribute(dataAttrName);
-    
+
     if (itemId) {
+      // 클릭 이벤트 핸들러
       row._clickHandler = function(e) {
         const target = e.target;
-        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('input, button')) {
+        // 체크박스, 버튼, 링크(a 태그) 클릭이면 무시
+        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('input, button, a')) {
           return;
         }
-        
+
+        // 이벤트 기본 동작 차단
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
         
+        // selectFunction 호출
         selectFunction(e, parseInt(itemId));
+        
+        return false;
       };
-      row.addEventListener('click', row._clickHandler);
+
+      // capture 단계에서 이벤트 리스너 등록 (다른 리스너보다 먼저 실행)
+      row.addEventListener('click', row._clickHandler, { capture: true });
     }
   });
 }
@@ -1702,24 +1436,47 @@ function handlePaginationAjax(e, url) {
   //   - 목적: 페이지네이션 링크 부분만 업데이트하기 위함
   const paginationContainer = document.querySelector('.pagination');
   
+  // ========= URL 파싱 및 FormData 생성 =========
+  // 목적: URL에서 파라미터를 추출하여 POST 요청용 FormData 생성
+  const urlObj = new URL(url, window.location.origin);
+  const formData = new FormData();
+  
+  // URL 파라미터를 FormData에 추가
+  urlObj.searchParams.forEach((value, key) => {
+    formData.append(key, value);
+  });
+  
+  // CSRF 토큰 추가
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
+  if (csrfToken) {
+    formData.append('csrfmiddlewaretoken', csrfToken);
+  }
+  
   // ========= AJAX 요청 =========
   // 목적: 서버에 요청하여 새로운 페이지의 HTML 받아오기
   //   - 전체 페이지 새로고침 없이 필요한 데이터만 받아오기
   //   - 사용자 경험(UX) 개선: 빠른 페이지 이동
   // 
-  // fetch(url, {...}): Fetch API를 사용한 HTTP 요청
-  //   - url: 요청할 URL (문자열)
-  //     → 예: 'http://localhost:8000/admin_panel/users/?page=2&search_type=name&search_keyword=김'
+  // fetch(url.pathname, {...}): Fetch API를 사용한 HTTP 요청
+  //   - url.pathname: URL의 경로 부분만 사용 (쿼리 파라미터 제외)
+  //     → 예: 'http://localhost:8000/admin_panel/users/' → '/admin_panel/users/'
   //   - 두 번째 인자: 요청 옵션 객체
-  //     → method: HTTP 메서드 ('GET', 'POST' 등)
+  //     → method: HTTP 메서드 ('POST')
+  //     → body: 요청 본문 (FormData)
   //     → headers: HTTP 헤더 객체
   //   - 반환값: Promise 객체 (비동기 처리)
   //   - 동작: 서버에 요청을 보내고 응답을 기다림
-  fetch(url, {
-    // method: 'GET': HTTP GET 메서드 사용
-    //   - GET: 서버에서 데이터를 가져오는 요청
-    //   - 목적: 페이지네이션은 데이터를 조회하는 것이므로 GET 사용
-    method: 'GET',
+  fetch(urlObj.pathname, {
+    // method: 'POST': HTTP POST 메서드 사용
+    //   - POST: 서버에 데이터를 전송하는 요청
+    //   - 목적: URL 파라미터를 숨기기 위해 POST 사용
+    method: 'POST',
+    
+    // body: 요청 본문 데이터
+    //   - FormData: 폼 데이터를 전송하기 위한 객체
+    body: formData,
     
     // headers: HTTP 요청 헤더 설정
     //   - 목적: 서버에 AJAX 요청임을 알리기 위함
@@ -2021,6 +1778,29 @@ function handlePaginationAjax(e, url) {
     //   - 주의: 최신 브라우저에서는 무시될 수 있지만, 호환성을 위해 설정
     document.body.scrollTop = currentScrollPosition;
     
+    // ========= 비동기 스크롤 복원 (추가 안전장치) =========
+    // 목적: DOM 업데이트가 완전히 완료된 후 스크롤 위치를 다시 한 번 복원
+    //   - 브라우저의 레이아웃 재계산이 완료된 후 스크롤 위치를 확실하게 복원
+    //   - requestAnimationFrame을 사용하여 브라우저 렌더링 사이클과 동기화
+    //   - 사용자 경험(UX) 개선: 스크롤 위치가 확실하게 유지됨
+    requestAnimationFrame(() => {
+      // 브라우저 렌더링 완료 후 스크롤 위치 재설정
+      window.scrollTo(0, currentScrollPosition);
+      document.documentElement.scrollTop = currentScrollPosition;
+      document.body.scrollTop = currentScrollPosition;
+      
+      // 추가 안전장치: 한 번 더 확인
+      setTimeout(() => {
+        const finalPos = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
+        if (Math.abs(finalPos - currentScrollPosition) > 5) {
+          // 스크롤 위치가 여전히 다르면 다시 설정
+          window.scrollTo(0, currentScrollPosition);
+          document.documentElement.scrollTop = currentScrollPosition;
+          document.body.scrollTop = currentScrollPosition;
+        }
+      }, 50);
+    });
+    
     // ========= 페이지네이션 후 상세 정보 영역 플레이스홀더 추가 =========
     // 목적: 페이지네이션 후 상세 정보 영역이 없어졌다면 플레이스홀더를 추가하여 스크롤 이동 방지
     //   - 사용자가 행을 클릭하여 상세 정보를 보고 있는 경우
@@ -2089,31 +1869,7 @@ function handlePaginationAjax(e, url) {
     //   - container가 없으면: 플레이스홀더를 추가할 위치가 없음
     //   - currentDetailSection이 있으면: 상세 정보 영역이 이미 존재하므로 플레이스홀더 불필요
     
-    // ========= 비동기 스크롤 복원 (브라우저 자동 조정 완료 후) =========
-    // 목적: 브라우저의 자동 스크롤 조정이 완료된 후 스크롤 위치를 최종적으로 복원
-    //   - 브라우저는 DOM 업데이트 후 레이아웃을 다시 계산하고 스크롤 위치를 조정할 수 있음
-    //   - 이 과정이 완료된 후에 스크롤 위치를 복원하여 확실하게 유지
-    //   - 사용자 경험(UX) 개선: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
-    // 
-    // restoreScroll(currentScrollPosition): Promise 기반 스크롤 복원 함수 호출
-    //   - restoreScroll(): 스크롤 위치를 복원하는 유틸리티 함수 (Promise 반환)
-    //   - currentScrollPosition: 저장된 스크롤 위치 (픽셀 단위)
-    //   - 반환값: Promise 객체 (비동기 처리)
-    //   - 동작:
-    //     1. DOM 업데이트가 완료될 때까지 대기 (50ms 지연)
-    //     2. 여러 방법으로 스크롤 위치 설정 (window.scrollTo, scrollTop 등)
-    //     3. 복원 성공 여부 확인
-    //     4. 실패 시 requestAnimationFrame으로 재시도
-    //   - 목적: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
-    //   - .then(() => {...}): 복원 완료 후 실행
-    //     → 복원 완료 후 추가 안전장치를 실행할 수 있음 (현재는 비어있음)
-    restoreScroll(currentScrollPosition).then(() => {
-      // 복원 완료 후 추가 안전장치 (선택 사항)
-      //   - 현재는 비어있지만, 향후 추가 로직을 넣을 수 있음
-      //   - 예: 스크롤 위치 확인, 추가 복원 시도 등
-    });
-    
-    // ========= 이벤트 리스너 재연결 =========
+    // ========= 이벤트 리스너 재연결 (DOM 업데이트 직후) =========
     // 목적: DOM 업데이트 후 새로 추가된 요소들에 이벤트 리스너를 다시 연결
     //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
     //   - 새로 추가된 요소들에 이벤트 리스너를 다시 연결하여 기능 유지
@@ -2127,11 +1883,44 @@ function handlePaginationAjax(e, url) {
     attachPaginationListeners();
     
     // ========= 테이블 행 클릭 이벤트 다시 연결 =========
-    // 주의: attachTableRowListeners와 attachSortListeners는 각 페이지별 JS 파일에서 호출해야 합니다.
-    //   - 이유: 각 페이지마다 다른 파라미터(rowSelector, idAttribute, selectFunction)가 필요하기 때문입니다.
-    //   - 각 페이지별 JS 파일의 DOMContentLoaded 또는 handlePaginationAjax 완료 후에 호출하세요.
-    //   - 예: attachTableRowListeners('.user-row[data-user-id]', 'data-user-id', selectUser);
-    //   - 예: attachSortListeners();
+    // 목적: 페이지네이션 후 새로 추가된 테이블 행에 클릭 이벤트 리스너를 다시 연결
+    //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
+    //   - 새로 추가된 행에 이벤트 리스너를 다시 연결하여 기능 유지
+    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 행 클릭 기능이 정상 작동
+    // 
+    // typeof window.reattachTableRowListeners === 'function': 함수 존재 여부 확인
+    //   - typeof: 변수의 타입을 확인하는 연산자
+    //   - window.reattachTableRowListeners: 테이블 행에 이벤트 리스너를 다시 연결하는 함수 (전역 함수)
+    //   - 'function': 함수 타입을 나타내는 문자열
+    //   - 목적: 함수가 정의되어 있는지 확인 (안전성)
+    //   - 이유: 각 페이지별 JS 파일에서 window 객체에 이 함수를 정의해야 함
+    // ========= DOM 업데이트 완료 후 이벤트 리스너 재연결 =========
+    // 목적: 브라우저 렌더링 사이클과 동기화하여 DOM 업데이트가 완료된 후 이벤트 리스너 재연결
+    //   - requestAnimationFrame을 사용하여 브라우저 렌더링 완료 후 실행
+    //   - 사용자 경험(UX) 개선: DOM 업데이트가 완전히 완료된 후 이벤트 리스너를 연결하여 안정성 확보
+    requestAnimationFrame(() => {
+      if (typeof window.reattachTableRowListeners === 'function') {
+        // window.reattachTableRowListeners(): 테이블 행에 이벤트 리스너 다시 연결
+        //   - 목적: 새로 추가된 테이블 행에 클릭 이벤트 리스너 연결
+        //   - 동작: 각 페이지별 JS 파일에서 정의한 방식으로 이벤트 리스너 연결
+        //   - 결과: 행 클릭 시 상세 정보 표시 기능이 정상 작동
+        window.reattachTableRowListeners();
+      }
+      // 주의: reattachTableRowListeners 함수가 없으면 실행하지 않음 (에러 방지)
+    });
+    
+    // ========= 정렬 링크 이벤트 다시 연결 =========
+    // 목적: 페이지네이션 후 새로 추가된 정렬 링크에 클릭 이벤트 리스너를 다시 연결
+    //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
+    //   - 새로 추가된 정렬 링크에 이벤트 리스너를 다시 연결하여 기능 유지
+    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 정렬 기능이 정상 작동
+    // 
+    // attachSortListeners(): 정렬 링크에 이벤트 리스너 연결 (공통 함수)
+    //   - attachSortListeners: admin_common.js에 정의된 공통 함수
+    //   - 목적: 모든 정렬 링크에 클릭 이벤트 리스너 연결
+    //   - 동작: 모든 정렬 링크를 찾아서 각각에 이벤트 리스너 추가
+    //   - 결과: 정렬 링크 클릭 시 정렬 처리 수행
+    attachSortListeners();
     
     // ========= 체크박스 이벤트 다시 연결 =========
     // 목적: 새로 추가된 체크박스에 이벤트 리스너를 다시 연결
@@ -2156,6 +1945,30 @@ function handlePaginationAjax(e, url) {
       attachCheckboxListeners();
     }
     // 주의: attachCheckboxListeners 함수가 없으면 실행하지 않음 (에러 방지)
+    
+    // ========= 비동기 스크롤 복원 (브라우저 자동 조정 완료 후) =========
+    // 목적: 브라우저의 자동 스크롤 조정이 완료된 후 스크롤 위치를 최종적으로 복원
+    //   - 브라우저는 DOM 업데이트 후 레이아웃을 다시 계산하고 스크롤 위치를 조정할 수 있음
+    //   - 이 과정이 완료된 후에 스크롤 위치를 복원하여 확실하게 유지
+    //   - 사용자 경험(UX) 개선: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
+    // 
+    // restoreScroll(currentScrollPosition): Promise 기반 스크롤 복원 함수 호출
+    //   - restoreScroll(): 스크롤 위치를 복원하는 유틸리티 함수 (Promise 반환)
+    //   - currentScrollPosition: 저장된 스크롤 위치 (픽셀 단위)
+    //   - 반환값: Promise 객체 (비동기 처리)
+    //   - 동작:
+    //     1. DOM 업데이트가 완료될 때까지 대기 (50ms 지연)
+    //     2. 여러 방법으로 스크롤 위치 설정 (window.scrollTo, scrollTop 등)
+    //     3. 복원 성공 여부 확인
+    //     4. 실패 시 requestAnimationFrame으로 재시도
+    //   - 목적: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
+    //   - .then(() => {...}): 복원 완료 후 실행
+    //     → 복원 완료 후 추가 안전장치를 실행할 수 있음 (현재는 비어있음)
+    restoreScroll(currentScrollPosition).then(() => {
+      // 복원 완료 후 추가 안전장치 (선택 사항)
+      //   - 현재는 비어있지만, 향후 추가 로직을 넣을 수 있음
+      //   - 예: 스크롤 위치 확인, 추가 복원 시도 등
+    });
     
     // ========= URL 업데이트 (히스토리 관리) =========
     // 목적: 브라우저의 URL과 히스토리를 업데이트하여 페이지 새로고침 없이 URL 변경
@@ -2528,6 +2341,12 @@ document.addEventListener('DOMContentLoaded', function() {
     //     → e: 이벤트 객체 (Event)
     //   - 동작: 폼이 제출될 때 실행됨
     form.addEventListener('submit', function(e) {
+      // ========= 기본 동작 차단 =========
+      // e.preventDefault(): 폼의 기본 동작(제출) 차단
+      //   - preventDefault(): 이벤트의 기본 동작을 취소
+      //   - 목적: AJAX로 처리하기 위해 기본 제출 차단
+      e.preventDefault();
+      
       // ========= 검색 폼 유효성 검사 =========
       // validateSearchForm(form): 검색 폼의 유효성을 검사하는 함수 호출
       //   - form: 검증할 폼 요소
@@ -2542,20 +2361,91 @@ document.addEventListener('DOMContentLoaded', function() {
       //   - ! 연산자: 논리 부정
       //   - 조건: 검증이 실패한 경우 (false 반환)
       if (!validateSearchForm(form)) {
-        // ========= 폼 제출 차단 =========
-        // e.preventDefault(): 폼의 기본 동작(제출) 차단
-        //   - preventDefault(): 이벤트의 기본 동작을 취소
-        //   - 목적: 검증 실패 시 폼 제출을 막음
-        //   - 결과: 서버로 요청이 전송되지 않음
-        e.preventDefault();
-        
-        // return false: 함수 종료 및 false 반환
-        //   - false: 검증 실패를 나타냄
-        //   - 목적: 폼 제출을 확실하게 차단
-        //   - 주의: preventDefault()와 함께 사용하여 이중으로 차단
+        // 검증 실패 시 아무 작업도 하지 않음 (이미 preventDefault로 차단됨)
         return false;
       }
-      // 주의: 검증이 통과하면 폼이 정상적으로 제출됨
+      
+      // ========= AJAX로 검색 폼 제출 =========
+      // FormData 생성
+      const formData = new FormData(form);
+      
+      // CSRF 토큰 확인 및 추가
+      const csrfToken = formData.get('csrfmiddlewaretoken') || 
+                        document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                        document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                        '';
+      if (csrfToken && !formData.has('csrfmiddlewaretoken')) {
+        formData.append('csrfmiddlewaretoken', csrfToken);
+      }
+      
+      // AJAX 요청
+      fetch(form.action || window.location.pathname, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        }
+      })
+      .then(response => {
+        // HTML 응답 처리
+        if (response.headers.get('content-type')?.includes('text/html')) {
+          return response.text();
+        }
+        // JSON 응답 처리
+        return response.json();
+      })
+      .then(data => {
+        // HTML 응답인 경우 (전체 페이지 HTML)
+        if (typeof data === 'string') {
+          // 임시 DOM 요소 생성 및 HTML 파싱
+          const tempDiv = document.createElement('div');
+          tempDiv.innerHTML = data;
+          
+          // 테이블 컨테이너 업데이트
+          const tableContainer = document.querySelector('.table-container');
+          const newTableContainer = tempDiv.querySelector('.table-container');
+          if (tableContainer && newTableContainer) {
+            tableContainer.innerHTML = newTableContainer.innerHTML;
+          }
+          
+          // 페이지네이션 업데이트
+          const paginationContainer = document.querySelector('.pagination');
+          const newPaginationContainer = tempDiv.querySelector('.pagination');
+          if (paginationContainer && newPaginationContainer) {
+            paginationContainer.innerHTML = newPaginationContainer.innerHTML;
+          } else if (paginationContainer && !newPaginationContainer) {
+            paginationContainer.innerHTML = '';
+          }
+          
+          // 상세 정보 섹션 제거 (검색 시 초기화)
+          const detailSection = document.querySelector('.user-detail-section, .doctor-detail-section, .hospital-detail-section, .approval-detail-section');
+          if (detailSection) {
+            detailSection.remove();
+          }
+          
+          // 페이지네이션 리스너 재연결
+          attachPaginationListeners();
+          
+          // 테이블 행 리스너 재연결
+          if (typeof window.reattachTableRowListeners === 'function') {
+            window.reattachTableRowListeners();
+          }
+          
+          // URL 업데이트 (히스토리 관리)
+          const url = new URL(form.action || window.location.href);
+          url.searchParams.delete('page'); // 검색 시 페이지 초기화
+          window.history.pushState({}, '', url.toString());
+        } else {
+          // JSON 응답인 경우 (상세 정보만)
+          // selectItem 함수에서 처리하도록 함
+          console.log('JSON 응답:', data);
+        }
+      })
+      .catch(error => {
+        console.error('검색 요청 오류:', error);
+        // 에러 발생 시 기본 제출로 폴백
+        form.submit();
+      });
     });
   });
   

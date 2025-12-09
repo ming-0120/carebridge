@@ -1,4 +1,4 @@
-<!-- 
+{% comment %}
   선택 사용자 상세정보 템플릿
   
   목적: 사용자 목록에서 선택된 사용자의 상세 정보를 표시하는 템플릿
@@ -29,62 +29,63 @@
       → email: 이메일 주소
     - favorite_hospitals: 사용자가 즐겨찾기한 병원 목록 (리스트)
       → 병원명 리스트 또는 None
--->
+{% endcomment %}
 {% if selected_user %}
-<!-- 
+{% comment %}
   상세 정보 섹션 컨테이너
   
   목적: 사용자 상세 정보를 담는 컨테이너
     - CSS 클래스: user-detail-section (공통 스타일 적용)
     - 레이아웃: 상세 정보를 표시하는 섹션
--->
-<div class="user-detail-section">
-  <!-- 
-    상세 정보 제목
+{% endcomment %}
+<div class="user-detail-section card shadow-sm">
+  <div class="card-body">
+    {% comment %}
+      상세 정보 제목
+      
+      목적: 상세 정보 섹션의 제목 표시
+        - CSS 클래스: detail-title (제목 스타일 적용)
+        - 텍스트: "선택 사용자 상세정보"
+    {% endcomment %}
+    <h3 class="detail-title card-title border-bottom pb-3 mb-4">선택 사용자 상세정보</h3>
     
-    목적: 상세 정보 섹션의 제목 표시
-      - CSS 클래스: detail-title (제목 스타일 적용)
-      - 텍스트: "선택 사용자 상세정보"
-  -->
-  <h3 class="detail-title">선택 사용자 상세정보</h3>
-  
-  <!-- 
-    상세 정보 그리드 레이아웃
-    
-    목적: 사용자의 상세 정보를 그리드 레이아웃으로 표시
-      - CSS 클래스: detail-grid (그리드 레이아웃 스타일 적용)
-      - 레이아웃: 각 정보 항목을 그리드로 배치하여 가독성 향상
-  -->
-  <div class="detail-grid">
-    <!-- 
+    {% comment %}
+      상세 정보 그리드 레이아웃
+      
+      목적: 사용자의 상세 정보를 그리드 레이아웃으로 표시
+        - CSS 클래스: detail-grid (그리드 레이아웃 스타일 적용)
+        - 레이아웃: 각 정보 항목을 그리드로 배치하여 가독성 향상
+    {% endcomment %}
+    <div class="detail-grid">
+    {% comment %}
       이름 정보 항목
       
       목적: 사용자의 이름을 표시
         - detail-label: "이름" (라벨)
-        - detail-value: {{ selected_user.name }} (사용자의 이름)
+        - detail-value: selected_user.name (사용자의 이름)
           → selected_user: 선택된 사용자 객체
           → name: 사용자의 이름
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">이름</span>
       <span class="detail-value">{{ selected_user.name }}</span>
     </div>
     
-    <!-- 
+    {% comment %}
       ID 정보 항목
       
       목적: 사용자의 ID(로그인 ID)를 표시
         - detail-label: "id" (라벨)
-        - detail-value: {{ selected_user.username }} (사용자의 로그인 ID)
+        - detail-value: selected_user.username (사용자의 로그인 ID)
           → selected_user: 선택된 사용자 객체
           → username: 사용자의 로그인 ID
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">id</span>
       <span class="detail-value">{{ selected_user.username }}</span>
     </div>
     
-    <!-- 
+    {% comment %}
       주민번호 정보 항목 (마스킹 처리)
       
       목적: 사용자의 주민번호를 마스킹 처리하여 표시 (개인정보 보호)
@@ -97,22 +98,19 @@
         - 개인정보 보호: 주민번호의 뒷자리를 마스킹 처리하여 개인정보 보호
         - 앞 6자리만 표시: 생년월일 정보만 표시
         - 7번째 자리 표시: 성별 코드 표시 (1, 2, 3, 4)
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">주민번호</span>
       <span class="detail-value">
-        <!-- 
-          주민번호 마스킹 처리
-            - slice:":6": 주민번호의 앞 6자리 추출 (생년월일)
-            - slice:"6:7": 주민번호의 7번째 자리 추출 (성별 코드)
-            - "******": 뒷자리 마스킹 처리
-            - 예: "123456-1******"
-        -->
-        {{ selected_user.resident_reg_no|slice:":6" }}-{{ selected_user.resident_reg_no|slice:"6:7" }}******
+        {% if selected_user.resident_reg_no %}
+          {% with reg_no=selected_user.resident_reg_no|cut:"-" %}{{ reg_no|slice:":6" }}-{{ reg_no|slice:"6:" }}{% endwith %}
+        {% else %}
+          -
+        {% endif %}
       </span>
     </div>
     
-    <!-- 
+    {% comment %}
       성별 정보 항목
       
       목적: 사용자의 성별을 표시
@@ -121,65 +119,65 @@
           → selected_user.gender == 'M': 성별이 'M'이면 '남' 표시
           → 그 외: '여' 표시
           → gender: 사용자의 성별 ('M' 또는 'F')
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">성별</span>
       <span class="detail-value">
-        <!-- 
+        {% comment %}
           성별 조건부 표시
           
           목적: 성별 코드를 한글로 변환하여 표시
             - selected_user.gender == 'M': 성별이 'M' (남성)인지 확인
             - 'M'이면: '남' 표시
             - 그 외 ('F' 등): '여' 표시
-        -->
+        {% endcomment %}
         {% if selected_user.gender == 'M' %}남{% else %}여{% endif %}
       </span>
     </div>
     
-    <!-- 
+    {% comment %}
       전화번호 정보 항목
       
       목적: 사용자의 전화번호를 표시
         - detail-label: "전화번호" (라벨)
-        - detail-value: {{ selected_user.phone }} (사용자의 전화번호)
+        - detail-value: selected_user.phone (사용자의 전화번호)
           → selected_user: 선택된 사용자 객체
           → phone: 사용자의 전화번호
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">전화번호</span>
       <span class="detail-value">{{ selected_user.phone }}</span>
     </div>
     
-    <!-- 
+    {% comment %}
       주소 정보 항목
       
       목적: 사용자의 주소를 표시
         - detail-label: "주소" (라벨)
-        - detail-value: {{ selected_user.address }} (사용자의 주소)
+        - detail-value: selected_user.address (사용자의 주소)
           → selected_user: 선택된 사용자 객체
           → address: 사용자의 주소
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">주소</span>
       <span class="detail-value">{{ selected_user.address }}</span>
     </div>
     
-    <!-- 
+    {% comment %}
       이메일 정보 항목
       
       목적: 사용자의 이메일 주소를 표시
         - detail-label: "email" (라벨)
-        - detail-value: {{ selected_user.email }} (사용자의 이메일 주소)
+        - detail-value: selected_user.email (사용자의 이메일 주소)
           → selected_user: 선택된 사용자 객체
           → email: 사용자의 이메일 주소
-    -->
+    {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">email</span>
       <span class="detail-value">{{ selected_user.email }}</span>
     </div>
     
-    <!-- 
+    {% comment %}
       즐겨찾기 병원 정보 항목 (조건부 표시, 전체 너비)
       
       목적: 사용자가 즐겨찾기한 병원 목록을 표시
@@ -190,45 +188,38 @@
           → favorite_hospitals: 사용자가 즐겨찾기한 병원 목록 (리스트)
             → 있으면: 병원명을 쉼표로 구분하여 표시 (예: "서울대학교병원, 세브란스병원")
             → 없으면: "없음" 표시
-          → |join:", ": 리스트의 각 항목을 쉼표와 공백으로 구분하여 문자열로 변환
-    -->
+          → join:", ": 리스트의 각 항목을 쉼표와 공백으로 구분하여 문자열로 변환
+    {% endcomment %}
     <div class="detail-item full-width">
       <span class="detail-label">즐겨찾기 병원</span>
       <span class="detail-value">
-        <!-- 
+        {% comment %}
           즐겨찾기 병원 목록 조건부 표시
           
           목적: 즐겨찾기 병원이 있는 경우에만 표시, 없으면 "없음" 표시
             - favorite_hospitals: 사용자가 즐겨찾기한 병원 목록 (리스트 또는 None)
-        -->
+        {% endcomment %}
         {% if favorite_hospitals %}
-          <!-- 
+          {% comment %}
             즐겨찾기 병원 목록 표시
               - favorite_hospitals|join:", ": 리스트의 각 항목을 쉼표와 공백으로 구분하여 문자열로 변환
               - 예: ["서울대학교병원", "세브란스병원"] → "서울대학교병원, 세브란스병원"
-          -->
+          {% endcomment %}
           {{ favorite_hospitals|join:", " }}
         {% else %}
-          <!-- 즐겨찾기 병원이 없으면 "없음" 표시 -->
+          {% comment %} 즐겨찾기 병원이 없으면 "없음" 표시 {% endcomment %}
           없음
         {% endif %}
       </span>
     </div>
   </div>
+  </div>
 </div>
 {% endif %}
-<!-- 
+{% comment %}
   조건문 종료
   
   목적: selected_user가 없으면 상세 정보 섹션을 표시하지 않음
     - selected_user가 null이거나 없으면 아무것도 표시하지 않음
     - AJAX로 상세 정보를 로드할 때 사용
--->
-
-
-
-
-
-
-
-
+{% endcomment %}

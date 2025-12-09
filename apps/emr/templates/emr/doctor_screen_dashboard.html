@@ -7,17 +7,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>의사 화면 대시보드</title>
     <link rel="stylesheet" href="{% static 'emr/css/doctor_screen_dashboard.css' %}">
-    <!-- <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js'></script> -->
-    <!-- fullcalendar CDN -->
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.css' rel='stylesheet' />
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js'></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <!-- fullcalendar 언어 CDN -->
     <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js'></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
     <script>
-        let holidays = "{{ holidays | escape }}"
-        let medical_record_chart = "{{ medical_record_chart | escape }}"
-        const doctor_id = "{{ doctor.doctor_id }}"
+        let holidays = "{{ holidays | escape }}";
+        let medical_record_chart = "{{ medical_record_chart | escape }}";
+        let lab_orders_chart = "{{ lab_orders_chart | escape }}";
+        let treatment_chart = "{{ treatment_chart | escape }}";
+        const daily_medical_record_completed_count = "{{ daily_medical_record_completed_count }}";
+        const daily_reservation_count = "{{ daily_reservation_count }}";
+        const doctor_id = "{{ doctor.doctor_id }}";
+
         function htmlDecode(input) {
             const doc = new DOMParser().parseFromString(input, "text/html");
             return doc.documentElement.textContent;
@@ -25,14 +29,16 @@
 
         holidays = JSON.parse(htmlDecode(holidays));
         medical_record_chart = JSON.parse(htmlDecode(medical_record_chart));
-        console.log(medical_record_chart)
+        lab_orders_chart = JSON.parse(htmlDecode(lab_orders_chart));
+        treatment_chart = JSON.parse(htmlDecode(treatment_chart));
     </script>
 </head>
 <body>
-    <div class="header">
+    <!-- <div class="header">
         <div class="logo" onclick="location.href='main.html'">로고</div>
         <div class="user-info">00님</div>
-    </div>
+    </div> -->
+    {% include "emr/_header.html" %}
 
     <div class="dashboard-container">
 
@@ -54,8 +60,8 @@
             </div>
         </div>
 
-        <div class="card patient-list">
-            <h3>예약 환자 (4명)</h3>
+        <div class="card patient-list" id="patinetList">
+            <h3>예약 환자 ({{ users | length }}명)</h3>
             {% for user in users %}
                 <div class="patient-list-item" onclick="">
                     <h4>성명: {{ user.user.name }}</h4>
@@ -85,7 +91,7 @@
             <h3>📊 7일간 환자의 진료 및 오더 통계</h3>
             <div class="chart-container">
                 <div class="chart-placeholder">
-                    <canvas id="dailyStatsChart"></canvas>
+                    <canvas id="dailyStatsChart" width="600px"></canvas>
                 </div>
             </div>
         </div>
@@ -93,7 +99,7 @@
         <div class="card chart-daily">
             <h3>📈 오늘 진료 환자 통계</h3>
             <div class="chart-placeholder">
-                                <br> (오늘 진료 완료: 70%, 대기 중: 30%)
+                    <canvas id="dailyMedicalRecordChart"></canvas>
             </div>
         </div>
 
@@ -101,13 +107,36 @@
 
     <script src="{% static 'emr/js/doctor_screen_dashboard.js' %}"></script>
     <script>
-        window.onload = function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const ctx = document.getElementById('dailyStatsChart').getContext('2d');
+            const ctxDoughnut = document.getElementById('dailyMedicalRecordChart').getContext('2d');
             const dates = getLastSevenDays();
             const medical_record_chart_data = [];
+            const lab_orders_chart_data = [];
+            const treatment_chart_data = [];
             
             for (date of dates) {
-                const foundMedicalChart = me
+                const foundMedicalChart = medical_record_chart.find(item => item.labels == date);
+                const foundLabChart = lab_orders_chart.find(item => item.labels == date);
+                const foundTreatmentChart = treatment_chart.find(item => item.labels == date);
+
+                if (foundMedicalChart) {
+                    medical_record_chart_data.push(foundMedicalChart.data);
+                } else {
+                    medical_record_chart_data.push(0);
+                }
+
+                if (foundLabChart) {
+                    lab_orders_chart_data.push(foundLabChart.data);
+                } else {
+                    lab_orders_chart_data.push(0);
+                }
+
+                if (foundTreatmentChart) {
+                    treatment_chart_data.push(foundTreatmentChart.data)
+                } else {
+                    treatment_chart_data.push(0)
+                }
             }
 
             var chart = new Chart(ctx, {
@@ -126,20 +155,46 @@
                         pointRadius : 0,    // 각 지점에 포인트 주지 않음
                         backgroundColor: 'rgb(255, 153, 0)',
                         borderColor: 'rgb(255, 153, 0)',
-                        data: [40, 50, 60, 70, 80, 90]
+                        data: medical_record_chart_data,
                     }, {
-                        label: '라인 그래프2',
+                        label: '검사',
                         type : 'line',
                         fill : false,
                         lineTension : 0.2,
                         pointRadius : 0,
                         backgroundColor: 'rgb(255, 204, 0)',
                         borderColor: 'rgb(255, 204, 0)',
-                        data: [100, 120, 150, 100, 180, 200]
+                        data: lab_orders_chart_data,
+                    },  {
+                        label: '치료',
+                        type : 'line',
+                        fill : false,
+                        lineTension : 0.2,
+                        pointRadius : 0,
+                        backgroundColor: 'rgb(68, 175, 229)',
+                        borderColor: 'rgb(68, 175, 229)',
+                        data: treatment_chart_data,
                     }]
                 },
+                options: {
+                    responsive: false,
+                },
             });
-        }
+
+            var chartDoughnut = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['진료 완료', '진료 대기'],
+                    datasets: [{
+                        data: [Number(daily_medical_record_completed_count), Number(daily_reservation_count)],
+                        backgroundColor: [
+                            'rgb(88, 140, 255)',
+                            'rgb(153, 102, 255)',
+                        ]
+                    }]
+                }
+            })
+        })
         
     </script>
 </body>
