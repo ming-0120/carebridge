@@ -53,33 +53,16 @@ def api_reserved_hours(request):
 
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-    # KST 날짜 범위 생성
-    start_kst = timezone.make_aware(
-        datetime.combine(target_date, datetime.min.time()),
-        KST
-    )
-    end_kst = timezone.make_aware(
-        datetime.combine(target_date, datetime.max.time()),
-        KST
-    )
-
-    # UTC 변환 (Django 5.2에서는 timezone.utc 제거됨 → dt_timezone.utc 사용)
-    start_utc = start_kst.astimezone(dt_timezone.utc)
-    end_utc   = end_kst.astimezone(dt_timezone.utc)
-
-    # UTC 범위로 DB 조회
+    # slot_date를 직접 사용
     qs = Reservations.objects.filter(
         slot__doctor_id=doctor_id,
-        reserved_at__gte=start_utc,
-        reserved_at__lte=end_utc
-    ).values_list("reserved_at", flat=True)
+        slot__slot_date=target_date
+    ).select_related("slot").values_list("slot__start_time", flat=True)
 
-    reserved_hours = []
-    for dt in qs:
-        local_dt = dt.astimezone(KST)
-        reserved_hours.append(local_dt.hour)
+    reserved_hours = [t.hour for t in qs]
 
     return JsonResponse({"reserved_hours": reserved_hours})
+
 
 
 # ---------------------------------------------------------
@@ -264,13 +247,38 @@ def hospital_staff_dashboard(request):
 # ---------------------------------------------------------
 # 진료기록 작성 화면
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# 진료기록 작성 화면
+# ---------------------------------------------------------
 def medical_record_creation(request):
+    # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
-    return render(request, 'emr/medical_record_creation.html', {
-        "patient_id": patient_id
-    })
 
+    # 2) 환자(Users), 의사(Doctors) 객체 조회
+    #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
+    patient = Users.objects.get(user_id=patient_id)
+    doctor = Doctors.objects.get(doctor_id=1)
 
+    # 3) 화면용 파생 값 세팅
+    #    주민번호 → 생년월일
+    birth = extract_birth_date(patient.resident_reg_no)
+    #    진료과 이름 (모델 구조에 따라 dep_name 사용)
+    department = doctor.dep.dep_name if doctor.dep else ""
+    #    의사 이름 (Users 테이블에 연결되어 있다고 가정)
+    doctor_name = doctor.user.name if hasattr(doctor, "user") else ""
+
+    now_dt = timezone.now()
+
+    context = {
+        "patient": patient,
+        "doctor": doctor,          # doctor.doctor_id, doctor.hos_id 템플릿에서 사용
+        "birth": birth,
+        "department": department,
+        "doctor_name": doctor_name,
+        "now": now_dt,
+    }
+
+    return render(request, 'emr/medical_record_creation.html', context)
 
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
@@ -483,10 +491,11 @@ def api_today_patients(request):
         Q(resident_reg_no__icontains=q)
     ).values_list("user_id", flat=True)
 
+    # slot_date 중심 조회
     reservations = (
         Reservations.objects.filter(
             user_id__in=matched_users,
-            slot__slot_date=today,
+            slot__slot_date=today
         )
         .select_related(
             "user",
@@ -505,57 +514,43 @@ def api_today_patients(request):
         s = r.slot
         d = s.doctor
 
-        # 오늘 이전 기록 중 가장 최근
-        today_start = timezone.make_aware(
-            datetime.combine(today, time.min),
-            timezone.get_current_timezone()
-        )
-
         recent_record = (
             MedicalRecord.objects
-            .filter(user=u, record_datetime__lt=today_start)
+            .filter(user=u, record_datetime__date__lt=today)
             .order_by('-record_datetime')
             .first()
         )
-
         recent_diag = recent_record.record_datetime.date().isoformat() if recent_record else ""
 
-        # -----------------------------------------------------
-        # 오더 유무 계산 (해당 환자의 모든 기록 기준)
-        # -----------------------------------------------------
-        # medical_record_id 리스트 전체 확보
-        all_records = MedicalRecord.objects.filter(user=u).values_list("medical_record_id", flat=True)
+        # 오더 유무 계산
+        all_records = MedicalRecord.objects.filter(user=u)\
+            .values_list("medical_record_id", flat=True)
 
-        # Lab Completed 여부
         lab_completed = LabOrders.objects.filter(
             medical_record_id__in=all_records,
             status="Completed"
         ).exists()
-
-        # Treatment Completed 여부
         treat_completed = TreatmentProcedures.objects.filter(
             medical_record_id__in=all_records,
             status="Completed"
         ).exists()
 
-        if lab_completed or treat_completed:
-            order_summary = "있음"
-        else:
-            order_summary = "없음"
+        order_summary = "있음" if (lab_completed or treat_completed) else "없음"
 
-        # -----------------------------------------------------
-        # JSON 반환
-        # -----------------------------------------------------
         result.append({
             "name": u.name,
             "gender": u.gender,
             "dob": u.resident_reg_no[:8],
+
+            # slot_date · start_time 기준 표시
             "visit": str(s.slot_date),
             "time": str(s.start_time)[:5],
+
             "dept": d.dep.dep_name if d and d.dep else "",
             "doctor": d.user.name if d else "",
             "recent_diag": recent_diag,
             "order_detail": order_summary,
+            "patient_id": u.user_id,
         })
 
     return JsonResponse({"patients": result})
