@@ -1,0 +1,185 @@
+# CareBridge 프로젝트 - Cursor AI 설정
+
+## 프로젝트 개요
+CareBridge는 의료 정보 및 병원 예약 서비스를 제공하는 Django 기반 웹 애플리케이션입니다.
+
+## 기술 스택
+- **Backend**: Django 5.2.8
+- **Frontend**: HTML, CSS, JavaScript
+- **Database**: SQLite (개발 환경)
+- **Python**: 3.12.5
+
+## 프로젝트 구조
+```
+carebridge/
+├── apps/
+│   ├── admin_panel/     # 관리자 패널
+│   ├── core/            # 메인 홈페이지
+│   ├── db/              # 데이터베이스 모델
+│   ├── hospitals/       # 병원 관련 기능
+│   ├── emergency/       # 응급실 정보
+│   ├── emr/             # 전자의무기록
+│   └── ...
+├── config/              # Django 설정
+└── static/              # 정적 파일
+```
+
+## 코딩 컨벤션
+
+### Python
+- PEP 8 스타일 가이드 준수
+- 함수명: snake_case
+- 클래스명: PascalCase
+- 상수: UPPER_SNAKE_CASE
+- 최대 줄 길이: 100자
+- Docstring 작성 권장
+
+### JavaScript
+- 변수명/함수명: camelCase
+- 상수: UPPER_SNAKE_CASE
+- 이벤트 핸들러: `handle` 접두사 사용 (예: `handleClick`)
+- 최대 줄 길이: 100자
+- 세미콜론 사용
+
+### CSS
+- 클래스명: kebab-case (예: `user-list`, `approval-pending`)
+- BEM 방법론 권장
+- 반응형 디자인: 모바일 우선 (Mobile First)
+
+### HTML
+- Django 템플릿 문법 사용
+- 시맨틱 태그 사용
+- 접근성 고려 (alt 속성, aria-label 등)
+
+## 파일 구조 규칙
+
+### Django 앱 구조
+- `models.py`: 데이터베이스 모델
+- `views.py`: 뷰 로직
+- `urls.py`: URL 라우팅
+- `templates/`: HTML 템플릿
+- `static/`: 정적 파일 (CSS, JS, 이미지)
+- `management/commands/`: 커스텀 관리 명령어
+
+### 정적 파일 구조
+```
+static/
+└── {app_name}/
+    ├── css/
+    │   ├── {app_name}_common.css  # 공통 스타일
+    │   └── {page_name}.css        # 페이지별 스타일
+    ├── js/
+    │   ├── {app_name}_common.js   # 공통 JavaScript
+    │   └── {page_name}.js          # 페이지별 JavaScript
+    └── img/                        # 이미지 파일
+```
+
+## 네이밍 규칙
+
+### URL 패턴
+- 하이픈(`-`) 대신 언더스코어(`_`) 사용
+- 예: `/admin_panel/users/` (O), `/admin-panel/users/` (X)
+
+### 템플릿 파일
+- 파일명: snake_case
+- 예: `user_list.html`, `approval_pending.html`
+
+### CSS 클래스
+- kebab-case 사용
+- 예: `.user-list`, `.approval-pending`
+
+## 코드 작성 가이드
+
+### Django 뷰
+- 함수 기반 뷰 사용
+- `get_object_or_404` 사용 권장
+- 페이지네이션: 5개 또는 10개 단위
+- 검색 기능: `icontains` 사용 (대소문자 구분 없음)
+
+### JavaScript
+- 인라인 JavaScript 지양, 별도 `.js` 파일로 분리
+- 이벤트 리스너는 `addEventListener` 사용
+- AJAX 요청 시 `fetch` API 사용
+- 공통 함수는 `admin_common.js`에 정의
+
+### CSS
+- 인라인 스타일 지양, 별도 `.css` 파일로 분리
+- 공통 스타일은 `admin_common.css`에 정의
+- 미디어 쿼리 사용 (모바일, 태블릿, PC)
+- PC 화면: max-width 1440px 기준
+
+## 데이터베이스
+
+### 모델 명명
+- 단수형 사용 (예: `User`, `Hospital`, `Doctor`)
+- ForeignKey: `related_name` 명시 권장
+
+### 더미 데이터
+- 테스트용 더미 데이터는 `management/commands/`에 생성
+- 또는 뷰에서 직접 생성 가능 (개발 환경)
+
+## 보안
+- CSRF 토큰 필수 사용
+- 사용자 입력 검증 필수
+- SQL Injection 방지 (ORM 사용)
+- XSS 방지 (템플릿 이스케이핑)
+
+## 성능
+- `select_related`, `prefetch_related` 사용 권장
+- 정적 파일 캐싱 고려
+- 페이지네이션 필수
+
+## 주석 및 문서화
+- 복잡한 로직은 주석 작성
+- 함수/클래스 Docstring 작성 권장
+- TODO 주석 사용 가능
+
+## Git 커밋 메시지
+- `.gitmessage` 템플릿 사용
+- 타입: feat, fix, docs, style, refactor, test, chore 등
+- 제목: 50자 이내, 명령형으로 작성
+
+## 에러 처리
+- 사용자 친화적인 에러 메시지
+- 개발 환경에서는 상세한 에러 정보 표시
+- 프로덕션 환경에서는 일반적인 에러 메시지
+
+## 테스트
+- 가능한 경우 테스트 코드 작성
+- 더미 데이터로 기능 테스트
+
+## 특별 고려사항
+
+### 관리자 패널
+- 모든 URL은 `/admin_panel/`로 시작
+- 하이픈(`-`) 대신 언더스코어(`_`) 사용
+- 반응형 디자인 필수 (모바일, 태블릿, PC)
+- 페이지네이션: 5개 항목씩 표시
+
+### 의료 정보
+- 개인정보 보호 고려
+- 주민번호 마스킹 처리
+- 비밀번호 해싱 필수
+
+## 코드 리뷰 체크리스트
+- [ ] 코드 스타일 가이드 준수
+- [ ] 인라인 스타일/스크립트 제거
+- [ ] 반응형 디자인 적용
+- [ ] 에러 처리 구현
+- [ ] 보안 고려사항 확인
+- [ ] 성능 최적화 확인
+- [ ] 주석 및 문서화
+
+## 참고사항
+- 프로젝트는 팀 프로젝트이므로 코드 가독성 중요
+- 다른 팀원이 이해하기 쉬운 코드 작성
+- 복잡한 로직은 주석으로 설명
+- 공통 기능은 재사용 가능하도록 모듈화
+
+
+
+
+
+
+
+

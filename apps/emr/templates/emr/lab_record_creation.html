@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>검사 기록 작성</title>
+
+    <link rel="stylesheet" href="{% static 'emr/css/lab_record_creation.css' %}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script>
+        let currentState = "{{ order.status }}";
+        let select = "{{order.specimen_cd}}"
+        console.log(currentState);
+    </script>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo" onclick="location.href='main.html'">로고</div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="container">
+        <h2> 검사 기록 작성</h2>
+        
+        <div class="patient-info-header">
+            <div class="info-item"><strong>성명:</strong> {{ user.name }}</div>
+            <div class="info-item"><strong>주민번호:</strong> {{ user.resident_reg_no }}</div>
+            <div class="info-item"><strong>전화번호:</strong> {{ user.phone }}</div>
+            <div class="info-item"><strong>성별:</strong> {% if user.gender == 'F' %} 여 {% else %} 남 {% endif %}</div>
+            <div class="info-item"><strong>주소:</strong> {{ user.address }}</div>
+            <div class="info-item"><strong>진단정보:</strong> {{ medical_record.record_type }}</div>
+            <div class="info-item"><strong>진료기록내용:</strong> {{ medical_record.record_content }}</div>
+            <div class="info-item"><strong>S:</strong> {{ medical_record.subjective }}</div>
+            <div class="info-item"><strong>O:</strong> {{ medical_record.objective }}</div>
+            <div class="info-item"><strong>A:</strong> {{ medical_record.assessment }}</div>
+            <div class="info-item"><strong>P:</strong> {{ medical_record.plan }}</div>
+        </div>
+
+        <form name="frmLab" id="frmLab" class="card" method="post" action="{% url 'lab_record' %}"  enctype="multipart/form-data">
+            <h3>검사 기록 데이터 입력</h3>
+            <input type="hidden" id="medical_record_id" name="medical_record_id" value="{{ medical_record.medical_record_id }}">
+            <input type="hidden" id="order_id" name="order_id" value="{{ order.lab_order_id }}">
+            <input type="hidden" id="user_id" name="user_id" value="{{ user.user_id }}">
+            <input type="hidden" id="current_status" name="current_status" value="{{ order.status }}">
+
+            <div class="record-entry-grid">
+                
+                <div>
+                    <div class="form-group">
+                        <label for="labName">검사 항목명</label>
+                        <div class="input-with-button">
+                            <input type="text" name="labName" id="labName" style="background-color: #a3a5a7;" {% if order.status != "Pending" %} value="{{order.lab_nm}}" {% endif %} readonly>
+                            <input type="text" name="labCode" id="labCode" style="background-color: #a3a5a7;" {% if order.status != "Pending" %} value="{{order.lab_cd}}" {% endif %} readonly>
+
+                            {% if order.status == "Pending" %}
+                                <button type="button" class="search-btn" style="width: 100px;" onclick="openLabSearchModal()">검색</button>
+                            {% endif %}
+                            
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="specimenType">검체 유형 코드</label>
+                        <div class="input-with-button">
+                            <select name="specimenType" id="specimenType" {% if order.status != 'Pending' %} readonly {% endif %}>
+                                <option value="None">없음</option>
+                                <option value="BLD">BLD (전혈)</option>
+                                <option value="PLAS">PLAS (혈장)</option>
+                                <option value="UR">UR (소변)</option>
+                                <option value="CSF">CSF (뇌척수액)</option>
+                                <option value="SWAB">SWAB (도말/면봉)</option>
+                                <option value="TISS">TISS (조직)</option>
+                                <option value="SALI">SALI (타액/침)</option>
+                                <option value="STOOL">STOOL (대변/분변)</option>
+                                <option value="SPUT">SPUT (가래/객담)</option>
+                                <option value="FLUID">FLUID (체액)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="specialNotes">특이사항 메모</label>
+                        <textarea name="specialNotes" id="specialNotes" placeholder="특이사항 메모란"
+                            {% if order.status == 'Completed' %} readonly {% endif %}
+                        >{% if order.requisition_note != None %}{{ order.requisition_note }}{% endif %}</textarea>
+                    </div>
+                </div>
+                        
+                <div>
+                    <div class="form-group">
+                        <label>첨부파일</label>
+                        <input type="file" name="fileAttachment" id="fileAttachment" style="display: none;" onchange="addAttachment(this)" multiple>
+                        {% if order.status == 'Sampled' %}
+                            <button class="search-btn attach-btn" type="button" onclick="document.getElementById('fileAttachment').click()">첨부파일</button>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label>첨부된 이미지 목록</label>
+                        <ul class="attachment-list" id="attachmentList">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-button-group">
+                {% if order.status == "Pending" %}
+                    <button class="status-button btn-sampled" type="button" id="btnSampled" onclick="updateStatus('Sampled')">SAMPLED</button>
+                {% elif order.status == 'Sampled' %}
+                    <button class="status-button btn-completed" type="button" id="btnCompleted" onclick="updateStatus('Completed')">COMPLETED</button>
+                {% endif %}
+                <!-- <button class="status-button btn-next" type="button" id="btnNext" onclick="goToNextPatient()">다음환자</button> -->
+            </div>
+        </form>
+    </div>
+
+    <div class="modal-overlay" id="labSearchModal">
+        <div class="modal-content">
+            
+            <div class="modal-header">
+                검사항목 검색 모달창
+                <button class="close-btn" onclick="closeModal('labSearchModal')">×</button>
+            </div>
+
+            <div class="modal-body">
+                
+                <div class="search-controls">
+                    <input type="text" id="labNameInput" placeholder="검사항목명을 입력한다">
+                    <button onclick="labPerformSearch()">검색</button>
+                </div>
+
+                <table class="result-table" id="labResultTable">
+                    <thead>
+                        <tr>
+                            <th>검사항목명</th>
+                            <th>검사항목코드</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('labSearchModal')">취소</button>
+                <button class="btn-confirm" onclick="confirmSelection()">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/lab_record_creation.js' %}"></script>
+</body>
+</html>

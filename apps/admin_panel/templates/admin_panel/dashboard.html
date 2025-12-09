@@ -1,0 +1,369 @@
+<!-- 
+  관리자 대시보드 페이지 템플릿
+  
+  목적: 관리자 대시보드 페이지로 주요 통계 정보와 그래프를 표시
+    - 사용자 경험(UX) 개선: 관리자가 주요 통계 정보를 한눈에 확인할 수 있도록 함
+    - 데이터 시각화: 최근 7일간의 일일 방문자 수를 그래프로 표시
+    - 빠른 접근: 각 통계 카드를 클릭하면 해당 목록 페이지로 이동
+  
+  주요 기능:
+    - 요약 카드: 5개의 주요 통계 정보를 카드 형태로 표시
+    - 그래프: 최근 7일간의 일일 방문자 수를 막대 그래프로 표시
+    - 네비게이션: 각 카드를 클릭하면 해당 목록 페이지로 이동
+  
+  관련 파일:
+    - CSS: admin_common.css, dashboard.css
+    - JavaScript: admin_common.js, dashboard.js
+    - Chart.js: 외부 CDN에서 로드 (차트 라이브러리)
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- 
+    HTML 문서 메타 정보
+    
+    목적: 문서의 기본 정보 및 설정
+      - charset: UTF-8 인코딩 설정 (한글 지원)
+      - viewport: 반응형 디자인을 위한 뷰포트 설정
+      - title: 브라우저 탭에 표시될 페이지 제목
+  -->
+  <meta charset="UTF-8">
+  <!-- 
+    뷰포트 설정
+    
+    목적: 모바일 기기에서 올바른 화면 크기로 표시되도록 설정
+      - width=device-width: 기기의 실제 너비에 맞춤
+      - initial-scale=1.0: 초기 확대/축소 비율 100%
+      - minimum-scale=0.5: 최소 확대/축소 비율 50%
+      - maximum-scale=2.0: 최대 확대/축소 비율 200%
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
+  <title>CareBridge 관리자 대시보드</title>
+  
+  <!-- 
+    CSS 파일 로드
+    
+    목적: 페이지 스타일링을 위한 CSS 파일 로드
+      - admin_common.css: 관리자 패널 공통 스타일
+      - dashboard.css: 대시보드 페이지 전용 스타일
+  -->
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/dashboard.css' %}">
+</head>
+<body>
+  <!-- 
+    헤더 섹션
+    
+    목적: 페이지 상단에 로고와 사용자 정보, 로그아웃 버튼을 표시
+      - 로고: CareBridge 로고 이미지 및 대시보드 링크
+      - 사용자 정보: 로그인한 관리자 이름 표시
+      - 로그아웃 버튼: 로그아웃 기능 제공
+  -->
+  <header class="header">
+    <!-- 
+      헤더 내부 컨테이너
+      
+      목적: 헤더 내용을 담는 컨테이너
+        - 로고 영역: CareBridge 로고 및 대시보드 링크
+        - 유틸리티 영역: 사용자 정보 및 로그아웃 버튼
+    -->
+    <div class="header-inner">
+      <!-- 
+        로고 링크
+        
+        목적: 로고 클릭 시 관리자 대시보드로 이동 (현재 페이지)
+          - href: {% url 'admin_dashboard' %} - 관리자 대시보드 URL
+          - CSS 클래스: logo-link (링크 스타일)
+      -->
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <!-- 
+            로고 이미지
+            
+            목적: CareBridge 로고 이미지 표시
+              - src: {% static 'core/img/logo_2.png' %} - 로고 이미지 경로
+              - alt: "CareBridge 관리자 대시보드" - 대체 텍스트 (접근성)
+              - CSS 클래스: logo-img (이미지 스타일)
+          -->
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      
+      <!-- 
+        유틸리티 영역
+        
+        목적: 사용자 정보 및 로그아웃 버튼 표시
+          - 사용자 이름: 로그인한 관리자 이름 표시
+          - 로그아웃 버튼: 로그아웃 기능 제공
+      -->
+      <div class="util">
+        <!-- 
+          사용자 세션 확인 및 정보 표시
+          
+          목적: 로그인한 관리자 정보 표시
+            - request.session.username: 세션에 저장된 사용자 이름
+            - 로그인한 경우에만 표시
+        -->
+        {% if request.session.username %}
+          <!-- 
+            환영 메시지
+            
+            목적: 로그인한 관리자에게 환영 메시지 표시
+              - {{ request.session.username }}: 사용자 이름
+              - CSS 클래스: welcome-text (텍스트 스타일)
+          -->
+          <span class="welcome-text">{{ request.session.username }}님 환영합니다</span>
+          
+          <!-- 
+            로그아웃 버튼
+            
+            목적: 로그아웃 기능 제공
+              - type="button": 버튼 타입 (폼 제출 방지)
+              - id="logoutBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
+              - CSS 클래스: btn-logout (버튼 스타일)
+          -->
+          <button type="button" id="logoutBtn" class="btn-logout">로그아웃</button>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+<!-- 
+  대시보드 메인 컨테이너
+  
+  목적: 대시보드의 주요 내용을 담는 컨테이너
+    - CSS 클래스: dashboard-wrap (대시보드 래퍼 스타일)
+    - 내용: 요약 카드, 그래프
+-->
+<div class="dashboard-wrap">
+
+  <!-- 
+    상단 요약 카드 섹션
+    
+    목적: 주요 통계 정보를 카드 형태로 표시하고 각 목록 페이지로 이동할 수 있도록 함
+      - 사용자 경험(UX) 개선: 관리자가 주요 통계 정보를 한눈에 확인할 수 있도록 함
+      - 빠른 접근: 각 카드를 클릭하면 해당 목록 페이지로 이동
+      - 시각적 구분: 각 카드마다 다른 색상으로 구분하여 가독성 향상
+  -->
+  <div class="summary-cards">
+    <!-- 
+      신규 가입자수 카드
+      
+      목적: 오늘 기준 신규 가입자 수를 표시하고 사용자 목록 페이지로 이동
+        - href: {% url 'user_list' %} - 사용자 목록 URL
+        - CSS 클래스: summary-card-link (카드 링크 스타일)
+        - 카드 스타일: card-blue (파란색 카드)
+        - 데이터: {{ new_users_count }} - 오늘 기준 신규 가입자 수 (뷰에서 전달)
+    -->
+    <a href="{% url 'user_list' %}" class="summary-card-link">
+      <div class="summary-card card-blue">
+        <!-- 
+          카드 라벨
+          
+          목적: 카드의 제목 표시
+            - CSS 클래스: label (라벨 스타일)
+            - 텍스트: "신규 가입자수"
+        -->
+        <span class="label">신규 가입자수</span>
+        
+        <!-- 
+          카드 값
+          
+          목적: 통계 수치를 크게 표시
+            - CSS 클래스: value (값 스타일)
+            - {{ new_users_count }}: 오늘 기준 신규 가입자 수
+            - 예: "5명"
+        -->
+        <span class="value">{{ new_users_count }}명</span>
+        
+        <!-- 
+          카드 설명
+          
+          목적: 통계 수치에 대한 추가 설명 표시
+            - CSS 클래스: desc (설명 스타일)
+            - 텍스트: "오늘 기준 신규 회원"
+        -->
+        <span class="desc">오늘 기준 신규 회원</span>
+      </div>
+    </a>
+    
+    <!-- 
+      총 가입한 의사 수 카드
+      
+      목적: 전체 의사 수를 표시하고 의사 목록 페이지로 이동
+        - href: {% url 'doctor_list' %} - 의사 목록 URL
+        - 카드 스타일: card-purple (보라색 카드)
+        - 데이터: {{ total_doctors_count }} - 전체 의사 수 (검증 여부와 관계없이)
+    -->
+    <a href="{% url 'doctor_list' %}" class="summary-card-link">
+      <div class="summary-card card-purple">
+        <span class="label">총 가입한 의사 수</span>
+        <span class="value">{{ total_doctors_count }}명</span>
+        <span class="desc">검증 여부와 관계없이 전체 의사</span>
+      </div>
+    </a>
+    
+    <!-- 
+      총 병원 수 카드
+      
+      목적: 전체 병원 수를 표시하고 병원 정보 페이지로 이동
+        - href: {% url 'hospital_list' %} - 병원 정보 URL
+        - 카드 스타일: card-lightblue (연한 파란색 카드)
+        - 데이터: {{ total_hospitals_count }} - 전체 병원 수
+    -->
+    <a href="{% url 'hospital_list' %}" class="summary-card-link">
+      <div class="summary-card card-lightblue">
+        <span class="label">총 병원 수</span>
+        <span class="value">{{ total_hospitals_count }}개</span>
+        <span class="desc">등록된 병·의원</span>
+      </div>
+    </a>
+    
+    <!-- 
+      승인 대기중인 의사 카드
+      
+      목적: 승인 대기 중인 의사 수를 표시하고 승인 대기 페이지로 이동
+        - href: {% url 'approval_pending' %} - 승인 대기 URL
+        - 카드 스타일: card-navy (네이비색 카드)
+        - 데이터: {{ pending_doctors_count }} - 승인 대기 중인 의사 수
+    -->
+    <a href="{% url 'approval_pending' %}" class="summary-card-link">
+      <div class="summary-card card-navy">
+        <span class="label">승인 대기중인 의사</span>
+        <span class="value">{{ pending_doctors_count }}명</span>
+        <span class="desc">검증 대기중인 의사 수</span>
+      </div>
+    </a>
+    
+    <!-- 
+      미처리 1:1 문의 카드
+      
+      목적: 미처리 1:1 문의 수를 표시하고 1:1 문의 관리 페이지로 이동
+        - href: {% url 'qna_list' %} - 1:1 문의 목록 URL
+        - 카드 스타일: card-green (초록색 카드)
+        - 데이터: {{ pending_qna_count }} - 미처리 1:1 문의 수
+    -->
+    <a href="{% url 'qna_list' %}" class="summary-card-link">
+      <div class="summary-card card-green">
+        <span class="label">미처리 1:1 문의</span>
+        <span class="value">{{ pending_qna_count }}건</span>
+        <span class="desc">빠른 답변 필요</span>
+      </div>
+    </a>
+  </div>
+
+  <!-- 
+    7일 이용자 그래프 섹션
+    
+    목적: 최근 7일간의 일일 방문자 수를 막대 그래프로 표시
+      - 사용자 경험(UX) 개선: 방문자 추이를 시각적으로 확인할 수 있도록 함
+      - 데이터 시각화: Chart.js를 사용하여 막대 그래프로 표시
+      - 데이터 전달: 템플릿에서 JSON 형식으로 데이터를 전달하여 JavaScript에서 차트 생성
+  -->
+  <div class="main-row">
+    <!-- 
+      그래프 카드
+      
+      목적: 그래프를 담는 카드 컨테이너
+        - CSS 클래스: graph-card (그래프 카드 스타일)
+        - 내용: 그래프 헤더, 그래프 캔버스
+    -->
+    <div class="graph-card">
+      <!-- 
+        그래프 헤더
+        
+        목적: 그래프의 제목과 부제목 표시
+          - CSS 클래스: graph-header (그래프 헤더 스타일)
+      -->
+      <div class="graph-header">
+        <!-- 
+          그래프 제목
+          
+          목적: 그래프의 제목 표시
+            - CSS 클래스: graph-title (그래프 제목 스타일)
+            - 텍스트: "7일 이용자 그래프"
+        -->
+        <div class="graph-title">7일 이용자 그래프</div>
+        
+        <!-- 
+          그래프 부제목
+          
+          목적: 그래프에 대한 추가 설명 표시
+            - CSS 클래스: graph-sub (그래프 부제목 스타일)
+            - 텍스트: "최근 7일간 일일 접속 현황"
+        -->
+        <div class="graph-sub">최근 7일간 일일 접속 현황</div>
+      </div>
+      
+      <!-- 
+        그래프 캔버스 영역
+        
+        목적: Chart.js가 렌더링할 캔버스 요소를 담는 영역
+          - CSS 클래스: graph-placeholder (그래프 플레이스홀더 스타일)
+          - 캔버스: Chart.js가 차트를 렌더링할 <canvas> 요소
+            → id="visitorChart": JavaScript에서 차트를 생성하기 위한 ID
+            → dashboard.js에서 이 요소를 찾아서 차트 생성
+      -->
+      <div class="graph-placeholder">
+        <canvas id="visitorChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- 
+  JavaScript 라이브러리 및 파일 로드
+  
+  목적: 페이지의 동적 기능을 제공하기 위한 JavaScript 파일 로드
+    - 로드 순서: Chart.js → 방문자 차트 데이터 → admin_common.js → dashboard.js
+    - Chart.js: 외부 CDN에서 로드 (차트 라이브러리)
+    - 방문자 차트 데이터: 템플릿에서 JSON 형식으로 데이터 전달
+    - admin_common.js: 관리자 패널 공통 JavaScript 함수들
+    - dashboard.js: 대시보드 페이지 전용 JavaScript 함수들
+-->
+<!-- 
+  Chart.js 라이브러리
+  
+  목적: 차트를 생성하기 위한 외부 라이브러리 로드
+    - CDN: jsdelivr CDN에서 Chart.js 4.4.0 버전 로드
+    - chart.umd.min.js: UMD 형식의 최소화된 파일 (브라우저 호환성)
+    - 사용: dashboard.js에서 Chart.js를 사용하여 막대 그래프 생성
+-->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<!-- 
+  방문자 차트 데이터 (JSON 형식으로 전달)
+  
+  목적: 템플릿에서 JavaScript로 방문자 데이터를 전달
+    - type="application/json": JSON 형식의 데이터임을 명시
+    - id="visitor-chart-data": JavaScript에서 데이터를 읽기 위한 ID
+    - {{ visitor_chart_data|safe }}: 뷰에서 전달된 방문자 차트 데이터 (JSON 문자열)
+      → |safe: HTML 이스케이핑을 방지하여 JSON 문자열을 그대로 출력
+      → 예: {"labels": ["2024-01-01", ...], "values": [100, 150, ...]}
+    - 사용: dashboard.js에서 이 요소의 textContent를 읽어서 JSON.parse()로 파싱
+-->
+<script type="application/json" id="visitor-chart-data">{{ visitor_chart_data|safe }}</script>
+
+<!-- 
+  공통 JavaScript (로그아웃 버튼 등)
+  
+  목적: 관리자 패널 공통 JavaScript 함수들 로드
+    - admin_common.js: 관리자 패널 공통 기능
+      → 로그아웃 버튼 이벤트 처리
+      → 기타 공통 기능들
+-->
+<script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
+
+<!-- 
+  대시보드 JavaScript
+  
+  목적: 대시보드 페이지 전용 JavaScript 함수들 로드
+    - dashboard.js: 대시보드 페이지 전용 기능
+      → 방문자 차트 생성 (Chart.js 사용)
+      → visitor-chart-data 요소에서 데이터를 읽어서 차트 생성
+-->
+<script src="{% static 'admin_panel/js/dashboard.js' %}"></script>
+</body>
+</html>

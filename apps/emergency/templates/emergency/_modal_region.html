@@ -1,0 +1,36 @@
+<div id="region-modal" class="modal-overlay hidden">
+
+  <div class="modal-wrap">
+
+    <div class="region-header">
+      <span>시/도 선택</span>
+      <button class="modal-close" onclick="closeRegionModal()">×</button>
+    </div>
+
+    <input id="region-search-input" type="text" placeholder="지역명을 입력하세요."
+          class="region-search" oninput="liveSearchRegion()" />
+
+
+    <div class="region-container">
+
+      <div class="sido-list">
+        {% for s in sido_list %}
+          <div class="sido-item {% if selected_sido == s %}active{% endif %}" onclick="selectSido('{{ s }}')">{{ s }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="sigungu-list">
+        <div class="sigungu-item all" onclick="selectSigungu('전체')">전체</div>
+      </div>
+
+    </div>
+
+    <div class="modal-footer">
+      <!-- 닫기 → 초기화 기능으로 변경 -->
+      <button class="btn reset" onclick="resetRegion()">초기화</button>
+      <button class="btn primary" onclick="applyRegionFilter()">적용하기</button>
+    </div>
+
+
+  </div>
+</div>

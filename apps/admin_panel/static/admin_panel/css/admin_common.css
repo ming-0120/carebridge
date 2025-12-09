@@ -1,0 +1,1652 @@
+
+/* 
+  ========= 관리자 페이지 공통 CSS =========
+  
+  목적: 관리자 패널의 모든 페이지에서 공통으로 사용되는 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: 일관된 디자인으로 사용자 경험 향상
+    - 코드 재사용: 공통 스타일을 한 곳에서 관리하여 유지보수성 향상
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+  
+  주요 섹션:
+    - Body & Base: 기본 HTML/body 스타일
+    - Header: 헤더 공통 스타일
+    - Container: 메인 컨테이너 스타일
+    - Tabs: 탭 메뉴 스타일
+    - Search Section: 검색 섹션 스타일
+    - Table: 테이블 공통 스타일
+    - Pagination: 페이지네이션 스타일
+    - Detail Section: 상세 정보 섹션 스타일
+    - 반응형 디자인: 미디어 쿼리를 통한 반응형 스타일
+*/
+
+/* 
+  ========= Body & Base =========
+  
+  목적: HTML과 body 요소의 기본 스타일 설정
+    - 레이아웃: 전체 화면 높이 사용 및 스크롤 제어
+    - 폰트: 한글 폰트 설정
+    - 배경: 관리자 패널 배경색 설정
+*/
+
+/* 
+  HTML과 body 기본 스타일
+  
+  목적: 전체 페이지의 높이와 스크롤 동작 제어
+    - height: 100vh - 뷰포트 높이 100% 사용
+    - overflow: hidden - 기본적으로 스크롤 숨김 (컨테이너 내부 스크롤 사용)
+    - 사용처: 모든 관리자 페이지
+*/
+html, body {
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 
+  QnA 상세 페이지 body 스타일
+  
+  목적: QnA 상세 페이지는 전체 페이지 스크롤 허용
+    - body.qna-detail-body: QnA 상세 페이지에만 적용되는 클래스
+    - overflow-y: auto - 세로 스크롤 허용
+    - 사용처: qna_detail.html
+    - 이유: QnA 상세 페이지는 긴 답변 내용을 표시할 수 있으므로 전체 페이지 스크롤 필요
+*/
+body.qna-detail-body {
+  overflow-y: auto;
+}
+
+/* 
+  Body 기본 스타일
+  
+  목적: body 요소의 기본 스타일 설정
+    - background-color: #F4F6F9 - 관리자 패널 배경색 (연한 회색)
+    - margin: 0 - 기본 마진 제거
+    - font-family: "Noto Sans KR" - 한글 폰트 설정
+    - color: #222 - 기본 텍스트 색상 (진한 회색)
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - 사용처: 모든 관리자 페이지
+*/
+body {
+  background-color: #F4F6F9;
+  margin: 0;
+  font-family: "Noto Sans KR", sans-serif;
+  color: #222;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 
+  PC 화면 body 스타일 (1024px 이상)
+  
+  목적: PC 화면에서는 전체 내용을 표시할 수 있도록 높이 제한 제거
+    - height: auto - 높이 자동 조정
+    - min-height: 100vh - 최소 높이 뷰포트 높이
+    - overflow-y: auto - 세로 스크롤 허용
+    - 사용처: PC 화면 (1024px 이상)
+    - 이유: PC 화면에서는 컨테이너 높이 제한 없이 전체 내용 표시
+*/
+@media (min-width: 1024px) {
+  html, body {
+    height: auto !important;
+    min-height: 100vh;
+    overflow-y: auto !important;
+  }
+}
+
+/* 
+  스크롤바 숨기기 (스크롤 기능은 유지)
+  
+  목적: 스크롤바는 숨기되 스크롤 기능은 유지
+    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
+    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
+    - scrollbar-width: none - Firefox의 스크롤바 숨김
+    - 사용처: 모든 관리자 페이지
+    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+*/
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+html, body {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 
+  ========= Header (공통) =========
+  
+  목적: 관리자 패널의 헤더 영역 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 모든 페이지에서 일관된 헤더 디자인 제공
+    - 레이아웃: 로고와 유틸리티 영역을 양쪽 끝에 배치
+    - 반응형: 화면 크기에 따라 로고 크기 조정
+*/
+
+/* 
+  헤더 컨테이너
+  
+  목적: 페이지 상단 헤더 영역 스타일
+    - height: 80px - 헤더 높이 고정
+    - background: #ffffff - 흰색 배경
+    - border-bottom: 1px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - display: flex, align-items: center, justify-content: center - 플렉스 레이아웃 (중앙 정렬)
+    - flex-shrink: 0 - 축소 방지 (항상 고정 높이 유지)
+    - 사용처: 모든 관리자 페이지의 헤더
+*/
+.header {
+  height: 80px;
+  background: #ffffff;
+  border-bottom: 1px solid #e1e4ec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* 
+  헤더 내부 컨테이너
+  
+  목적: 헤더 내용을 담는 내부 컨테이너 스타일
+    - max-width: 1440px - 최대 너비 제한 (PC 화면 최적화)
+    - width: 100% - 화면 너비에 맞춤
+    - padding: 0 20px - 좌우 패딩
+    - display: flex, justify-content: space-between - 플렉스 레이아웃 (양쪽 끝 배치)
+    - 사용처: 헤더 내부의 로고와 유틸리티 영역을 담는 컨테이너
+*/
+.header-inner {
+  max-width: 1440px;
+  width: 100%;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 
+  로고 링크
+  
+  목적: 로고 이미지를 클릭 가능한 링크로 만드는 스타일
+    - text-decoration: none - 링크 밑줄 제거
+    - display: flex, align-items: center - 플렉스 레이아웃 (중앙 정렬)
+    - cursor: pointer - 포인터 커서 표시
+    - 사용처: 헤더의 로고 영역
+*/
+.header .logo-link {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+/* 
+  로고 링크 호버 효과
+  
+  목적: 로고 링크에 마우스를 올렸을 때 투명도 변경
+    - opacity: 0.8 - 투명도 80% (약간 어둡게)
+    - 사용자 경험(UX) 개선: 클릭 가능함을 시각적으로 표시
+*/
+.header .logo-link:hover {
+  opacity: 0.8;
+}
+
+/* 
+  로고 컨테이너
+  
+  목적: 로고 이미지를 담는 컨테이너 스타일
+    - display: flex, align-items: center - 플렉스 레이아웃 (중앙 정렬)
+    - 사용처: 로고 이미지 영역
+*/
+.header .logo {
+  display: flex;
+  align-items: center;
+}
+
+/* 
+  로고 이미지
+  
+  목적: 로고 이미지 스타일
+    - width: 200px - 로고 너비 200px
+    - height: auto - 높이 자동 조정 (비율 유지)
+    - object-fit: contain - 이미지 비율 유지하며 컨테이너에 맞춤
+    - margin-top: 10px - 상단 마진 (시각적 정렬)
+    - 사용처: 헤더의 로고 이미지
+*/
+.header .logo-img {
+  width: 200px;
+  height: auto;
+  object-fit: contain;
+  margin-top: 10px;
+}
+
+/* 
+  유틸리티 영역 (사용자 정보 및 로그아웃 버튼)
+  
+  목적: 헤더 오른쪽의 유틸리티 영역 스타일
+    - font-size: 13px - 작은 글씨 크기
+    - color: #555 - 회색 텍스트
+    - display: flex, align-items: center - 플렉스 레이아웃 (중앙 정렬)
+    - gap: 12px - 요소 간 간격
+    - 사용처: 환영 메시지와 로그아웃 버튼 영역
+*/
+.header .util {
+  font-size: 13px;
+  color: #555;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 
+  유틸리티 영역 링크
+  
+  목적: 유틸리티 영역 내 링크 스타일
+    - text-decoration: none - 링크 밑줄 제거
+    - color: #555 - 회색 텍스트
+    - margin-left: 10px - 왼쪽 마진
+    - 사용처: 유틸리티 영역의 링크 요소
+*/
+.header .util a {
+  text-decoration: none;
+  color: #555;
+  margin-left: 10px;
+}
+
+/* 
+  유틸리티 영역 링크 호버 효과
+  
+  목적: 유틸리티 영역 링크에 마우스를 올렸을 때 밑줄 표시
+    - text-decoration: underline - 밑줄 표시
+    - 사용자 경험(UX) 개선: 링크임을 시각적으로 표시
+*/
+.header .util a:hover {
+  text-decoration: underline;
+}
+
+/* 
+  환영 메시지
+  
+  목적: 로그인한 관리자에게 표시되는 환영 메시지 스타일
+    - font-size: 14px - 글씨 크기
+    - font-weight: 500 - 중간 굵기
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - 사용처: 헤더의 환영 메시지 (예: "홍길동님 환영합니다")
+*/
+.welcome-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1B3C73;
+}
+
+/* 
+  로그아웃 버튼
+  
+  목적: 로그아웃 버튼 기본 스타일
+    - padding: 8px 16px - 내부 여백
+    - background-color: #EF4444 - 빨간색 배경
+    - color: #fff - 흰색 텍스트
+    - border: none - 테두리 제거
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 13px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 헤더의 로그아웃 버튼
+*/
+.btn-logout {
+  padding: 8px 16px;
+  background-color: #EF4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  로그아웃 버튼 호버 효과
+  
+  목적: 로그아웃 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #DC2626 - 더 진한 빨간색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-logout:hover {
+  background-color: #DC2626;
+}
+
+/* 
+  로그아웃 버튼 활성화 효과
+  
+  목적: 로그아웃 버튼을 클릭했을 때 배경색 변경
+    - background-color: #B91C1C - 가장 진한 빨간색
+    - 사용자 경험(UX) 개선: 클릭 상태를 시각적으로 표시
+*/
+.btn-logout:active {
+  background-color: #B91C1C;
+}
+
+/* 
+  ========= Container (공통) =========
+  
+  목적: 관리자 패널의 메인 컨테이너 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 모든 페이지에서 일관된 컨테이너 디자인 제공
+    - 레이아웃: 최대 너비 제한 및 중앙 정렬
+    - 스크롤: 컨테이너 내부 스크롤 처리
+    - 반응형: 화면 크기에 따라 높이 및 패딩 조정
+*/
+
+/* 
+  메인 컨테이너
+  
+  목적: 페이지의 주요 내용을 담는 컨테이너 스타일
+    - max-width: 1440px - 최대 너비 제한 (PC 화면 최적화)
+    - width: 100% - 화면 너비에 맞춤
+    - min-width: 320px - 최소 너비 (모바일 대응)
+    - margin: 20px auto - 상하 마진 20px, 좌우 자동 (중앙 정렬)
+    - background-color: #ffffff - 흰색 배경
+    - border-radius: 16px - 둥근 모서리
+    - padding: 24px - 내부 여백
+    - box-shadow: 0 6px 18px rgba(0,0,0,0.12) - 그림자 효과
+    - flex: 1 - 남은 공간 채우기
+    - overflow-y: auto - 세로 스크롤 허용
+    - overflow-x: hidden - 가로 스크롤 숨김
+    - max-height: calc(100vh - 100px) - 최대 높이 (뷰포트 높이 - 헤더 높이)
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - 사용처: 모든 관리자 페이지의 메인 컨테이너
+*/
+.container {
+  max-width: 1440px;
+  width: 100%;
+  min-width: 320px;
+  margin: 20px auto;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 100px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* 
+  PC 화면 컨테이너 스타일 (1024px 이상)
+  
+  목적: PC 화면에서는 전체 내용을 표시할 수 있도록 높이 제한 제거
+    - .container:not(.dashboard-wrap) - 대시보드가 아닌 컨테이너에만 적용
+    - max-height: none - 최대 높이 제한 제거
+    - height: auto - 높이 자동 조정
+    - overflow-y: visible - 세로 스크롤 제거 (전체 내용 표시)
+    - margin-bottom: 40px - 하단 마진 추가
+    - padding-bottom: 40px - 하단 패딩 추가
+    - flex: none - 플렉스 축소 방지
+    - 사용처: PC 화면 (1024px 이상)
+    - 이유: PC 화면에서는 컨테이너 높이 제한 없이 전체 내용 표시
+*/
+@media (min-width: 1024px) {
+  .container:not(.dashboard-wrap) {
+    max-height: none !important;
+    height: auto !important;
+    min-height: auto !important;
+    overflow-y: visible !important;
+    overflow-x: hidden;
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    flex: none !important;
+  }
+  
+  /* 
+    상세정보창 하단 여백 조정
+    
+    목적: 상세 정보 섹션이 잘리지 않도록 하단 여백 설정
+      - margin-bottom: 0 - 하단 마진 제거
+      - padding-bottom: 24px - 하단 패딩 추가
+      - 사용처: 사용자, 의사, 병원 상세 정보 섹션
+  */
+  .user-detail-section,
+  .approval-detail-section {
+    margin-bottom: 0;
+    padding-bottom: 24px;
+  }
+  
+  /* 
+    테이블 컨테이너 하단 여백 조정
+    
+    목적: 테이블과 페이지네이션 사이 간격 설정
+      - margin-bottom: 20px - 하단 마진 20px
+      - 사용처: 테이블 컨테이너
+  */
+  .table-container {
+    margin-bottom: 20px;
+  }
+  
+  /* 
+    페이지네이션 상하 여백 조정
+    
+    목적: 페이지네이션 주변 여백 설정
+      - margin: 20px 0 - 상하 마진 20px
+      - 사용처: 페이지네이션 영역
+  */
+  .pagination {
+    margin: 20px 0;
+  }
+  
+  /* 
+    컨테이너 내부 요소 축소 방지
+    
+    목적: 컨테이너 내부 요소들이 잘리지 않도록 축소 방지
+      - flex-shrink: 0 - 플렉스 축소 방지
+      - 사용처: 컨테이너의 모든 직계 자식 요소
+  */
+  .container:not(.dashboard-wrap) > * {
+    flex-shrink: 0;
+  }
+  
+  /* 
+    상세정보창 강제 표시 (잘림 방지)
+    
+    목적: 상세 정보 섹션이 잘리지 않도록 강제로 표시
+      - display: block !important - 블록 요소로 강제 표시
+      - visibility: visible !important - 보이도록 강제
+      - opacity: 1 !important - 불투명도 100%
+      - height: auto !important - 높이 자동 조정
+      - max-height: none !important - 최대 높이 제한 제거
+      - overflow: visible !important - 오버플로우 표시
+      - position: relative !important - 상대 위치 지정
+      - clip: auto !important - 클리핑 제거
+      - clip-path: none !important - 클리핑 경로 제거
+      - 사용처: 사용자, 의사, 병원 상세 정보 섹션
+      - 이유: PC 화면에서 상세 정보가 잘리지 않도록 보장
+  */
+  .user-detail-section,
+  .approval-detail-section {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: relative !important;
+    clip: auto !important;
+    clip-path: none !important;
+    margin-bottom: 0;
+    padding-bottom: 24px;
+  }
+}
+
+/* 
+  컨테이너 스크롤바 숨기기
+  
+  목적: 컨테이너의 스크롤바는 숨기되 스크롤 기능은 유지
+    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
+    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
+    - scrollbar-width: none - Firefox의 스크롤바 숨김
+    - 사용처: 모든 관리자 페이지의 컨테이너
+    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+*/
+.container::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 
+  ========= Tabs (공통) =========
+  
+  목적: 관리자 패널의 탭 메뉴 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 페이지 간 이동을 위한 탭 메뉴 제공
+    - 현재 페이지 표시: active 클래스로 현재 페이지 강조
+    - 호버 효과: 마우스 오버 시 시각적 피드백 제공
+*/
+
+/* 
+  탭 메뉴 컨테이너
+  
+  목적: 탭 메뉴를 담는 컨테이너 스타일
+    - display: flex - 플렉스 레이아웃
+    - gap: 0 - 탭 간 간격 없음
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - margin-bottom: 24px - 하단 마진
+    - 사용처: 모든 관리자 페이지의 탭 메뉴 영역
+*/
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 2px solid #e1e4ec;
+  margin-bottom: 24px;
+}
+
+/* 
+  개별 탭 스타일
+  
+  목적: 각 탭 메뉴 항목의 기본 스타일
+    - padding: 12px 24px - 내부 여백
+    - text-decoration: none - 링크 밑줄 제거
+    - color: #666 - 회색 텍스트
+    - font-size: 15px - 글씨 크기
+    - font-weight: 500 - 중간 굵기
+    - border-bottom: 3px solid transparent - 하단 테두리 (투명, 활성화 시 색상 변경)
+    - transition: all 0.2s - 모든 속성 변경 애니메이션
+    - white-space: nowrap - 텍스트 줄바꿈 방지
+    - flex-shrink: 0 - 축소 방지
+    - min-width: fit-content - 최소 너비 내용에 맞춤
+    - 사용처: 각 탭 메뉴 항목 (사용자목록, 의사목록, 병원정보, 승인대기, 1:1문의관리)
+*/
+.tab {
+  padding: 12px 24px;
+  text-decoration: none;
+  color: #666;
+  font-size: 15px;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+  min-width: fit-content;
+}
+
+/* 
+  탭 호버 효과
+  
+  목적: 탭에 마우스를 올렸을 때 색상 및 배경 변경
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.tab:hover {
+  color: #1B3C73;
+  background-color: #F8FAFF;
+}
+
+/* 
+  활성화된 탭 스타일
+  
+  목적: 현재 페이지를 나타내는 탭 스타일
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - border-bottom-color: #1B3C73 - 하단 테두리 색상 (진한 파란색)
+    - font-weight: 700 - 굵은 글씨
+    - 사용처: 현재 페이지의 탭 (active 클래스가 적용된 탭)
+*/
+.tab.active {
+  color: #1B3C73;
+  border-bottom-color: #1B3C73;
+  font-weight: 700;
+}
+
+/* 
+  ========= Search Section (공통) =========
+  
+  목적: 관리자 패널의 검색 섹션 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 일관된 검색 UI 제공
+    - 레이아웃: 검색 조건 선택, 검색어 입력, 검색 버튼을 한 줄에 배치
+    - 반응형: 화면 크기에 따라 레이아웃 조정
+*/
+
+/* 
+  검색 섹션 컨테이너
+  
+  목적: 검색 폼을 담는 섹션 스타일
+    - margin-bottom: 24px - 하단 마진
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 모든 목록 페이지의 검색 섹션
+*/
+.search-section {
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+/* 
+  검색 폼
+  
+  목적: 검색 조건 선택, 검색어 입력, 검색 버튼을 담는 폼 스타일
+    - display: flex - 플렉스 레이아웃
+    - gap: 10px - 요소 간 간격
+    - align-items: center - 수직 중앙 정렬
+    - 사용처: 검색 폼 컨테이너
+*/
+.search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/* 
+  검색 조건 선택 드롭다운
+  
+  목적: 검색할 필드를 선택하는 드롭다운 스타일
+    - padding: 10px 16px - 내부 여백
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 8px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - color: #333 - 진한 회색 텍스트
+    - background-color: #fff - 흰색 배경
+    - cursor: pointer - 포인터 커서
+    - min-width: 100px - 최소 너비
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 검색 조건 선택 드롭다운 (예: ID, 이름, 이메일, 전화번호)
+*/
+.search-select {
+  padding: 10px 16px;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #333;
+  background-color: #fff;
+  cursor: pointer;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+/* 
+  검색어 입력 필드
+  
+  목적: 검색어를 입력하는 텍스트 필드 스타일
+    - flex: 1 - 남은 공간 채우기
+    - padding: 10px 16px - 내부 여백
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 8px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - 사용처: 검색어 입력 필드
+*/
+.search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+/* 
+  검색어 입력 필드 포커스 효과
+  
+  목적: 검색어 입력 필드에 포커스가 있을 때 테두리 색상 변경
+    - outline: none - 기본 포커스 아웃라인 제거
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - 사용자 경험(UX) 개선: 포커스 상태를 시각적으로 표시
+*/
+.search-input:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+/* 
+  검색 버튼
+  
+  목적: 검색을 실행하는 버튼 스타일
+    - width: 44px, height: 44px - 정사각형 버튼
+    - border-radius: 50% - 원형 버튼
+    - border: none - 테두리 제거
+    - background-color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - color: #fff - 흰색 텍스트
+    - cursor: pointer - 포인터 커서
+    - display: flex, align-items: center, justify-content: center - 아이콘 중앙 정렬
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 검색 버튼
+*/
+.search-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background-color: #1B3C73;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+/* 
+  검색 버튼 호버 효과
+  
+  목적: 검색 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #004C97 - 더 진한 파란색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.search-btn:hover {
+  background-color: #004C97;
+}
+
+/* 
+  검색 아이콘
+  
+  목적: 검색 버튼 내부의 아이콘 스타일
+    - font-size: 18px - 아이콘 크기
+    - 사용처: 검색 버튼 내부의 아이콘 (🔍)
+*/
+.search-icon {
+  font-size: 18px;
+}
+
+/* 
+  ========= Table (공통) =========
+  
+  목적: 관리자 패널의 테이블 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 일관된 테이블 디자인 제공
+    - 반응형: 화면 크기에 따라 가로 스크롤 처리
+    - 인터랙션: 행 호버 및 선택 상태 스타일
+*/
+
+/* 
+  테이블 컨테이너
+  
+  목적: 테이블을 담는 컨테이너 스타일
+    - overflow-x: auto - 가로 스크롤 허용 (작은 화면에서 테이블이 잘릴 때)
+    - overflow-y: hidden - 세로 스크롤 숨김
+    - margin-bottom: 24px - 하단 마진
+    - flex-shrink: 0 - 축소 방지
+    - -webkit-overflow-scrolling: touch - iOS에서 부드러운 스크롤
+    - 사용처: 모든 목록 페이지의 테이블 컨테이너
+*/
+.table-container {
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 
+  테이블 컨테이너 스크롤바 숨기기
+  
+  목적: 테이블 컨테이너의 스크롤바는 숨기되 스크롤 기능은 유지
+    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
+    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
+    - scrollbar-width: none - Firefox의 스크롤바 숨김
+    - 사용처: 테이블 컨테이너
+    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+*/
+.table-container::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+.table-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* 
+  사용자 테이블 기본 스타일
+  
+  목적: 사용자 목록 테이블의 기본 스타일
+    - width: 100% - 전체 너비 사용
+    - min-width: 600px - 최소 너비 (작은 화면에서 가로 스크롤 발생)
+    - border-collapse: collapse - 테두리 병합
+    - font-size: 14px - 글씨 크기
+    - table-layout: auto - 테이블 레이아웃 자동 조정
+    - 사용처: 사용자 목록 테이블 (다른 목록 테이블도 동일한 클래스 사용 가능)
+*/
+.user-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 14px;
+  table-layout: auto;
+}
+
+/* 
+  테이블 헤더 영역
+  
+  목적: 테이블 헤더의 배경색 설정
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용처: 테이블 헤더 (thead)
+*/
+.user-table thead {
+  background-color: #F8FAFF;
+}
+
+/* 
+  테이블 헤더 셀
+  
+  목적: 테이블 헤더 셀의 스타일
+    - padding: 12px - 내부 여백
+    - text-align: left - 왼쪽 정렬
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - 사용처: 테이블 헤더 셀 (th)
+*/
+.user-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1B3C73;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+/* 
+  테이블 데이터 셀
+  
+  목적: 테이블 데이터 셀의 스타일
+    - padding: 12px - 내부 여백
+    - border-bottom: 1px solid #f0f0f0 - 하단 테두리 (매우 연한 회색)
+    - 사용처: 테이블 데이터 셀 (td)
+*/
+.user-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 
+  사용자 행 기본 스타일
+  
+  목적: 사용자 목록 테이블의 행 기본 스타일
+    - cursor: pointer - 포인터 커서 (클릭 가능함을 표시)
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 사용자 목록 테이블의 행 (tr.user-row)
+*/
+.user-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  사용자 행 호버 효과
+  
+  목적: 사용자 행에 마우스를 올렸을 때 배경색 변경
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.user-row:hover {
+  background-color: #F8FAFF;
+}
+
+/* 
+  사용자 행 활성화 효과
+  
+  목적: 사용자 행을 클릭했을 때 배경색 변경
+    - background-color: #E9F1FF - 더 진한 파란색 배경
+    - 사용자 경험(UX) 개선: 클릭 상태를 시각적으로 표시
+*/
+.user-row:active {
+  background-color: #E9F1FF;
+}
+
+/* 
+  선택된 사용자 행 스타일
+  
+  목적: 선택된 사용자 행을 강조하는 스타일
+    - background-color: #E3F2FD - 연한 파란색 배경
+    - box-shadow: inset 3px 0 0 0 #2196F3 - 왼쪽에 파란색 인셋 그림자 (선택 표시)
+    - 주의: border-left 대신 inset box-shadow를 사용하여 행 높이 변화 방지
+    - 사용처: 선택된 사용자 행 (tr.user-row.selected)
+*/
+.user-row.selected {
+  background-color: #E3F2FD;
+  /* 🌟 border-left를 padding으로 대체하여 행 높이 변화 방지 🌟 */
+  /* border-left: 3px solid #2196F3; */
+  box-shadow: inset 3px 0 0 0 #2196F3; /* inset box-shadow 사용 */
+}
+
+/* 
+  데이터 없음 메시지
+  
+  목적: 테이블에 데이터가 없을 때 표시되는 메시지 스타일
+    - text-align: center - 중앙 정렬
+    - padding: 40px - 내부 여백
+    - color: #999 - 회색 텍스트
+    - 사용처: 테이블에 데이터가 없을 때 (td.no-data)
+*/
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+/* 
+  ========= Pagination (공통) =========
+  
+  목적: 관리자 패널의 페이지네이션 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 일관된 페이지네이션 UI 제공
+    - 레이아웃: 페이지 번호를 중앙 정렬하여 표시
+    - 인터랙션: 현재 페이지 강조 및 호버 효과 제공
+*/
+
+/* 
+  페이지네이션 컨테이너
+  
+  목적: 페이지네이션 링크를 담는 컨테이너 스타일
+    - display: flex - 플렉스 레이아웃
+    - justify-content: center - 중앙 정렬
+    - gap: 4px - 링크 간 간격
+    - margin: 24px 0 - 상하 마진
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 모든 목록 페이지의 페이지네이션 영역
+*/
+.pagination {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  margin: 24px 0;
+  flex-shrink: 0;
+}
+
+/* 
+  페이지 링크 기본 스타일
+  
+  목적: 페이지네이션의 각 페이지 번호 링크 기본 스타일
+    - padding: 8px 12px - 내부 여백
+    - text-decoration: none - 링크 밑줄 제거
+    - color: #666 - 회색 텍스트
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 6px - 둥근 모서리
+    - transition: all 0.2s - 모든 속성 변경 애니메이션
+    - min-width: 40px, min-height: 36px - 최소 크기
+    - text-align: center - 텍스트 중앙 정렬
+    - display: inline-flex - 인라인 플렉스 레이아웃
+    - align-items: center, justify-content: center - 내용 중앙 정렬
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - 사용처: 페이지네이션의 각 페이지 번호 링크
+*/
+.page-link {
+  padding: 8px 12px;
+  text-decoration: none;
+  color: #666;
+  border: 1px solid #e1e4ec;
+  border-radius: 6px;
+  transition: all 0.2s;
+  min-width: 40px;
+  min-height: 36px;
+  text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* 
+  페이지 링크 호버 효과
+  
+  목적: 페이지 링크에 마우스를 올렸을 때 스타일 변경 (비활성화 및 활성화 링크 제외)
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - color: #1B3C73 - 텍스트 색상 (관리자 패널 메인 색상)
+    - :not(.disabled):not(.active) - 비활성화 및 활성화 링크는 제외
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.page-link:hover:not(.disabled):not(.active) {
+  background-color: #F8FAFF;
+  border-color: #1B3C73;
+  color: #1B3C73;
+}
+
+/* 
+  활성화된 페이지 링크 스타일
+  
+  목적: 현재 페이지를 나타내는 링크 스타일
+    - background-color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - color: #fff - 흰색 텍스트
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - font-weight: 600 - 굵은 글씨
+    - 사용처: 현재 페이지의 링크 (a.page-link.active 또는 span.page-link.active)
+*/
+.page-link.active {
+  background-color: #1B3C73;
+  color: #fff;
+  border-color: #1B3C73;
+  font-weight: 600;
+}
+
+/* 
+  비활성화된 페이지 링크 스타일
+  
+  목적: 클릭할 수 없는 페이지 링크 스타일 (첫 페이지의 이전 버튼, 마지막 페이지의 다음 버튼 등)
+    - color: #ccc - 연한 회색 텍스트
+    - cursor: not-allowed - 금지 커서
+    - background-color: #f5f5f5 - 연한 회색 배경
+    - border-color: #e1e4ec - 연한 회색 테두리
+    - 사용처: 비활성화된 페이지 링크 (span.page-link.disabled)
+*/
+.page-link.disabled {
+  color: #ccc;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+  border-color: #e1e4ec;
+}
+
+/* 
+  ========= Detail Section (공통) =========
+  
+  목적: 관리자 패널의 상세 정보 섹션 공통 스타일 정의
+    - 사용자 경험(UX) 개선: 일관된 상세 정보 디자인 제공
+    - 레이아웃: 그리드 레이아웃을 사용하여 정보 항목 배치
+    - Bootstrap 통합: Bootstrap의 card와 grid 클래스와 통합
+    - 플레이스홀더: 상세 정보가 없을 때 레이아웃 유지를 위한 플레이스홀더 처리
+*/
+
+/* 
+  상세 정보 섹션 기본 스타일 (Bootstrap card와 통합)
+  
+  목적: 사용자, 의사, 병원 상세 정보를 표시하는 섹션 스타일
+    - margin-top: 32px - 상단 마진
+    - border: none !important - Bootstrap 기본 테두리 제거
+    - flex-shrink: 0 - 축소 방지
+    - margin-bottom: 0 - 하단 마진 제거
+    - min-height: 200px - 최소 높이 설정 (로드 시 높이 변화 최소화)
+      → placeholder와 동일한 최소 높이 설정으로 안정성 강화
+    - 사용처: 사용자, 의사, 병원 상세 정보 섹션
+    - Bootstrap 통합: Bootstrap의 card 클래스와 함께 사용
+*/
+.user-detail-section,
+.doctor-detail-section,
+.hospital-detail-section {
+  margin-top: 32px;
+  border: none !important; /* Bootstrap 기본 border 오버라이드 */
+  flex-shrink: 0;
+  margin-bottom: 0;
+  /* 🌟 상세 정보 섹션에 기본 최소 높이를 적용하여 로드 시 높이 변화 최소화 🌟 */
+  min-height: 200px; /* 🌟 placeholder와 동일한 최소 높이 설정 (안정성 강화) 🌟 */
+}
+
+/* 
+  상세 정보 섹션 카드 본문
+  
+  목적: 상세 정보 섹션 내부의 카드 본문 스타일
+    - padding: 32px !important - 내부 여백 (Bootstrap 기본값 오버라이드)
+    - 사용처: 상세 정보 섹션의 카드 본문 (.card-body)
+*/
+.user-detail-section .card-body,
+.doctor-detail-section .card-body,
+.hospital-detail-section .card-body {
+  padding: 32px !important;
+}
+
+/* 
+  상세 정보 제목
+  
+  목적: 상세 정보 섹션의 제목 스타일
+    - margin: 0 - 마진 제거
+    - font-size: 18px - 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - 사용처: 상세 정보 섹션의 제목 (h3.detail-title)
+    - Bootstrap 통합: Bootstrap의 border-bottom pb-3 mb-4 클래스와 함께 사용
+*/
+.detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3C73;
+  /* Bootstrap의 border-bottom pb-3 mb-4 클래스 사용 */
+}
+
+/* 
+  상세 정보 그리드 (Bootstrap grid와 통합)
+  
+  목적: 상세 정보 항목을 배치하는 그리드 컨테이너
+    - Bootstrap 통합: Bootstrap의 row g-3 클래스와 함께 사용
+    - 사용처: 상세 정보 항목들을 담는 그리드 컨테이너 (.detail-grid)
+    - 주의: 실제 그리드 레이아웃은 아래의 .detail-grid 정의에서 명시적으로 설정됨
+*/
+
+/* 
+  상세 정보 항목
+  
+  목적: 각 상세 정보 항목(라벨 + 값)의 스타일
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - gap: 0 - 요소 간 간격 없음
+    - height: 100% - 높이 100% (그리드 셀 높이에 맞춤)
+    - border: 1px solid #6B7280 - 테두리 (회색)
+    - border-radius: 8px - 둥근 모서리
+    - overflow: hidden - 오버플로우 숨김
+    - background-color: #FFFFFF - 흰색 배경
+    - 사용처: 각 상세 정보 항목 (.detail-item)
+*/
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  border: 1px solid #6B7280;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #FFFFFF;
+}
+
+/* 
+  전체 너비 상세 정보 항목
+  
+  목적: 전체 너비를 차지하는 상세 정보 항목 (예: 즐겨찾기 병원)
+    - grid-column: 1 / -1 - 그리드 컬럼 전체 너비 사용
+    - 사용처: 전체 너비를 차지해야 하는 상세 정보 항목 (.detail-item.full-width)
+*/
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* 
+  상세 정보 라벨
+  
+  목적: 상세 정보 항목의 라벨(필드명) 스타일
+    - font-size: 14px - 글씨 크기
+    - color: #111827 - 진한 회색 텍스트
+    - font-weight: 700 - 굵은 글씨
+    - padding: 12px 16px - 내부 여백
+    - background-color: #F3F4F6 - 연한 회색 배경
+    - border: none - 테두리 제거
+    - border-bottom: 1px solid #6B7280 - 하단 테두리 (회색)
+    - border-radius: 8px 8px 0 0 - 상단 모서리만 둥글게
+    - margin: 0 - 마진 제거
+    - 사용처: 상세 정보 항목의 라벨 (.detail-label)
+*/
+.detail-label {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 700;
+  padding: 12px 16px;
+  background-color: #F3F4F6;
+  border: none;
+  border-bottom: 1px solid #6B7280;
+  border-radius: 8px 8px 0 0;
+  margin: 0;
+}
+
+/* 
+  상세 정보 값
+  
+  목적: 상세 정보 항목의 값(데이터) 스타일
+    - font-size: 14px - 글씨 크기
+    - color: #111827 - 진한 회색 텍스트
+    - font-weight: 400 - 일반 글씨
+    - line-height: 1.5 - 줄 간격
+    - padding: 12px 16px - 내부 여백
+    - background-color: #FFFFFF - 흰색 배경
+    - border: none - 테두리 제거
+    - border-top: none - 상단 테두리 제거
+    - border-radius: 0 0 8px 8px - 하단 모서리만 둥글게
+    - margin: 0 - 마진 제거
+    - 사용처: 상세 정보 항목의 값 (.detail-value)
+*/
+.detail-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: none;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  margin: 0;
+}
+
+/* 
+  Bootstrap 충돌 방지 - 테이블 스타일 보호
+  
+  목적: Bootstrap의 기본 테이블 스타일이 기존 테이블 스타일을 덮어쓰지 않도록 보호
+    - width: 100% !important - 너비 100% 강제
+    - border-collapse: collapse !important - 테두리 병합 강제
+    - padding: 12px !important - 패딩 강제
+    - 사용처: 사용자 테이블, QnA 테이블
+    - 이유: Bootstrap이 로드되면 기본 테이블 스타일이 적용되어 기존 스타일과 충돌할 수 있음
+*/
+.user-table,
+.qna-table {
+  /* Bootstrap 기본 스타일 오버라이드 */
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.user-table th,
+.user-table td,
+.qna-table th,
+.qna-table td {
+  padding: 12px !important;
+}
+
+/* 
+  Bootstrap 충돌 방지 - 헤더, 탭 등 기존 요소 보호
+  
+  목적: Bootstrap의 기본 스타일이 기존 요소 스타일을 덮어쓰지 않도록 보호
+    - box-sizing: border-box - 박스 모델 설정
+    - 사용처: 헤더, 탭, 컨테이너
+    - 이유: Bootstrap이 로드되면 기본 스타일이 적용되어 기존 스타일과 충돌할 수 있음
+*/
+.header,
+.tabs,
+.container {
+  /* Bootstrap 기본 스타일이 적용되지 않도록 */
+  box-sizing: border-box;
+}
+
+/* 
+  ========= Detail Section Placeholder Fix =========
+  
+  목적: 상세 정보가 없을 때도 공간을 차지하도록 하여 레이아웃 안정성 확보
+    - 문제 해결: 페이지네이션 시 상세 정보가 사라지면 레이아웃이 깨지는 문제 해결
+    - 사용자 경험(UX) 개선: 레이아웃 변화를 최소화하여 사용자 경험 향상
+*/
+
+/* 
+  상세 정보 플레이스홀더 (숨김 처리)
+  
+  목적: 상세 정보가 없을 때 레이아웃을 유지하기 위한 플레이스홀더
+    - min-height: 200px - 최소 높이 설정 (상세 정보 내용에 따라 적절히 조정)
+    - visibility: hidden !important - 보이지 않게 처리 (공간은 차지)
+    - opacity: 0 !important - 투명도 0 (보이지 않게 처리)
+    - padding: 0 !important - 내부 패딩 제거 (높이 계산을 쉽게 함)
+    - margin: 0 !important - 마진 제거
+    - margin-top: 32px !important - 상단 마진 유지 (레이아웃 일관성 유지)
+    - border: none !important - 테두리 제거
+    - box-shadow: none !important - 그림자 제거
+    - background-color: transparent !important - 투명 배경
+    - 사용처: 상세 정보가 없을 때 표시되는 플레이스홀더
+      → 예: user_list.html에서 selected_user가 없을 때
+    - 이유: 페이지네이션 시 상세 정보가 사라지면 레이아웃이 깨지는 문제를 해결하기 위해
+      플레이스홀더로 공간을 차지하여 레이아웃 안정성 확보
+*/
+.user-detail-section.placeholder-hidden,
+.doctor-detail-section.placeholder-hidden,
+.hospital-detail-section.placeholder-hidden {
+  /* 높이를 미리 예상하거나 고정할 수 없을 경우, 최소 높이를 설정합니다. */
+  min-height: 200px; /* 🌟 상세 정보 내용에 따라 적절히 조정 🌟 */
+  
+  /* 공간은 차지하되 보이지 않게 처리 */
+  visibility: hidden !important; 
+  opacity: 0 !important;
+  padding: 0 !important; /* 내부 패딩도 없애 높이 계산을 쉽게 함 */
+  margin: 0 !important;
+  margin-top: 32px !important; /* 상단 마진은 유지하여 레이아웃 일관성 유지 */
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* 
+  상세 정보 제목 (중복 정의 - 일부 페이지에서 사용)
+  
+  목적: 상세 정보 섹션의 제목 스타일 (위의 정의와 유사하지만 하단 마진 추가)
+    - margin: 0 0 20px 0 - 하단 마진 20px 추가
+    - font-size: 18px - 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - 사용처: 일부 상세 정보 섹션의 제목
+    - 주의: 위의 .detail-title 정의와 중복되지만 하단 마진이 다름
+*/
+.detail-title {
+  margin: 0 0 20px 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3C73;
+}
+
+/* 
+  상세 정보 그리드 (중복 정의 - 그리드 레이아웃 명시)
+  
+  목적: 상세 정보 항목을 배치하는 그리드 컨테이너 (명시적 그리드 레이아웃)
+    - display: grid - 그리드 레이아웃
+    - grid-template-columns: repeat(2, 1fr) - 2열 그리드 (동일한 너비)
+    - gap: 16px - 그리드 항목 간 간격
+    - 사용처: 상세 정보 항목들을 담는 그리드 컨테이너
+    - 주의: 위의 .detail-grid 정의와 중복되지만 명시적 그리드 레이아웃 정의
+*/
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+/* 
+  상세 정보 항목 (중복 정의 - 간격 조정)
+  
+  목적: 각 상세 정보 항목의 스타일 (위의 정의와 유사하지만 gap 조정)
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - gap: 4px - 요소 간 간격 4px
+    - 사용처: 각 상세 정보 항목
+    - 주의: 위의 .detail-item 정의와 중복되지만 gap이 다름
+*/
+.detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* 
+  전체 너비 상세 정보 항목 (중복 정의)
+  
+  목적: 전체 너비를 차지하는 상세 정보 항목
+    - grid-column: 1 / -1 - 그리드 컬럼 전체 너비 사용
+    - 사용처: 전체 너비를 차지해야 하는 상세 정보 항목
+    - 주의: 위의 .detail-item.full-width 정의와 동일
+*/
+.detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* 
+  detail-label과 detail-value는 위에서 이미 정의됨 (435번 줄)
+  → 중복 정의를 피하기 위해 주석으로 표시
+*/
+
+/* 
+  ========= 반응형 디자인 =========
+  
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
+    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
+    - 주요 브레이크포인트:
+      → PC: 1024px 이상
+      → 태블릿: 768px ~ 1024px
+      → 모바일: 768px 이하
+      → 작은 모바일: 480px 이하
+*/
+
+/* 
+  PC 화면 스타일 (1024px ~ 1440px)
+  
+  목적: PC 화면 크기에 맞춘 스타일 조정
+    - max-width: 1440px - 최대 너비 1440px까지 적용
+    - 헤더 및 컨테이너 패딩 조정
+    - 사용처: PC 화면 (1024px ~ 1440px)
+*/
+@media (max-width: 1440px) {
+  .header-inner {
+    padding: 0 20px;
+  }
+  
+  .container {
+    margin: 20px;
+  }
+}
+
+/* 
+  태블릿 화면 스타일 (768px ~ 1024px) - 아이패드 등
+  
+  목적: 태블릿 화면 크기에 맞춘 스타일 조정
+    - max-width: 1024px - 최대 너비 1024px까지 적용
+    - 헤더 높이 및 로고 크기 조정
+    - 컨테이너 패딩 및 높이 조정
+    - 탭 메뉴 가로 스크롤 처리
+    - 검색 폼 줄바꿈 처리
+    - 테이블 가로 스크롤 처리
+    - 일부 테이블 컬럼 숨김 처리
+    - 페이지네이션 줄바꿈 처리
+    - 상세 정보 그리드 1열로 변경
+    - 사용처: 태블릿 화면 (768px ~ 1024px)
+*/
+@media (max-width: 1024px) {
+  .header-inner {
+    width: 100%;
+    padding: 0 20px;
+  }
+  
+  .header .logo-img {
+    width: 150px;
+  }
+  
+  .container {
+    margin: 15px;
+    padding: 16px;
+    max-height: calc(100vh - 90px);
+  }
+  
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 16px;
+  }
+  
+  .tab {
+    padding: 10px 16px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  
+  .search-section {
+    margin-bottom: 16px;
+  }
+  
+  .search-form {
+    flex-wrap: wrap;
+  }
+  
+  .search-select {
+    min-width: 120px;
+  }
+  
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 16px;
+    max-width: 100%;
+  }
+  
+  .user-table {
+    font-size: 12px;
+    min-width: 800px;
+  }
+  
+  .user-table th,
+  .user-table td {
+    padding: 8px 6px;
+    white-space: nowrap;
+  }
+  
+  .user-table th:nth-child(n+7),
+  .user-table td:nth-child(n+7) {
+    display: none;
+  }
+  
+  .pagination {
+    margin: 16px 0;
+    flex-wrap: wrap;
+  }
+  
+  .page-link {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 36px;
+  }
+  
+  .detail-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .user-detail-section {
+    padding: 16px;
+    margin-top: 20px;
+  }
+  
+  .detail-title {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
+}
+
+/* 
+  모바일 화면 스타일 (768px 이하)
+  
+  목적: 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 768px - 최대 너비 768px까지 적용
+    - HTML/body 스크롤 허용
+    - 헤더 높이 및 로고 크기 축소
+    - 컨테이너 패딩 및 높이 조정
+    - 탭 메뉴 전체 너비 사용
+    - 검색 폼 세로 배치
+    - 테이블 가로 스크롤 처리
+    - 일부 테이블 컬럼 숨김 처리
+    - 페이지네이션 줄바꿈 처리
+    - 상세 정보 그리드 1열로 변경
+    - 글씨 크기 축소
+    - 사용처: 모바일 화면 (768px 이하)
+*/
+@media (max-width: 768px) {
+  html, body {
+    overflow: auto;
+  }
+  
+  .header {
+    height: 60px;
+  }
+  
+  .header-inner {
+    padding: 0 15px;
+  }
+  
+  .header .logo-img {
+    width: 120px;
+    margin-top: 5px;
+  }
+  
+  .header .util {
+    font-size: 12px;
+  }
+  
+  .container {
+    margin: 10px;
+    padding: 15px;
+    border-radius: 12px;
+    max-height: calc(100vh - 80px);
+  }
+  
+  .tabs {
+    margin-bottom: 16px;
+    gap: 0;
+  }
+  
+  .tab {
+    padding: 10px 12px;
+    font-size: 13px;
+    flex: 1;
+    text-align: center;
+    min-width: 0;
+  }
+  
+  .search-section {
+    margin-bottom: 16px;
+  }
+  
+  .search-form {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .search-select,
+  .search-input {
+    width: 100%;
+    padding: 12px;
+  }
+  
+  .search-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+  }
+  
+  .table-container {
+    margin-bottom: 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .user-table {
+    font-size: 12px;
+    min-width: 600px;
+  }
+  
+  .user-table th,
+  .user-table td {
+    padding: 8px 6px;
+  }
+  
+  .user-table th:nth-child(n+6),
+  .user-table td:nth-child(n+6) {
+    display: none;
+  }
+  
+  .pagination {
+    margin: 16px 0;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  
+  .page-link {
+    padding: 6px 10px;
+    font-size: 13px;
+    min-width: 36px;
+  }
+  
+  .user-detail-section {
+    margin-top: 20px;
+    padding: 16px;
+  }
+  
+  .detail-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .detail-grid {
+    gap: 12px;
+  }
+  
+  .detail-label {
+    font-size: 11px;
+  }
+  
+  .detail-value {
+    font-size: 13px;
+  }
+}
+
+/* 
+  작은 모바일 화면 스타일 (480px 이하)
+  
+  목적: 작은 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 480px - 최대 너비 480px까지 적용
+    - 로고 크기 추가 축소
+    - 컨테이너 패딩 추가 축소
+    - 탭 메뉴 패딩 및 글씨 크기 축소
+    - 테이블 글씨 크기 및 패딩 축소
+    - 페이지네이션 버튼 크기 축소
+    - 상세 정보 섹션 패딩 축소
+    - 사용처: 작은 모바일 화면 (480px 이하)
+*/
+@media (max-width: 480px) {
+  .header .logo-img {
+    width: 100px;
+  }
+  
+  .container {
+    margin: 5px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  .tab {
+    padding: 8px 8px;
+    font-size: 12px;
+  }
+  
+  .user-table {
+    font-size: 11px;
+    min-width: 500px;
+  }
+  
+  .user-table th,
+  .user-table td {
+    padding: 6px 4px;
+  }
+  
+  .page-link {
+    padding: 5px 8px;
+    font-size: 12px;
+    min-width: 32px;
+  }
+  
+  .user-detail-section {
+    padding: 12px;
+  }
+}

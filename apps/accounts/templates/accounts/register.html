@@ -1,0 +1,404 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>CareBridge 회원가입</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- 로그인 공통 스타일 -->
+    <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
+    <!-- 회원가입 전용 스타일 -->
+    <link rel="stylesheet" href="{% static 'accounts/css/register.css' %}">
+</head>
+<body>
+{% include "core/_header.html" %}
+
+<div class="join-page">
+    <div class="join-container">
+        <div class="join-header">
+            <h1 class="join-title">회원가입</h1>
+            <p class="join-required"><span class="required">*</span> 필수입력사항</p>
+        </div>
+
+        <form method="POST"
+              action="{% url 'register' %}"
+              id="registerForm"
+              class="join-form"
+              enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <!-- provider 구분 -->
+            <input type="hidden" name="provider"
+                   value="{% if from_kakao %}kakao{% else %}local{% endif %}">
+
+            <!-- role: 카카오면 patient 고정 -->
+            {% if from_kakao %}
+                <input type="hidden" name="role" id="roleInput" value="patient">
+            {% else %}
+                <input type="hidden" name="role" id="roleInput" value="{{ role }}">
+            {% endif %}
+
+           
+
+            <!-- 이름 -->
+            <div class="join-row">
+                <label for="id_name" class="join-label">
+                    이름<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <input id="id_name"
+                           type="text"
+                           name="name"
+                           class="join-input"
+                           value="{% if from_kakao %}{{ kakao_name }}{% endif %}"
+                           placeholder="이름을 입력해주세요"
+                           required>
+                </div>
+            </div>
+
+            <!-- 비밀번호 (카카오면 숨김) -->
+            {% if not from_kakao %}
+             <!-- 아이디 -->
+            <div class="join-row">
+                <label for="id_username" class="join-label">
+                    아이디<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <div class="input-with-btn">
+                        <input id="id_username"
+                               type="text"
+                               name="username"
+                               class="join-input"
+                               placeholder="{% if from_kakao %}카카오와 함께 사용할 아이디를 입력해주세요{% else %}아이디를 입력해주세요{% endif %}"
+                               required>
+                        <button type="button" id="check-username-btn" class="btn-line">
+                            중복확인
+                        </button>
+                    </div>
+                    <div id="username-msg" class="msg"></div>
+                </div>
+            </div>
+            <div class="join-row">
+                <label for="id_password1" class="join-label">
+                    비밀번호<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <input id="id_password1" type="password" name="password1"
+                           class="join-input"
+                           placeholder="비밀번호를 입력해주세요">
+                    <p class="field-help" id="pw-help-msg">
+                        8~16자, 영문/숫자/특수문자를 각각 1자 이상 포함해주세요.
+                    </p>
+                    <p id="pw-rule-msg" class="error-msg" style="display:none;">
+                        8~16자, 영문/숫자/특수문자를 각각 1자 이상 포함해야 합니다.
+                    </p>
+                </div>
+            </div>
+
+            <div class="join-row">
+                <label for="id_password2" class="join-label">
+                    비밀번호 확인<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <input id="id_password2"
+                           type="password"
+                           name="password2"
+                           class="join-input"
+                           placeholder="비밀번호를 한 번 더 입력해주세요">
+                    <p id="pw-mismatch-msg" class="error-msg" style="display:none;">
+                        비밀번호가 일치하지 않습니다.
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- 성별 -->
+            <div class="join-row">
+                <span class="join-label">성별<span class="required">*</span></span>
+                <div class="join-field">
+                    <div class="radio-inline">
+                        <label><input type="radio" name="gender" value="M" required> 남자</label>
+                        <label><input type="radio" name="gender" value="F"> 여자</label>
+                    </div>
+                </div>
+            </div>
+            <!-- 주민등록번호 (일반 회원가입 전용) -->
+            <div class="join-row">
+                <span class="join-label">주민등록번호<span class="required">*</span></span>
+                <div class="join-field">
+                    <div class="rrn-group">
+                        <input type="text"
+                               id="rrn_front"
+                               class="join-input rrn-input"
+                               placeholder="앞 6자리"
+                               maxlength="6"
+                               inputmode="numeric"
+                               required>
+                        <span class="rrn-dash">-</span>
+                        <input type="password"
+                               id="rrn_back"
+                               class="join-input rrn-input"
+                               placeholder="뒤 7자리"
+                               maxlength="7"
+                               autocomplete="off"
+                               required>
+                    </div>
+                    <input type="hidden" name="resident_reg_no" id="resident_reg_no">
+                </div>
+            </div>
+
+            <!-- 휴대폰 (일반 회원가입 전용) -->
+            <div class="join-row">
+                <label for="id_phone" class="join-label">휴대폰<span class="required">*</span></label>
+                <div class="join-field">
+                    <input id="id_phone"
+                           type="text"
+                           name="phone"
+                           class="join-input"
+                           placeholder="예: 010-0000-0000"
+                           maxlength="13"
+                           required>
+                </div>
+            </div>
+
+            <!-- 이메일 -->
+            <div class="join-row">
+                <label class="join-label">이메일<span class="required">*</span></label>
+
+                <div class="join-field email-field">
+                    <div class="email-input-wrap">
+                        <input type="text"
+                               id="email_local"
+                               class="join-input email-local"
+                               placeholder="이메일 아이디">
+                        <span class="email-at">@</span>
+                        <input type="text"
+                               id="email_domain_text"
+                               class="join-input email-domain-text"
+                               placeholder="도메인 입력">
+                        <select id="email_domain_select"
+                                class="join-select email-domain-select">
+                            <option value="">선택</option>
+                            <option value="naver.com">naver.com</option>
+                            <option value="daum.net">daum.net</option>
+                            <option value="gmail.com">gmail.com</option>
+                            <option value="custom">직접입력</option>
+                        </select>
+                    </div>
+
+                    <input type="hidden" id="email" name="email">
+
+                </div>
+            </div>
+
+            <!-- 광고 메일 수신 -->
+            <div class="join-row">
+                <span class="join-label">광고/소식 메일</span>
+                <div class="join-field">
+                    <div class="radio-inline">
+                        <label><input type="radio" name="mail_confirm" value="Y" required> 수신 동의</label>
+                        <label><input type="radio" name="mail_confirm" value="N"> 수신 거부</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 주소 -->
+            <div class="join-row">
+                <label class="join-label">집 주소<span class="required">*</span></label>
+
+                <div class="join-field">
+                    <div class="input-with-btn" style="margin-bottom:8px;">
+                        <button type="button" class="btn-line" onclick="openPostcodeSearch()">
+                            우편번호 찾기
+                        </button>
+                    </div>
+
+                    <input type="text" id="addr_num" class="join-input" name="zipcode"  placeholder="우편번호" readonly required>
+                    <input type="text" id="addr" class="join-input" name="addr1" placeholder="주소" readonly required style="margin-top:8px;">
+                    <input type="text" id="addr_detail" class="join-input" name="addr2" placeholder="상세주소" required style="margin-top:8px;">
+
+                    <input type="hidden" id="address_full" name="address">
+                </div>
+            </div>
+
+            <!-- 의사 전용 (카카오면 role=patient 이므로 자동으로 사라짐) -->
+            {% if role == "doctor" and not from_kakao %}
+
+            <!-- 병원 -->
+            <div class="join-row">
+                <label for="id_hospital_addr" class="join-label">
+                    병원 주소<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <div class="input-with-btn">
+                        <input id="id_hospital_addr"
+                               type="text"
+                               name="hospital_address"
+                               class="join-input"
+                               placeholder="병원 주소를 검색해주세요"
+                               readonly
+                               required>
+                        <button type="button" id="hospital-search-btn" class="btn-line">검색</button>
+                    </div>
+                    <input type="hidden" name="hospital_id" id="hospital_id">
+                </div>
+            </div>
+
+            <!-- 의사 번호 -->
+            <div class="join-row">
+                <label for="id_license_number" class="join-label">
+                    의사 번호<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <input id="id_license_number"
+                           type="text"
+                           name="license_number"
+                           class="join-input"
+                           required>
+                </div>
+            </div>
+
+            <!-- 진찰과 -->
+            <div class="join-row">
+                <label for="id_department" class="join-label">
+                    진찰과<span class="required">*</span>
+                </label>
+                <div class="join-field">
+                    <select id="id_department"
+                            name="department_id"
+                            class="join-select"
+                            required>
+                        <option value="">선택</option>
+                        {% for d in departments %}
+                            <option value="{{ d.dep_id }}">{{ d.dep_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- 프로필 사진 -->
+            <div class="join-row">
+                <label for="id_profile_image" class="join-label">프로필 사진</label>
+                <div class="join-field">
+                    <div class="profile-row">
+                        <div class="avatar-preview">
+                            <img id="profilePreview"
+                                 src="{% static 'accounts/img/default_profile.png' %}"
+                                 data-default-src="{% static 'accounts/img/default_profile.png' %}"
+                                 alt="프로필 미리보기">
+                        </div>
+                        <div class="profile-controls">
+                            <input type="file"
+                                   id="id_profile_image"
+                                   name="profile_image"
+                                   accept="image/*">
+                            <button type="button" id="resetProfileImage" class="btn-line">
+                                기본 이미지로
+                            </button>
+                            <div class="upload-info">정면 사진을 업로드해주세요. (JPG, PNG 권장)</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% endif %}
+
+            <!-- 약관 -->
+            <div class="terms-section">
+                <div class="terms-header">
+                    <span>이용약관동의</span>
+                    <span class="terms-desc"><span class="required">*</span> 필수동의항목</span>
+                </div>
+
+                <div class="terms-all">
+                    <label>
+                        <input type="checkbox" id="terms_all"> 전체 동의합니다.
+                    </label>
+                    <p class="terms-all-sub">
+                        선택 항목 포함, 개별적으로도 선택 가능합니다.
+                    </p>
+                </div>
+                <ul class="terms-list">
+                    <li>
+                        <label>
+                            <input type="checkbox" name="terms_service" required> 이용약관 동의 <span class="required">(필수)</span>
+                        </label>
+                        <button type="button" class="terms-link">약관보기 ></button>
+                    </li>
+                    <li>
+                        <label>
+                            <input type="checkbox" name="terms_privacy" required> 개인정보 수집·이용 동의 <span class="required">(필수)</span>
+                        </label>
+                        <button type="button" class="terms-link">약관보기 ></button>
+                    </li>
+                    <li>
+                        <label>
+                            <input type="checkbox" name="terms_marketing"> 개인정보 수집·이용 동의 <span class="optional">(선택)</span>
+                        </label>
+                    </li>
+                    <li>
+                        <label>
+                            <input type="checkbox" name="terms_sms"> SMS <span class="optional">(선택)</span>
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
+            {% if messages %}
+            <ul class="auth-messages">
+                {% for message in messages %}
+                    <li class="auth-message auth-message--error">
+                        {{ message }}
+                    </li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            <!-- 제출 버튼 -->
+            <div class="join-submit">
+                <button type="submit" class="btn-main">가입하기</button>
+            </div>
+
+        </form>
+    </div>
+</div>
+
+<!-- 병원 검색 모달 -->
+<div id="hospital-modal" class="modal hidden">
+  <div class="modal-backdrop"></div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>병원 찾기</h2>
+      <button type="button" id="hospital-modal-close" class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-search">
+        <input type="text" id="hospital-search-input"
+               placeholder="병원 이름을 입력하세요">
+      </div>
+      <div class="modal-results">
+        <table>
+          <thead>
+            <tr>
+              <th>병원명</th>
+              <th>주소</th>
+            </tr>
+          </thead>
+          <tbody id="hospital-results-body">
+            <!-- JS로 결과 렌더링 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
+</script>
+<script src="{% static 'accounts/js/register.js' %}"></script>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+</body>
+</html>

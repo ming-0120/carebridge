@@ -1,0 +1,86 @@
+
+.mypage-layout {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+}
+
+.mypage-sidebar {
+    width: 160px;
+    border: 1px solid #ddd;
+}
+
+.mypage-sidebar ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.mypage-sidebar li a {
+    display: block;
+    padding: 12px 16px;
+    border-bottom: 1px solid #eee;
+    text-decoration: none;
+    color: #333;
+}
+
+.mypage-sidebar li a.active {
+    background: #f2f4ff;
+    font-weight: 600;
+}
+
+.mypage-content {
+    flex: 1;
+}
+
+.notice {
+    font-size: 13px;
+    color: #666;
+    margin: 12px 0 20px;
+}
+
+.reservation-table-wrapper {
+    max-height: 400px;     /* 스크롤 영역 */
+    overflow-y: auto;
+    border: 1px solid #ddd;
+}
+
+.reservation-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.reservation-table th,
+.reservation-table td {
+    border-bottom: 1px solid #eee;
+    padding: 10px 8px;
+    text-align: left;
+}
+
+.reservation-table th {
+    background: #f8f8f8;
+    text-align: center;
+}
+
+.reservation-table td:nth-child(1),
+.reservation-table td:nth-child(6) {
+    text-align: center;
+}
+
+.btn {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: 1px solid #4b6cff;
+    background: #4b6cff;
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-cancel.disabled {
+    background: #ccc;
+    border-color: #ccc;
+    cursor: default;
+}

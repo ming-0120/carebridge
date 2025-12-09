@@ -1,0 +1,157 @@
+body {
+    font-family: 'Malgun Gothic','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f4f7;
+    color: #333;
+}
+
+.header {
+    background-color: #fff;
+    border-bottom: 2px solid #0056b3;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #0056b3;
+    cursor: pointer;
+}
+.user-info {
+    font-size: 16px;
+    color: #555;
+}
+
+.container {
+    max-width: 1500px;
+    margin: 20px auto;
+    padding: 20px;
+}
+
+.card {
+    background: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+h2 {
+    color: #17a2b8;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.card h3 {
+    color: #007bff;
+    border-bottom: 1px dashed #e9ecef;
+    padding-bottom: 5px;
+}
+
+.patient-detail-card {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 20px;
+    font-size: 14px;
+}
+.patient-detail-card div {
+    padding: 8px 0;
+    border-bottom: 1px dotted #eee;
+}
+.patient-detail-card strong {
+    width: 80px;
+    display: inline-block;
+    color: #495057;
+}
+
+/* Visit Box Grid */
+.visit-box-grid {
+    display: grid;
+    grid-template-columns: repeat(4,1fr);
+    gap: 15px;
+}
+
+.visit-box-wrapper {
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.visit-box-header {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    cursor: pointer;
+    border-bottom: 1px solid #ced4da;
+}
+.visit-box-header:hover {
+    background: #e9ecef;
+}
+
+.toggle-icon {
+    font-size: 12px;
+    transition: 0.3s;
+}
+
+.visit-box-header[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Level 2 */
+.level-2-item {
+    padding: 8px 10px 8px 15px;
+    border-bottom: 1px dotted #dee2e6;
+    cursor: pointer;
+    background: #fff;
+    color: #007bff;
+    font-weight: 500;
+}
+.level-2-item:hover {
+    background: #f0f4f7;
+}
+.level-2-item[aria-expanded="true"] .toggle-icon {
+    transform: rotate(180deg);
+}
+
+/* Level 3 */
+.level-3-detail {
+    padding: 5px 10px 5px 30px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #495057;
+}
+.level-3-detail.selected,
+.level-3-detail:hover {
+    background: #e2f3ff;
+    font-weight: bold;
+}
+
+/* 상세 정보 영역 */
+#detailView {
+    margin-top: 20px;
+    border-left: 5px solid #28a745;
+    padding: 15px;
+    background: #e6f7e9;
+    border-radius: 4px;
+}
+#detailView h4 {
+    color: #1e7e34;
+    border-bottom: 1px dashed #a3d9a3;
+    padding-bottom: 5px;
+}
+.detail-item {
+    padding: 5px 0;
+    font-size: 14px;
+}
+.detail-item strong {
+    width: 120px;
+    display: inline-block;
+    color: #0056b3;
+    font-weight: bold;
+}

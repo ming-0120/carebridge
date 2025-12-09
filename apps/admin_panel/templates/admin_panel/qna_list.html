@@ -1,0 +1,790 @@
+<!-- 
+  1:1 문의 목록 페이지 템플릿
+  
+  목적: 1:1 문의 목록을 표시하고 검색, 정렬, 페이지네이션, 삭제 기능을 제공하는 관리자 페이지
+    - 사용자 경험(UX) 개선: 관리자가 문의 목록을 확인하고 관리할 수 있도록 함
+    - 데이터 관리: 문의 정보를 테이블로 표시하고 상세 정보 확인
+    - 기능 제공: 정렬, 페이지네이션, 체크박스 선택, 일괄 삭제
+    - 더미 데이터 관리: 개발 환경에서 더미 데이터 생성/삭제 기능 제공
+  
+  주요 기능:
+    - 문의 목록 표시: 전체 문의 목록을 테이블로 표시
+    - 정렬 기능: No., 이름, 이메일, 문의 제목, 문의 일자, 상태로 정렬 가능
+    - 페이지네이션: 많은 데이터를 페이지 단위로 나누어 표시
+    - 체크박스 선택: 여러 문의를 선택하여 일괄 삭제 처리
+    - 상세 정보 표시: 문의 행 클릭 시 상세 정보 페이지로 이동
+    - 상태 표시: 답변 완료/대기 상태를 시각적으로 표시
+  
+  관련 파일:
+    - CSS: admin_common.css, qna_list.css
+    - JavaScript: admin_common.js, qna_list.js
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <!-- 
+    HTML 문서 메타 정보
+    
+    목적: 문서의 기본 정보 및 설정
+      - charset: UTF-8 인코딩 설정 (한글 지원)
+      - viewport: 반응형 디자인을 위한 뷰포트 설정
+      - title: 브라우저 탭에 표시될 페이지 제목
+  -->
+  <meta charset="UTF-8">
+  <!-- 
+    뷰포트 설정
+    
+    목적: 모바일 기기에서 올바른 화면 크기로 표시되도록 설정
+      - width=device-width: 기기의 실제 너비에 맞춤
+      - initial-scale=1.0: 초기 확대/축소 비율 100%
+      - minimum-scale=0.5: 최소 확대/축소 비율 50%
+      - maximum-scale=2.0: 최대 확대/축소 비율 200%
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
+  <title>1:1 문의 관리 - CareBridge 관리자</title>
+  
+  <!-- 
+    CSS 파일 로드
+    
+    목적: 페이지 스타일링을 위한 CSS 파일 로드
+      - admin_common.css: 관리자 패널 공통 스타일
+      - qna_list.css: 문의 목록 페이지 전용 스타일
+  -->
+  <link rel="stylesheet" href="{% static 'admin_panel/css/admin_common.css' %}">
+  <link rel="stylesheet" href="{% static 'admin_panel/css/qna_list.css' %}">
+</head>
+<body>
+  <!-- 
+    헤더 섹션
+    
+    목적: 페이지 상단에 로고와 사용자 정보, 로그아웃 버튼을 표시
+      - 로고: CareBridge 로고 이미지 및 대시보드 링크
+      - 사용자 정보: 로그인한 관리자 이름 표시
+      - 로그아웃 버튼: 로그아웃 기능 제공
+  -->
+  <header class="header">
+    <!-- 
+      헤더 내부 컨테이너
+      
+      목적: 헤더 내용을 담는 컨테이너
+        - 로고 영역: CareBridge 로고 및 대시보드 링크
+        - 유틸리티 영역: 사용자 정보 및 로그아웃 버튼
+    -->
+    <div class="header-inner">
+      <!-- 
+        로고 링크
+        
+        목적: 로고 클릭 시 관리자 대시보드로 이동
+          - href: {% url 'admin_dashboard' %} - 관리자 대시보드 URL
+          - CSS 클래스: logo-link (링크 스타일)
+      -->
+      <a href="{% url 'admin_dashboard' %}" class="logo-link">
+        <div class="logo">
+          <!-- 
+            로고 이미지
+            
+            목적: CareBridge 로고 이미지 표시
+              - src: {% static 'core/img/logo_2.png' %} - 로고 이미지 경로
+              - alt: "CareBridge 관리자 대시보드" - 대체 텍스트 (접근성)
+              - CSS 클래스: logo-img (이미지 스타일)
+          -->
+          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+        </div>
+      </a>
+      
+      <!-- 
+        유틸리티 영역
+        
+        목적: 사용자 정보 및 로그아웃 버튼 표시
+          - 사용자 이름: 로그인한 관리자 이름 표시
+          - 로그아웃 버튼: 로그아웃 기능 제공
+      -->
+      <div class="util">
+        <!-- 
+          사용자 세션 확인 및 정보 표시
+          
+          목적: 로그인한 관리자 정보 표시
+            - request.session.username: 세션에 저장된 사용자 이름
+            - 로그인한 경우에만 표시
+        -->
+        {% if request.session.username %}
+          <!-- 
+            환영 메시지
+            
+            목적: 로그인한 관리자에게 환영 메시지 표시
+              - {{ request.session.username }}: 사용자 이름
+              - CSS 클래스: welcome-text (텍스트 스타일)
+          -->
+          <span class="welcome-text">{{ request.session.username }}님 환영합니다</span>
+          
+          <!-- 
+            로그아웃 버튼
+            
+            목적: 로그아웃 기능 제공
+              - type="button": 버튼 타입 (폼 제출 방지)
+              - id="logoutBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
+              - CSS 클래스: btn-logout (버튼 스타일)
+          -->
+          <button type="button" id="logoutBtn" class="btn-logout">로그아웃</button>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- 
+    메인 컨테이너
+    
+    목적: 페이지의 주요 내용을 담는 컨테이너
+      - CSS 클래스: container (컨테이너 스타일)
+      - 내용: 탭, 문의 관리 헤더, 목록, 페이지네이션
+  -->
+  <div class="container">
+    <!-- 
+      상단 탭 메뉴
+      
+      목적: 관리자 패널의 각 페이지로 이동할 수 있는 탭 메뉴
+        - 사용자 경험(UX) 개선: 관리자가 쉽게 다른 페이지로 이동할 수 있도록 함
+        - 현재 페이지 표시: active 클래스로 현재 페이지 표시
+    -->
+    <div class="tabs">
+      <!-- 
+        사용자목록 탭
+        
+        목적: 사용자 목록 페이지로 이동
+          - href: {% url 'user_list' %} - 사용자 목록 URL
+          - CSS 클래스: tab (탭 스타일)
+      -->
+      <a href="{% url 'user_list' %}" class="tab">사용자목록</a>
+      
+      <!-- 
+        의사목록 탭
+        
+        목적: 의사 목록 페이지로 이동
+          - href: {% url 'doctor_list' %} - 의사 목록 URL
+          - CSS 클래스: tab (탭 스타일)
+      -->
+      <a href="{% url 'doctor_list' %}" class="tab">의사목록</a>
+      
+      <!-- 
+        병원정보 탭
+        
+        목적: 병원 정보 페이지로 이동
+          - href: {% url 'hospital_list' %} - 병원 정보 URL
+          - CSS 클래스: tab (탭 스타일)
+      -->
+      <a href="{% url 'hospital_list' %}" class="tab">병원정보</a>
+      
+      <!-- 
+        승인대기 탭
+        
+        목적: 승인 대기 페이지로 이동
+          - href: {% url 'approval_pending' %} - 승인 대기 URL
+          - CSS 클래스: tab (탭 스타일)
+      -->
+      <a href="{% url 'approval_pending' %}" class="tab">승인대기</a>
+      
+      <!-- 
+        1:1문의관리 탭 (현재 페이지)
+        
+        목적: 1:1 문의 관리 페이지로 이동 (현재 페이지)
+          - href: {% url 'qna_list' %} - 1:1 문의 목록 URL
+          - CSS 클래스: tab active (탭 스타일 + 현재 페이지 표시)
+      -->
+      <a href="{% url 'qna_list' %}" class="tab active">1:1문의관리</a>
+    </div>
+
+    <!-- 
+      문의 관리 헤더 섹션
+      
+      목적: 페이지 제목과 액션 버튼을 표시하는 헤더
+        - 사용자 경험(UX) 개선: 관리자가 페이지의 목적을 명확히 인지하고 액션을 수행할 수 있도록 함
+        - 액션 버튼: 더미 데이터 생성/삭제, 선택 항목 삭제 기능 제공
+        - CSS 클래스: qna-header (문의 헤더 스타일)
+    -->
+    <div class="qna-header">
+      <!-- 
+        페이지 제목
+        
+        목적: 페이지의 제목 표시
+          - CSS 클래스: qna-title (제목 스타일)
+          - 텍스트: "1:1 문의 관리"
+      -->
+      <h1 class="qna-title">1:1 문의 관리</h1>
+      
+      <!-- 
+        액션 버튼 영역
+        
+        목적: 더미 데이터 관리 및 선택 항목 삭제 버튼을 표시
+          - 더미 데이터 생성: 테스트용 더미 문의 데이터 생성
+          - 더미 데이터 삭제: 생성된 더미 문의 데이터 삭제
+          - 선택 항목 삭제: 선택한 문의를 일괄 삭제
+      -->
+      <div>
+        <!-- 
+          더미 데이터 생성 버튼 (개발 환경용)
+          
+          목적: 테스트용 더미 문의 데이터를 생성
+            - href: {% url 'create_qna_dummy' %} - 더미 데이터 생성 URL
+            - CSS 클래스: 
+              → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
+              → btn-create-dummy: 더미 데이터 생성 버튼 전용 스타일
+            - 텍스트: "더미 데이터 생성"
+            - 주의: 프로덕션 환경에서는 제거하거나 접근 제한 필요
+        -->
+        <a href="{% url 'create_qna_dummy' %}" class="btn-delete btn-create-dummy">더미 데이터 생성</a>
+        
+        <!-- 
+          더미 데이터 삭제 버튼 (개발 환경용)
+          
+          목적: 생성된 더미 문의 데이터를 삭제
+            - href: {% url 'delete_qna_dummy' %} - 더미 데이터 삭제 URL
+            - id="deleteQnaDummyBtn": JavaScript에서 확인 메시지를 표시하기 위한 ID
+            - CSS 클래스: 
+              → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
+              → btn-delete-dummy: 더미 데이터 삭제 버튼 전용 스타일
+            - 텍스트: "더미 데이터 삭제"
+            - 주의: JavaScript에서 확인 메시지를 표시하여 실수로 삭제하는 것을 방지
+        -->
+        <a href="{% url 'delete_qna_dummy' %}" class="btn-delete btn-delete-dummy" id="deleteQnaDummyBtn">더미 데이터 삭제</a>
+        
+        <!-- 
+          선택 항목 삭제 폼
+          
+          목적: 선택한 문의를 일괄 삭제하기 위한 폼
+            - method="post": POST 메서드로 서버에 데이터 전송
+            - action: {% url 'qna_list' %} - 문의 목록 URL (자기 자신)
+            - id="deleteForm": JavaScript에서 폼 제출을 위한 ID
+            - CSS 클래스: delete-form (삭제 폼 스타일)
+        -->
+        <form method="post" action="{% url 'qna_list' %}" id="deleteForm" class="delete-form">
+          <!-- 
+            CSRF 토큰
+            
+            목적: CSRF 공격 방지를 위한 토큰
+              - {% csrf_token %}: Django의 CSRF 토큰 생성
+              - POST 요청 시 필수
+          -->
+          {% csrf_token %}
+          
+          <!-- 
+            액션 타입 숨겨진 입력 필드
+            
+            목적: 삭제 액션을 구분하기 위한 필드
+              - type="hidden": 숨겨진 입력 필드 (사용자에게 보이지 않음)
+              - name="action": 서버에서 액션 타입을 읽기 위한 필드 이름
+              - value="delete": 액션 값 (삭제)
+          -->
+          <input type="hidden" name="action" value="delete">
+          
+          <!-- 
+            선택된 문의 ID 목록 숨겨진 입력 필드
+            
+            목적: 선택한 문의의 ID 목록을 저장하여 서버에 전송
+              - type="hidden": 숨겨진 입력 필드 (사용자에게 보이지 않음)
+              - name="qna_ids": 서버에서 문의 ID 목록을 읽기 위한 필드 이름
+              - id="qnaIdsInput": JavaScript에서 값을 설정하기 위한 ID
+              - value="": 초기값은 빈 문자열 (JavaScript에서 선택된 문의 ID를 쉼표로 구분하여 설정)
+              - 예: "1,2,3" (문의 ID가 1, 2, 3인 경우)
+          -->
+          <input type="hidden" name="qna_ids" id="qnaIdsInput" value="">
+          
+          <!-- 
+            삭제 버튼
+            
+            목적: 선택한 문의를 삭제 처리
+              - type="button": 버튼 타입 (폼 제출 방지, JavaScript로 처리)
+              - id="deleteSelectedBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
+              - CSS 클래스: btn-delete (삭제 버튼 스타일)
+              - 텍스트: "삭제"
+              - 동작: JavaScript에서 확인 메시지를 표시하고 폼을 제출
+          -->
+          <button type="button" id="deleteSelectedBtn" class="btn-delete">삭제</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 
+      문의 목록 테이블 섹션
+      
+      목적: 문의 목록을 테이블로 표시하고 정렬 기능 제공
+        - 사용자 경험(UX) 개선: 문의 정보를 테이블로 표시하여 가독성 향상
+        - 정렬 기능: 대부분의 컬럼에 정렬 기능 제공
+        - 행 클릭: 문의 행 클릭 시 상세 정보 페이지로 이동
+        - 체크박스 선택: 여러 문의를 선택하여 일괄 삭제 처리
+    -->
+    <div class="table-container">
+      <!-- 
+        문의 목록 테이블
+        
+        목적: 문의 목록을 테이블로 표시
+          - CSS 클래스: qna-table (문의 테이블 스타일)
+          - 구조: thead (헤더), tbody (본문)
+      -->
+      <table class="qna-table">
+        <!-- 
+          테이블 헤더
+          
+          목적: 테이블의 컬럼 제목 표시
+            - 정렬 기능: 대부분의 컬럼에 정렬 기능 제공
+            - 정렬 방향 표시: 현재 정렬 필드에 화살표 표시 (↑ 또는 ↓)
+            - 체크박스: 전체 선택 체크박스
+        -->
+        <thead>
+          <tr>
+            <!-- 
+              전체 선택 체크박스 컬럼
+              
+              목적: 모든 문의를 일괄 선택/해제할 수 있는 체크박스
+                - style="width: 40px;": 컬럼 너비 40px
+                - id="selectAll": JavaScript에서 이벤트 리스너 연결을 위한 ID
+            -->
+            <th style="width: 40px;">
+              <input type="checkbox" id="selectAll">
+            </th>
+            
+            <!-- 
+              No. 컬럼 (정렬 가능)
+              
+              목적: 문의 번호를 표시하고 정렬 기능 제공
+                - data-sort-field="qna_id": 정렬 필드 이름
+                - data-current-sort: 현재 정렬 필드 (뷰에서 전달)
+                - data-current-order: 현재 정렬 방향 (뷰에서 전달)
+                - 정렬 방향 표시: 현재 정렬 필드가 'qna_id'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="qna_id" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                No.
+                {% if sort_field == 'qna_id' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              이름 컬럼 (정렬 가능)
+              
+              목적: 문의 작성자 이름을 표시하고 정렬 기능 제공
+                - data-sort-field="name": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'name'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이름
+                {% if sort_field == 'name' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              이메일 컬럼 (정렬 가능)
+              
+              목적: 문의 작성자 이메일을 표시하고 정렬 기능 제공
+                - data-sort-field="email": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'email'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="email" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이메일
+                {% if sort_field == 'email' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              문의 제목 컬럼 (정렬 가능)
+              
+              목적: 문의 제목을 표시하고 정렬 기능 제공
+                - data-sort-field="title": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'title'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="title" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                문의 제목
+                {% if sort_field == 'title' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              문의 일자 컬럼 (정렬 가능)
+              
+              목적: 문의 작성일자를 표시하고 정렬 기능 제공
+                - data-sort-field="created_at": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'created_at'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                문의 일자
+                {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              상태 컬럼 (정렬 가능)
+              
+              목적: 문의의 답변 상태를 표시하고 정렬 기능 제공
+                - data-sort-field="status": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'status'이면 화살표 표시
+                - 상태: 답변 완료 또는 대기
+            -->
+            <th>
+              <a href="#" data-sort-field="status" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                상태
+                {% if sort_field == 'status' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+          </tr>
+        </thead>
+        
+        <!-- 
+          테이블 본문
+          
+          목적: 문의 목록을 테이블 행으로 표시
+            - 반복문: qnas_with_number 리스트를 순회하며 각 문의 정보를 행으로 표시
+            - 데이터 표시: 문의의 각 정보 필드를 테이블 셀로 표시
+            - 행 클릭: 행 클릭 시 상세 정보 페이지로 이동
+        -->
+        <tbody>
+          <!-- 
+            문의 목록 반복문
+            
+            목적: 문의 목록을 순회하며 테이블 행 생성
+              - qnas_with_number: 뷰에서 전달된 문의 목록 (번호 포함)
+                → 각 항목은 dict 형태: {'qna': Qna 객체, 'number': int}
+              - item: 현재 순회 중인 항목
+                → item.qna: 문의 객체 (Qna 모델 인스턴스)
+                → item.number: 목록 번호 (페이지네이션 고려)
+          -->
+          {% for item in qnas_with_number %}
+          <!-- 
+            변수 할당 (with 태그)
+            
+            목적: 반복문 내에서 사용할 변수를 간단한 이름으로 할당
+              - qna: item.qna (문의 객체)
+          -->
+          {% with qna=item.qna %}
+          <!-- 
+            문의 정보 행
+            
+            목적: 문의의 정보를 테이블 행으로 표시
+              - CSS 클래스: qna-row (문의 행 스타일)
+              - data-qna-id: 문의 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
+              - style="cursor: pointer;": 마우스 커서를 포인터로 변경하여 클릭 가능함을 표시
+          -->
+          <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
+            <!-- 
+              체크박스 셀
+              
+              목적: 문의를 선택하기 위한 체크박스
+                - CSS 클래스: checkbox-cell (체크박스 셀 스타일)
+                - name="qna_checkbox": 체크박스 그룹 이름 (JavaScript에서 선택된 문의 ID 수집에 사용)
+                - value="{{ qna.qna_id }}": 체크박스 값 (문의 ID)
+            -->
+            <td class="checkbox-cell">
+              <input 
+                type="checkbox" 
+                name="qna_checkbox" 
+                value="{{ qna.qna_id }}"
+              >
+            </td>
+            
+            <!-- 
+              번호 셀
+              
+              목적: 목록 번호 표시 (페이지네이션 고려)
+                - {{ item.number }}: 페이지네이션을 고려한 순번
+            -->
+            <td>{{ item.number }}</td>
+            
+            <!-- 
+              이름 셀
+              
+              목적: 문의 작성자 이름 표시
+                - {{ qna.user.name }}: 문의 작성자 이름
+                  → qna: 문의 객체
+                  → user: 문의 작성자 정보 (Users 모델 인스턴스)
+                  → name: 사용자 이름
+            -->
+            <td>{{ qna.user.name }}</td>
+            
+            <!-- 
+              이메일 셀
+              
+              목적: 문의 작성자 이메일 표시
+                - {{ qna.user.email }}: 문의 작성자 이메일
+                  → email: 사용자의 이메일 주소
+            -->
+            <td>{{ qna.user.email }}</td>
+            
+            <!-- 
+              문의 제목 셀
+              
+              목적: 문의 제목 표시
+                - {{ qna.title }}: 문의 제목
+                  → title: 문의 제목
+            -->
+            <td>{{ qna.title }}</td>
+            
+            <!-- 
+              문의 일자 셀
+              
+              목적: 문의 작성일자 표시
+                - {{ qna.created_at|date:"Y-m-d" }}: 문의 작성일
+                  → created_at: 문의 작성일
+                  → |date:"Y-m-d": 날짜 형식을 "YYYY-MM-DD" 형식으로 변환
+                  → 예: "2024-01-15"
+            -->
+            <td>{{ qna.created_at|date:"Y-m-d" }}</td>
+            
+            <!-- 
+              상태 셀
+              
+              목적: 문의의 답변 상태를 시각적으로 표시
+                - 답변 완료: reply 필드가 있으면 "답변 완료" 배지 표시
+                - 대기: reply 필드가 없으면 "대기" 배지 표시
+                - 상태 배지:
+                  → status-completed: 답변 완료 상태 (초록색 배지)
+                  → status-waiting: 대기 상태 (주황색 배지)
+            -->
+            <td>
+              <!-- 
+                답변 상태 확인
+                
+                목적: 문의의 답변 상태에 따라 다른 배지 표시
+                  - qna.reply: 문의에 대한 답변 내용
+                    → 있으면: 답변 완료
+                    → 없으면: 대기 중
+              -->
+              {% if qna.reply %}
+                <!-- 
+                  답변 완료 배지
+                  
+                  목적: 답변 완료된 문의를 시각적으로 표시
+                    - CSS 클래스: 
+                      → status-badge: 상태 배지 기본 스타일
+                      → status-completed: 답변 완료 상태 스타일 (초록색)
+                    - 텍스트: "답변 완료"
+                -->
+                <span class="status-badge status-completed">답변 완료</span>
+              {% else %}
+                <!-- 
+                  대기 배지
+                  
+                  목적: 답변 대기 중인 문의를 시각적으로 표시
+                    - CSS 클래스: 
+                      → status-badge: 상태 배지 기본 스타일
+                      → status-waiting: 대기 상태 스타일 (주황색)
+                    - 텍스트: "대기"
+                -->
+                <span class="status-badge status-waiting">대기</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endwith %}
+          <!-- 
+            빈 목록 처리
+            
+            목적: 문의 데이터가 없을 때 메시지 표시
+              - {% empty %}: 반복문에서 반복할 항목이 없을 때 실행
+              - colspan="7": 7개 컬럼을 병합하여 메시지 표시
+              - CSS 클래스: no-data (데이터 없음 메시지 스타일)
+          -->
+          {% empty %}
+          <tr>
+            <td colspan="7" class="no-data">문의 데이터가 없습니다.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 
+      페이지네이션 섹션
+      
+      목적: 많은 데이터를 페이지 단위로 나누어 표시하고 페이지 이동 기능 제공
+        - 사용자 경험(UX) 개선: 많은 데이터를 페이지 단위로 나누어 가독성 향상
+        - 파라미터 유지: 정렬 필드와 정렬 방향을 URL 파라미터로 유지
+        - AJAX 처리: JavaScript에서 AJAX로 페이지네이션 처리하여 페이지 새로고침 없이 목록 업데이트
+      
+      주요 기능:
+        - 첫 페이지로 이동: « 버튼
+        - 이전 페이지로 이동: < 버튼
+        - 페이지 번호 표시: 현재 페이지 ±3 범위의 페이지 번호 표시
+        - 다음 페이지로 이동: > 버튼
+        - 마지막 페이지로 이동: » 버튼
+    -->
+    <div class="pagination">
+      <!-- 
+        이전 페이지 버튼 영역
+        
+        목적: 첫 페이지로 이동 및 이전 페이지로 이동 버튼 표시
+          - page_obj.has_previous: 이전 페이지가 있는지 확인
+          - 이전 페이지가 있으면 링크 버튼 표시
+          - 이전 페이지가 없으면 비활성화된 버튼 표시
+      -->
+      {% if page_obj.has_previous %}
+        <!-- 
+          첫 페이지로 이동 링크
+          
+          목적: 첫 페이지(1페이지)로 이동
+            - href: ?page=1 - 첫 페이지 URL
+            - CSS 클래스: page-link (페이지 링크 스타일)
+            - 텍스트: « (첫 페이지 기호)
+        -->
+        <a href="?page=1" class="page-link">«</a>
+        
+        <!-- 
+          이전 페이지로 이동 링크
+          
+          목적: 현재 페이지의 이전 페이지로 이동
+            - href: ?page={{ page_obj.previous_page_number }} - 이전 페이지 URL
+            - page_obj.previous_page_number: 이전 페이지 번호
+            - CSS 클래스: page-link (페이지 링크 스타일)
+            - 텍스트: < (이전 페이지 기호)
+        -->
+        <a href="?page={{ page_obj.previous_page_number }}" class="page-link"><</a>
+      {% else %}
+        <!-- 
+          비활성화된 첫 페이지 버튼
+          
+          목적: 첫 페이지에 있을 때 비활성화된 버튼 표시
+            - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
+            - 텍스트: « (첫 페이지 기호)
+        -->
+        <span class="page-link disabled">«</span>
+        
+        <!-- 
+          비활성화된 이전 페이지 버튼
+          
+          목적: 첫 페이지에 있을 때 비활성화된 버튼 표시
+            - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
+            - 텍스트: < (이전 페이지 기호)
+        -->
+        <span class="page-link disabled"><</span>
+      {% endif %}
+
+      <!-- 
+        페이지 번호 표시 영역
+        
+        목적: 페이지 번호를 표시하고 현재 페이지를 하이라이트
+          - page_obj.paginator.num_pages: 전체 페이지 수
+          - page_obj.paginator.page_range: 페이지 번호 범위 (1부터 전체 페이지 수까지)
+          - 현재 페이지 ±3 범위의 페이지 번호만 표시 (너무 많은 페이지 번호 표시 방지)
+      -->
+      {% if page_obj.paginator.num_pages > 0 %}
+        <!-- 
+          페이지 번호 반복문
+          
+          목적: 페이지 번호를 순회하며 링크 또는 현재 페이지 표시
+            - num: 현재 순회 중인 페이지 번호
+        -->
+        {% for num in page_obj.paginator.page_range %}
+          <!-- 
+            현재 페이지 표시
+            
+            목적: 현재 페이지를 하이라이트하여 표시
+              - page_obj.number == num: 현재 페이지 번호와 일치하는지 확인
+              - CSS 클래스: page-link active (현재 페이지 스타일)
+          -->
+          {% if page_obj.number == num %}
+            <span class="page-link active">{{ num }}</span>
+          <!-- 
+            인접 페이지 번호 링크
+            
+            목적: 현재 페이지 ±3 범위의 페이지 번호를 링크로 표시
+              - num > page_obj.number|add:'-3': 현재 페이지 - 3보다 큰지 확인
+              - num < page_obj.number|add:'3': 현재 페이지 + 3보다 작은지 확인
+              - 예: 현재 페이지가 5이면 2, 3, 4, 5, 6, 7, 8만 표시
+              - 정렬 파라미터 유지: sort와 order 파라미터를 URL에 포함
+          -->
+          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">{{ num }}</a>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        <!-- 
+          페이지가 없을 때 기본 페이지 번호 표시
+          
+          목적: 페이지가 없을 때 기본적으로 1페이지 표시
+            - CSS 클래스: page-link active (현재 페이지 스타일)
+        -->
+        <span class="page-link active">1</span>
+      {% endif %}
+
+      <!-- 
+        다음 페이지 버튼 영역
+        
+        목적: 다음 페이지로 이동 및 마지막 페이지로 이동 버튼 표시
+          - page_obj.has_next: 다음 페이지가 있는지 확인
+          - 다음 페이지가 있으면 링크 버튼 표시
+          - 다음 페이지가 없으면 비활성화된 버튼 표시
+      -->
+      {% if page_obj.has_next %}
+        <!-- 
+          다음 페이지로 이동 링크
+          
+          목적: 현재 페이지의 다음 페이지로 이동
+            - href: ?page={{ page_obj.next_page_number }} + 정렬 파라미터 - 다음 페이지 URL
+            - page_obj.next_page_number: 다음 페이지 번호
+            - CSS 클래스: page-link (페이지 링크 스타일)
+            - 텍스트: > (다음 페이지 기호)
+            - 정렬 파라미터 유지: sort와 order 파라미터를 URL에 포함
+        -->
+        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">></a>
+        
+        <!-- 
+          마지막 페이지로 이동 링크
+          
+          목적: 마지막 페이지로 이동
+            - href: ?page={{ page_obj.paginator.num_pages }} + 정렬 파라미터 - 마지막 페이지 URL
+            - page_obj.paginator.num_pages: 전체 페이지 수 (마지막 페이지 번호)
+            - CSS 클래스: page-link (페이지 링크 스타일)
+            - 텍스트: » (마지막 페이지 기호)
+            - 정렬 파라미터 유지: sort와 order 파라미터를 URL에 포함
+        -->
+        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}" class="page-link">»</a>
+      {% else %}
+        <!-- 
+          비활성화된 다음 페이지 버튼
+          
+          목적: 마지막 페이지에 있을 때 비활성화된 버튼 표시
+            - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
+            - 텍스트: > (다음 페이지 기호)
+        -->
+        <span class="page-link disabled">></span>
+        
+        <!-- 
+          비활성화된 마지막 페이지 버튼
+          
+          목적: 마지막 페이지에 있을 때 비활성화된 버튼 표시
+            - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
+            - 텍스트: » (마지막 페이지 기호)
+        -->
+        <span class="page-link disabled">»</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- 
+    JavaScript 파일 로드
+    
+    목적: 페이지의 동적 기능을 제공하기 위한 JavaScript 파일 로드
+      - 로드 순서: admin_common.js를 먼저 로드한 후 qna_list.js를 로드
+      - admin_common.js: 관리자 패널 공통 JavaScript 함수들
+        → 페이지네이션, 정렬, 검색 등 공통 기능
+      - qna_list.js: 문의 목록 페이지 전용 JavaScript 함수들
+        → 문의 선택, 체크박스 관리, 삭제 처리 등
+  -->
+  <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
+  <script src="{% static 'admin_panel/js/qna_list.js' %}"></script>
+</body>
+</html>
+

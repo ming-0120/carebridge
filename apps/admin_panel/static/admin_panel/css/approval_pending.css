@@ -1,0 +1,685 @@
+
+/* 
+  ========= 의사 승인 대기 페이지 전용 CSS =========
+  
+  목적: 의사 승인 대기 페이지(approval_pending.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: 승인 대기 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: admin_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - Bootstrap 통합: Bootstrap의 card, grid 클래스와 통합하여 사용
+  
+  주요 기능:
+    - 승인/거부 버튼 스타일
+    - 승인 대기 테이블 스타일
+    - 면허번호 유효성 검사 시각적 표시 (invalid-license)
+    - 체크박스 선택 상태 시각적 표시
+    - 상세 정보 섹션 스타일
+  
+  관련 파일:
+    - HTML: approval_pending.html, approval_pending_detail.html
+    - JavaScript: approval_pending.js
+    - 공통 CSS: admin_common.css
+*/
+
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* 
+  ========= Bootstrap 충돌 방지 =========
+  
+  목적: Bootstrap의 기본 스타일이 기존 스타일을 덮어쓰지 않도록 보호
+    - 테이블 스타일 보호: Bootstrap의 기본 테이블 스타일 오버라이드
+    - 버튼 스타일 보호: Bootstrap의 기본 버튼 스타일 오버라이드
+    - !important 사용: Bootstrap의 높은 우선순위 스타일을 오버라이드하기 위해 사용
+*/
+
+/* 
+  Bootstrap 충돌 방지 - 승인 테이블 스타일 보호
+  
+  목적: Bootstrap의 기본 테이블 스타일이 승인 테이블 스타일을 덮어쓰지 않도록 보호
+    - width: 100% !important - 너비 100% 강제
+    - border-collapse: collapse !important - 테두리 병합 강제
+    - padding: 12px !important - 패딩 강제
+    - border-bottom: 1px solid #f0f0f0 !important - 하단 테두리 강제
+    - background-color: #F8FAFF !important - 헤더 배경색 강제
+    - 사용처: 승인 대기 테이블 (.approval-table)
+    - 이유: Bootstrap이 로드되면 기본 테이블 스타일이 적용되어 기존 스타일과 충돌할 수 있음
+*/
+.approval-table {
+  /* Bootstrap 기본 스타일 오버라이드 */
+  width: 100% !important;
+  border-collapse: collapse !important;
+}
+
+.approval-table th,
+.approval-table td {
+  padding: 12px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.approval-table thead {
+  background-color: #F8FAFF !important;
+}
+
+/* 
+  Bootstrap 충돌 방지 - 승인/거부 버튼 스타일 보호
+  
+  목적: Bootstrap의 기본 버튼 스타일이 승인/거부 버튼 스타일을 덮어쓰지 않도록 보호
+    - display: inline-block !important - 인라인 블록 강제
+    - padding: 10px 20px !important - 패딩 강제
+    - background-color: inherit !important - 배경색 상속 강제 (개별 버튼에서 오버라이드)
+    - border: none !important - 테두리 제거 강제
+    - border-radius: 6px !important - 둥근 모서리 강제
+    - font-size: 14px !important - 글씨 크기 강제
+    - font-weight: 600 !important - 글씨 굵기 강제
+    - cursor: pointer !important - 포인터 커서 강제
+    - 사용처: 승인 버튼 (.btn-approve), 거부 버튼 (.btn-reject)
+    - 이유: Bootstrap이 로드되면 기본 버튼 스타일이 적용되어 기존 스타일과 충돌할 수 있음
+*/
+.btn-approve,
+.btn-reject {
+  /* Bootstrap 버튼 스타일 오버라이드 */
+  display: inline-block !important;
+  padding: 10px 20px !important;
+  background-color: inherit !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+}
+
+/* 
+  승인 버튼 기본 스타일
+  
+  목적: 승인 버튼의 기본 스타일 (Bootstrap 충돌 방지용)
+    - background-color: #10B981 !important - 초록색 배경 (성공 색상)
+    - color: #fff !important - 흰색 텍스트
+    - 사용처: 승인 버튼 (.btn-approve)
+*/
+.btn-approve {
+  background-color: #10B981 !important;
+  color: #fff !important;
+}
+
+/* 
+  승인 버튼 호버 효과
+  
+  목적: 승인 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #059669 !important - 더 진한 초록색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-approve:hover {
+  background-color: #059669 !important;
+}
+
+/* 
+  거부 버튼 기본 스타일
+  
+  목적: 거부 버튼의 기본 스타일 (Bootstrap 충돌 방지용)
+    - background-color: #EF4444 !important - 빨간색 배경 (경고 색상)
+    - color: #fff !important - 흰색 텍스트
+    - 사용처: 거부 버튼 (.btn-reject)
+*/
+.btn-reject {
+  background-color: #EF4444 !important;
+  color: #fff !important;
+}
+
+/* 
+  거부 버튼 호버 효과
+  
+  목적: 거부 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #DC2626 !important - 더 진한 빨간색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-reject:hover {
+  background-color: #DC2626 !important;
+}
+
+/* 
+  ========= 승인 헤더 섹션 =========
+  
+  목적: 승인 대기 페이지의 헤더 영역 스타일
+    - 사용자 경험(UX) 개선: 페이지 제목과 통계 정보를 명확하게 표시
+    - 레이아웃: 제목, 승인 대기 수, 부제목을 포함하는 헤더 영역
+*/
+
+/* 
+  승인 헤더 컨테이너
+  
+  목적: 승인 대기 페이지의 헤더 영역을 담는 컨테이너 스타일
+    - margin-bottom: 24px - 하단 마진
+    - padding-bottom: 16px - 하단 패딩
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - 사용처: 승인 대기 페이지의 헤더 영역 (.approval-header)
+*/
+.approval-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+/* 
+  승인 대기 페이지 제목
+  
+  목적: 승인 대기 페이지의 메인 제목 스타일
+    - font-size: 24px - 큰 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - margin-bottom: 8px - 하단 마진
+    - 사용처: 승인 대기 페이지 제목 (.approval-title)
+*/
+.approval-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin-bottom: 8px;
+}
+
+/* 
+  승인 대기 수 표시
+  
+  목적: 승인 대기 중인 의사 수를 표시하는 스타일
+    - font-size: 18px - 중간 글씨 크기
+    - color: #666 - 회색 텍스트
+    - margin-bottom: 4px - 하단 마진
+    - 사용처: 승인 대기 수 표시 (.approval-count)
+*/
+.approval-count {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+/* 
+  승인 대기 부제목
+  
+  목적: 승인 대기 페이지의 부제목 스타일
+    - font-size: 14px - 작은 글씨 크기
+    - color: #999 - 연한 회색 텍스트
+    - 사용처: 승인 대기 페이지 부제목 (.approval-subtitle)
+*/
+.approval-subtitle {
+  font-size: 14px;
+  color: #999;
+}
+
+/* 
+  ========= 승인 액션 버튼 섹션 =========
+  
+  목적: 승인/거부 버튼을 담는 액션 영역 스타일
+    - 레이아웃: 버튼들을 오른쪽 정렬하여 배치
+*/
+
+/* 
+  승인 액션 버튼 영역
+  
+  목적: 승인/거부 버튼을 담는 컨테이너 스타일
+    - display: flex - 플렉스 레이아웃
+    - justify-content: flex-end - 오른쪽 정렬
+    - gap: 10px - 버튼 간 간격
+    - margin-bottom: 16px - 하단 마진
+    - 사용처: 승인/거부 버튼 영역 (.approval-actions)
+*/
+.approval-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* 
+  승인 버튼 기본 스타일 (일반 스타일)
+  
+  목적: 승인 버튼의 기본 스타일 (Bootstrap 충돌 방지용이 아닌 일반 스타일)
+    - padding: 10px 20px - 내부 여백
+    - background-color: #10B981 - 초록색 배경 (성공 색상)
+    - color: #fff - 흰색 텍스트
+    - border: none - 테두리 제거
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 승인 버튼 (.btn-approve)
+*/
+.btn-approve {
+  padding: 10px 20px;
+  background-color: #10B981;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  승인 버튼 호버 효과 (일반 스타일)
+  
+  목적: 승인 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #059669 - 더 진한 초록색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-approve:hover {
+  background-color: #059669;
+}
+
+/* 
+  거부 버튼 기본 스타일 (일반 스타일)
+  
+  목적: 거부 버튼의 기본 스타일 (Bootstrap 충돌 방지용이 아닌 일반 스타일)
+    - padding: 10px 20px - 내부 여백
+    - background-color: #EF4444 - 빨간색 배경 (경고 색상)
+    - color: #fff - 흰색 텍스트
+    - border: none - 테두리 제거
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 거부 버튼 (.btn-reject)
+*/
+.btn-reject {
+  padding: 10px 20px;
+  background-color: #EF4444;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  거부 버튼 호버 효과 (일반 스타일)
+  
+  목적: 거부 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #DC2626 - 더 진한 빨간색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-reject:hover {
+  background-color: #DC2626;
+}
+
+/* 
+  ========= 승인 테이블 스타일 =========
+  
+  목적: 승인 대기 의사 목록을 표시하는 테이블 스타일
+    - 사용자 경험(UX) 개선: 일관된 테이블 디자인 제공
+    - 인터랙션: 행 호버 및 선택 상태 스타일
+*/
+
+/* 
+  승인 테이블 기본 스타일
+  
+  목적: 승인 대기 의사 목록 테이블의 기본 스타일
+    - width: 100% - 전체 너비 사용
+    - border-collapse: collapse - 테두리 병합
+    - font-size: 14px - 글씨 크기
+    - 사용처: 승인 대기 테이블 (.approval-table)
+*/
+.approval-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* 
+  승인 테이블 헤더 영역
+  
+  목적: 승인 테이블 헤더의 배경색 설정
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용처: 승인 테이블 헤더 (thead)
+*/
+.approval-table thead {
+  background-color: #F8FAFF;
+}
+
+/* 
+  승인 테이블 헤더 셀
+  
+  목적: 승인 테이블 헤더 셀의 스타일
+    - padding: 12px - 내부 여백
+    - text-align: left - 왼쪽 정렬
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - 사용처: 승인 테이블 헤더 셀 (th)
+*/
+.approval-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1B3C73;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+/* 
+  승인 테이블 데이터 셀
+  
+  목적: 승인 테이블 데이터 셀의 스타일
+    - padding: 12px - 내부 여백
+    - border-bottom: 1px solid #f0f0f0 - 하단 테두리 (매우 연한 회색)
+    - 사용처: 승인 테이블 데이터 셀 (td)
+*/
+.approval-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 
+  ========= 승인 행 스타일 =========
+  
+  목적: 승인 대기 테이블의 행 스타일 정의
+    - 사용자 경험(UX) 개선: 행 호버, 선택, 유효성 검사 상태를 시각적으로 표시
+    - 상태별 스타일:
+      → 기본 행: 일반 배경색
+      → 호버 행: 연한 파란색 배경
+      → 선택된 행: 파란색 배경
+      → 유효하지 않은 면허번호 행: 빨간색 배경 (면허번호와 주민번호 뒷자리 불일치)
+      → 체크박스 선택 행: 파란색 배경 (일괄 승인/거부용)
+*/
+
+/* 
+  승인 행 기본 스타일
+  
+  목적: 승인 대기 테이블의 행 기본 스타일
+    - cursor: pointer - 포인터 커서 (클릭 가능함을 표시)
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 승인 대기 테이블의 행 (tr.approval-row)
+*/
+.approval-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  승인 행 호버 효과
+  
+  목적: 승인 행에 마우스를 올렸을 때 배경색 변경
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.approval-row:hover {
+  background-color: #F8FAFF;
+}
+
+/* 
+  선택된 승인 행 스타일
+  
+  목적: 선택된 승인 행을 강조하는 스타일
+    - background-color: #E9F1FF - 파란색 배경
+    - 사용처: 선택된 승인 행 (tr.approval-row.selected)
+    - 동작: 행 클릭 시 상세 정보를 표시하기 위해 선택 상태 표시
+*/
+.approval-row.selected {
+  background-color: #E9F1FF;
+}
+
+/* 
+  유효하지 않은 면허번호 행 스타일
+  
+  목적: 면허번호와 주민번호 뒷자리가 일치하지 않는 의사 행을 시각적으로 표시
+    - background-color: #FEE2E2 - 연한 빨간색 배경 (경고 색상)
+    - 사용처: 유효하지 않은 면허번호를 가진 의사 행 (tr.approval-row.invalid-license)
+    - 이유: 면허번호 유효성 검사 실패 시 관리자가 쉽게 식별할 수 있도록 시각적 경고 제공
+    - 동작: JavaScript에서 면허번호와 주민번호 뒷자리를 비교하여 불일치 시 이 클래스 추가
+*/
+.approval-row.invalid-license {
+  background-color: #FEE2E2;
+}
+
+/* 
+  유효하지 않은 면허번호 행 호버 효과
+  
+  목적: 유효하지 않은 면허번호 행에 마우스를 올렸을 때 배경색 변경
+    - background-color: #FECACA - 더 진한 빨간색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.approval-row.invalid-license:hover {
+  background-color: #FECACA;
+}
+
+/* 
+  선택된 유효하지 않은 면허번호 행 스타일
+  
+  목적: 선택된 유효하지 않은 면허번호 행을 강조하는 스타일
+    - background-color: #FCA5A5 - 가장 진한 빨간색 배경
+    - 사용처: 선택된 유효하지 않은 면허번호 행 (tr.approval-row.invalid-license.selected)
+    - 이유: 선택 상태와 유효성 검사 실패 상태를 모두 시각적으로 표시
+*/
+.approval-row.invalid-license.selected {
+  background-color: #FCA5A5;
+}
+
+/* 
+  체크박스가 체크된 행의 스타일
+  
+  목적: 체크박스가 체크된 행을 시각적으로 표시 (일괄 승인/거부용)
+    - background-color: #E9F1FF - 파란색 배경 (선택된 행과 동일한 색상)
+    - 사용처: 체크박스가 체크된 행 (tr.approval-row.checkbox-checked)
+    - 이유: 일괄 승인/거부를 위해 여러 행을 선택할 때 시각적 피드백 제공
+    - 동작: JavaScript에서 체크박스 상태 변경 시 이 클래스를 추가/제거
+*/
+.approval-row.checkbox-checked {
+  background-color: #E9F1FF;
+}
+
+/* 
+  체크박스가 체크된 행 호버 효과
+  
+  목적: 체크박스가 체크된 행에 마우스를 올렸을 때 배경색 유지
+    - background-color: #E9F1FF - 파란색 배경 유지 (호버 시에도 동일한 색상)
+    - 사용자 경험(UX) 개선: 체크된 상태를 일관되게 유지
+*/
+.approval-row.checkbox-checked:hover {
+  background-color: #E9F1FF;
+}
+
+/* 
+  체크박스가 체크되고 유효하지 않은 면허번호인 경우
+  
+  목적: 체크박스가 체크되고 면허번호가 유효하지 않은 행의 스타일
+    - background-color: #FCA5A5 - 가장 진한 빨간색 배경
+    - 사용처: 체크박스가 체크되고 유효하지 않은 면허번호 행
+      (tr.approval-row.invalid-license.checkbox-checked)
+    - 이유: 체크 상태와 유효성 검사 실패 상태를 모두 시각적으로 표시
+*/
+.approval-row.invalid-license.checkbox-checked {
+  background-color: #FCA5A5;
+}
+
+/* 
+  체크박스가 체크되고 유효하지 않은 면허번호인 행 호버 효과
+  
+  목적: 체크박스가 체크되고 유효하지 않은 면허번호 행에 마우스를 올렸을 때 배경색 유지
+    - background-color: #FCA5A5 - 가장 진한 빨간색 배경 유지 (호버 시에도 동일한 색상)
+    - 사용자 경험(UX) 개선: 체크된 상태와 유효성 검사 실패 상태를 일관되게 유지
+*/
+.approval-row.invalid-license.checkbox-checked:hover {
+  background-color: #FCA5A5;
+}
+
+/* 
+  ========= 상세 정보 섹션 =========
+  
+  목적: 승인 대기 의사의 상세 정보를 표시하는 섹션 스타일
+    - 사용자 경험(UX) 개선: 선택된 의사의 상세 정보를 명확하게 표시
+    - Bootstrap 통합: Bootstrap의 card와 grid 클래스와 통합하여 사용
+    - 레이아웃: 그리드 레이아웃을 사용하여 정보 항목 배치
+*/
+
+/* 
+  승인 상세 정보 섹션 (Bootstrap card와 통합)
+  
+  목적: 승인 대기 의사의 상세 정보를 표시하는 섹션 스타일
+    - margin-top: 32px - 상단 마진
+    - border: none !important - Bootstrap 기본 테두리 제거
+    - 사용처: 승인 대기 의사 상세 정보 섹션 (.approval-detail-section)
+    - Bootstrap 통합: Bootstrap의 card 클래스와 함께 사용
+*/
+.approval-detail-section {
+  margin-top: 32px;
+  border: none !important; /* Bootstrap 기본 border 오버라이드 */
+}
+
+/* 
+  승인 상세 정보 섹션 카드 본문
+  
+  목적: 승인 상세 정보 섹션 내부의 카드 본문 스타일
+    - padding: 32px !important - 내부 여백 (Bootstrap 기본값 오버라이드)
+    - 사용처: 승인 상세 정보 섹션의 카드 본문 (.card-body)
+*/
+.approval-detail-section .card-body {
+  padding: 32px !important;
+}
+
+/* 
+  승인 상세 정보 제목
+  
+  목적: 승인 상세 정보 섹션의 제목 스타일
+    - margin: 0 - 마진 제거
+    - font-size: 18px - 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - 사용처: 승인 상세 정보 섹션의 제목 (.approval-detail-title)
+    - Bootstrap 통합: Bootstrap의 border-bottom pb-3 mb-4 클래스와 함께 사용
+*/
+.approval-detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3C73;
+  /* Bootstrap의 border-bottom pb-3 mb-4 클래스 사용 */
+}
+
+/* 
+  승인 상세 정보 메시지
+  
+  목적: 승인 상세 정보 섹션의 메시지 스타일 (예: 안내 메시지)
+    - margin: 0 - 마진 제거
+    - 사용처: 승인 상세 정보 섹션의 메시지 (.approval-detail-message)
+    - Bootstrap 통합: Bootstrap의 alert alert-info 클래스와 함께 사용
+*/
+.approval-detail-message {
+  margin: 0;
+  /* Bootstrap의 alert alert-info 클래스 사용 */
+}
+
+/* 
+  Bootstrap grid와 통합
+  
+  주의: approval-detail-grid는 더 이상 사용하지 않음 (admin_common.css의 detail-grid 사용)
+    - 이유: 공통 스타일을 사용하여 코드 중복 제거 및 일관성 유지
+*/
+
+/* 
+  승인 상세 정보 항목
+  
+  목적: 각 승인 상세 정보 항목(라벨 + 값)의 스타일
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - gap: 0 - 요소 간 간격 없음
+    - height: 100% - 높이 100% (그리드 셀 높이에 맞춤)
+    - border: 1px solid #6B7280 - 테두리 (회색)
+    - border-radius: 8px - 둥근 모서리
+    - overflow: hidden - 오버플로우 숨김
+    - background-color: #FFFFFF - 흰색 배경
+    - 사용처: 각 승인 상세 정보 항목 (.approval-detail-item)
+*/
+.approval-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  border: 1px solid #6B7280;
+  border-radius: 8px;
+  overflow: hidden;
+  background-color: #FFFFFF;
+}
+
+/* 
+  전체 너비 승인 상세 정보 항목
+  
+  목적: 전체 너비를 차지하는 승인 상세 정보 항목
+    - grid-column: 1 / -1 - 그리드 컬럼 전체 너비 사용
+    - 사용처: 전체 너비를 차지해야 하는 승인 상세 정보 항목
+      (.approval-detail-item.full-width)
+*/
+.approval-detail-item.full-width {
+  grid-column: 1 / -1;
+}
+
+/* 
+  승인 상세 정보 라벨
+  
+  목적: 승인 상세 정보 항목의 라벨(필드명) 스타일
+    - font-size: 14px - 글씨 크기
+    - color: #111827 - 진한 회색 텍스트
+    - font-weight: 700 - 굵은 글씨
+    - padding: 12px 16px - 내부 여백
+    - background-color: #FFFFFF - 흰색 배경
+    - border: none - 테두리 제거
+    - border-bottom: 1px solid #6B7280 - 하단 테두리 (회색)
+    - border-radius: 8px 8px 0 0 - 상단 모서리만 둥글게
+    - margin: 0 - 마진 제거
+    - 사용처: 승인 상세 정보 항목의 라벨 (.approval-detail-label)
+*/
+.approval-detail-label {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 700;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: none;
+  border-bottom: 1px solid #6B7280;
+  border-radius: 8px 8px 0 0;
+  margin: 0;
+}
+
+/* 
+  승인 상세 정보 값
+  
+  목적: 승인 상세 정보 항목의 값(데이터) 스타일
+    - font-size: 14px - 글씨 크기
+    - color: #111827 - 진한 회색 텍스트
+    - font-weight: 400 - 일반 글씨
+    - line-height: 1.5 - 줄 간격
+    - padding: 12px 16px - 내부 여백
+    - background-color: #FFFFFF - 흰색 배경
+    - border: none - 테두리 제거
+    - border-top: none - 상단 테두리 제거
+    - border-radius: 0 0 8px 8px - 하단 모서리만 둥글게
+    - margin: 0 - 마진 제거
+    - 사용처: 승인 상세 정보 항목의 값 (.approval-detail-value)
+*/
+.approval-detail-value {
+  font-size: 14px;
+  color: #111827;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 12px 16px;
+  background-color: #FFFFFF;
+  border: none;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  margin: 0;
+}
+
+/* 
+  승인대기 목록 상세정보 2열 레이아웃
+  
+  목적: 승인 대기 목록의 상세 정보를 2열 그리드 레이아웃으로 표시
+    - display: grid - 그리드 레이아웃
+    - grid-template-columns: repeat(2, 1fr) - 2열 그리드 (동일한 너비)
+    - gap: 16px - 그리드 항목 간 간격
+    - 사용처: 승인 대기 목록의 상세 정보 그리드 (.user-detail-section .detail-grid)
+    - 이유: 승인 대기 목록의 상세 정보를 2열로 배치하여 가독성 향상
+    - 주의: admin_common.css의 .detail-grid를 오버라이드하여 승인 대기 페이지에만 적용
+*/
+.user-detail-section .detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}

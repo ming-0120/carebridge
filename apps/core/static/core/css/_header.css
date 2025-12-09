@@ -1,0 +1,206 @@
+/* ===========================
+   HEADER 기본 스타일
+   =========================== */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #ffffff;
+  border-bottom: 1px solid #e1e4ec;
+  display: flex;
+  justify-content: center;
+}
+
+.header-inner {
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+/* -------- 로고 -------- */
+.logo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #1B3C73;
+  text-decoration: none;
+}
+
+.logo small {
+  font-size: 13px;
+  font-weight: 400;
+  color: #777;
+  margin-left: 4px;
+}
+
+/* ===========================
+   NAV + 로그인
+   =========================== */
+.nav-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 40px;
+}
+
+.nav {
+  display: flex;
+  gap: 40px;
+}
+
+.nav a {
+  font-size: 16px;
+  text-decoration: none;
+  color: #222;
+
+  /* news-card 와 동일 느낌 적용 */
+  padding: 8px 14px;
+  border-radius: 10px;
+
+  transition: .2s;
+}
+
+/* 활성 메뉴 */
+.nav a.active {
+  color: #1B3C73;
+  border-bottom: 2px solid #1B3C73;
+}
+
+.util {
+  font-size: 13px;
+  color: #555;
+  white-space: nowrap;
+}
+
+.util a {
+  text-decoration: none;
+  color: #555;
+  margin-left: 10px;
+}
+
+.util a:hover {
+  text-decoration: underline;
+}
+
+/* ===========================
+   햄버거 버튼
+   =========================== */
+.menu-toggle {
+  display: none;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.menu-toggle span {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin: 5px 0;
+  background: #333;
+  transition: 0.2s;
+}
+
+/* ===========================
+   반응형
+   =========================== */
+
+/* 1024px 이하: 메뉴 간격 축소 */
+@media (max-width: 1024px) {
+  .nav-wrapper {
+    gap: 24px;
+  }
+  .nav {
+    gap: 24px;
+  }
+}
+
+/* ---------- 768px 이하: 햄버거 메뉴 ---------- */
+@media (max-width: 768px) {
+
+  .header-inner {
+    height: auto;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .logo {
+    flex: 1 1 auto;
+  }
+
+  .menu-toggle {
+    display: block;
+  }
+
+  /* 기본: 닫힌 상태 -> 메뉴 숨김 */
+  .nav-wrapper {
+    display: none;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+    padding: 10px 16px 12px;
+  }
+
+  /* 메뉴 열림 */
+  .header.menu-open .nav-wrapper {
+    display: block;
+  }
+
+  .nav {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .nav a {
+    font-size: 15px;
+    padding: 10px 14px;
+    border-radius: 10px;
+  }
+
+  .nav a:hover {
+    background: #E9F1FF;
+    transform: translateY(-2px);
+  }
+
+  .util {
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  .util a {
+    margin-left: 12px;
+  }
+}
+
+/* ---------- 480px 이하: 더 작은 화면 ---------- */
+@media (max-width: 480px) {
+  .header-inner {
+    padding: 8px 12px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .logo small {
+    display: block;
+    margin-top: 2px;
+  }
+
+  .nav a {
+    font-size: 14px;
+  }
+}

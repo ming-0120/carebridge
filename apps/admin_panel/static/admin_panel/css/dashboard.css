@@ -1,0 +1,873 @@
+/* 
+  ========= CSS 변수 정의 =========
+  
+  목적: 대시보드 페이지에서 사용할 색상 및 스타일 값을 CSS 변수로 정의
+    - 코드 재사용: 색상 값을 한 곳에서 관리하여 유지보수성 향상
+    - 일관성: 전체 페이지에서 일관된 색상 사용
+    - 유지보수: 색상 변경 시 변수만 수정하면 전체에 반영
+*/
+
+:root {
+  /* 
+    주요 색상 변수
+    
+    목적: 대시보드 페이지의 주요 색상을 정의
+      - --primary-blue: 밝은 파란색 (요약 카드 배경 등)
+      - --primary-navy: 진한 파란색 (제목, 강조 등)
+      - --accent-green: 초록색 (요약 카드 배경 등)
+      - --bg-page: 전체 페이지 배경색 (연한 회색)
+      - --text-main: 메인 텍스트 색상 (진한 회색)
+      - --border-soft: 부드러운 테두리 색상 (연한 회색)
+      - --shadow-soft: 부드러운 그림자 효과
+  */
+  --primary-blue: #0066CC;   /* 밝은 파랑 */
+  --primary-navy: #004C97;   /* 진한 파랑 */
+  --accent-green: #009966;   /* 초록 */
+  --bg-page: #F4F6F9;        /* 전체 배경 */
+  --text-main: #1F2933;
+  --border-soft: #E1E7F0;
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+/* 
+  ========= 대시보드 페이지 전용 CSS =========
+  
+  목적: 관리자 대시보드 페이지(dashboard.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: 대시보드에 특화된 UI 제공
+    - 공통 스타일 확장: admin_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+  
+  주요 기능:
+    - 요약 카드 영역: 통계 정보를 카드 형태로 표시
+    - 그래프 영역: 7일 방문자 수 그래프 표시
+    - 사이드 카드: 추가 통계나 공지사항 표시
+  
+  관련 파일:
+    - HTML: dashboard.html
+    - JavaScript: dashboard.js
+    - 공통 CSS: admin_common.css
+*/
+
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* 
+  대시보드 전용 body 스타일
+  
+  목적: 대시보드 페이지의 body 배경색 설정
+    - background-color: var(--bg-page) - CSS 변수를 사용한 배경색 설정
+    - 사용처: 대시보드 페이지의 body 요소
+    - 이유: 대시보드 페이지에만 특별한 배경색 적용
+*/
+body {
+  background-color: var(--bg-page);
+}
+
+/* 
+  ========= 대시보드 컨테이너 =========
+  
+  목적: 대시보드 페이지의 메인 컨테이너 스타일
+    - 레이아웃: 플렉스 레이아웃을 사용하여 세로 방향으로 요소 배치
+    - 높이 제한: 뷰포트 높이에 맞춰 높이 제한
+    - 스크롤: 내부 스크롤 처리
+*/
+
+/* 
+  대시보드 래퍼 컨테이너
+  
+  목적: 대시보드 페이지의 모든 내용을 담는 메인 컨테이너
+    - max-width: 1440px - 최대 너비 제한 (PC 화면 최적화)
+    - width: 100% - 화면 너비에 맞춤
+    - min-width: 320px - 최소 너비 (모바일 대응)
+    - margin: 20px auto 10px - 상하 마진, 좌우 자동 (중앙 정렬)
+    - background-color: #ffffff - 흰색 배경
+    - border-radius: 16px - 둥근 모서리
+    - padding: 20px - 내부 여백
+    - box-shadow: var(--shadow-soft) - 부드러운 그림자 효과
+    - height: calc(100vh - 110px) - 높이 제한 (뷰포트 높이 - 헤더 높이)
+    - overflow: hidden - 오버플로우 숨김
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - position: relative - 상대 위치 지정
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - 사용처: 대시보드 페이지의 메인 컨테이너 (.dashboard-wrap)
+*/
+.dashboard-wrap {
+  max-width: 1440px;
+  width: 100%;
+  min-width: 320px;
+  margin: 20px auto 10px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--shadow-soft);
+  height: calc(100vh - 110px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* 
+  ========= 상단 요약 카드 영역 =========
+  
+  목적: 대시보드 상단에 통계 정보를 카드 형태로 표시하는 영역
+    - 사용자 경험(UX) 개선: 주요 통계 정보를 한눈에 볼 수 있도록 카드 형태로 표시
+    - 레이아웃: 그리드 레이아웃을 사용하여 5개의 카드를 한 줄에 배치
+    - 인터랙션: 카드 호버 및 클릭 효과 제공
+*/
+
+/* 
+  요약 카드 그리드 컨테이너
+  
+  목적: 요약 카드들을 담는 그리드 컨테이너 스타일
+    - display: grid - 그리드 레이아웃
+    - grid-template-columns: repeat(5, minmax(0, 1fr)) - 5열 그리드 (동일한 너비)
+    - gap: 12px - 그리드 항목 간 간격
+    - margin-bottom: 16px - 하단 마진
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 요약 카드 영역 (.summary-cards)
+*/
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-shrink: 0;
+}
+
+/* 
+  요약 카드 링크
+  
+  목적: 요약 카드를 클릭 가능한 링크로 만드는 스타일
+    - text-decoration: none - 링크 밑줄 제거
+    - color: inherit - 부모 요소의 색상 상속
+    - display: block - 블록 요소로 표시
+    - 사용처: 요약 카드 링크 (.summary-card-link)
+    - 동작: 카드 클릭 시 해당 페이지로 이동 (예: 사용자 목록, 의사 목록 등)
+*/
+.summary-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* 
+  요약 카드 기본 스타일
+  
+  목적: 각 요약 카드의 기본 스타일
+    - border-radius: 16px - 둥근 모서리
+    - padding: 12px 16px - 내부 여백
+    - color: #ffffff - 흰색 텍스트
+    - box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2) - 그림자 효과
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - justify-content: space-between - 요소 간 공간 분배
+    - min-height: 80px - 최소 높이
+    - min-width: 0 - 최소 너비 (그리드에서 축소 가능하도록)
+    - cursor: pointer - 포인터 커서
+    - transition: transform 0.2s ease, box-shadow 0.2s ease - 변환 및 그림자 변경 애니메이션
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - 사용처: 각 요약 카드 (.summary-card)
+*/
+.summary-card {
+  border-radius: 16px;
+  padding: 12px 16px;
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 80px;
+  min-width: 0;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* 
+  요약 카드 호버 효과
+  
+  목적: 요약 카드에 마우스를 올렸을 때 위로 살짝 이동하고 그림자 강화
+    - transform: translateY(-4px) - 위로 4px 이동
+    - box-shadow: 0 15px 40px rgba(15, 23, 42, 0.3) - 더 강한 그림자
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시하여 클릭 가능함을 명확히 함
+*/
+.summary-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.3);
+}
+
+/* 
+  요약 카드 활성화 효과
+  
+  목적: 요약 카드를 클릭했을 때 약간의 이동 효과
+    - transform: translateY(-2px) - 위로 2px 이동 (호버보다 작은 이동)
+    - box-shadow: 0 12px 35px rgba(15, 23, 42, 0.25) - 중간 강도의 그림자
+    - 사용자 경험(UX) 개선: 클릭 상태를 시각적으로 표시
+*/
+.summary-card:active {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(15, 23, 42, 0.25);
+}
+
+/* 
+  요약 카드 라벨 (예: "신규 가입자수")
+  
+  목적: 요약 카드의 라벨 텍스트 스타일
+    - font-size: 13px - 작은 글씨 크기
+    - opacity: 0.9 - 약간 투명하게 표시
+    - 사용처: 요약 카드의 라벨 (span.label)
+*/
+.summary-card span.label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* 
+  요약 카드 값 (예: "123명")
+  
+  목적: 요약 카드의 값 텍스트 스타일
+    - margin-top: 8px - 상단 마진
+    - font-size: 22px - 큰 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - 사용처: 요약 카드의 값 (span.value)
+*/
+.summary-card span.value {
+  margin-top: 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+/* 
+  요약 카드 설명 (예: "오늘 기준 신규 회원")
+  
+  목적: 요약 카드의 설명 텍스트 스타일
+    - margin-top: 4px - 상단 마진
+    - font-size: 11px - 매우 작은 글씨 크기
+    - opacity: 0.9 - 약간 투명하게 표시
+    - 사용처: 요약 카드의 설명 (span.desc)
+*/
+.summary-card span.desc {
+  margin-top: 4px;
+  font-size: 11px;
+  opacity: 0.9;
+}
+
+/* 
+  ========= 요약 카드 배경색 클래스 =========
+  
+  목적: 각 요약 카드에 다른 색상의 그라데이션 배경을 적용
+    - 사용자 경험(UX) 개선: 각 카드를 시각적으로 구분하여 가독성 향상
+    - 그라데이션: linear-gradient를 사용하여 부드러운 색상 전환 효과
+*/
+
+/* 
+  파란색 카드 배경
+  
+  목적: 파란색 그라데이션 배경을 가진 요약 카드
+    - background: linear-gradient(135deg, var(--primary-blue), #0090FF)
+      → 135도 각도로 밝은 파란색에서 더 밝은 파란색으로 그라데이션
+    - 사용처: 파란색 요약 카드 (.card-blue)
+*/
+.card-blue {
+  background: linear-gradient(135deg, var(--primary-blue), #0090FF);
+}
+
+/* 
+  네이비 카드 배경
+  
+  목적: 네이비(진한 파란색) 그라데이션 배경을 가진 요약 카드
+    - background: linear-gradient(135deg, var(--primary-navy), #0065C8)
+      → 135도 각도로 진한 파란색에서 밝은 파란색으로 그라데이션
+    - 사용처: 네이비 요약 카드 (.card-navy)
+*/
+.card-navy {
+  background: linear-gradient(135deg, var(--primary-navy), #0065C8);
+}
+
+/* 
+  초록색 카드 배경
+  
+  목적: 초록색 그라데이션 배경을 가진 요약 카드
+    - background: linear-gradient(135deg, var(--accent-green), #00B37A)
+      → 135도 각도로 초록색에서 더 밝은 초록색으로 그라데이션
+    - 사용처: 초록색 요약 카드 (.card-green)
+*/
+.card-green {
+  background: linear-gradient(135deg, var(--accent-green), #00B37A);
+}
+
+/* 
+  연한 파란색 카드 배경
+  
+  목적: 연한 파란색 그라데이션 배경을 가진 요약 카드
+    - background: linear-gradient(135deg, #3B82F6, #60A5FA)
+      → 135도 각도로 파란색에서 연한 파란색으로 그라데이션
+    - 사용처: 연한 파란색 요약 카드 (.card-lightblue)
+*/
+.card-lightblue {
+  background: linear-gradient(135deg, #3B82F6, #60A5FA);
+}
+
+/* 
+  보라색 카드 배경
+  
+  목적: 보라색 그라데이션 배경을 가진 요약 카드
+    - background: linear-gradient(135deg, #6366F1, #818CF8)
+      → 135도 각도로 보라색에서 연한 보라색으로 그라데이션
+    - 사용처: 보라색 요약 카드 (.card-purple)
+*/
+.card-purple {
+  background: linear-gradient(135deg, #6366F1, #818CF8);
+}
+
+/* 
+  ========= 그래프 레이아웃 =========
+  
+  목적: 대시보드의 그래프 영역 레이아웃 설정
+    - 레이아웃: 그리드 레이아웃을 사용하여 그래프 카드 배치
+    - 반응형: 화면 크기에 따라 레이아웃 조정
+*/
+
+/* 
+  메인 행 레이아웃
+  
+  목적: 그래프 카드를 담는 메인 행 컨테이너 스타일
+    - display: grid - 그리드 레이아웃
+    - grid-template-columns: 1fr - 1열 그리드 (전체 너비 사용)
+    - gap: 16px - 그리드 항목 간 간격
+    - align-items: flex-start - 상단 정렬
+    - flex: 1 - 남은 공간 채우기
+    - min-height: 0 - 최소 높이 제거 (플렉스 컨테이너 내에서 축소 가능하도록)
+    - 사용처: 그래프 영역의 메인 행 (.main-row)
+*/
+.main-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  align-items: flex-start;
+  flex: 1;
+  min-height: 0;
+}
+
+/* 
+  ========= 7일 이용자 그래프 카드 =========
+  
+  목적: 7일간의 방문자 수를 그래프로 표시하는 카드 스타일
+    - 사용자 경험(UX) 개선: 방문자 통계를 시각적으로 표시
+    - Chart.js 통합: Chart.js 라이브러리를 사용하여 그래프 렌더링
+*/
+
+/* 
+  그래프 카드 컨테이너
+  
+  목적: 그래프를 담는 카드 컨테이너 스타일
+    - border-radius: 18px - 둥근 모서리
+    - border: 1px solid var(--border-soft) - 테두리 (연한 회색)
+    - background-color: #ffffff - 흰색 배경
+    - box-shadow: var(--shadow-soft) - 부드러운 그림자 효과
+    - padding: 16px 18px 8px - 내부 여백 (상단, 좌우, 하단)
+    - height: 100% - 높이 100% (부모 요소 높이에 맞춤)
+    - display: flex, flex-direction: column - 플렉스 레이아웃 (세로 방향)
+    - min-height: 0 - 최소 높이 제거 (플렉스 컨테이너 내에서 축소 가능하도록)
+    - 사용처: 그래프 카드 컨테이너 (.graph-card)
+*/
+.graph-card {
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background-color: #ffffff;
+  box-shadow: var(--shadow-soft);
+  padding: 16px 18px 8px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* 
+  그래프 헤더 영역
+  
+  목적: 그래프 카드의 헤더 영역 스타일 (제목 및 부제목)
+    - display: flex - 플렉스 레이아웃
+    - justify-content: space-between - 양쪽 끝 정렬
+    - align-items: center - 수직 중앙 정렬
+    - margin-bottom: 8px - 하단 마진
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 그래프 카드의 헤더 영역 (.graph-header)
+*/
+.graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+/* 
+  그래프 제목
+  
+  목적: 그래프 카드의 제목 스타일
+    - font-size: 15px - 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: var(--primary-navy) - 진한 파란색 텍스트
+    - 사용처: 그래프 카드의 제목 (.graph-title)
+*/
+.graph-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-navy);
+}
+
+/* 
+  그래프 부제목
+  
+  목적: 그래프 카드의 부제목 스타일
+    - font-size: 12px - 작은 글씨 크기
+    - color: #6B7280 - 회색 텍스트
+    - 사용처: 그래프 카드의 부제목 (.graph-sub)
+*/
+.graph-sub {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* 
+  그래프 플레이스홀더 (Chart.js 캔버스 영역)
+  
+  목적: Chart.js 그래프를 렌더링하는 캔버스 영역 스타일
+    - margin-top: 8px - 상단 마진
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - border-radius: 12px - 둥근 모서리
+    - border: 1px solid var(--border-soft) - 테두리 (연한 회색)
+    - flex: 1 - 남은 공간 채우기
+    - min-height: 0 - 최소 높이 제거
+    - display: flex, align-items: center, justify-content: center - 중앙 정렬
+    - padding: 10px - 내부 여백
+    - 사용처: 그래프 캔버스 영역 (.graph-placeholder)
+    - Chart.js 통합: Chart.js가 이 영역에 그래프를 렌더링
+*/
+.graph-placeholder {
+  margin-top: 8px;
+  background-color: #F8FAFF;
+  border-radius: 12px;
+  border: 1px solid var(--border-soft);
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+/* 
+  그래프 캔버스 스타일
+  
+  목적: Chart.js 그래프 캔버스의 크기 제한
+    - max-height: 100% - 최대 높이 100% (부모 요소 높이에 맞춤)
+    - max-width: 100% - 최대 너비 100% (부모 요소 너비에 맞춤)
+    - 사용처: 그래프 캔버스 (canvas)
+    - 이유: 캔버스가 부모 요소를 넘어가지 않도록 크기 제한
+*/
+.graph-placeholder canvas {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+/* 
+  ========= 사이드 카드 (오른쪽 요약 카드) =========
+  
+  목적: 대시보드 오른쪽에 표시되는 추가 통계나 공지사항 카드 스타일
+    - 사용자 경험(UX) 개선: 추가 정보를 카드 형태로 표시
+    - 레이아웃: 간단한 리스트 형태로 정보 표시
+*/
+
+/* 
+  사이드 카드 컨테이너
+  
+  목적: 사이드 카드의 기본 스타일
+    - border-radius: 18px - 둥근 모서리
+    - border: 1px solid var(--border-soft) - 테두리 (연한 회색)
+    - background-color: #ffffff - 흰색 배경
+    - box-shadow: var(--shadow-soft) - 부드러운 그림자 효과
+    - padding: 18px - 내부 여백
+    - 사용처: 사이드 카드 컨테이너 (.side-card)
+*/
+.side-card {
+  border-radius: 18px;
+  border: 1px solid var(--border-soft);
+  background-color: #ffffff;
+  box-shadow: var(--shadow-soft);
+  padding: 18px;
+}
+
+/* 
+  사이드 카드 제목
+  
+  목적: 사이드 카드의 제목 스타일
+    - font-size: 15px - 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - margin-bottom: 10px - 하단 마진
+    - color: var(--primary-navy) - 진한 파란색 텍스트
+    - 사용처: 사이드 카드의 제목 (.side-title)
+*/
+.side-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--primary-navy);
+}
+
+/* 
+  사이드 카드 항목
+  
+  목적: 사이드 카드의 각 항목 스타일
+    - padding: 10px 0 - 상하 패딩
+    - border-bottom: 1px solid #EEF1F7 - 하단 테두리 (매우 연한 회색)
+    - font-size: 13px - 글씨 크기
+    - 사용처: 사이드 카드의 각 항목 (.side-item)
+*/
+.side-item {
+  padding: 10px 0;
+  border-bottom: 1px solid #EEF1F7;
+  font-size: 13px;
+}
+
+/* 
+  사이드 카드 마지막 항목
+  
+  목적: 사이드 카드의 마지막 항목에서 하단 테두리 제거
+    - border-bottom: none - 하단 테두리 제거
+    - 사용자 경험(UX) 개선: 마지막 항목의 불필요한 테두리 제거
+*/
+.side-item:last-child {
+  border-bottom: none;
+}
+
+/* 
+  사이드 카드 항목 라벨
+  
+  목적: 사이드 카드 항목의 라벨 텍스트 스타일
+    - font-size: 11px - 매우 작은 글씨 크기
+    - color: #9CA3AF - 연한 회색 텍스트
+    - margin-bottom: 2px - 하단 마진
+    - 사용처: 사이드 카드 항목의 라벨 (.side-item .label)
+*/
+.side-item .label {
+  font-size: 11px;
+  color: #9CA3AF;
+  margin-bottom: 2px;
+}
+
+/* 
+  사이드 카드 항목 텍스트
+  
+  목적: 사이드 카드 항목의 메인 텍스트 스타일
+    - font-weight: 500 - 중간 굵기
+    - margin-bottom: 2px - 하단 마진
+    - 사용처: 사이드 카드 항목의 텍스트 (.side-item .text)
+*/
+.side-item .text {
+  font-weight: 500;
+  margin-bottom: 2px;
+}
+
+/* 
+  사이드 카드 항목 값
+  
+  목적: 사이드 카드 항목의 값 텍스트 스타일
+    - font-size: 12px - 작은 글씨 크기
+    - color: #6B7280 - 회색 텍스트
+    - 사용처: 사이드 카드 항목의 값 (.side-item .value)
+*/
+.side-item .value {
+  font-size: 12px;
+  color: #6B7280;
+}
+
+/* 
+  ========= 반응형 디자인 =========
+  
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
+    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
+    - 주요 브레이크포인트:
+      → PC: 1024px ~ 1440px
+      → 태블릿: 768px ~ 1024px
+      → 모바일: 768px 이하
+      → 작은 모바일: 480px 이하
+*/
+
+/* 
+  PC 화면 스타일 (1024px ~ 1440px)
+  
+  목적: PC 화면 크기에 맞춘 스타일 조정
+    - max-width: 1440px - 최대 너비 1440px까지 적용
+    - 컨테이너 마진 조정
+    - 사용처: PC 화면 (1024px ~ 1440px)
+*/
+@media (max-width: 1440px) {
+  .dashboard-wrap {
+    margin: 20px;
+  }
+}
+
+/* 
+  태블릿 화면 스타일 (768px ~ 1024px)
+  
+  목적: 태블릿 화면 크기에 맞춘 스타일 조정
+    - max-width: 1024px - 최대 너비 1024px까지 적용
+    - 컨테이너 마진 및 패딩 조정
+    - 요약 카드 그리드: 5열 → 3열로 변경
+    - 요약 카드 패딩 및 최소 높이 조정
+    - 요약 카드 값 글씨 크기 축소
+    - 그래프 카드 패딩 조정
+    - 사용처: 태블릿 화면 (768px ~ 1024px)
+*/
+@media (max-width: 1024px) {
+  .dashboard-wrap {
+    margin: 15px;
+    padding: 18px;
+    height: calc(100vh - 90px);
+  }
+  
+  /* 
+    요약 카드 그리드: 5열 → 3열로 변경
+    
+    목적: 태블릿 화면에서 요약 카드를 3열로 배치
+      - grid-template-columns: repeat(3, minmax(0, 1fr)) - 3열 그리드
+      - gap: 10px - 간격 축소
+      - margin-bottom: 14px - 하단 마진 축소
+  */
+  .summary-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  
+  /* 
+    요약 카드 패딩 및 최소 높이 조정
+    
+    목적: 태블릿 화면에서 요약 카드 크기 조정
+      - padding: 10px 14px - 패딩 축소
+      - min-height: 75px - 최소 높이 축소
+  */
+  .summary-card {
+    padding: 10px 14px;
+    min-height: 75px;
+  }
+  
+  /* 
+    요약 카드 값 글씨 크기 축소
+    
+    목적: 태블릿 화면에서 요약 카드 값 글씨 크기 축소
+      - font-size: 20px - 글씨 크기 축소 (기본 22px → 20px)
+  */
+  .summary-card span.value {
+    font-size: 20px;
+  }
+  
+  /* 
+    메인 행 레이아웃 유지
+    
+    목적: 태블릿 화면에서도 1열 레이아웃 유지
+      - grid-template-columns: 1fr - 1열 그리드 유지
+  */
+  .main-row {
+    grid-template-columns: 1fr;
+  }
+  
+  /* 
+    그래프 카드 패딩 조정
+    
+    목적: 태블릿 화면에서 그래프 카드 패딩 축소
+      - padding: 14px 16px 6px - 패딩 축소
+  */
+  .graph-card {
+    padding: 14px 16px 6px;
+  }
+}
+
+/* 
+  모바일 화면 스타일 (768px 이하)
+  
+  목적: 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 768px - 최대 너비 768px까지 적용
+    - 컨테이너 마진, 패딩, 높이, 테두리 반경 조정
+    - 요약 카드 그리드: 3열 → 2열로 변경
+    - 요약 카드 패딩, 최소 높이, 글씨 크기 조정
+    - 그래프 카드 패딩, 테두리 반경 조정
+    - 그래프 헤더 및 제목 글씨 크기 조정
+    - 그래프 플레이스홀더 패딩 조정
+    - 사용처: 모바일 화면 (768px 이하)
+*/
+@media (max-width: 768px) {
+  .dashboard-wrap {
+    margin: 10px;
+    padding: 15px;
+    height: calc(100vh - 80px);
+    border-radius: 12px;
+  }
+  
+  /* 
+    요약 카드 그리드: 3열 → 2열로 변경
+    
+    목적: 모바일 화면에서 요약 카드를 2열로 배치
+      - grid-template-columns: repeat(2, minmax(0, 1fr)) - 2열 그리드
+      - gap: 8px - 간격 추가 축소
+      - margin-bottom: 12px - 하단 마진 추가 축소
+  */
+  .summary-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  
+  /* 
+    요약 카드 패딩 및 최소 높이 조정
+    
+    목적: 모바일 화면에서 요약 카드 크기 추가 조정
+      - padding: 10px 12px - 패딩 추가 축소
+      - min-height: 70px - 최소 높이 추가 축소
+  */
+  .summary-card {
+    padding: 10px 12px;
+    min-height: 70px;
+  }
+  
+  /* 
+    요약 카드 라벨 글씨 크기 축소
+    
+    목적: 모바일 화면에서 요약 카드 라벨 글씨 크기 축소
+      - font-size: 12px - 글씨 크기 축소 (기본 13px → 12px)
+  */
+  .summary-card span.label {
+    font-size: 12px;
+  }
+  
+  /* 
+    요약 카드 값 글씨 크기 및 마진 조정
+    
+    목적: 모바일 화면에서 요약 카드 값 글씨 크기 및 마진 조정
+      - font-size: 18px - 글씨 크기 추가 축소 (기본 22px → 18px)
+      - margin-top: 6px - 상단 마진 축소
+  */
+  .summary-card span.value {
+    font-size: 18px;
+    margin-top: 6px;
+  }
+  
+  /* 
+    요약 카드 설명 글씨 크기 및 마진 조정
+    
+    목적: 모바일 화면에서 요약 카드 설명 글씨 크기 및 마진 조정
+      - font-size: 10px - 글씨 크기 추가 축소 (기본 11px → 10px)
+      - margin-top: 3px - 상단 마진 축소
+  */
+  .summary-card span.desc {
+    font-size: 10px;
+    margin-top: 3px;
+  }
+  
+  /* 
+    그래프 카드 패딩 및 테두리 반경 조정
+    
+    목적: 모바일 화면에서 그래프 카드 패딩 및 테두리 반경 조정
+      - padding: 12px 14px 6px - 패딩 추가 축소
+      - border-radius: 12px - 테두리 반경 축소 (기본 18px → 12px)
+  */
+  .graph-card {
+    padding: 12px 14px 6px;
+    border-radius: 12px;
+  }
+  
+  /* 
+    그래프 헤더 하단 마진 조정
+    
+    목적: 모바일 화면에서 그래프 헤더 하단 마진 축소
+      - margin-bottom: 6px - 하단 마진 축소 (기본 8px → 6px)
+  */
+  .graph-header {
+    margin-bottom: 6px;
+  }
+  
+  /* 
+    그래프 제목 글씨 크기 축소
+    
+    목적: 모바일 화면에서 그래프 제목 글씨 크기 축소
+      - font-size: 14px - 글씨 크기 축소 (기본 15px → 14px)
+  */
+  .graph-title {
+    font-size: 14px;
+  }
+  
+  /* 
+    그래프 부제목 글씨 크기 축소
+    
+    목적: 모바일 화면에서 그래프 부제목 글씨 크기 축소
+      - font-size: 11px - 글씨 크기 축소 (기본 12px → 11px)
+  */
+  .graph-sub {
+    font-size: 11px;
+  }
+  
+  /* 
+    그래프 플레이스홀더 패딩 조정
+    
+    목적: 모바일 화면에서 그래프 플레이스홀더 패딩 축소
+      - padding: 8px - 패딩 축소 (기본 10px → 8px)
+  */
+  .graph-placeholder {
+    padding: 8px;
+  }
+}
+
+/* 
+  작은 모바일 화면 스타일 (480px 이하)
+  
+  목적: 작은 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 480px - 최대 너비 480px까지 적용
+    - 컨테이너 마진, 패딩, 테두리 반경 추가 조정
+    - 요약 카드 그리드: 2열 → 1열로 변경
+    - 요약 카드 최소 높이 추가 조정
+    - 요약 카드 값 글씨 크기 추가 조정
+    - 사용처: 작은 모바일 화면 (480px 이하)
+*/
+@media (max-width: 480px) {
+  .dashboard-wrap {
+    margin: 5px;
+    padding: 12px;
+    border-radius: 8px;
+  }
+  
+  /* 
+    요약 카드 그리드: 2열 → 1열로 변경
+    
+    목적: 작은 모바일 화면에서 요약 카드를 1열로 배치
+      - grid-template-columns: 1fr - 1열 그리드
+      - gap: 8px - 간격 유지
+  */
+  .summary-cards {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  /* 
+    요약 카드 최소 높이 추가 조정
+    
+    목적: 작은 모바일 화면에서 요약 카드 최소 높이 추가 축소
+      - min-height: 65px - 최소 높이 추가 축소 (기본 80px → 65px)
+  */
+  .summary-card {
+    min-height: 65px;
+  }
+  
+  /* 
+    요약 카드 값 글씨 크기 추가 조정
+    
+    목적: 작은 모바일 화면에서 요약 카드 값 글씨 크기 추가 축소
+      - font-size: 16px - 글씨 크기 추가 축소 (기본 22px → 16px)
+  */
+  .summary-card span.value {
+    font-size: 16px;
+  }
+}
+

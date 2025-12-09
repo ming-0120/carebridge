@@ -1,0 +1,167 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>병원내 의료진 대시보드 (11페이지 수정본)</title>
+
+    <link rel="stylesheet" href="{% static 'emr/css/hospital_staff_dashboard.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-left">
+            <div class="logo" onclick="location.href='main.html'">로고</div>
+            <div class="hospital-name">00병원</div>
+        </div>
+        <div class="user-info">00님</div>
+    </div>
+
+    <div class="container">
+        <h2> 병원내 의료진 대시보드</h2>
+        
+        <div class="status-overview">
+            
+            <div class="card status-box">
+                <h3>치료 대기</h3>
+                <div class="status-counts">
+                    <div class="count-item pending">대기 <strong>{{ treatment_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong>{{ treatment_inprogress_count }}명</strong></div>
+                </div>
+            </div>
+            
+            <div class="card status-box">
+                <h3>검사 대기</h3>
+                <div class="status-counts">
+                    <div class="count-item pending">대기 <strong>{{ lab_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong>{{ lab_sampled_count }}명</strong></div>
+                    <div class="count-item emergency">응급 <strong>{{ lab_is_urgent_count }}명</strong></div>
+                </div>
+            </div>
+            
+        </div>
+
+        <div class="patient-list-grid">
+            
+            <div class="card list-panel">
+                <h3>치료 대기중인 환자</h3>
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>나이</th>
+                            <th>성별</th>
+                            <th>담당의사</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for treatment in treatment_order %}
+                            <tr>
+                                <td>{{ treatment.user.name }}</td>
+                                <td>{{ treatment.user_age }}</td>
+                                <td>
+                                    {% if treatment.user.gender == 'F' %}
+                                        여
+                                    {% else %}
+                                        남
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{treatment.doctor_info.name}}
+                                </td>
+                                <td>
+                                    <button 
+                                        class="status-button 
+                                            {% if treatment.treatment.status == 'Pending' %}
+                                                status-pending
+                                            {% else %} 
+                                                status-inprogress
+                                            {% endif %}"
+                                        
+                                        onclick="goToRecord(
+                                            'Treatment', 
+                                            '{{ treatment.treatment.treatment_id }}', 
+                                            '{{ treatment.user.user_id }}', 
+                                            '{{treatment.record_id}}'
+                                        )"
+                                    >
+                                        {% if treatment.treatment.status == 'Pending' %}
+                                            PENDING
+                                        {% else %} 
+                                            IN PROGRESS
+                                        {% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card list-panel">
+                <h3>검사 대기중인 환자</h3>
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>이름</th>
+                            <th>나이</th>
+                            <th>성별</th>
+                            <th>담당의사</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for lab in lab_order %}
+                            <tr 
+                                class="{% if lab.lab.is_urgent == True %} emergency-row {% endif %}"
+                            >
+                                <td>{{ lab.user.name }}</td>
+                                <td>{{ lab.user_age }}</td>
+                                <td>
+                                    {% if lab.user.gender == 'F' %}
+                                        여
+                                    {% else %}
+                                        남
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{lab.doctor_info.name}}
+                                </td>
+                                <td>
+                                    <button 
+                                        class="status-button 
+                                            {% if lab.lab.status == 'Pending' %}
+                                                status-pending
+                                            {% else %} 
+                                                status-sampled
+                                            {% endif %}"
+                                        
+                                        onclick="goToRecord(
+                                            'Lab', 
+                                            '{{ lab.lab.lab_order_id }}', 
+                                            '{{ lab.user.user_id }}', 
+                                            '{{lab.record_id}}',
+                                        )"
+                                    >
+                                        {% if lab.lab.status == 'Pending' %}
+                                            PENDING
+                                        {% else %} 
+                                            SAMPLED
+                                        {% endif %}
+                                    </button>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/hospital_staff_dashboard.js' %}"></script>
+</body>
+</html>
+

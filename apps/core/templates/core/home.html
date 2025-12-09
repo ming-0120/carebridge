@@ -1,1 +1,122 @@
-ss
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareBridge 메인</title>
+<link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+</head>
+<body>
+  {% include "core/_header.html" %}
+<main class="page">
+  <section class="hero-row">
+    <div class="hero-left">
+      <img src="{% static 'core/img/medical1.png' %}" alt="감염병 대시보드 화면 예시">
+      
+      <button class="hero-arrow prev">&#10094;</button>
+      <button class="hero-arrow next">&#10095;</button>
+
+      <div class="hero-dots">
+        <div class="hero-dot active"></div>
+        <div class="hero-dot"></div>
+        <div class="hero-dot"></div>
+      </div>
+    </div>
+    <aside class="news-panel" id="newsletter">
+      <h2>메디컬 뉴스레터</h2>
+        
+      {% for item in newsletters %}
+        <a href="{{ item.url }}" target="_blank" rel="noopener" class="news-card-link">
+          <div class="news-card">
+            <div class="news-tag">{{ item.category }}</div>
+            <div class="news-title">{{ item.title }}</div>
+            <div class="news-date">{{ item.created_at|date:"Y.m.d" }}</div>
+          </div>
+        </a>
+      {% endfor %}
+    </aside>
+  </section>
+
+  <section class="card-row">
+
+  <a href="#emergency" class="info-card-link">
+    <div class="info-card card-emergency">
+      <div>
+        <h3>응급실 조회</h3>
+        <p>실시간 응급실 혼잡도와<br>진료 가능 여부를 확인합니다.</p>
+      </div>
+      <div class="card-btn-area">
+        <span class="card-btn">응급실 조회</span>
+        <span class="card-btn">지도 보기</span>
+      </div>
+    </div>
+  </a>
+
+  <a href="#reservation" class="info-card-link">
+    <div class="info-card card-reservation">
+      <div>
+        <h3>병원 예약</h3>
+        <p>진료과와 의료진, 시간대를 선택해<br>간편하게 예약합니다.</p>
+      </div>
+      <div class="card-btn-area">
+        <span class="card-btn">예약하기</span>
+        <span class="card-btn">예약내역</span>
+      </div>
+    </div>
+  </a>
+
+  <a href="#qna" class="info-card-link">
+    <div class="info-card card-qna">
+      <div>
+        <h3>QnA</h3>
+        <p>진료 및 서비스 이용에 대한<br>궁금증을 남겨보세요.</p>
+      </div>
+      <div class="card-btn-area">
+        <span class="card-btn">문의하기</span>
+        <span class="card-btn">자주 묻는 질문</span>
+      </div>
+    </div>
+  </a>
+</section>
+</main>
+
+<button type="button" class="chatbot-btn">
+  <img src="{% static 'core/img/chatbot.png' %}" alt="챗봇">
+</button>
+
+<div class="chatbot-panel" id="chatbotPanel">
+  <div class="chatbot-header">
+    <span class="chatbot-title">CareBridge 챗봇</span>
+    <button type="button" class="chatbot-close" id="chatbotCloseBtn">×</button>
+  </div>
+
+  <div class="chatbot-body">
+    <div class="chatbot-messages" id="chatbotMessages">
+      <!-- 초기 봇 메시지 -->
+      <div class="chat-bubble bot">
+        <span class="chat-step">1</span>
+        <div class="chat-text">
+          어떤 증상이 있으신가요?<br>
+          (예: 3일째 열이 나고 기침이 심해요)
+        </div>
+      </div>
+    </div>
+    <form class="chatbot-input-area" id="chatbotForm">
+      <div class="chat-input-wrapper">
+        <textarea id="chatInput"
+                  class="chat-input"
+                  rows="1"
+                  placeholder="증상을 자세히 적어주세요."></textarea>
+      </div>
+      <button type="submit" class="chat-send-btn">전송</button>
+    </form>
+  </div>
+</div>
+
+<footer class="footer">
+  © CareBridge All Rights Reserved.
+</footer>
+<script src="{% static 'core/js/home.js' %}"></script>
+</body>
+</html>

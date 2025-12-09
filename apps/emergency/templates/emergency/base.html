@@ -1,0 +1,49 @@
+<!-- emergency/templates/emergency/base.html -->
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}CareBridge 응급실{% endblock %}</title>
+    {% load static %}
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'emergency/css/emergency.css' %}">
+    <link rel="stylesheet" href="{% static 'emergency/css/modal.css' %}">
+    <link rel="stylesheet" href="{% static 'emergency/css/detail.css' %}">
+</head>
+
+<body>
+<div class="page-wrap">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- JS -->
+<script src="{% static 'emergency/js/emergency.js' %}"></script>
+<script src="{% static 'emergency/js/region_modal.js' %}"></script>
+<script src="{% static 'emergency/js/filter_modal.js' %}"></script>
+<script src="{% static 'emergency/js/detail_modal.js' %}"></script>
+
+<script>
+  // ESC로 모든 모달 닫기
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".modal-overlay").forEach(function(m) {
+        m.classList.add("hidden");
+      });
+    }
+  });
+
+  // 새로고침 시 쿼리 파라미터(지역/필터) 초기화
+  document.addEventListener("DOMContentLoaded", function() {
+    if (window.performance && performance.navigation &&
+        performance.navigation.type === performance.navigation.TYPE_RELOAD) {
+
+      var url = new URL(window.location.href);
+      url.search = "";
+      window.location.replace(url.toString());
+    }
+  });
+</script>
+
+</body>
+</html>

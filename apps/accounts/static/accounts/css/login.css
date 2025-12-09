@@ -1,0 +1,372 @@
+:root {
+    --color-bg: #f3f5f9;
+    --color-card: #ffffff;
+    --color-primary: #3f6ae3;
+    --color-primary-soft: #eef2ff;
+    --color-border: #e0e4ec;
+    --color-text-main: #1f2933;
+    --color-text-sub: #6b7280;
+    --radius-lg: 18px;
+    --radius-md: 10px;
+    --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.12);
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+    background: radial-gradient(circle at top, #e0ebff 0, #f3f5f9 45%, #f3f5f9 100%);
+    color: var(--color-text-main);
+}
+
+/* 전체 레이아웃 */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--color-card);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    padding: 32px 32px 28px;
+}
+
+/* 헤더 */
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 26px;
+}
+
+.auth-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 20px;
+    border-radius: 999px;
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: 0.02em;
+}
+
+.auth-subtitle {
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--color-text-sub);
+}
+
+/* 역할 토글 */
+
+.role-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+}
+
+.role-toggle input {
+    display: none;
+}
+
+.role-toggle__track {
+    position: relative;
+    width: 220px;
+    height: 40px;
+    border-radius: 999px;
+    background: #f1f2f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid #d3d7e3;
+}
+
+.role-toggle__thumb {
+    position: absolute;
+    width: calc(50% - 6px);
+    height: 32px;
+    border-radius: 999px;
+    background: #ffffff;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: all 0.22s ease;
+}
+
+.role-toggle__option {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-text-sub);
+}
+
+.role-toggle__option--left {
+    padding-left: 6px;
+}
+
+.role-toggle__option--right {
+    padding-right: 6px;
+}
+
+/* 체크 상태일 때 thumb 오른쪽 이동 + 색상 */
+
+.role-toggle input:checked + .role-toggle__track .role-toggle__thumb {
+    left: calc(50% + 2px);
+}
+
+.role-toggle input:checked + .role-toggle__track .role-toggle__option--left {
+    color: var(--color-text-sub);
+}
+
+.role-toggle input:checked + .role-toggle__track .role-toggle__option--right {
+    color: var(--color-primary);
+}
+
+.role-toggle input:not(:checked) + .role-toggle__track .role-toggle__option--left {
+    color: var(--color-primary);
+}
+
+/* 폼 영역 */
+
+.auth-form {
+    margin-top: 4px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--color-text-sub);
+}
+
+.form-group input {
+    width: 100%;
+    padding: 11px 12px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.16s ease, box-shadow 0.16s ease;
+    background: #fbfcff;
+}
+
+.form-group input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px rgba(63,106,227,0.15);
+    background: #ffffff;
+}
+
+/* 메시지 */
+
+.auth-messages {
+    list-style: none;
+    padding: 0;
+    margin: 4px 0 10px;
+}
+
+.auth-message {
+    font-size: 12px;
+    padding: 8px 10px;
+    border-radius: 8px;
+}
+
+.auth-message--error {
+    background: #fef2f2;
+    color: #b91c1c;
+    border: 1px solid #fecaca;
+}
+
+/* 버튼 */
+
+.auth-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.btn {
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    padding: 11px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    flex: 1;
+    transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.06s ease;
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn--primary {
+    background: var(--color-primary);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(63, 106, 227, 0.35);
+}
+
+.btn--primary:hover {
+    box-shadow: 0 12px 26px rgba(63, 106, 227, 0.45);
+}
+
+.btn--ghost {
+    background: #ffffff;
+    color: var(--color-text-main);
+    border-color: #d3d7e3;
+}
+
+.btn--ghost:hover {
+    background: #f5f6fb;
+}
+
+/* 구분선 */
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 22px 0 16px;
+    font-size: 12px;
+    color: var(--color-text-sub);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e0e4ec;
+}
+
+.auth-divider span {
+    margin: 0 10px;
+}
+.social-login {
+  margin-top: 16px;
+}
+
+.kakao-login-button {
+  width: 100%;
+  height: 48px;
+  border: none;
+  border-radius: 8px;
+  background: #FEE500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
+  font-size: 15px;
+  font-weight: 600;
+  color: #191600;
+}
+
+.kakao-login-button:hover {
+  filter: brightness(0.97);
+}
+
+.kakao-logo-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #000000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.kakao-text {
+  line-height: 1;
+}
+
+/* 모바일 */
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 26px 20px 22px;
+        border-radius: 14px;
+    }
+}
+.social-login {
+    margin-top: 16px;
+}
+
+/* 카카오 로그인 버튼 */
+.kakao-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    width: 100%;
+    padding: 12px 16px;
+
+    background-color: #FEE500;       /* 카카오 노란색 */
+    color: #381E1F;                  /* 카카오 텍스트 색 느낌 */
+    border-radius: 8px;
+    border: none;
+
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    transition: transform 0.05s ease-out,
+                box-shadow 0.05s ease-out,
+                filter 0.05s ease-out;
+    cursor: pointer;
+}
+
+.kakao-login-btn:hover {
+    filter: brightness(0.97);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+    transform: translateY(-1px);
+}
+
+.kakao-login-btn:active {
+    filter: brightness(0.94);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+    transform: translateY(0);
+}
+
+.kakao-login-btn__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.kakao-login-btn__icon img {
+    display: block;
+    width: 14px;
+    height: 14px;
+}
+
+.kakao-login-btn__text {
+    letter-spacing: -0.02em;
+}

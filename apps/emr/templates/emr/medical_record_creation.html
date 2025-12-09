@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>진료 기록 작성</title>
+
+    <link rel="stylesheet" href="{% static 'emr/css/medical_record_creation.css' %}">
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">로고</div>
+        <div class="user-info">강민경님</div>
+    </div>
+
+    <!-- 전체 FORM -->
+    <form id="recordForm" method="POST" action="/mstaff/api/medical-record/create/">
+        {% csrf_token %}
+
+        <!-- JS가 JSON으로 넣어주는 필드 -->
+        <input type="hidden" id="prescriptions" name="prescriptions">
+        <input type="hidden" id="orders" name="orders">
+
+        <!-- 기본 값 -->
+        <input type="hidden" name="patient_id" value="1">
+        <input type="hidden" name="doctor_id" value="1">
+        <input type="hidden" name="hos_id" value="1">
+
+        <div class="container">
+            <h2>진료 기록 작성</h2>
+
+            <div class="patient-header-info">
+                <span><strong>환자명:</strong> 홍길순</span>
+                <span><strong>성별:</strong> 여자</span>
+                <span><strong>생년월일:</strong> 1990-02-10</span>
+                <span><strong>방문일시:</strong> 2025-03-14 09:42</span>
+                <span><strong>진료과:</strong> 내과</span>
+                <span><strong>담당의:</strong> 박○○</span>
+            </div>
+
+            <div class="middle-content-grid">
+
+                <!-- 진료기록 -->
+                <div class="card">
+                    <div class="section-title">진료기록 작성</div>
+
+                    <div class="form-group">
+                        <label>진료과</label>
+                        <input type="text" value="내과 (자동입력됨)" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>담당의사</label>
+                        <input type="text" value="정약용 (자동입력됨)" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label>특이사항</label>
+                        <input type="text" name="special_note" placeholder="특이사항을 직접 입력하세요">
+                    </div>
+
+                    <div class="form-group">
+                        <label>기록유형</label>
+                        <input type="text" name="record_type" placeholder="기록유형을 직접 입력하세요">
+                    </div>
+
+                    <div class="form-group">
+                        <label>환자분류</label>
+                        <select name="ptnt_div_cd">
+                            <option value="O" selected>외래 환자</option>
+                            <option value="I">입원 환자</option>
+                            <option value="E">응급 환자</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SOAP -->
+                <div class="card soap-area">
+                    <div class="section-title">경과기록 (SOAP)</div>
+
+                    <div class="form-group">
+                        <label for="sNote">S. 주관적 증상 입력</label>
+                        <textarea id="sNote" name="subjective"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="oNote">O. 객관적 소견 입력</label>
+                        <textarea id="oNote" name="objective"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="aNote">A. 의학적 평가 입력</label>
+                        <textarea id="aNote" name="assessment"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="pNote">P. 치료 계획 입력</label>
+                        <textarea id="pNote" name="plan"></textarea>
+                    </div>
+                </div>
+
+                <!-- 처방전 영역 -->
+                <div class="card prescription-area">
+                    <div class="section-title">처방전 작성</div>
+
+                    <div class="form-group">
+                        <label>투약 기간</label>
+                        <div class="date-group">
+                            <span>시작:</span>
+                            <input type="date" id="globalStartDate">
+
+                            <span>종료:</span>
+                            <input type="date" id="globalEndDate">
+                        </div>
+                    </div>
+
+                    <div id="prescriptionContainer"></div>
+
+                    <button class="order-add-button" type="button" onclick="addPrescriptionForm()">
+                        처방 추가 (+)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 추가 오더 + 예약 -->
+            <div class="bottom-content-grid">
+
+                <div class="card">
+                    <div class="section-title">추가 오더 설정</div>
+
+                    <div class="form-group">
+                        <label for="orderType">오더 종류</label>
+                        <select id="orderType" onchange="toggleEmergencyOption()">
+                            <option value="">선택</option>
+                            <option value="treatment">치료/처치</option>
+                            <option value="lab">검사</option>
+                        </select>
+                    </div>
+
+                    <div id="emergencyWrapper" style="display:none;">
+                        <label class="emergency-label">응급 여부</label>
+
+                        <div class="radio-line">
+                            <input type="radio" id="emergencyY" name="emergency_flag" value="yes">
+                            <label for="emergencyY">예</label>
+
+                            <input type="radio" id="emergencyN" name="emergency_flag" value="no" checked>
+                            <label for="emergencyN">아니오</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="section-title">예약 설정</div>
+
+                    <div class="form-group">
+                        <label for="reservationDate">예약 날짜</label>
+                        <input type="date" id="reservationDate" name="reservation_date_day">
+                    </div>
+
+                    <div class="form-group">
+                        <label>예약 시간</label>
+
+                        <!-- 실제 서버로 보내는 값 -->
+                        <input type="hidden" id="reservation_hour" name="reservation_hour">
+
+                        <!-- 시간 모달을 여는 버튼 -->
+                        <button type="button" class="btn-time-select" onclick="openTimeModal()">
+                            시간 선택
+                        </button>
+
+                        <!-- 선택된 시간 표시 -->
+                        <span id="selectedTimeLabel" style="margin-left:10px; font-weight:bold;"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reservationType">예약 유형</label>
+                        <select id="reservationType" name="reservation_type">
+                            <option value="consultation">진료/상담</option>
+                            <option value="test">검사</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="reservationMemo">메모</label>
+                        <textarea id="reservationMemo" name="reservation_memo"></textarea>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="action-buttons">
+                <button class="btn-save" type="button" onclick="prepareSubmit()">저장</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ================================
+         약품 검색 모달 (1개만 유지)
+    ================================= -->
+    <div class="modal-overlay" id="drugSearchModal">
+        <div class="modal-content">
+
+            <div class="modal-header">약품 검색 모달창</div>
+
+            <div class="modal-body">
+                <div class="search-controls">
+                    <input type="text" id="drugNameInput" placeholder="약품명을 입력한다">
+                    <button type="button" onclick="performSearch()">검색</button>
+                </div>
+
+                <table class="result-table" id="drugResultTable">
+                    <thead>
+                        <tr>
+                            <th>약품명</th>
+                            <th>약품코드</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel-6page" type="button" onclick="closeModal('drugSearchModal')">취소</button>
+                <button class="btn-confirm-6page" type="button" onclick="confirmSelection()">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================================
+         예약 시간 선택 모달
+    ================================= -->
+    <div class="modal-overlay" id="timeSelectModal">
+        <div class="modal-content">
+
+            <div class="modal-header">예약 시간 선택</div>
+
+            <div class="modal-body">
+                <div id="timeGrid" class="time-grid"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn-cancel-6page" type="button" onclick="closeModal('timeSelectModal')">
+                    닫기
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/medical_record_creation.js' %}"></script>
+</body>
+</html>

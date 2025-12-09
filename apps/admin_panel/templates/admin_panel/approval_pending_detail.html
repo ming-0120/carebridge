@@ -1,0 +1,203 @@
+<!-- 
+  승인신청 상세정보 템플릿
+  
+  목적: 승인 대기 중인 의사의 상세 정보를 표시하는 템플릿
+    - 사용자 경험(UX) 개선: 관리자가 승인 대기 중인 의사의 상세 정보를 확인할 수 있도록 함
+    - 데이터 표시: 의사의 기본 정보, 면허 정보, 병원 정보 등을 그리드 레이아웃으로 표시
+    - 개인정보 보호: 주민번호는 마스킹 처리하여 개인정보 보호
+  
+  동작 방식:
+    1. selected_doctor 변수가 존재하는지 확인
+    2. selected_doctor가 있으면 상세 정보 섹션 표시
+    3. 의사의 각 정보 필드를 그리드 레이아웃으로 표시
+    4. 주민번호는 마스킹 처리하여 표시
+  
+  사용 시점:
+    - 승인 대기 목록에서 의사를 선택했을 때 (AJAX로 로드)
+    - 페이지 로드 시 URL 파라미터에 의사 ID가 있을 때
+  
+  관련 변수:
+    - selected_doctor: 선택된 의사 객체 (Doctors 모델 인스턴스)
+      → user: 의사의 사용자 정보 (Users 모델 인스턴스)
+      → dep: 의사의 전공과 정보 (Departments 모델 인스턴스)
+      → hos: 의사의 주근무 병원 정보 (Hospitals 모델 인스턴스)
+-->
+{% if selected_doctor %}
+<!-- 
+  상세 정보 섹션 컨테이너
+  
+  목적: 의사 상세 정보를 담는 컨테이너
+    - CSS 클래스: user-detail-section (공통 스타일 적용)
+    - 레이아웃: 상세 정보를 표시하는 섹션
+-->
+<div class="user-detail-section">
+  <!-- 
+    상세 정보 제목
+    
+    목적: 상세 정보 섹션의 제목 표시
+      - CSS 클래스: detail-title (제목 스타일 적용)
+      - 텍스트: "승인신청 상세정보"
+  -->
+  <h3 class="detail-title">승인신청 상세정보</h3>
+  
+  <!-- 
+    상세 정보 그리드 레이아웃
+    
+    목적: 의사의 상세 정보를 그리드 레이아웃으로 표시
+      - CSS 클래스: detail-grid (그리드 레이아웃 스타일 적용)
+      - 레이아웃: 각 정보 항목을 그리드로 배치하여 가독성 향상
+  -->
+  <div class="detail-grid">
+    <!-- 
+      이름 정보 항목
+      
+      목적: 의사의 이름을 표시
+        - detail-label: "이름" (라벨)
+        - detail-value: selected_doctor.user.name (의사의 이름)
+          → selected_doctor: 선택된 의사 객체
+          → user: 의사의 사용자 정보
+          → name: 사용자의 이름
+    -->
+    <div class="detail-item">
+      <span class="detail-label">이름</span>
+      <span class="detail-value">{{ selected_doctor.user.name }}</span>
+    </div>
+    
+    <!-- 
+      의사ID 정보 항목
+      
+      목적: 의사의 사용자 ID(로그인 ID)를 표시
+        - detail-label: "의사ID" (라벨)
+        - detail-value: selected_doctor.user.username|default:"-" (의사의 사용자 ID)
+          → selected_doctor: 선택된 의사 객체
+          → user: 의사의 사용자 정보
+          → username: 사용자의 로그인 ID
+          → |default:"-": username이 없으면 "-" 표시
+    -->
+    <div class="detail-item">
+      <span class="detail-label">의사ID</span>
+      <span class="detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
+    </div>
+    
+    <!-- 
+      면허번호 정보 항목
+      
+      목적: 의사의 의사 면허번호를 표시
+        - detail-label: "면허번호" (라벨)
+        - detail-value: selected_doctor.license_no (의사의 면허번호)
+          → selected_doctor: 선택된 의사 객체
+          → license_no: 의사의 면허번호
+    -->
+    <div class="detail-item">
+      <span class="detail-label">면허번호</span>
+      <span class="detail-value">{{ selected_doctor.license_no }}</span>
+    </div>
+    
+    <!-- 
+      전공과 정보 항목
+      
+      목적: 의사의 전공과를 표시
+        - detail-label: "전공과" (라벨)
+        - detail-value: selected_doctor.dep.dep_name|default:"-" (의사의 전공과 이름)
+          → selected_doctor: 선택된 의사 객체
+          → dep: 의사의 전공과 정보 (Departments 모델 인스턴스)
+          → dep_name: 전공과 이름
+          → |default:"-": dep_name이 없으면 "-" 표시
+    -->
+    <div class="detail-item">
+      <span class="detail-label">전공과</span>
+      <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+    </div>
+    
+    <!-- 
+      주근무 병원 정보 항목
+      
+      목적: 의사의 주근무 병원을 표시
+        - detail-label: "주근무 병원" (라벨)
+        - detail-value: selected_doctor.hos.name|default:"-" (의사의 주근무 병원 이름)
+          → selected_doctor: 선택된 의사 객체
+          → hos: 의사의 주근무 병원 정보 (Hospitals 모델 인스턴스)
+          → name: 병원 이름
+          → |default:"-": name이 없으면 "-" 표시
+    -->
+    <div class="detail-item">
+      <span class="detail-label">주근무 병원</span>
+      <span class="detail-value">{{ selected_doctor.hos.name|default:"-" }}</span>
+    </div>
+    
+    <!-- 
+      연락처 정보 항목
+      
+      목적: 의사의 연락처(전화번호)를 표시
+        - detail-label: "연락처" (라벨)
+        - detail-value: selected_doctor.user.phone|default:"-" (의사의 전화번호)
+          → selected_doctor: 선택된 의사 객체
+          → user: 의사의 사용자 정보
+          → phone: 사용자의 전화번호
+          → |default:"-": phone이 없으면 "-" 표시
+    -->
+    <div class="detail-item">
+      <span class="detail-label">연락처</span>
+      <span class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
+    </div>
+    
+    <!-- 
+      주민번호 정보 항목 (마스킹 처리)
+      
+      목적: 의사의 주민번호를 마스킹 처리하여 표시 (개인정보 보호)
+        - detail-label: "주민번호" (라벨)
+        - detail-value: 주민번호 마스킹 처리
+          → selected_doctor.user.resident_reg_no: 의사의 주민번호
+          → 마스킹 규칙: 앞 6자리 + "-" + 7번째 자리 + "******"
+          → 예: "123456-1******" (실제 주민번호: "123456-1234567")
+          → 주민번호가 없으면 "-" 표시
+      
+      보안 고려사항:
+        - 개인정보 보호: 주민번호의 뒷자리를 마스킹 처리하여 개인정보 보호
+        - 앞 6자리만 표시: 생년월일 정보만 표시 (예: 123456-1******)
+    -->
+    <div class="detail-item">
+      <span class="detail-label">주민번호</span>
+      <span class="detail-value">
+        {% if selected_doctor.user.resident_reg_no %}
+          <!-- 
+            주민번호 마스킹 처리
+              - slice:":6": 주민번호의 앞 6자리 추출 (생년월일)
+              - slice:"6:7": 주민번호의 7번째 자리 추출 (성별 코드)
+              - "******": 뒷자리 마스킹 처리
+              - 예: "123456-1******"
+          -->
+          {{ selected_doctor.user.resident_reg_no|slice:":6" }}-{{ selected_doctor.user.resident_reg_no|slice:"6:7" }}******
+        {% else %}
+          <!-- 주민번호가 없으면 "-" 표시 -->
+          -
+        {% endif %}
+      </span>
+    </div>
+    
+    <!-- 
+      신청일 정보 항목
+      
+      목적: 의사 승인 신청일을 표시
+        - detail-label: "신청일" (라벨)
+        - detail-value: selected_doctor.user.created_at|date:"Y.m.d" (의사 계정 생성일)
+          → selected_doctor: 선택된 의사 객체
+          → user: 의사의 사용자 정보
+          → created_at: 사용자 계정 생성일 (의사 승인 신청일로 간주)
+          → |date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
+          → 예: "2024.01.15"
+    -->
+    <div class="detail-item">
+      <span class="detail-label">신청일</span>
+      <span class="detail-value">{{ selected_doctor.user.created_at|date:"Y.m.d" }}</span>
+    </div>
+  </div>
+</div>
+{% endif %}
+<!-- 
+  조건문 종료
+  
+  목적: selected_doctor가 없으면 상세 정보 섹션을 표시하지 않음
+    - selected_doctor가 null이거나 없으면 아무것도 표시하지 않음
+    - AJAX로 상세 정보를 로드할 때 사용
+-->

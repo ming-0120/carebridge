@@ -1,0 +1,10 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    path('', views.emergency_main, name='emergency_main'),
+    path('detail/<int:er_id>/', views.hospital_detail_json, name='hospital_detail'),
+    path('get_sigungu/', views.get_sigungu, name='get_sigungu'),
+]
+
+

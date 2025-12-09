@@ -1,0 +1,115 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>이전 진료기록 보기</title>
+
+    <link rel="stylesheet" href="{% static 'emr/css/view_previous_medical_records.css' %}">
+</head>
+<body>
+
+    <div class="container">
+        <h2>이전 진료기록 보기</h2>
+        
+        <div class="patient-info-header">
+            <span><strong>환자명:</strong> 홍길순</span>
+            <span><strong>성별:</strong> 여자</span>
+            <span><strong>생년월일:</strong> 1990-02-10</span>
+            <span><strong>방문일시:</strong> 2025-03-14 09:42</span>
+            <span><strong>진료과:</strong> 내과</span>
+            <span><strong>담당의:</strong> 박○○</span>
+        </div>
+
+        <div class="record-view-grid">
+            
+            <div class="panel" id="recordList">
+                <h3>[이전 진료기록 목록]</h3>
+                <div class="list-content"></div>
+            </div>
+            
+            <div class="panel">
+                <h3>[진료기록 상세보기]</h3>
+                <div id="soapDetail"></div>
+            </div>
+            
+            <div class="right-column-stack">
+                <div class="order-summary-panel">
+                    <h4>[치료기록]</h4>
+                    <div id="treatmentSummary"></div>
+                </div>
+                
+                <div class="order-summary-panel">
+                    <h4>[검사 오더]</h4>
+                    <div id="labOrderSummary"></div>
+                </div>
+                
+                <div class="order-summary-panel">
+                    <h4>[처방기록]</h4>
+                    <div id="prescriptionSummary"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Treatment Modal -->
+    <div class="modal-overlay" id="treatmentDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">치료기록 상세 모달창 (8페이지)</div>
+            <div class="modal-body">
+                <div class="modal-detail-row"><strong>처치명:</strong> Nebulizer</div>
+                <div class="modal-detail-row"><strong>처치 코드:</strong> TR001</div>
+                <div class="modal-detail-row"><strong>처치 부위:</strong> -</div>
+                <div class="modal-detail-row"><strong>시행 시각:</strong> 2025-03-14 10:20</div>
+                <div class="modal-detail-row"><strong>완료 시각:</strong> 2025-03-14 10:35</div>
+                <div class="modal-detail-row"><strong>상태:</strong> completed</div>
+                <div class="modal-detail-row"><strong>특이사항:</strong> 정상 진행</div>
+                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+            </div>
+            <div class="modal-footer"><button onclick="closeModal('treatmentDetailModal')">닫기</button></div>
+        </div>
+    </div>
+
+    <!-- Lab Modal -->
+    <div class="modal-overlay" id="labDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">검사오더 상세 모달창 (9페이지)</div>
+            <div class="modal-body">
+                <div class="modal-detail-row"><strong>검사 항목명:</strong> CBC</div>
+                <div class="modal-detail-row"><strong>검사 코드:</strong> LAB001</div>
+                <div class="modal-detail-row"><strong>검체:</strong> 혈액(BLD)</div>
+                <div class="modal-detail-row"><strong>오더 입력 시각:</strong> 2025-03-14 09:20</div>
+                <div class="modal-detail-row"><strong>상태:</strong> COMPLETED</div>
+                <div class="modal-detail-row"><strong>상태 변경 시각:</strong> 2025-03-14 10:05</div>
+                <div class="modal-detail-row"><strong>응급 여부:</strong> FALSE</div>
+                <div class="modal-detail-row"><strong>특이사항:</strong> 없음</div>
+                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+            </div>
+            <div class="modal-footer"><button onclick="closeModal('labDetailModal')">닫기</button></div>
+        </div>
+    </div>
+
+    <!-- Prescription Modal -->
+    <div class="modal-overlay" id="prescriptionDetailModal">
+        <div class="modal-content">
+            <div class="modal-header">처방기록 상세 모달창 (10페이지)</div>
+            <div class="modal-body">
+                <div class="modal-detail-row"><strong>처방명:</strong> Amoxicillin 500mg</div>
+                <div class="modal-detail-row"><strong>처방 코드:</strong> DRUG022</div>
+                <div class="modal-detail-row"><strong>오더 날짜:</strong> 2025-03-14 09:52</div>
+                <div class="modal-detail-row"><strong>처방 상태:</strong> 15 (투여완료)</div>
+                <div class="modal-detail-row"><strong>적용 시작 시각:</strong> 2025-03-14</div>
+                <div class="modal-detail-row"><strong>적용 종료 시각:</strong> 2025-03-19</div>
+                <div class="modal-detail-row"><strong>특이사항:</strong> 없음</div>
+                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+            </div>
+            <div class="modal-footer"><button onclick="closeModal('prescriptionDetailModal')">닫기</button></div>
+        </div>
+    </div>
+
+    <script src="{% static 'emr/js/view_previous_medical_records.js' %}"></script>
+</body>
+</html>
+ 

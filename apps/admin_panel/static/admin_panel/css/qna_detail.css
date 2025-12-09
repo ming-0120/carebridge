@@ -1,0 +1,679 @@
+/* 
+  ========= 문의 답변하기 페이지 전용 CSS =========
+  
+  목적: 1:1 문의 상세 페이지(qna_detail.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: 문의 답변 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: admin_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+  
+  주요 기능:
+    - 문의 내용 표시: 사용자가 작성한 문의 내용을 표시
+    - 답변 작성: 관리자가 답변을 작성할 수 있는 텍스트 영역
+    - 액션 버튼: 답변 취소 및 답변 완료 버튼
+  
+  관련 파일:
+    - HTML: qna_detail.html
+    - JavaScript: qna_detail.js
+    - 공통 CSS: admin_common.css
+*/
+
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* 
+  ========= QnA 상세 페이지 컨테이너 스타일 =========
+  
+  목적: QnA 상세 페이지의 컨테이너 높이 제한을 완전히 해제하여 전체 내용 표시
+    - 문제 해결: 긴 답변 내용을 표시할 수 있도록 높이 제한 제거
+    - 사용자 경험(UX) 개선: 스크롤 없이 전체 내용을 볼 수 있도록 함
+*/
+
+/* 
+  QnA 상세 페이지 컨테이너 높이 제한 완전 해제
+  
+  목적: QnA 상세 페이지의 컨테이너 높이 제한을 완전히 해제
+    - max-height: none !important - 최대 높이 제한 제거
+    - height: auto !important - 높이 자동 조정
+    - overflow-y: visible !important - 세로 스크롤 제거 (전체 내용 표시)
+    - overflow-x: hidden - 가로 스크롤 숨김
+    - flex: none - 플렉스 축소 방지
+    - margin-bottom: 20px !important - 하단 마진 추가
+    - padding-bottom: 20px !important - 하단 패딩 추가
+    - 사용처: QnA 상세 페이지의 컨테이너 (.container.qna-detail-page)
+    - 이유: 긴 답변 내용을 표시할 수 있도록 높이 제한을 완전히 제거
+*/
+.container.qna-detail-page {
+  max-height: none !important;
+  height: auto !important;
+  overflow-y: visible !important;
+  overflow-x: hidden;
+  flex: none;
+  margin-bottom: 20px !important;
+  padding-bottom: 20px !important;
+}
+
+/* 
+  QnA 상세 페이지 body 스크롤 허용
+  
+  목적: QnA 상세 페이지의 body에 스크롤 허용
+    - overflow-y: auto - 세로 스크롤 허용
+    - 사용처: QnA 상세 페이지의 body (body.qna-detail-body)
+    - 이유: 긴 답변 내용을 표시할 수 있도록 전체 페이지 스크롤 허용
+    - 주의: admin_common.css에서도 동일한 스타일이 정의되어 있음
+*/
+body.qna-detail-body {
+  overflow-y: auto;
+}
+
+/* 
+  탭 마진 줄이기
+  
+  목적: QnA 상세 페이지의 탭 메뉴 하단 마진 축소
+    - margin-bottom: 16px - 하단 마진 축소 (기본 24px → 16px)
+    - 사용처: QnA 상세 페이지의 탭 메뉴 (.container.qna-detail-page .tabs)
+    - 이유: 페이지 공간을 효율적으로 사용하기 위해 마진 축소
+*/
+.container.qna-detail-page .tabs {
+  margin-bottom: 16px;
+}
+
+/* 
+  ========= QnA 상세 페이지 컨테이너 =========
+  
+  목적: QnA 상세 페이지의 메인 컨테이너 스타일
+*/
+
+/* 
+  QnA 상세 컨테이너
+  
+  목적: QnA 상세 페이지의 메인 컨테이너 스타일
+    - width: 100% - 전체 너비 사용
+    - margin: 0 - 마진 제거
+    - 사용처: QnA 상세 페이지의 메인 컨테이너 (.qna-detail-container)
+*/
+.qna-detail-container {
+  width: 100%;
+  margin: 0;
+}
+
+/* 
+  QnA 상세 페이지 제목
+  
+  목적: QnA 상세 페이지의 메인 제목 스타일
+    - font-size: 24px - 큰 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - margin-bottom: 12px - 하단 마진
+    - padding-bottom: 8px - 하단 패딩
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - 사용처: QnA 상세 페이지의 제목 (.qna-detail-title)
+*/
+.qna-detail-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+/* 
+  ========= 문의 내용 섹션 =========
+  
+  목적: 사용자가 작성한 문의 내용을 표시하는 섹션 스타일
+    - 사용자 경험(UX) 개선: 문의 내용을 명확하게 구분하여 표시
+*/
+
+/* 
+  문의 섹션 컨테이너
+  
+  목적: 문의 내용을 담는 섹션 컨테이너 스타일
+    - background-color: #F5F5F5 - 연한 회색 배경
+    - border: 1px solid #E0E0E0 - 테두리 (회색)
+    - border-radius: 8px - 둥근 모서리
+    - padding: 14px - 내부 여백
+    - margin-bottom: 12px - 하단 마진
+    - 사용처: 문의 내용 섹션 (.inquiry-section)
+*/
+.inquiry-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+/* 
+  문의 섹션 제목
+  
+  목적: 문의 섹션의 제목 스타일
+    - font-size: 16px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - margin-bottom: 10px - 하단 마진
+    - 사용처: 문의 섹션의 제목 (.inquiry-section-title)
+*/
+.inquiry-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 10px;
+}
+
+/* 
+  문의 상세 항목
+  
+  목적: 문의 상세 정보의 각 항목 스타일 (예: 작성자, 연락처, 이메일 등)
+    - display: flex - 플렉스 레이아웃
+    - padding: 6px 0 - 상하 패딩
+    - border-bottom: 1px solid #E0E0E0 - 하단 테두리 (회색)
+    - 사용처: 문의 상세 정보의 각 항목 (.inquiry-detail-item)
+*/
+.inquiry-detail-item {
+  display: flex;
+  padding: 6px 0;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+/* 
+  문의 상세 항목 마지막 항목
+  
+  목적: 문의 상세 정보의 마지막 항목에서 하단 테두리 제거
+    - border-bottom: none - 하단 테두리 제거
+    - 사용자 경험(UX) 개선: 마지막 항목의 불필요한 테두리 제거
+*/
+.inquiry-detail-item:last-child {
+  border-bottom: none;
+}
+
+/* 
+  문의 상세 항목 라벨
+  
+  목적: 문의 상세 정보 항목의 라벨(필드명) 스타일
+    - width: 100px - 고정 너비
+    - font-size: 14px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #666 - 회색 텍스트
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: 문의 상세 정보 항목의 라벨 (.inquiry-detail-label)
+*/
+.inquiry-detail-label {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+
+/* 
+  문의 상세 항목 값
+  
+  목적: 문의 상세 정보 항목의 값(데이터) 스타일
+    - flex: 1 - 남은 공간 채우기
+    - font-size: 14px - 글씨 크기
+    - color: #222 - 진한 회색 텍스트
+    - 사용처: 문의 상세 정보 항목의 값 (.inquiry-detail-value)
+*/
+.inquiry-detail-value {
+  flex: 1;
+  font-size: 14px;
+  color: #222;
+}
+
+/* 
+  문의 상세 항목 값 링크
+  
+  목적: 문의 상세 정보 항목의 값 내부 링크 스타일 (예: 이메일 링크)
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - text-decoration: underline - 밑줄 표시
+    - 사용처: 문의 상세 정보 항목의 값 내부 링크 (.inquiry-detail-value a)
+*/
+.inquiry-detail-value a {
+  color: #1B3C73;
+  text-decoration: underline;
+}
+
+/* 
+  문의 내용 텍스트 영역
+  
+  목적: 사용자가 작성한 문의 내용을 표시하는 텍스트 영역 스타일
+    - background-color: #fff - 흰색 배경
+    - border: 1px solid #E0E0E0 - 테두리 (회색)
+    - border-radius: 6px - 둥근 모서리
+    - padding: 10px - 내부 여백
+    - min-height: 40px - 최소 높이
+    - max-height: 120px - 최대 높이 (긴 내용은 스크롤)
+    - overflow-y: auto - 세로 스크롤 허용
+    - white-space: pre-wrap - 공백과 줄바꿈 유지
+    - word-wrap: break-word - 긴 단어 줄바꿈
+    - font-size: 14px - 글씨 크기
+    - line-height: 1.4 - 줄 간격
+    - 사용처: 문의 내용 텍스트 영역 (.inquiry-content)
+    - 이유: 사용자가 작성한 문의 내용의 형식을 유지하면서 표시
+*/
+.inquiry-content {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* 
+  ========= 답변 작성 섹션 =========
+  
+  목적: 관리자가 답변을 작성할 수 있는 섹션 스타일
+    - 사용자 경험(UX) 개선: 답변 작성 영역을 명확하게 구분하여 표시
+*/
+
+/* 
+  답변 섹션 컨테이너
+  
+  목적: 답변 작성 영역을 담는 섹션 컨테이너 스타일
+    - background-color: #F5F5F5 - 연한 회색 배경
+    - border: 1px solid #E0E0E0 - 테두리 (회색)
+    - border-radius: 8px - 둥근 모서리
+    - padding: 14px - 내부 여백
+    - margin-bottom: 12px - 하단 마진
+    - 사용처: 답변 작성 섹션 (.reply-section)
+*/
+.reply-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+/* 
+  답변 섹션 제목
+  
+  목적: 답변 섹션의 제목 스타일
+    - font-size: 16px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - margin-bottom: 10px - 하단 마진
+    - 사용처: 답변 섹션의 제목 (.reply-section-title)
+*/
+.reply-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 10px;
+}
+
+/* 
+  답변 작성 텍스트 영역
+  
+  목적: 관리자가 답변을 작성하는 텍스트 영역 스타일
+    - width: 100% - 전체 너비 사용
+    - min-height: 100px - 최소 높이
+    - padding: 10px - 내부 여백
+    - border: 1px solid #E0E0E0 - 테두리 (회색)
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-family: "Noto Sans KR", sans-serif - 한글 폰트 설정
+    - resize: vertical - 세로 방향 크기 조정만 허용
+    - background-color: #fff - 흰색 배경
+    - line-height: 1.4 - 줄 간격
+    - 사용처: 답변 작성 텍스트 영역 (.reply-textarea)
+*/
+.reply-textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 10px;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: "Noto Sans KR", sans-serif;
+  resize: vertical;
+  background-color: #fff;
+  line-height: 1.4;
+}
+
+/* 
+  답변 작성 텍스트 영역 포커스 효과
+  
+  목적: 답변 작성 텍스트 영역에 포커스가 있을 때 테두리 색상 변경
+    - outline: none - 기본 포커스 아웃라인 제거
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - 사용자 경험(UX) 개선: 포커스 상태를 시각적으로 표시
+*/
+.reply-textarea:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+/* 
+  ========= 액션 버튼 섹션 =========
+  
+  목적: 답변 취소 및 답변 완료 버튼을 담는 액션 영역 스타일
+    - 레이아웃: 버튼들을 오른쪽 정렬하여 배치
+*/
+
+/* 
+  액션 버튼 영역
+  
+  목적: 답변 취소 및 답변 완료 버튼을 담는 컨테이너 스타일
+    - display: flex - 플렉스 레이아웃
+    - justify-content: flex-end - 오른쪽 정렬
+    - gap: 10px - 버튼 간 간격
+    - margin-top: 10px - 상단 마진
+    - margin-bottom: 0 - 하단 마진 제거
+    - padding-bottom: 0 - 하단 패딩 제거
+    - 사용처: 액션 버튼 영역 (.action-buttons)
+*/
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+/* 
+  답변 취소 버튼
+  
+  목적: 답변을 취소하는 버튼 스타일
+    - padding: 10px 20px - 내부 여백
+    - background-color: #F3F4F6 - 연한 회색 배경
+    - color: #374151 - 진한 회색 텍스트
+    - border: 1px solid #D1D5DB - 테두리 (회색)
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - text-decoration: none - 링크 밑줄 제거
+    - display: inline-block - 인라인 블록 요소
+    - 사용처: 답변 취소 버튼 (.btn-cancel)
+*/
+.btn-cancel {
+  padding: 10px 20px;
+  background-color: #F3F4F6;
+  color: #374151;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  text-decoration: none;
+  display: inline-block;
+}
+
+/* 
+  답변 취소 버튼 호버 효과
+  
+  목적: 답변 취소 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #E5E7EB - 더 진한 회색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-cancel:hover {
+  background-color: #E5E7EB;
+}
+
+/* 
+  답변 완료 버튼
+  
+  목적: 답변을 완료하는 버튼 스타일
+    - padding: 10px 20px - 내부 여백
+    - background-color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - color: #fff - 흰색 텍스트
+    - border: none - 테두리 제거
+    - border-radius: 6px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 답변 완료 버튼 (.btn-complete)
+*/
+.btn-complete {
+  padding: 10px 20px;
+  background-color: #1B3C73;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  답변 완료 버튼 호버 효과
+  
+  목적: 답변 완료 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #004C97 - 더 진한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-complete:hover {
+  background-color: #004C97;
+}
+
+/* 
+  ========= 반응형 디자인 =========
+  
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
+    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
+    - 주요 브레이크포인트:
+      → 모바일: 768px 이하
+      → 작은 모바일: 480px 이하
+*/
+
+/* 
+  모바일 화면 스타일 (768px 이하)
+  
+  목적: 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 768px - 최대 너비 768px까지 적용
+    - 제목 글씨 크기 축소
+    - 섹션 패딩 및 마진 조정
+    - 문의 상세 항목 세로 배치
+    - 문의 내용 및 답변 텍스트 영역 크기 조정
+    - 액션 버튼 세로 배치 및 전체 너비 사용
+    - 사용처: 모바일 화면 (768px 이하)
+*/
+@media (max-width: 768px) {
+  /* 
+    QnA 상세 페이지 제목 글씨 크기 축소
+    
+    목적: 모바일 화면에서 제목 글씨 크기 축소
+      - font-size: 20px - 글씨 크기 축소 (기본 24px → 20px)
+      - margin-bottom: 16px - 하단 마진 증가
+      - padding-bottom: 10px - 하단 패딩 증가
+  */
+  .qna-detail-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+  }
+  
+  /* 
+    문의 섹션 및 답변 섹션 패딩 및 마진 조정
+    
+    목적: 모바일 화면에서 섹션 패딩 및 마진 조정
+      - padding: 16px - 패딩 증가 (기본 14px → 16px)
+      - margin-bottom: 16px - 하단 마진 증가 (기본 12px → 16px)
+  */
+  .inquiry-section,
+  .reply-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  /* 
+    문의 섹션 및 답변 섹션 제목 글씨 크기 및 마진 조정
+    
+    목적: 모바일 화면에서 섹션 제목 글씨 크기 및 마진 조정
+      - font-size: 15px - 글씨 크기 축소 (기본 16px → 15px)
+      - margin-bottom: 14px - 하단 마진 증가 (기본 10px → 14px)
+  */
+  .inquiry-section-title,
+  .reply-section-title {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+  
+  /* 
+    문의 상세 항목 세로 배치
+    
+    목적: 모바일 화면에서 문의 상세 항목을 세로로 배치
+      - flex-direction: column - 세로 방향 배치
+      - padding: 12px 0 - 상하 패딩 증가
+      - gap: 6px - 요소 간 간격 추가
+  */
+  .inquiry-detail-item {
+    flex-direction: column;
+    padding: 12px 0;
+    gap: 6px;
+  }
+  
+  /* 
+    문의 상세 항목 라벨 전체 너비 사용
+    
+    목적: 모바일 화면에서 라벨이 전체 너비를 사용하도록 변경
+      - width: 100% - 전체 너비 사용 (기본 100px → 100%)
+      - font-size: 13px - 글씨 크기 축소 (기본 14px → 13px)
+  */
+  .inquiry-detail-label {
+    width: 100%;
+    font-size: 13px;
+  }
+  
+  /* 
+    문의 상세 항목 값 글씨 크기 축소
+    
+    목적: 모바일 화면에서 값 글씨 크기 축소
+      - font-size: 13px - 글씨 크기 축소 (기본 14px → 13px)
+  */
+  .inquiry-detail-value {
+    font-size: 13px;
+  }
+  
+  /* 
+    문의 내용 텍스트 영역 패딩 및 크기 조정
+    
+    목적: 모바일 화면에서 문의 내용 텍스트 영역 패딩 및 크기 조정
+      - padding: 12px - 패딩 증가 (기본 10px → 12px)
+      - font-size: 13px - 글씨 크기 축소 (기본 14px → 13px)
+      - min-height: 60px - 최소 높이 증가 (기본 40px → 60px)
+  */
+  .inquiry-content {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 60px;
+  }
+  
+  /* 
+    답변 작성 텍스트 영역 최소 높이 및 패딩 조정
+    
+    목적: 모바일 화면에서 답변 작성 텍스트 영역 최소 높이 및 패딩 조정
+      - min-height: 150px - 최소 높이 증가 (기본 100px → 150px)
+      - padding: 12px - 패딩 증가 (기본 10px → 12px)
+      - font-size: 13px - 글씨 크기 축소 (기본 14px → 13px)
+  */
+  .reply-textarea {
+    min-height: 150px;
+    padding: 12px;
+    font-size: 13px;
+  }
+  
+  /* 
+    액션 버튼 세로 배치
+    
+    목적: 모바일 화면에서 액션 버튼을 세로로 배치
+      - flex-direction: column-reverse - 세로 방향 역순 배치 (답변 완료 버튼이 위에)
+      - gap: 8px - 간격 축소
+      - margin-top: 16px - 상단 마진 증가
+  */
+  .action-buttons {
+    flex-direction: column-reverse;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  
+  /* 
+    액션 버튼 전체 너비 사용
+    
+    목적: 모바일 화면에서 액션 버튼이 전체 너비를 사용하도록 변경
+      - width: 100% - 전체 너비 사용
+      - padding: 14px - 패딩 증가 (기본 10px 20px → 14px)
+      - font-size: 14px - 글씨 크기 유지
+  */
+  .btn-cancel,
+  .btn-complete {
+    width: 100%;
+    padding: 14px;
+    font-size: 14px;
+  }
+}
+
+/* 
+  작은 모바일 화면 스타일 (480px 이하)
+  
+  목적: 작은 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 480px - 최대 너비 480px까지 적용
+    - 제목 글씨 크기 추가 축소
+    - 섹션 패딩 추가 축소
+    - 문의 상세 항목 패딩 추가 축소
+    - 답변 작성 텍스트 영역 최소 높이 추가 축소
+    - 사용처: 작은 모바일 화면 (480px 이하)
+*/
+@media (max-width: 480px) {
+  /* 
+    QnA 상세 페이지 제목 글씨 크기 추가 축소
+    
+    목적: 작은 모바일 화면에서 제목 글씨 크기 추가 축소
+      - font-size: 18px - 글씨 크기 추가 축소 (기본 24px → 18px)
+  */
+  .qna-detail-title {
+    font-size: 18px;
+  }
+  
+  /* 
+    문의 섹션 및 답변 섹션 패딩 추가 축소
+    
+    목적: 작은 모바일 화면에서 섹션 패딩 추가 축소
+      - padding: 12px - 패딩 추가 축소 (기본 14px → 12px)
+  */
+  .inquiry-section,
+  .reply-section {
+    padding: 12px;
+  }
+  
+  /* 
+    문의 상세 항목 패딩 추가 축소
+    
+    목적: 작은 모바일 화면에서 문의 상세 항목 패딩 추가 축소
+      - padding: 10px 0 - 상하 패딩 추가 축소 (기본 12px 0 → 10px 0)
+  */
+  .inquiry-detail-item {
+    padding: 10px 0;
+  }
+  
+  /* 
+    답변 작성 텍스트 영역 최소 높이 추가 축소
+    
+    목적: 작은 모바일 화면에서 답변 작성 텍스트 영역 최소 높이 추가 축소
+      - min-height: 120px - 최소 높이 추가 축소 (기본 150px → 120px)
+  */
+  .reply-textarea {
+    min-height: 120px;
+  }
+}
+
+
+
+
+
+
+
+
+

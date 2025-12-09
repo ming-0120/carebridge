@@ -1,0 +1,102 @@
+/* 
+  ========= 의사 목록 페이지 전용 CSS =========
+  
+  목적: 의사 목록 페이지(doctor_list.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: 의사 목록 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: admin_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+  
+  주요 기능:
+    - 승인 상태 배지: 의사의 승인 상태를 시각적으로 표시하는 배지 스타일
+  
+  관련 파일:
+    - HTML: doctor_list.html, doctor_list_detail.html
+    - JavaScript: doctor_list.js
+    - 공통 CSS: admin_common.css
+*/
+
+/* 공통 CSS는 admin_common.css를 참조하세요 */
+
+/* 
+  ========= 승인 상태 배지 스타일 =========
+  
+  목적: 의사의 승인 상태를 시각적으로 표시하는 배지 스타일
+    - 사용자 경험(UX) 개선: 의사의 승인 상태를 색상으로 구분하여 한눈에 파악 가능
+    - 상태별 색상:
+      → 승인됨: 초록색 배경
+      → 대기 중: 주황색 배경
+      → 거부됨: 빨간색 배경
+*/
+
+/* 
+  승인 상태 배지 기본 스타일
+  
+  목적: 모든 승인 상태 배지에 공통으로 적용되는 기본 스타일
+    - display: inline-block - 인라인 블록 요소로 표시 (배지 형태)
+    - padding: 4px 12px - 내부 여백 (상하 4px, 좌우 12px)
+    - border-radius: 12px - 둥근 모서리 (배지 형태)
+    - font-size: 12px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - 사용처: 모든 승인 상태 배지 (.status-badge)
+    - 사용 예시: <span class="status-badge status-approved">승인</span>
+*/
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 
+  승인됨 상태 배지 스타일
+  
+  목적: 승인된 의사의 상태를 표시하는 배지 스타일
+    - background-color: #10B981 - 초록색 배경 (성공 색상)
+    - color: #fff - 흰색 텍스트
+    - 사용처: 승인된 의사 상태 배지 (.status-badge.status-approved)
+    - 사용 예시: <span class="status-badge status-approved">승인</span>
+    - 의미: 의사가 관리자에 의해 승인되어 정상적으로 활동할 수 있는 상태
+*/
+.status-approved {
+  background-color: #10B981;
+  color: #fff;
+}
+
+/* 
+  대기 중 상태 배지 스타일
+  
+  목적: 승인 대기 중인 의사의 상태를 표시하는 배지 스타일
+    - background-color: #F59E0B - 주황색 배경 (경고 색상)
+    - color: #fff - 흰색 텍스트
+    - 사용처: 승인 대기 중인 의사 상태 배지 (.status-badge.status-pending)
+    - 사용 예시: <span class="status-badge status-pending">대기</span>
+    - 의미: 의사가 가입 신청을 했지만 아직 관리자의 승인을 받지 않은 상태
+*/
+.status-pending {
+  background-color: #F59E0B;
+  color: #fff;
+}
+
+/* 
+  거부됨 상태 배지 스타일
+  
+  목적: 승인이 거부된 의사의 상태를 표시하는 배지 스타일
+    - background-color: #EF4444 - 빨간색 배경 (에러 색상)
+    - color: #fff - 흰색 텍스트
+    - 사용처: 승인이 거부된 의사 상태 배지 (.status-badge.status-rejected)
+    - 사용 예시: <span class="status-badge status-rejected">거부</span>
+    - 의미: 의사의 가입 신청이 관리자에 의해 거부된 상태
+*/
+.status-rejected {
+  background-color: #EF4444;
+  color: #fff;
+}
+
+
+
+
+
+
+
+
+

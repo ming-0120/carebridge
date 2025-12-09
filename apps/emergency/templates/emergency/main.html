@@ -1,0 +1,178 @@
+{% extends "emergency/base.html" %}
+{% load static %}
+{% load status_filters %}
+
+{% block title %}실시간 응급실 조회{% endblock %}
+
+{% block content %}
+
+<header>
+  <h1>실시간 응급실 조회</h1>
+</header>
+
+<div class="control-row">
+  <button class="btn" onclick="openRegionModal()">지역 선택</button>
+  {% if selected_region %}
+    <span id="region-summary" class="region-summary">{{ selected_region }}</span>
+  {% endif %}
+  <button class="btn" onclick="openFilterModal()">필터</button>
+
+  <!-- 거리순 정렬 버튼 -->
+  <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
+</div>
+
+<!-- 선택된 필터 태그 -->
+<div id="filter-tags-container" class="filter-tags hidden">
+  <div class="filter-tags-label">필터 결과</div>
+
+  <div id="filter-tags" style="
+        display:flex;
+        flex-wrap:nowrap;
+        align-items:center;
+        gap:8px;
+        overflow-x:auto;
+        padding:6px 0;
+  "></div>
+
+  <button id="filter-tags-reset" class="filter-reset-btn">선택 초기화 ✕</button>
+</div>
+
+
+<div class="table-box">
+  <div class="table-header">
+    <div>기관명</div>
+    <div>응급실 일반</div>
+    <div>응급실 소아</div>
+    <div>분만실</div>
+    <div>음압격리</div>
+    <div>일반격리</div>
+    <div>코호트격리</div>
+    <div></div>
+  </div>
+
+  {% for hos in hospitals %}
+    {% with st=hos.latest_status %}
+      <div class="row" data-er-id="{{ hos.er_id }}" onclick="openHospitalDetail('{{ hos.er_id }}')">
+
+        <div>
+          <div class="h-name">{{ hos.er_name }}</div>
+          <div class="h-subinfo">
+            {% if hos.distance_km %}
+              {{ hos.distance_km|floatformat:1 }}km | 
+            {% endif %}
+            {{ hos.er_sido }} {{ hos.er_sigungu }}
+          </div>
+        </div>
+
+        {# 응급실 일반 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+        </div>
+
+        {# 응급실 소아 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+        </div>
+
+        {# 분만실 #}
+        <div>
+          {% if st %}{% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+        </div>
+
+        {# 음압격리 #}
+        <div>
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
+        </div>
+
+        {# 일반격리 #}
+        <div>
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
+        </div>
+
+        {# 코호트격리 #}
+        <div>
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
+        </div>
+
+
+        <div class="favorite">★</div>
+      </div>
+    {% endwith %}
+  {% empty %}
+  <div style="padding:24px;">표시할 병원 데이터가 없습니다.</div>
+  {% endfor %}
+
+</div>
+
+{% include "emergency/_modal_region.html" %}
+{% include "emergency/_modal_filter.html" %}
+{% include "emergency/_modal_detail.html" %}
+
+<script>
+  window.regionDict = JSON.parse('{{ region_dict_json|safe }}');
+
+  // -------------------------
+  // 거리 순 정렬 기능
+  // -------------------------
+  function sortByDistance() {
+    const url = new URL(window.location.href);
+    url.searchParams.set("sort", "distance");
+    window.location.href = url.toString();
+  }
+  
+  // -------------------------
+  // sessionStorage에서 위치 정보 읽어서 서버에 전달 (URL에는 추가하지 않음)
+  // -------------------------
+  (function() {
+    const userLat = sessionStorage.getItem("user_lat");
+    const userLng = sessionStorage.getItem("user_lng");
+    
+    // sessionStorage에 위치 정보가 있고, URL에 없으면 서버에 전달
+    if (userLat && userLng) {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (!urlParams.get("lat") && !urlParams.get("lng")) {
+        // 위치 정보를 서버에 전달하기 위해 AJAX로 요청
+        // 서버는 요청 헤더에서 위치 정보를 읽어서 처리
+        fetch(window.location.pathname + window.location.search, {
+          method: 'GET',
+          headers: {
+            'X-User-Lat': userLat,
+            'X-User-Lng': userLng,
+            'X-Requested-With': 'XMLHttpRequest',
+          }
+        })
+        .then(response => response.text())
+        .then(html => {
+          // 응답을 파싱하여 병원 목록만 업데이트
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const newTableBox = doc.querySelector('.table-box');
+          if (newTableBox) {
+            const currentTableBox = document.querySelector('.table-box');
+            if (currentTableBox) {
+              currentTableBox.innerHTML = newTableBox.innerHTML;
+            }
+          }
+        })
+        .catch(err => console.error('위치 정보 전달 실패:', err));
+      }
+    }
+  })();
+</script>
+
+<!-- home.js: 위치 → sessionStorage에만 저장 (URL에는 추가하지 않음) -->
+<script src="{% static 'core/js/home.js' %}"></script>
+
+{% endblock %}
