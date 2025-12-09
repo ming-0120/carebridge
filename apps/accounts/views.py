@@ -55,12 +55,14 @@ def login_view(request):
 
     # 실제 로그인 처리
     request.session['user_id'] = user.user_id
-    request.session['username'] = user.username
+    request.session['username'] = user.name
     request.session['role'] = user.role
 
     # 관리자 역할 체크 (role 값은 'ADMIN' - 대문자)
     if user.role == 'ADMIN':
         return redirect('/admin_panel/')
+    elif user.role == 'DOCTOR':
+        return redirect('/mstaff/doctor_dashboard/')
 
     return redirect(next_url)
 
@@ -71,8 +73,8 @@ def register_view(request):
     from_kakao = kakao_tmp is not None
 
     if request.method == "GET":
-        role = request.GET.get("role", "patient")          # 기본값: patient
-        provider = request.GET.get("provider", "local")    # local 또는 kakao
+        role = request.GET.get("role", "patient")
+        provider = request.GET.get("provider", "local")
 
         hospitals = Hospital.objects.all()
         departments = Department.objects.all()
@@ -106,7 +108,9 @@ def register_view(request):
     password1 = request.POST.get("password1", "")
     password2 = request.POST.get("password2", "")
 
-    address = ""
+    zipcode = request.POST.get("zipcode", "").strip()
+    addr1   = request.POST.get("addr1", "").strip()   # 기본주소
+    addr2   = request.POST.get("addr2", "").strip()   # 상세주소
 
     # 의사 전용 필드
     license_no = request.POST.get("license_number", "").strip()
@@ -117,7 +121,10 @@ def register_view(request):
 
     # 1) 역할별 주소 세팅 ----------------------
     if role == "patient":
-        address = request.POST.get("address", "").strip()
+        if zipcode or addr1 or addr2:
+            address = f"{zipcode}|{addr1}|{addr2}"
+        else:
+            address = ""
     else:  # doctor
         if hospital_id:
             hospital = Hospital.objects.filter(pk=hospital_id).first()

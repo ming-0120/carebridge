@@ -1,0 +1,102 @@
+{% load static %}
+
+{% block content %}
+{% include "core/_header.html" %}
+<link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+<div class="mypage-layout">
+    <!-- 왼쪽 마이페이지 메뉴 -->
+    <aside class="mypage-sidebar">
+        <ul>
+            <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
+            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
+            <li><a href="{% url 'profile_edit' %}" class="active">회원 정보수정</a></li>
+            <li><a href="#">즐겨 찾는 병원</a></li>
+            <li><a href="#">계정 탈퇴</a></li>
+        </ul>
+    </aside>
+
+    <!-- 오른쪽 컨텐츠 -->
+    <section class="mypage-content">
+        <h2>개인정보수정</h2>
+
+        {% if messages %}
+            <ul class="django-messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="form-row">
+                <label>성명</label>
+                <div class="form-value">{{ user.name }}</div>
+            </div>
+
+            <div class="form-row">
+                <label>생년월일</label>
+                <div class="form-value">
+                     {{ birth_display }}
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>아이디</label>
+                <div class="form-value">{{ user.username }}</div>
+            </div>
+
+            <div class="form-row email-row">
+                <label>이메일</label>
+                <div class="form-inline">
+                    <input type="text" name="email_local" class="input-email" value="{{ email_local }}">
+                    <span>@</span>
+                    <input type="text" name="email_domain_input" id="emailDomainInput"
+                           class="input-email" value="{{ email_domain }}">
+                    <select name="email_domain_select" id="emailDomainSelect" class="select-email">
+                        <option value="custom">직접입력</option>
+                        <option value="naver.com">naver.com</option>
+                        <option value="gmail.com">gmail.com</option>
+                        <option value="daum.net">daum.net</option>
+                        <option value="nate.com">nate.com</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>연락처</label>
+                <div class="form-inline">
+                    <input type="text" name="phone" class="input-text" value="{{ user.phone }}">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>주소</label>
+                <div class="form-address">
+                    <div class="addr-row">
+                        <input type="text" name="zipcode" id="postcode" class="input-zip"
+                               placeholder="우편번호" value="{{ zipcode }}">
+                        <button type="button" class="btn" onclick="execDaumPostcode()">우편번호 검색</button>
+                    </div>
+                    <div class="addr-row">
+                        <input type="text" name="addr1" id="address" class="input-text"
+                               placeholder="기본주소" value="{{ addr1 }}">
+                    </div>
+                    <div class="addr-row">
+                        <input type="text" name="addr2" id="addressDetail" class="input-text"
+                               placeholder="상세주소" value="{{ addr2 }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn btn-primary">수정</button>
+                <button type="button" class="btn btn-secondary" onclick="history.back();">취소</button>
+            </div>
+        </form>
+    </section>
+</div>
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<script src="{% static 'mypage/js/profile_edit.js' %}"></script>
+{% endblock %}

@@ -18,7 +18,7 @@ window.onload = function() {
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
-        dateClick: function(info) {
+        dateClick: async function(info) {
             if (!selectedDate) {
                 selectedDate = info.dayEl
             } else {
@@ -30,7 +30,29 @@ window.onload = function() {
                 document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)'
             }
             info.dayEl.style.backgroundColor = '#2c6cc5aa';
-            console.log(info.dateStr)
+            console.log(info.dateStr);
+
+            const url = `/mstaff/get_reservation_medical_record/?date=${info.dateStr}`;
+            response = await fetch(url);
+
+            const datas = await response.json();
+
+            if (response.status == 200) {
+                const result = [];
+                result.push(`
+                    <h3>예약 환자 (${datas.users.length}명)</h3>    
+                `)
+                for (d of datas.users) {
+                    result.push(`
+                        <div class="patient-list-item" onclick="">
+                            <h4>성명: ${d.user.name}</h4>
+                            <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
+                            <p>예약시간: ${d.slot.start_time}</p>
+                        </div>    
+                    `)
+                }
+                $('#patinetList').html(result.join('\n'));
+            }
         },
         selectable: false,
         selectOverlap: false,
@@ -47,41 +69,6 @@ window.onload = function() {
         },
     });
     calendar.render();
-
-    const dates = getLastSevenDays();
-    const ctx = document.getElementById('dailyStatsChart').getContext('2d');
-
-    new Chart(ctx, {
-            type: 'line', // 라인 차트 (추이 분석에 유리)
-            data: {
-                labels: chartData.labels, // X축: 날짜
-                datasets: [{
-                    label: '라인 그래프2',
-                    type : 'line',
-                    fill : false,
-                    lineTension : 0.2,
-                    pointRadius : 0,
-                    backgroundColor: 'rgb(255, 204, 0)',
-                    borderColor: 'rgb(255, 204, 0)',
-                    data: [100, 120, 150, 100, 180, 200]
-                }
-                    
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: '진료 건수'
-                        }
-                    }
-                }
-            }
-        });
 }
 
 function getLastSevenDays() {
@@ -107,4 +94,57 @@ function getLastSevenDays() {
     }
 
     return dates;
+}
+
+function rrnToBirthdate(regNum) {
+    // 1. 입력된 주민등록번호에서 하이픈(-) 등 비숫자 문자 제거 및 정리
+    let regNumStr = String(regNum).replace(/[^0-9]/g, '').trim();
+
+    // 2. 입력값 유효성 검사 (최소 7자리 확인)
+    if (regNumStr.length < 7) {
+        return "정보 오류: 주민등록번호는 최소 7자리여야 합니다.";
+    } 
+
+    // 추출에 사용할 정확히 7자리만 선택
+    regNumStr = regNumStr.substring(0, 7);
+
+    // 3. 생년월일 부분 (앞 6자리)
+    const yy = regNumStr.substring(0, 2); // 년도 끝 두 자리
+    const mm = regNumStr.substring(2, 4); // 월
+    const dd = regNumStr.substring(4, 6); // 일
+    
+    // 4. 성별/세기 구분 번호 (7번째 자리)
+    const centuryDigit = regNumStr.charAt(6); 
+    let yearPrefix = '';
+
+    // 5. 세기 결정
+    switch (centuryDigit) {
+        // 1900년대 출생 남성/여성 (1, 2) 또는 외국인 (7, 8)
+        case '1':
+        case '2':
+        case '7':
+        case '8':
+            yearPrefix = '19';
+            break;
+        // 2000년대 출생 남성/여성 (3, 4) 또는 외국인 (5, 6)
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+            yearPrefix = '20';
+            break;
+        // 1800년대 출생 남성/여성 (9, 0) - 거의 사용되지 않음
+        case '9':
+        case '0':
+            yearPrefix = '18';
+            break;
+        default:
+            return "세기 오류: 유효하지 않은 7번째 자리 번호입니다.";
+    }
+    
+    // 6. 최종 생년월일 문자열 조합
+    const fullYear = yearPrefix + yy;
+    const birthDate = `${fullYear}-${mm}-${dd}`;
+    
+    return birthDate;
 }

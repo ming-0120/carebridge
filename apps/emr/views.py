@@ -19,6 +19,8 @@ from django.core import serializers
 from django.db.models import Count
 from django.db.models import DateField
 from django.db.models.functions import Cast
+from django.core.serializers.json import DjangoJSONEncoder
+
 
 KST = tz("Asia/Seoul")
 
@@ -53,39 +55,28 @@ def api_reserved_hours(request):
 
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
 
-    # KST 날짜 범위 생성
-    start_kst = timezone.make_aware(
-        datetime.combine(target_date, datetime.min.time()),
-        KST
-    )
-    end_kst = timezone.make_aware(
-        datetime.combine(target_date, datetime.max.time()),
-        KST
-    )
-
-    # UTC 변환 (Django 5.2에서는 timezone.utc 제거됨 → dt_timezone.utc 사용)
-    start_utc = start_kst.astimezone(dt_timezone.utc)
-    end_utc   = end_kst.astimezone(dt_timezone.utc)
-
-    # UTC 범위로 DB 조회
+    # slot_date를 직접 사용
     qs = Reservations.objects.filter(
         slot__doctor_id=doctor_id,
-        reserved_at__gte=start_utc,
-        reserved_at__lte=end_utc
-    ).values_list("reserved_at", flat=True)
+        slot__slot_date=target_date
+    ).select_related("slot").values_list("slot__start_time", flat=True)
 
-    reserved_hours = []
-    for dt in qs:
-        local_dt = dt.astimezone(KST)
-        reserved_hours.append(local_dt.hour)
+    reserved_hours = [t.hour for t in qs]
 
     return JsonResponse({"reserved_hours": reserved_hours})
+
 
 
 # ---------------------------------------------------------
 # 의사 대시보드 화면
 # ---------------------------------------------------------
 def doctor_screen_dashboard(request):
+
+    user_role = request.session.get('role', '')
+    if user_role != 'DOCTOR':
+        return redirect('/')
+
+    user_id = request.session.get('user_id', '')
     currentYear = datetime.now().year
 
     items = []
@@ -116,11 +107,7 @@ def doctor_screen_dashboard(request):
     doctor = {}
     users = []
     try:
-        doctor = Doctors.objects.get(doctor_id=1)
-        # users = list(Users.objects.filter(
-        #     reservations__slot__doctor_id=doctor.doctor_id,
-        #     reservations__slot__slot_date=date.today()
-        # ))
+        doctor = Doctors.objects.get(user_id=user_id)
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
@@ -139,13 +126,22 @@ def doctor_screen_dashboard(request):
     except:
         print('error')
 
-    try:
-        now = datetime.now() 
-        seven_days_ago_date = now.date() - timedelta(days=7)
-        start_of_period = datetime.combine(seven_days_ago_date, time.min)
-        end_of_period = now
+    
+    now = datetime.now() 
+    seven_days_ago_date = now.date() - timedelta(days=7)
+    start_of_period = datetime.combine(seven_days_ago_date, time.min)
+    end_of_period = now
+    daily_medical_record_stats = []
+    medical_record_chart_data = []
+    daily_lab_orders_stats = []
+    lab_orders_chart_data = []
+    daily_treatment_stats = []
+    treatment_chart_data = []
+    daily_medical_record_completed_count = 0
+    daily_reservation_count = 0
 
-        daily_stats = list(MedicalRecord.objects.filter(
+    try:
+        daily_medical_record_stats = list(MedicalRecord.objects.filter(
             hos_id=doctor.hos_id,
             record_datetime__gte=start_of_period,
             record_datetime__lte=end_of_period
@@ -154,19 +150,68 @@ def doctor_screen_dashboard(request):
         ).values('record_date').annotate(
             count=Count('medical_record_id')
         ).order_by('record_date'))
-
-        labels = []  # 날짜 (x축)
-        data = []    # 진료 건수 (y축)
         
-        for item in daily_stats:
-            labels.append(item['record_date'].strftime('%Y-%m-%d'))
-            data.append(item['count'])
-            
-        medical_record_chart_data = {
-            'labels': labels,
-            'data': data,
-        }
+        for item in daily_medical_record_stats:
+            medical_chart = {
+                'labels': item['record_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            medical_record_chart_data.append(medical_chart)
+    except:
+        print('error')
 
+    try:
+        daily_lab_orders_stats = list(LabOrders.objects.filter(
+            medical_record__hos_id=doctor.hos_id,
+            status_datetime__gte=start_of_period,
+            status_datetime__lte=end_of_period,
+            status='Completed'
+        ).annotate(
+            status_date=Cast('status_datetime', output_field=DateField())
+        ).values('status_date').annotate(
+            count=Count('lab_order_id')
+        ).order_by('status_date'))
+
+        for item in daily_lab_orders_stats:
+            lab_orders_chart = {
+                'labels': item['status_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            lab_orders_chart_data.append(lab_orders_chart)
+    except:
+        print('error')
+
+    try:
+        daily_treatment_stats = list(TreatmentProcedures.objects.filter(
+            medical_record__hos_id=doctor.hos_id,
+            completion_datetime__gte=start_of_period,
+            completion_datetime__lte=end_of_period,
+            status='Completed'
+        ).annotate(
+            completion_date=Cast('completion_datetime', output_field=DateField())
+        ).values('completion_date').annotate(
+            count=Count('treatment_id')
+        ).order_by('completion_date'))
+
+        for item in daily_treatment_stats:
+            treatment_chart = {
+                'labels': item['completion_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            treatment_chart_data.append(treatment_chart)
+    except:
+        print('error')
+
+    try:
+        daily_medical_record_completed_count = MedicalRecord.objects.filter(
+            doctor_id=doctor.doctor_id,
+            record_datetime__contains=str(date.today())
+        ).count()
+
+        daily_reservation_count = Reservations.objects.filter(
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=date.today() 
+        ).count()
     except:
         print('error')
 
@@ -174,7 +219,11 @@ def doctor_screen_dashboard(request):
         'holidays': json.dumps(holidays),
         'users': users,
         'doctor': doctor,
-        'medical_record_chart': medical_record_chart_data,
+        'medical_record_chart': json.dumps(medical_record_chart_data),
+        'lab_orders_chart': json.dumps(lab_orders_chart_data),
+        'treatment_chart': json.dumps(treatment_chart_data),
+        'daily_medical_record_completed_count': daily_medical_record_completed_count,
+        'daily_reservation_count': daily_reservation_count,
     }
 
     return render(request, 'emr/doctor_screen_dashboard.html', datas)
@@ -267,13 +316,38 @@ def hospital_staff_dashboard(request):
 # ---------------------------------------------------------
 # 진료기록 작성 화면
 # ---------------------------------------------------------
+# ---------------------------------------------------------
+# 진료기록 작성 화면
+# ---------------------------------------------------------
 def medical_record_creation(request):
+    # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
-    return render(request, 'emr/medical_record_creation.html', {
-        "patient_id": patient_id
-    })
 
+    # 2) 환자(Users), 의사(Doctors) 객체 조회
+    #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
+    patient = Users.objects.get(user_id=patient_id)
+    doctor = Doctors.objects.get(doctor_id=1)
 
+    # 3) 화면용 파생 값 세팅
+    #    주민번호 → 생년월일
+    birth = extract_birth_date(patient.resident_reg_no)
+    #    진료과 이름 (모델 구조에 따라 dep_name 사용)
+    department = doctor.dep.dep_name if doctor.dep else ""
+    #    의사 이름 (Users 테이블에 연결되어 있다고 가정)
+    doctor_name = doctor.user.name if hasattr(doctor, "user") else ""
+
+    now_dt = timezone.now()
+
+    context = {
+        "patient": patient,
+        "doctor": doctor,          # doctor.doctor_id, doctor.hos_id 템플릿에서 사용
+        "birth": birth,
+        "department": department,
+        "doctor_name": doctor_name,
+        "now": now_dt,
+    }
+
+    return render(request, 'emr/medical_record_creation.html', context)
 
 # -------------------------------------------------------------------
 # 추가해야 하는 나머지 View (템플릿만 연결)
@@ -486,10 +560,11 @@ def api_today_patients(request):
         Q(resident_reg_no__icontains=q)
     ).values_list("user_id", flat=True)
 
+    # slot_date 중심 조회
     reservations = (
         Reservations.objects.filter(
             user_id__in=matched_users,
-            slot__slot_date=today,
+            slot__slot_date=today
         )
         .select_related(
             "user",
@@ -508,57 +583,43 @@ def api_today_patients(request):
         s = r.slot
         d = s.doctor
 
-        # 오늘 이전 기록 중 가장 최근
-        today_start = timezone.make_aware(
-            datetime.combine(today, time.min),
-            timezone.get_current_timezone()
-        )
-
         recent_record = (
             MedicalRecord.objects
-            .filter(user=u, record_datetime__lt=today_start)
+            .filter(user=u, record_datetime__date__lt=today)
             .order_by('-record_datetime')
             .first()
         )
-
         recent_diag = recent_record.record_datetime.date().isoformat() if recent_record else ""
 
-        # -----------------------------------------------------
-        # 오더 유무 계산 (해당 환자의 모든 기록 기준)
-        # -----------------------------------------------------
-        # medical_record_id 리스트 전체 확보
-        all_records = MedicalRecord.objects.filter(user=u).values_list("medical_record_id", flat=True)
+        # 오더 유무 계산
+        all_records = MedicalRecord.objects.filter(user=u)\
+            .values_list("medical_record_id", flat=True)
 
-        # Lab Completed 여부
         lab_completed = LabOrders.objects.filter(
             medical_record_id__in=all_records,
             status="Completed"
         ).exists()
-
-        # Treatment Completed 여부
         treat_completed = TreatmentProcedures.objects.filter(
             medical_record_id__in=all_records,
             status="Completed"
         ).exists()
 
-        if lab_completed or treat_completed:
-            order_summary = "있음"
-        else:
-            order_summary = "없음"
+        order_summary = "있음" if (lab_completed or treat_completed) else "없음"
 
-        # -----------------------------------------------------
-        # JSON 반환
-        # -----------------------------------------------------
         result.append({
             "name": u.name,
             "gender": u.gender,
             "dob": u.resident_reg_no[:8],
+
+            # slot_date · start_time 기준 표시
             "visit": str(s.slot_date),
             "time": str(s.start_time)[:5],
+
             "dept": d.dep.dep_name if d and d.dep else "",
             "doctor": d.user.name if d else "",
             "recent_diag": recent_diag,
             "order_detail": order_summary,
+            "patient_id": u.user_id,
         })
 
     return JsonResponse({"patients": result})
@@ -901,6 +962,56 @@ def set_doctor_memo(request):
     
 
     return JsonResponse({"result": 'Ok'})
+
+def get_reservation_medical_record(request):
+
+    date = request.GET['date']
+
+    doctor = {}
+    users = []
+    user_data_list = []
+    try:
+        doctor = Doctors.objects.get(doctor_id=1)
+
+        users = list(Reservations.objects.filter(
+            # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=date
+        ).select_related(
+            # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
+            'user', 
+            'slot' 
+        ).order_by(
+            # 정렬: TimeSlots의 start_time을 기준으로 오름차순 정렬
+            'slot__start_time' 
+        ))
+
+        for reservation in users:
+            user = reservation.user
+            slot = reservation.slot
+            
+            user_data_list.append({
+                'user': {
+                    'user_id': user.user_id,
+                    'gender': user.gender,
+                    'name': user.name,
+                    'email': user.email,
+                    'resident_reg_no': user.resident_reg_no,
+                },
+                'slot': {
+                    'slot_id': slot.slot_id,
+                    'start_time': slot.start_time, # time 객체
+                    'end_time': slot.end_time,     # time 객체
+                    'slot_date': slot.slot_date,   # date 객체
+                    'status': slot.status,
+                },
+            })
+    except:
+        print('error')
+
+    return JsonResponse({
+        'users': user_data_list,
+    })
 
 
 # ---------------------------------------------------------

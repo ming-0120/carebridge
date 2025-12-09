@@ -1,3 +1,5 @@
+let selectedPatientId = null;
+
 function searchPatients() {
     const query = document.getElementById('searchQuery').value;
 
@@ -14,17 +16,17 @@ function renderPatientList(patients) {
         const tr = document.createElement('tr');
 
         tr.onclick = () => selectPatient(
-            tr, 
-            p.name, 
-            p.gender, 
-            p.dob, 
+            tr,
+            p.name,
+            p.gender,
+            p.dob,
             p.visit,
             p.dept,
             p.doctor,
             p.recent_diag,
-            p.order_detail    
+            p.order_detail,
+            p.patient_id
         );
-
 
         tr.innerHTML = `
             <td>${p.name}</td>
@@ -37,8 +39,9 @@ function renderPatientList(patients) {
     });
 }
 
+function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDiag, orderDetail, patientId) {
 
-function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDiag, orderDetail) {
+    selectedPatientId = patientId;
 
     document.querySelectorAll('#patientListBody tr')
         .forEach(r => r.classList.remove('selected'));
@@ -58,11 +61,11 @@ function selectPatient(row, name, gender, dob, lastVisit, dept, doctor, recentDi
 
     document.getElementById('summaryOrderExists').innerHTML =
         `<strong>오더 유무:</strong> ${orderDetail}`;
-
 }
 
 function goToCreateRecord() {
-    alert('진료기록작성 페이지로 이동합니다.');
+    if (!selectedPatientId) return;
+    window.location.href = `/mstaff/medical_record/?patient_id=${selectedPatientId}`;
 }
 
 function goToPreviousRecords() {

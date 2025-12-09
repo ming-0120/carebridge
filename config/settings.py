@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'apps.db.apps.DbConfig',
     'apps.emergency',
     'apps.social_auth',
+    'apps.chatbot',
+    'apps.mypage',
 ]
 
 MIDDLEWARE = [
@@ -169,3 +171,6 @@ load_dotenv()
 
 RAW_API_KEY = os.getenv("OPENAPI_SERVICE_KEY")
 OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')
+
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # 환경변수에서 읽기
+GOOGLE_API_KEY = os.getenv("GOOGLE_MAP_API_KEY", "")
