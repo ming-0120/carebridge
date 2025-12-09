@@ -1,0 +1,104 @@
+{% load static %}
+
+{% block content %}
+{% include "core/_header.html" %}
+<link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+<link rel="stylesheet" href="{% static 'mypage/css/favorite_hospitals.css' %}">
+<div class="mypage-layout">
+    <!-- 왼쪽 마이페이지 메뉴 -->
+    <aside class="mypage-sidebar">
+        <ul>
+            <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
+            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
+            <li><a href="{% url 'profile_edit' %}">회원 정보수정</a></li>
+            <li>
+                <a href="{% url 'favorite_hospitals' %}" class="active">
+                    즐겨 찾는 병원
+                </a>
+            </li>
+            <li><a href="{% url 'account_withdraw' %}" class="active">계정 탈퇴</a></li>
+        </ul>
+    </aside>
+
+    <!-- 오른쪽 콘텐츠 -->
+    <section class="mypage-content">
+        <h2>즐겨 찾는 병원</h2>
+
+        {% if favorites %}
+            {% for fav in favorites %}
+                {% with hospital=fav.hos %}
+                <div class="fav-hospital-card">
+                    <!-- 병원 정보 영역 -->
+                    <div class="fav-hospital-header">
+                        <span class="name">{{ hospital.name }}</span>
+
+                        <!-- 즐겨찾기 해제 아이콘 -->
+                        <span class="favorite-star"
+                              data-fav-id="{{ fav.fav_id }}">
+                            ★
+                        </span>
+                    
+                        {% if hospital.is_emergency %}
+                            <span class="badge-emergency">응급실</span>
+                        {% endif %}
+                    </div>                
+                    <div class="fav-hospital-info">
+                        <div class="meta">
+                            <span class="distance"
+                                  data-lat="{{ hospital.lat }}"
+                                  data-lng="{{ hospital.lng }}">
+                                -- km
+                            </span>
+                            <span class="address">{{ hospital.address }}</span>
+                        </div>
+                    </div>
+                
+                    <!-- 메모 표시 -->
+                    <div class="fav-hospital-memo">
+                        {% if fav.memo %}
+                            <p class="memo-text">{{ fav.memo|linebreaksbr }}</p>
+                        {% else %}
+                            <p class="memo-text memo-empty">작성된 메모가 없습니다.</p>
+                        {% endif %}
+                    
+                        <!-- 모달 여는 메모 버튼 -->
+                        <button type="button"
+                                class="memo-open-btn"
+                                data-fav-id="{{ fav.fav_id }}"
+                                data-memo="{{ fav.memo|default_if_none:''|escape }}">
+                            메모
+                        </button>
+                    </div>
+                </div>
+                {% endwith %}
+            {% endfor %}
+        {% else %}
+            <p>등록된 즐겨찾기 병원이 없습니다.</p>
+        {% endif %}
+    </section>
+</div>
+<!-- 메모 모달 오버레이 -->
+<div id="memoModal" class="memo-modal-overlay hidden">
+  <div class="memo-modal">
+    <div class="memo-modal-body">
+      <!-- 내용 입력 -->
+      <form id="memoForm" method="post">
+        {% csrf_token %}
+        <textarea name="memo" id="memoTextarea" rows="6" class="memo-textarea"></textarea>
+
+        <div class="memo-modal-actions">
+          <!-- 수정하기 -->
+          <button type="submit" name="action" value="edit" class="memo-btn-edit">
+            수정하기
+          </button>
+          <!-- 저장하기 -->
+          <button type="submit" name="action" value="save" class="memo-btn-save">
+            저장하기
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<script src="{% static 'mypage/js/favorite_hospitals.js' %}"></script>
+{% endblock %}

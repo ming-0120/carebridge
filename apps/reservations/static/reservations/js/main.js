@@ -125,6 +125,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     id: h.id,
                     name: h.name,
                     dept: h.dept,
+                    dept_code: h.dept_code,
                     city: h.city,
                     phone: h.tel,
                     hours: h.opening,
@@ -158,11 +159,22 @@ document.addEventListener("DOMContentLoaded", function () {
         // 예약하기 버튼: 병원 id로 폼 submit
         modalReserveBtn.onclick = function () {
             const form = document.getElementById("reservationForm");
-            const hiddenInput = document.getElementById(
-                "reservationHospitalId"
-            );
+            const hiddenHospital = document.getElementById("reservationHospitalId");
+            hiddenHospital.value = hospital.id;
 
-            hiddenInput.value = hospital.id;
+            // 선택된 과 코드
+            const checkedDep = document.getElementById("reservationDepartmentId");
+            const depCode = hospital.dept_code ? hospital.dept_code : null; // 예: "IM"
+
+            // 현재 form.action 기준으로 URL 객체 생성
+            const url = new URL(form.action, window.location.origin);
+            // === 추가: 어떤 URL로 제출되는지 확인 ===
+            if (depCode) {
+                url.searchParams.set("dept_id", depCode);
+            }
+            
+            console.log("예약하기 요청 URL =", url.toString());
+            form.action = url.toString();
             form.submit();
         };
 

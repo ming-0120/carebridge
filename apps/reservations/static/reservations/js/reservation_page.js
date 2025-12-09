@@ -37,7 +37,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 이 페이지에서는 hospital_id, reservationForm, modalReserveBtn 관련 코드는 전혀 필요 없음
 });
 // static/reservations/js/reservation_page.js
 document.addEventListener("DOMContentLoaded", () => {
@@ -65,64 +64,111 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
+// Django에서 넘어온 HOLIDAYS 활용
+const holidayEvents = HOLIDAYS.map(h => ({
+    title: h.name,
+    start: h.date,
+    allDay: true,
+    display: "background",  // 날짜 배경 표시
+    // color: "#ffe6e6",    // 필요하면 색 지정 가능
+}));
 
     // ============================
     // 2. FullCalendar 초기화
     // ============================
     const calendarEl = document.getElementById("calendar");
-    const selectedDateInput = document.getElementById("selectedDate");
+const selectedDateInput = document.getElementById("selectedDate");
 
-    if (calendarEl) {
-        const calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: "dayGridMonth",
-            locale: "ko",
-            height: "auto",
+if (calendarEl) {
+    // 오늘 ~ 오늘+14일까지만 유효
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
-            // 의사별 예약 이벤트 (지금 당장 필요 없으면 빈 배열만 넘겨도 됨)
-            events: function(info, successCallback, failureCallback) {
-                const doctorId = doctorIdInput ? doctorIdInput.value : null;
-                if (!doctorId) {
-                    // 의사 선택 안 되어 있으면 이벤트 없음
-                    successCallback([]);
-                    return;
-                }
+    const limit = new Date(today);
+    limit.setDate(limit.getDate() + 15); // end 는 exclusive 이므로 +15
 
-                const params = new URLSearchParams({
-                    doctor_id: doctorId,
-                    start: info.startStr,
-                    end: info.endStr,
+    const startStr = today.toISOString().split("T")[0];
+    const endStr = limit.toISOString().split("T")[0];
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: "dayGridMonth",
+        locale: "ko",
+        height: "auto",
+
+        // 오늘 이전 + 2주 이후는 회색/비활성
+        validRange: {
+            start: startStr, // 오늘
+            end: endStr,     // 오늘+15일 (실제 선택/표시는 오늘~오늘+14일)
+        },
+
+        // 의사별 예약 이벤트
+        events: function (info, successCallback, failureCallback) {
+            const doctorIdInput = document.getElementById("selectedDoctorId"); // 사용 중인 id에 맞게 조정
+            const doctorId = doctorIdInput ? doctorIdInput.value : null;
+
+            if (!doctorId) {
+                successCallback(holidayEvents);
+                return;
+            }
+
+            const params = new URLSearchParams({
+                doctor_id: doctorId,
+                start: info.startStr,
+                end: info.endStr,
+            });
+
+            fetch(`/reservations/api/doctor-reservations/?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    successCallback([...holidayEvents, ...data]);
+                })
+                .catch(err => {
+                    console.error("events load error", err);
+                    successCallback(holidayEvents);
+                    failureCallback(err);
                 });
+        },
 
-                fetch(`/reservations/api/doctor-reservations/?${params.toString()}`)
-                    .then(res => res.json())
-                    .then(data => successCallback(data))
-                    .catch(err => {
-                        console.error("events load error", err);
-                        failureCallback(err);
-                    });
-            },
+        // 날짜 클릭 시 타임슬롯 로드
+        dateClick: function (info) {
+            const clickedDate = info.dateStr;
+            // 1) 기존 선택 제거
+            document.querySelectorAll(".fc-daygrid-day").forEach(day => {
+                day.classList.remove("fc-day-selected");
+            });
+        
+            // 2) 현재 클릭한 날짜 셀에 선택 표시
+            const cell = document.querySelector(`.fc-daygrid-day[data-date="${clickedDate}"]`);
+            if (cell) {
+                cell.classList.add("fc-day-selected");
+            }
+            // 공휴일이면 막기
+            const isHoliday = HOLIDAYS.some(h => h.date === clickedDate);
+            if (isHoliday) {
+                alert("공휴일에는 예약이 불가합니다.");
+                return;
+            }
 
-            // 날짜 클릭 시 타임슬롯 로드
-            dateClick: function(info) {
-                console.log("dateClick:", info.dateStr);  // 반드시 콘솔에 찍혀야 함
+            if (selectedDateInput) {
+                selectedDateInput.value = clickedDate;
+            }
 
-                if (selectedDateInput) {
-                    selectedDateInput.value = info.dateStr;
-                }
+            const doctorIdInput = document.getElementById("selectedDoctorId"); // 실제 id와 맞추기
+            const doctorId = doctorIdInput ? doctorIdInput.value : null;
 
-                const doctorId = doctorIdInput ? doctorIdInput.value : null;
-                if (!doctorId) {
-                    alert("먼저 의사를 선택해 주세요.");
-                    return;
-                }
+            if (!doctorId) {
+                alert("먼저 의사를 선택해 주세요.");
+                return;
+            }
 
-                loadSlots(doctorId, info.dateStr);
-            },
-        });
+            loadSlots(doctorId, clickedDate);
+        },
+    });
 
-        calendar.render();
-        window.calendar = calendar;
-    }
+    calendar.render();
+    window.calendar = calendar;
+}
+
 
     // ============================
     // 3. 슬롯 로드 + 버튼 렌더
