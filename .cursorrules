@@ -51,6 +51,24 @@ carebridge/
 - 시맨틱 태그 사용
 - 접근성 고려 (alt 속성, aria-label 등)
 
+### Django 템플릿
+- **주석 사용 규칙**: Django 템플릿에서는 HTML 주석(`<!-- -->`) 대신 Django 주석(`{% comment %}...{% endcomment %}`)을 사용해야 합니다.
+  - 이유: HTML 주석 안에 Django 템플릿 태그(`{{ }}`, `{% %}`)가 포함되면 Django 템플릿 파서가 혼란스러워하여 `TemplateSyntaxError`가 발생할 수 있습니다.
+  - 올바른 예시:
+    ```django
+    {% comment %}
+      이 주석 안에는 Django 템플릿 태그를 자유롭게 사용할 수 있습니다.
+      예: {{ variable }}, {% if condition %}, {% url 'name' %}
+    {% endcomment %}
+    ```
+  - 잘못된 예시:
+    ```django
+    <!-- 
+      이 주석 안에 {{ variable }} 또는 {% if %} 같은 Django 태그가 있으면 에러 발생 가능
+    -->
+    ```
+  - 단순 텍스트 주석만 있는 경우에는 HTML 주석도 사용 가능하지만, Django 태그가 언급되거나 포함될 가능성이 있으면 반드시 `{% comment %}` 사용
+
 ## 파일 구조 규칙
 
 ### Django 앱 구조
@@ -175,6 +193,7 @@ static/
 - 다른 팀원이 이해하기 쉬운 코드 작성
 - 복잡한 로직은 주석으로 설명
 - 공통 기능은 재사용 가능하도록 모듈화
+
 
 
 

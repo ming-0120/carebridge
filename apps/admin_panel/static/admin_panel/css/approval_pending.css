@@ -419,10 +419,10 @@
 }
 
 /* 
-  유효하지 않은 면허번호 행 스타일
+  유효하지 않은 면허번호 행 스타일 (빨간색 통일)
   
   목적: 면허번호와 주민번호 뒷자리가 일치하지 않는 의사 행을 시각적으로 표시
-    - background-color: #FEE2E2 - 연한 빨간색 배경 (경고 색상)
+    - background-color: #FEE2E2 - 연한 빨간색 배경 (경고 색상, 통일된 색상)
     - 사용처: 유효하지 않은 면허번호를 가진 의사 행 (tr.approval-row.invalid-license)
     - 이유: 면허번호 유효성 검사 실패 시 관리자가 쉽게 식별할 수 있도록 시각적 경고 제공
     - 동작: JavaScript에서 면허번호와 주민번호 뒷자리를 비교하여 불일치 시 이 클래스 추가
@@ -432,26 +432,26 @@
 }
 
 /* 
-  유효하지 않은 면허번호 행 호버 효과
+  유효하지 않은 면허번호 행 호버 효과 (빨간색 통일)
   
-  목적: 유효하지 않은 면허번호 행에 마우스를 올렸을 때 배경색 변경
-    - background-color: #FECACA - 더 진한 빨간색 배경
-    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+  목적: 유효하지 않은 면허번호 행에 마우스를 올렸을 때 배경색 유지
+    - background-color: #FEE2E2 - 연한 빨간색 배경 유지 (호버 시에도 동일한 색상)
+    - 사용자 경험(UX) 개선: 일관된 빨간색 색감 유지
 */
 .approval-row.invalid-license:hover {
-  background-color: #FECACA;
+  background-color: #FEE2E2;
 }
 
 /* 
-  선택된 유효하지 않은 면허번호 행 스타일
+  선택된 유효하지 않은 면허번호 행 스타일 (빨간색 통일)
   
-  목적: 선택된 유효하지 않은 면허번호 행을 강조하는 스타일
-    - background-color: #FCA5A5 - 가장 진한 빨간색 배경
+  목적: 선택된 유효하지 않은 면허번호 행도 동일한 빨간색으로 표시
+    - background-color: #FEE2E2 - 연한 빨간색 배경 (통일된 색상)
     - 사용처: 선택된 유효하지 않은 면허번호 행 (tr.approval-row.invalid-license.selected)
-    - 이유: 선택 상태와 유효성 검사 실패 상태를 모두 시각적으로 표시
+    - 이유: 색감 통일을 위해 모든 유효하지 않은 면허번호 행을 동일한 빨간색으로 표시
 */
 .approval-row.invalid-license.selected {
-  background-color: #FCA5A5;
+  background-color: #FEE2E2;
 }
 
 /* 
@@ -479,27 +479,27 @@
 }
 
 /* 
-  체크박스가 체크되고 유효하지 않은 면허번호인 경우
+  체크박스가 체크되고 유효하지 않은 면허번호인 경우 (빨간색 통일)
   
-  목적: 체크박스가 체크되고 면허번호가 유효하지 않은 행의 스타일
-    - background-color: #FCA5A5 - 가장 진한 빨간색 배경
+  목적: 체크박스가 체크되고 면허번호가 유효하지 않은 행도 동일한 빨간색으로 표시
+    - background-color: #FEE2E2 - 연한 빨간색 배경 (통일된 색상)
     - 사용처: 체크박스가 체크되고 유효하지 않은 면허번호 행
       (tr.approval-row.invalid-license.checkbox-checked)
-    - 이유: 체크 상태와 유효성 검사 실패 상태를 모두 시각적으로 표시
+    - 이유: 색감 통일을 위해 모든 유효하지 않은 면허번호 행을 동일한 빨간색으로 표시
 */
 .approval-row.invalid-license.checkbox-checked {
-  background-color: #FCA5A5;
+  background-color: #FEE2E2;
 }
 
 /* 
-  체크박스가 체크되고 유효하지 않은 면허번호인 행 호버 효과
+  체크박스가 체크되고 유효하지 않은 면허번호인 행 호버 효과 (빨간색 통일)
   
   목적: 체크박스가 체크되고 유효하지 않은 면허번호 행에 마우스를 올렸을 때 배경색 유지
-    - background-color: #FCA5A5 - 가장 진한 빨간색 배경 유지 (호버 시에도 동일한 색상)
-    - 사용자 경험(UX) 개선: 체크된 상태와 유효성 검사 실패 상태를 일관되게 유지
+    - background-color: #FEE2E2 - 연한 빨간색 배경 유지 (호버 시에도 동일한 색상)
+    - 사용자 경험(UX) 개선: 일관된 빨간색 색감 유지
 */
 .approval-row.invalid-license.checkbox-checked:hover {
-  background-color: #FCA5A5;
+  background-color: #FEE2E2;
 }
 
 /* 

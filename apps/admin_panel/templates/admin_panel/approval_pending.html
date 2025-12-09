@@ -512,137 +512,130 @@
                   → item.number: 목록 번호 (페이지네이션 고려)
             -->
             {% for item in doctors_with_validation %}
-            <!-- 
-              변수 할당 (with 태그)
-              
-              목적: 반복문 내에서 사용할 변수를 간단한 이름으로 할당
-                - doctor: item.doctor (의사 객체)
-                - is_valid: item.is_valid_license (면허번호 유효성 검증 결과)
-            -->
-            {% with doctor=item.doctor is_valid=item.is_valid_license %}
-            <!-- 
-              의사 정보 행
-              
-              목적: 의사의 정보를 테이블 행으로 표시
-                - data-doctor-id: 의사 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
-                - CSS 클래스:
-                  → approval-row: 승인 대기 행 스타일
-                  → invalid-license: 면허번호가 유효하지 않은 경우 추가되는 클래스 (빨간색 표시)
-                  → selected: 현재 선택된 의사인 경우 추가되는 클래스 (하이라이트 표시)
-            -->
-            <tr 
-              data-doctor-id="{{ doctor.doctor_id }}"
-              class="approval-row {% if not is_valid %}invalid-license{% endif %} {% if selected_doctor and selected_doctor.doctor_id == doctor.doctor_id %}selected{% endif %}"
-            >
               <!-- 
-                체크박스 셀
+                의사 정보 행
                 
-                목적: 의사를 선택하기 위한 체크박스
-                  - CSS 클래스: checkbox-cell (체크박스 셀 스타일)
-                  - name="doctor_checkbox": 체크박스 그룹 이름 (JavaScript에서 선택된 의사 ID 수집에 사용)
-                  - value="{{ doctor.doctor_id }}": 체크박스 값 (의사 ID)
+                목적: 의사의 정보를 테이블 행으로 표시
+                  - data-doctor-id: 의사 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
+                  - CSS 클래스:
+                    → approval-row: 승인 대기 행 스타일
+                    → invalid-license: 면허번호가 유효하지 않은 경우 추가되는 클래스 (빨간색 표시)
+                    → selected: 현재 선택된 의사인 경우 추가되는 클래스 (하이라이트 표시)
+                  - item.doctor: 의사 객체 (Doctors 모델 인스턴스)
+                  - item.is_valid_license: 면허번호 유효성 검증 결과 (boolean)
               -->
-              <td class="checkbox-cell">
-                <input 
-                  type="checkbox" 
-                  name="doctor_checkbox" 
-                  value="{{ doctor.doctor_id }}"
-                >
-              </td>
-              
-              <!-- 
-                번호 셀
+              <tr 
+                data-doctor-id="{{ item.doctor.doctor_id }}"
+                class="approval-row {% if not item.is_valid_license %}invalid-license{% endif %} {% if selected_doctor and selected_doctor.doctor_id == item.doctor.doctor_id %}selected{% endif %}"
+              >
+                <!-- 
+                  체크박스 셀
+                  
+                  목적: 의사를 선택하기 위한 체크박스
+                    - CSS 클래스: checkbox-cell (체크박스 셀 스타일)
+                    - name="doctor_checkbox": 체크박스 그룹 이름 (JavaScript에서 선택된 의사 ID 수집에 사용)
+                    - value="{{ item.doctor.doctor_id }}": 체크박스 값 (의사 ID)
+                -->
+                <td class="checkbox-cell">
+                  <input 
+                    type="checkbox" 
+                    name="doctor_checkbox" 
+                    value="{{ item.doctor.doctor_id }}"
+                  >
+                </td>
                 
-                목적: 목록 번호 표시 (페이지네이션 고려)
-                  - {{ item.number }}: 페이지네이션을 고려한 순번
-                  - 예: 1페이지면 1, 2, 3... / 2페이지면 6, 7, 8... (페이지당 5개인 경우)
-              -->
-              <td>{{ item.number }}</td>
-              
-              <!-- 
-                이름 셀
+                <!-- 
+                  번호 셀
+                  
+                  목적: 목록 번호 표시 (페이지네이션 고려)
+                    - {{ item.number }}: 페이지네이션을 고려한 순번
+                    - 예: 1페이지면 1, 2, 3... / 2페이지면 6, 7, 8... (페이지당 5개인 경우)
+                -->
+                <td>{{ item.number }}</td>
                 
-                목적: 의사 이름 표시
-                  - {{ doctor.user.name }}: 의사의 사용자 이름
-                  - doctor: 의사 객체 (Doctors 모델 인스턴스)
-                  - user: 의사의 사용자 정보 (Users 모델 인스턴스)
-                  - name: 사용자의 이름
-              -->
-              <td>{{ doctor.user.name }}</td>
-              
-              <!-- 
-                ID 셀
+                <!-- 
+                  이름 셀
+                  
+                  목적: 의사 이름 표시
+                    - {{ item.doctor.user.name }}: 의사의 사용자 이름
+                    - item.doctor: 의사 객체 (Doctors 모델 인스턴스)
+                    - user: 의사의 사용자 정보 (Users 모델 인스턴스)
+                    - name: 사용자의 이름
+                -->
+                <td>{{ item.doctor.user.name }}</td>
                 
-                목적: 의사 ID(로그인 ID) 표시
-                  - {{ doctor.user.username|default:"-" }}: 의사의 사용자 ID
-                  - username: 사용자의 로그인 ID
-                  - |default:"-": username이 없으면 "-" 표시
-              -->
-              <td>{{ doctor.user.username|default:"-" }}</td>
-              
-              <!-- 
-                병원명 셀
+                <!-- 
+                  ID 셀
+                  
+                  목적: 의사 ID(로그인 ID) 표시
+                    - {{ item.doctor.user.username|default:"-" }}: 의사의 사용자 ID
+                    - username: 사용자의 로그인 ID
+                    - |default:"-": username이 없으면 "-" 표시
+                -->
+                <td>{{ item.doctor.user.username|default:"-" }}</td>
                 
-                목적: 의사의 주근무 병원명 표시
-                  - {{ doctor.hos.name|default:"-" }}: 의사의 주근무 병원명
-                  - hos: 의사의 주근무 병원 정보 (Hospitals 모델 인스턴스)
-                  - name: 병원 이름
-                  - |default:"-": name이 없으면 "-" 표시
-              -->
-              <td>{{ doctor.hos.name|default:"-" }}</td>
-              
-              <!-- 
-                전공과 셀
+                <!-- 
+                  병원명 셀
+                  
+                  목적: 의사의 주근무 병원명 표시
+                    - {{ item.doctor.hos.name|default:"-" }}: 의사의 주근무 병원명
+                    - hos: 의사의 주근무 병원 정보 (Hospitals 모델 인스턴스)
+                    - name: 병원 이름
+                    - |default:"-": name이 없으면 "-" 표시
+                -->
+                <td>{{ item.doctor.hos.name|default:"-" }}</td>
                 
-                목적: 의사의 전공과 표시
-                  - {{ doctor.dep.dep_name|default:"-" }}: 의사의 전공과 이름
-                  - dep: 의사의 전공과 정보 (Departments 모델 인스턴스)
-                  - dep_name: 전공과 이름
-                  - |default:"-": dep_name이 없으면 "-" 표시
-              -->
-              <td>{{ doctor.dep.dep_name|default:"-" }}</td>
-              
-              <!-- 
-                면허번호 셀
+                <!-- 
+                  전공과 셀
+                  
+                  목적: 의사의 전공과 표시
+                    - {{ item.doctor.dep.dep_name|default:"-" }}: 의사의 전공과 이름
+                    - dep: 의사의 전공과 정보 (Departments 모델 인스턴스)
+                    - dep_name: 전공과 이름
+                    - |default:"-": dep_name이 없으면 "-" 표시
+                -->
+                <td>{{ item.doctor.dep.dep_name|default:"-" }}</td>
                 
-                목적: 의사의 면허번호 표시
-                  - {{ doctor.license_no }}: 의사의 면허번호
-                  - license_no: 의사의 면허번호 필드
-                  - 주의: 면허번호가 유효하지 않으면 행에 invalid-license 클래스가 추가되어 빨간색으로 표시됨
-              -->
-              <td>{{ doctor.license_no }}</td>
-              
-              <!-- 
-                전화번호 셀
+                <!-- 
+                  면허번호 셀
+                  
+                  목적: 의사의 면허번호 표시
+                    - {{ item.doctor.license_no }}: 의사의 면허번호
+                    - license_no: 의사의 면허번호 필드
+                    - 주의: 면허번호가 유효하지 않으면 행에 invalid-license 클래스가 추가되어 빨간색으로 표시됨
+                -->
+                <td>{{ item.doctor.license_no }}</td>
                 
-                목적: 의사의 전화번호 표시
-                  - {{ doctor.user.phone|default:"-" }}: 의사의 전화번호
-                  - phone: 사용자의 전화번호
-                  - |default:"-": phone이 없으면 "-" 표시
-              -->
-              <td>{{ doctor.user.phone|default:"-" }}</td>
-              
-              <!-- 
-                생성일시 셀
+                <!-- 
+                  전화번호 셀
+                  
+                  목적: 의사의 전화번호 표시
+                    - {{ item.doctor.user.phone|default:"-" }}: 의사의 전화번호
+                    - phone: 사용자의 전화번호
+                    - |default:"-": phone이 없으면 "-" 표시
+                -->
+                <td>{{ item.doctor.user.phone|default:"-" }}</td>
                 
-                목적: 의사 계정 생성일시 표시
-                  - {{ doctor.user.created_at|date:"Y.m.d" }}: 의사 계정 생성일
-                  - created_at: 사용자 계정 생성일 (의사 승인 신청일로 간주)
-                  - |date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
-                  - 예: "2024.01.15"
-              -->
-              <td>{{ doctor.user.created_at|date:"Y.m.d" }}</td>
-            </tr>
-            {% endwith %}
+                <!-- 
+                  생성일시 셀
+                  
+                  목적: 의사 계정 생성일시 표시
+                    - {{ item.doctor.user.created_at|date:"Y.m.d" }}: 의사 계정 생성일
+                    - created_at: 사용자 계정 생성일 (의사 승인 신청일로 간주)
+                    - |date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
+                    - 예: "2024.01.15"
+                -->
+                <td>{{ item.doctor.user.created_at|date:"Y.m.d" }}</td>
+              </tr>
+            {% empty %}
             <!-- 
               빈 목록 처리
               
               목적: 승인 대기 중인 의사가 없을 때 메시지 표시
-                - {% empty %}: 반복문에서 반복할 항목이 없을 때 실행
+                - empty: 반복문에서 반복할 항목이 없을 때 실행
                 - colspan="9": 9개 컬럼을 병합하여 메시지 표시
                 - CSS 클래스: no-data (데이터 없음 메시지 스타일)
             -->
-            {% empty %}
             <tr>
               <td colspan="9" class="no-data">승인 대기 중인 의사가 없습니다.</td>
             </tr>
@@ -893,16 +886,22 @@
         </div>
         
         <!-- 
-          전공과 정보 항목
+          주민번호 정보 항목
           
-          목적: 의사의 전공과를 표시
-            - detail-label: "전공과" (라벨)
-            - detail-value: {{ selected_doctor.dep.dep_name|default:"-" }} (의사의 전공과 이름)
-              → |default:"-": dep_name이 없으면 "-" 표시
+          목적: 의사의 주민번호를 표시
+            - detail-label: "주민번호" (라벨)
+            - detail-value: {{ selected_doctor.user.resident_reg_no }} (의사의 주민번호)
+              → 주민번호가 없으면 "-" 표시
         -->
         <div class="detail-item">
-          <span class="detail-label">전공과</span>
-          <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+          <span class="detail-label">주민번호</span>
+          <span class="detail-value">
+            {% if selected_doctor.user.resident_reg_no %}
+              {% with reg_no=selected_doctor.user.resident_reg_no|cut:"-" %}{{ reg_no|slice:":6" }}-{{ reg_no|slice:"6:" }}{% endwith %}
+            {% else %}
+              -
+            {% endif %}
+          </span>
         </div>
         
         <!-- 
@@ -919,9 +918,22 @@
         </div>
         
         <!-- 
+          전공과 정보 항목
+          
+          목적: 의사의 전공과를 표시 (주근무 병원 옆에 배치)
+            - detail-label: "전공과" (라벨)
+            - detail-value: {{ selected_doctor.dep.dep_name|default:"-" }} (의사의 전공과 이름)
+              → |default:"-": dep_name이 없으면 "-" 표시
+        -->
+        <div class="detail-item">
+          <span class="detail-label">전공과</span>
+          <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
+        </div>
+        
+        <!-- 
           연락처 정보 항목
           
-          목적: 의사의 연락처(전화번호)를 표시
+          목적: 의사의 연락처(전화번호)를 표시 (주근무 병원 밑에 배치)
             - detail-label: "연락처" (라벨)
             - detail-value: {{ selected_doctor.user.phone|default:"-" }} (의사의 전화번호)
               → |default:"-": phone이 없으면 "-" 표시
@@ -929,39 +941,6 @@
         <div class="detail-item">
           <span class="detail-label">연락처</span>
           <span class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
-        </div>
-        
-        <!-- 
-          주민번호 정보 항목 (마스킹 처리)
-          
-          목적: 의사의 주민번호를 마스킹 처리하여 표시 (개인정보 보호)
-            - detail-label: "주민번호" (라벨)
-            - detail-value: 주민번호 마스킹 처리
-              → 앞 6자리 + "-" + 7번째 자리 + "******"
-              → 예: "123456-1******" (실제 주민번호: "123456-1234567")
-              → 주민번호가 없으면 "-" 표시
-          
-          보안 고려사항:
-            - 개인정보 보호: 주민번호의 뒷자리를 마스킹 처리하여 개인정보 보호
-            - 앞 6자리만 표시: 생년월일 정보만 표시
-        -->
-        <div class="detail-item">
-          <span class="detail-label">주민번호</span>
-          <span class="detail-value">
-            {% if selected_doctor.user.resident_reg_no %}
-              <!-- 
-                주민번호 마스킹 처리
-                  - slice:":6": 주민번호의 앞 6자리 추출 (생년월일)
-                  - slice:"6:7": 주민번호의 7번째 자리 추출 (성별 코드)
-                  - "******": 뒷자리 마스킹 처리
-                  - 예: "123456-1******"
-              -->
-              {{ selected_doctor.user.resident_reg_no|slice:":6" }}-{{ selected_doctor.user.resident_reg_no|slice:"6:7" }}******
-            {% else %}
-              <!-- 주민번호가 없으면 "-" 표시 -->
-              -
-            {% endif %}
-          </span>
         </div>
         
         <!-- 

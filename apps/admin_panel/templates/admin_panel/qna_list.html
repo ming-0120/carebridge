@@ -464,140 +464,133 @@
                 → item.number: 목록 번호 (페이지네이션 고려)
           -->
           {% for item in qnas_with_number %}
-          <!-- 
-            변수 할당 (with 태그)
-            
-            목적: 반복문 내에서 사용할 변수를 간단한 이름으로 할당
-              - qna: item.qna (문의 객체)
-          -->
-          {% with qna=item.qna %}
-          <!-- 
-            문의 정보 행
-            
-            목적: 문의의 정보를 테이블 행으로 표시
-              - CSS 클래스: qna-row (문의 행 스타일)
-              - data-qna-id: 문의 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
-              - style="cursor: pointer;": 마우스 커서를 포인터로 변경하여 클릭 가능함을 표시
-          -->
-          <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
             <!-- 
-              체크박스 셀
+              문의 정보 행
               
-              목적: 문의를 선택하기 위한 체크박스
-                - CSS 클래스: checkbox-cell (체크박스 셀 스타일)
-                - name="qna_checkbox": 체크박스 그룹 이름 (JavaScript에서 선택된 문의 ID 수집에 사용)
-                - value="{{ qna.qna_id }}": 체크박스 값 (문의 ID)
+              목적: 문의의 정보를 테이블 행으로 표시
+                - CSS 클래스: qna-row (문의 행 스타일)
+                - data-qna-id: 문의 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
+                - style="cursor: pointer;": 마우스 커서를 포인터로 변경하여 클릭 가능함을 표시
+                - item.qna: 문의 객체 (QnA 모델 인스턴스)
             -->
-            <td class="checkbox-cell">
-              <input 
-                type="checkbox" 
-                name="qna_checkbox" 
-                value="{{ qna.qna_id }}"
-              >
-            </td>
-            
-            <!-- 
-              번호 셀
-              
-              목적: 목록 번호 표시 (페이지네이션 고려)
-                - {{ item.number }}: 페이지네이션을 고려한 순번
-            -->
-            <td>{{ item.number }}</td>
-            
-            <!-- 
-              이름 셀
-              
-              목적: 문의 작성자 이름 표시
-                - {{ qna.user.name }}: 문의 작성자 이름
-                  → qna: 문의 객체
-                  → user: 문의 작성자 정보 (Users 모델 인스턴스)
-                  → name: 사용자 이름
-            -->
-            <td>{{ qna.user.name }}</td>
-            
-            <!-- 
-              이메일 셀
-              
-              목적: 문의 작성자 이메일 표시
-                - {{ qna.user.email }}: 문의 작성자 이메일
-                  → email: 사용자의 이메일 주소
-            -->
-            <td>{{ qna.user.email }}</td>
-            
-            <!-- 
-              문의 제목 셀
-              
-              목적: 문의 제목 표시
-                - {{ qna.title }}: 문의 제목
-                  → title: 문의 제목
-            -->
-            <td>{{ qna.title }}</td>
-            
-            <!-- 
-              문의 일자 셀
-              
-              목적: 문의 작성일자 표시
-                - {{ qna.created_at|date:"Y-m-d" }}: 문의 작성일
-                  → created_at: 문의 작성일
-                  → |date:"Y-m-d": 날짜 형식을 "YYYY-MM-DD" 형식으로 변환
-                  → 예: "2024-01-15"
-            -->
-            <td>{{ qna.created_at|date:"Y-m-d" }}</td>
-            
-            <!-- 
-              상태 셀
-              
-              목적: 문의의 답변 상태를 시각적으로 표시
-                - 답변 완료: reply 필드가 있으면 "답변 완료" 배지 표시
-                - 대기: reply 필드가 없으면 "대기" 배지 표시
-                - 상태 배지:
-                  → status-completed: 답변 완료 상태 (초록색 배지)
-                  → status-waiting: 대기 상태 (주황색 배지)
-            -->
-            <td>
+            <tr class="qna-row" data-qna-id="{{ item.qna.qna_id }}" style="cursor: pointer;">
               <!-- 
-                답변 상태 확인
+                체크박스 셀
                 
-                목적: 문의의 답변 상태에 따라 다른 배지 표시
-                  - qna.reply: 문의에 대한 답변 내용
-                    → 있으면: 답변 완료
-                    → 없으면: 대기 중
+                목적: 문의를 선택하기 위한 체크박스
+                  - CSS 클래스: checkbox-cell (체크박스 셀 스타일)
+                  - name="qna_checkbox": 체크박스 그룹 이름 (JavaScript에서 선택된 문의 ID 수집에 사용)
+                  - value="{{ item.qna.qna_id }}": 체크박스 값 (문의 ID)
               -->
-              {% if qna.reply %}
+              <td class="checkbox-cell">
+                <input 
+                  type="checkbox" 
+                  name="qna_checkbox" 
+                  value="{{ item.qna.qna_id }}"
+                >
+              </td>
+              
+              <!-- 
+                번호 셀
+                
+                목적: 목록 번호 표시 (페이지네이션 고려)
+                  - {{ item.number }}: 페이지네이션을 고려한 순번
+              -->
+              <td>{{ item.number }}</td>
+              
+              <!-- 
+                이름 셀
+                
+                목적: 문의 작성자 이름 표시
+                  - {{ item.qna.user.name }}: 문의 작성자 이름
+                    → item.qna: 문의 객체
+                    → user: 문의 작성자 정보 (Users 모델 인스턴스)
+                    → name: 사용자 이름
+              -->
+              <td>{{ item.qna.user.name }}</td>
+              
+              <!-- 
+                이메일 셀
+                
+                목적: 문의 작성자 이메일 표시
+                  - {{ item.qna.user.email }}: 문의 작성자 이메일
+                    → email: 사용자의 이메일 주소
+              -->
+              <td>{{ item.qna.user.email }}</td>
+              
+              <!-- 
+                문의 제목 셀
+                
+                목적: 문의 제목 표시
+                  - {{ item.qna.title }}: 문의 제목
+                    → title: 문의 제목
+              -->
+              <td>{{ item.qna.title }}</td>
+              
+              <!-- 
+                문의 일자 셀
+                
+                목적: 문의 작성일자 표시
+                  - {{ item.qna.created_at|date:"Y-m-d" }}: 문의 작성일
+                    → created_at: 문의 작성일
+                    → |date:"Y-m-d": 날짜 형식을 "YYYY-MM-DD" 형식으로 변환
+                    → 예: "2024-01-15"
+              -->
+              <td>{{ item.qna.created_at|date:"Y-m-d" }}</td>
+              
+              <!-- 
+                상태 셀
+                
+                목적: 문의의 답변 상태를 시각적으로 표시
+                  - 답변 완료: reply 필드가 있으면 "답변 완료" 배지 표시
+                  - 대기: reply 필드가 없으면 "대기" 배지 표시
+                  - 상태 배지:
+                    → status-completed: 답변 완료 상태 (초록색 배지)
+                    → status-waiting: 대기 상태 (주황색 배지)
+              -->
+              <td>
                 <!-- 
-                  답변 완료 배지
+                  답변 상태 확인
                   
-                  목적: 답변 완료된 문의를 시각적으로 표시
-                    - CSS 클래스: 
-                      → status-badge: 상태 배지 기본 스타일
-                      → status-completed: 답변 완료 상태 스타일 (초록색)
-                    - 텍스트: "답변 완료"
+                  목적: 문의의 답변 상태에 따라 다른 배지 표시
+                    - item.qna.reply: 문의에 대한 답변 내용
+                      → 있으면: 답변 완료
+                      → 없으면: 대기 중
                 -->
-                <span class="status-badge status-completed">답변 완료</span>
-              {% else %}
-                <!-- 
-                  대기 배지
-                  
-                  목적: 답변 대기 중인 문의를 시각적으로 표시
-                    - CSS 클래스: 
-                      → status-badge: 상태 배지 기본 스타일
-                      → status-waiting: 대기 상태 스타일 (주황색)
-                    - 텍스트: "대기"
-                -->
-                <span class="status-badge status-waiting">대기</span>
-              {% endif %}
-            </td>
-          </tr>
-          {% endwith %}
+                {% if item.qna.reply %}
+                  <!-- 
+                    답변 완료 배지
+                    
+                    목적: 답변 완료된 문의를 시각적으로 표시
+                      - CSS 클래스: 
+                        → status-badge: 상태 배지 기본 스타일
+                        → status-completed: 답변 완료 상태 스타일 (초록색)
+                      - 텍스트: "답변 완료"
+                  -->
+                  <span class="status-badge status-completed">답변 완료</span>
+                {% else %}
+                  <!-- 
+                    대기 배지
+                    
+                    목적: 답변 대기 중인 문의를 시각적으로 표시
+                      - CSS 클래스: 
+                        → status-badge: 상태 배지 기본 스타일
+                        → status-waiting: 대기 상태 스타일 (주황색)
+                      - 텍스트: "대기"
+                  -->
+                  <span class="status-badge status-waiting">대기</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
           <!-- 
             빈 목록 처리
             
             목적: 문의 데이터가 없을 때 메시지 표시
-              - {% empty %}: 반복문에서 반복할 항목이 없을 때 실행
+              - empty: 반복문에서 반복할 항목이 없을 때 실행
               - colspan="7": 7개 컬럼을 병합하여 메시지 표시
               - CSS 클래스: no-data (데이터 없음 메시지 스타일)
           -->
-          {% empty %}
           <tr>
             <td colspan="7" class="no-data">문의 데이터가 없습니다.</td>
           </tr>

@@ -268,7 +268,8 @@
           - action: {% url 'user_list' %} - 사용자 목록 URL (자기 자신)
           - CSS 클래스: search-form (검색 폼 스타일)
       -->
-      <form method="get" action="{% url 'user_list' %}" class="search-form">
+      <form method="post" action="{% url 'user_list' %}" class="search-form">
+        {% csrf_token %}
         <!-- 
           검색 조건 선택 드롭다운
           
@@ -519,116 +520,110 @@
                 → item.birth_date: 생년월일 (주민번호에서 추출한 생년월일)
           -->
           {% for item in users_with_number %}
-          <!-- 
-            변수 할당 (with 태그)
-            
-            목적: 반복문 내에서 사용할 변수를 간단한 이름으로 할당
-              - user_obj: item.user (사용자 객체)
-                → user_obj로 명명하여 템플릿 변수 user와 구분
-          -->
-          {% with user_obj=item.user %}
-          <!-- 
-            사용자 정보 행
-            
-            목적: 사용자의 정보를 테이블 행으로 표시
-              - data-user-id: 사용자 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
-              - CSS 클래스: user-row (사용자 행 스타일)
-          -->
-          <tr data-user-id="{{ user_obj.user_id }}" class="user-row">
             <!-- 
-              번호 셀
+              사용자 정보 행
               
-              목적: 목록 번호 표시 (페이지네이션 고려)
-                - {{ item.number }}: 페이지네이션을 고려한 순번
+              목적: 사용자의 정보를 테이블 행으로 표시
+                - data-user-id: 사용자 ID (JavaScript에서 행 클릭 이벤트 처리에 사용)
+                - CSS 클래스: user-row (사용자 행 스타일)
+                - item.user: 사용자 객체 (Users 모델 인스턴스)
             -->
-            <td>{{ item.number }}</td>
-            
-            <!-- 
-              ID 셀
+            <tr data-user-id="{{ item.user.user_id }}" class="user-row{% if item.is_new_user %} new-user-row{% endif %}">
+              <!-- 
+                번호 셀
+                
+                목적: 목록 번호 표시 (페이지네이션 고려)
+                  - {{ item.number }}: 페이지네이션을 고려한 순번
+              -->
+              <td>{{ item.number }}</td>
               
-              목적: 사용자 ID(로그인 ID) 표시
-                - {{ user_obj.username }}: 사용자의 로그인 ID
-                  → user_obj: 사용자 객체
-                  → username: 사용자의 로그인 ID
-            -->
-            <td>{{ user_obj.username }}</td>
-            
-            <!-- 
-              이름 셀
+              <!-- 
+                ID 셀
+                
+                목적: 사용자 ID(로그인 ID) 표시
+                  - {{ item.user.username }}: 사용자의 로그인 ID
+                    → item.user: 사용자 객체
+                    → username: 사용자의 로그인 ID
+              -->
+              <td>{{ item.user.username }}</td>
               
-              목적: 사용자 이름 표시
-                - {{ user_obj.name }}: 사용자 이름
-                  → name: 사용자의 이름
-            -->
-            <td>{{ user_obj.name }}</td>
-            
-            <!-- 
-              생년월일 셀
+              <!-- 
+                이름 셀
+                
+                목적: 사용자 이름 표시
+                  - {{ item.user.name }}: 사용자 이름
+                    → name: 사용자의 이름
+              -->
+              <td>{{ item.user.name }}</td>
               
-              목적: 사용자의 생년월일 표시
-                - {{ item.birth_date|default:"-" }}: 생년월일 (주민번호에서 추출)
-                  → item.birth_date: 주민번호에서 추출한 생년월일 (뷰에서 처리)
-                  → |default:"-": birth_date가 없으면 "-" 표시
-            -->
-            <td>{{ item.birth_date|default:"-" }}</td>
-            
-            <!-- 
-              성별 셀
+              <!-- 
+                생년월일 셀
+                
+                목적: 사용자의 생년월일 표시
+                  - {{ item.birth_date|default:"-" }}: 생년월일 (주민번호에서 추출)
+                    → item.birth_date: 주민번호에서 추출한 생년월일 (뷰에서 처리)
+                    → |default:"-": birth_date가 없으면 "-" 표시
+              -->
+              <td>{{ item.birth_date|default:"-" }}</td>
               
-              목적: 사용자의 성별을 한글로 표시
-                - 조건부 표시: user_obj.gender == 'M'이면 '남', 그 외는 '여' 표시
-                  → gender: 사용자의 성별 ('M' 또는 'F')
-            -->
-            <td>{% if user_obj.gender == 'M' %}남{% else %}여{% endif %}</td>
-            
-            <!-- 
-              전화번호 셀
+              <!-- 
+                성별 셀
+                
+                목적: 사용자의 성별을 한글로 표시
+                  - 조건부 표시: item.user.gender == 'M'이면 '남', 그 외는 '여' 표시
+                    → gender: 사용자의 성별 ('M' 또는 'F')
+              -->
+              <td>{% if item.user.gender == 'M' %}남{% else %}여{% endif %}</td>
               
-              목적: 사용자 전화번호 표시
-                - {{ user_obj.phone }}: 사용자 전화번호
-                  → phone: 사용자의 전화번호
-            -->
-            <td>{{ user_obj.phone }}</td>
-            
-            <!-- 
-              이메일 셀
+              <!-- 
+                전화번호 셀
+                
+                목적: 사용자 전화번호 표시
+                  - {{ item.user.phone }}: 사용자 전화번호
+                    → phone: 사용자의 전화번호
+              -->
+              <td>{{ item.user.phone }}</td>
               
-              목적: 사용자 이메일 표시
-                - {{ user_obj.email }}: 사용자 이메일 주소
-                  → email: 사용자의 이메일 주소
-            -->
-            <td>{{ user_obj.email }}</td>
-            
-            <!-- 
-              주소 셀
+              <!-- 
+                이메일 셀
+                
+                목적: 사용자 이메일 표시
+                  - {{ item.user.email }}: 사용자 이메일 주소
+                    → email: 사용자의 이메일 주소
+              -->
+              <td>{{ item.user.email }}</td>
               
-              목적: 사용자 주소 표시
-                - {{ user_obj.address }}: 사용자 주소
-                  → address: 사용자의 주소
-            -->
-            <td>{{ user_obj.address }}</td>
-            
-            <!-- 
-              생성일시 셀
+              <!-- 
+                주소 셀
+                
+                목적: 사용자 주소 표시 (동까지만 표시)
+                  - 목록에서는 주소의 "동"까지만 표시하여 간결하게 표시
+                  - 상세 정보에서는 전체 주소가 표시됨
+                  - 뷰에서 처리한 address_short 사용
+                  - 예: "서울특별시 강남구 역삼동 123-45" → "서울특별시 강남구 역삼동"
+              -->
+              <td>{{ item.address_short|default:"-" }}</td>
               
-              목적: 사용자 계정 생성일시 표시
-                - {{ user_obj.created_at|date:"Y.m.d" }}: 사용자 계정 생성일
-                  → created_at: 사용자 계정 생성일
-                  → |date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
-                  → 예: "2024.01.15"
-            -->
-            <td>{{ user_obj.created_at|date:"Y.m.d" }}</td>
-          </tr>
-          {% endwith %}
+              <!-- 
+                생성일시 셀
+                
+                목적: 사용자 계정 생성일시 표시
+                  - {{ item.user.created_at|date:"Y.m.d" }}: 사용자 계정 생성일
+                    → created_at: 사용자 계정 생성일
+                    → |date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
+                    → 예: "2024.01.15"
+              -->
+              <td>{{ item.user.created_at|date:"Y.m.d" }}</td>
+            </tr>
+          {% empty %}
           <!-- 
             빈 목록 처리
             
             목적: 사용자 데이터가 없을 때 메시지 표시
-              - {% empty %}: 반복문에서 반복할 항목이 없을 때 실행
+              - empty: 반복문에서 반복할 항목이 없을 때 실행
               - colspan="9": 9개 컬럼을 병합하여 메시지 표시
               - CSS 클래스: no-data (데이터 없음 메시지 스타일)
           -->
-          {% empty %}
           <tr>
             <td colspan="9" class="no-data">사용자 데이터가 없습니다.</td>
           </tr>

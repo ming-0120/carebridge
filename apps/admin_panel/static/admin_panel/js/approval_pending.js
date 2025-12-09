@@ -1112,6 +1112,14 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 결과: 행 클릭 시 의사 상세 정보 표시
   attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
   
+  // ========= 페이지네이션 후 이벤트 리스너 재연결 함수 =========
+  // 목적: 페이지네이션 완료 후 테이블 행 클릭 이벤트 리스너를 다시 연결
+  //   - handlePaginationAjax 함수에서 호출됨
+  //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
+  window.reattachTableRowListeners = function() {
+    attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
+  };
+  
   // ========= 체크박스 이벤트 리스너 연결 =========
   // attachCheckboxListeners(): 체크박스에 이벤트 리스너를 연결하는 함수 호출
   //   - attachCheckboxListeners(): 이 파일에 정의된 함수
