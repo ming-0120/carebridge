@@ -1,0 +1,66 @@
+.withdraw-content h2 {
+    margin-bottom: 16px;
+}
+
+.withdraw-notice {
+    background: #f3f7ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.reason-list label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+}
+
+#password {
+    width: 100%;
+    max-width: 360px;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+}
+
+.error-text {
+    color: #d00;
+    font-size: 13px;
+    margin-top: 4px;
+}
+
+.withdraw-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.btn-withdraw,
+.btn-cancel {
+    min-width: 120px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+.btn-withdraw {
+    background: #3478ff;
+    color: #fff;
+    border-color: #3478ff;
+}
+
+.btn-cancel {
+    background: #eee;
+}

@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'apps.emergency',
     'apps.social_auth',
     'apps.chatbot',
+    'apps.mypage',
 ]
 
 MIDDLEWARE = [

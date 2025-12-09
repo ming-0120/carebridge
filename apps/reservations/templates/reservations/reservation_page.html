@@ -13,6 +13,9 @@
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/main.min.js"></script>
     <!-- FullCalendar 한국어 -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js"></script>
+    <script>
+        const HOLIDAYS = {{ holidays|safe }};
+    </script>
 </head>
 <body>
     {% include "core/_header.html" %}
@@ -21,10 +24,20 @@
         <!-- 1. 왼쪽 : 진료과 리스트(예시) -->
         <aside class="dept-list">
             <h3>진료과</h3>
-            <ul>
+           <ul>
                 {% for dep in departments %}
-                    <li class="{% if selected_department and selected_department.dep_id == dep.dep_id %}active{% endif %}">
-                        <a href="?department_id={{ dep.dep_id }}">{{ dep.dep_name }}</a>
+                    <li class="
+                        {% if selected_department and selected_department.dep_id == dep.dep_id %}
+                            active
+                        {% else %}
+                            disabled
+                        {% endif %}
+                    ">
+                        {% if selected_department and selected_department.dep_id == dep.dep_id %}
+                            <span>{{ dep.dep_name }}</span>
+                        {% else %}
+                            <a href="?department_id={{ dep.dep_id }}">{{ dep.dep_name }}</a>
+                        {% endif %}
                     </li>
                 {% endfor %}
             </ul>
@@ -37,12 +50,11 @@
                 {% for doctor in doctors %}
                     <div class="doctor-card" data-doctor-id="{{ doctor.doctor_id }}">
                         <div class="doctor-image">
-                            <img src="{% static 'reservations/img/doctor.png' %}" alt="doctor">
+                            <img src="{% static 'accounts/img/default_profile.png' %}" alt="doctor">
                         </div>
                         <div class="doctor-info">
                             <div>전공과: {{ doctor.dep.name }}</div>
                             <div>성함: {{ doctor.user.name }}</div>
-                            <div>면허번호: {{ doctor.license_no }}</div>
                         </div>
                         <button type="button" class="btn-select-doctor">
                             선택하기

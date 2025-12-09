@@ -23,22 +23,24 @@
         <input type="hidden" id="prescriptions" name="prescriptions">
         <input type="hidden" id="orders" name="orders">
 
-        <!-- 기본 값 -->
-        <input type="hidden" name="patient_id" value="1">
-        <input type="hidden" name="doctor_id" value="1">
-        <input type="hidden" name="hos_id" value="1">
+        <!-- 환자/의사 정보 -->
+        <input type="hidden" name="patient_id" value="{{ patient.user_id }}">
+        <input type="hidden" name="doctor_id" value="{{ doctor.doctor_id }}">
+        <input type="hidden" name="hos_id" value="{{ doctor.hos_id }}">
+
 
         <div class="container">
             <h2>진료 기록 작성</h2>
-
+            
             <div class="patient-header-info">
-                <span><strong>환자명:</strong> 홍길순</span>
-                <span><strong>성별:</strong> 여자</span>
-                <span><strong>생년월일:</strong> 1990-02-10</span>
-                <span><strong>방문일시:</strong> 2025-03-14 09:42</span>
-                <span><strong>진료과:</strong> 내과</span>
-                <span><strong>담당의:</strong> 박○○</span>
+                <span><strong>환자명:</strong> {{ patient.name }}</span>
+                <span><strong>성별:</strong> {{ patient.gender }}</span>
+                <span><strong>생년월일:</strong> {{ birth }}</span>
+                <span><strong>방문일시:</strong> {{ now }}</span>
+                <span><strong>진료과:</strong> {{ department }}</span>
+                <span><strong>담당의:</strong> {{ doctor_name }}</span>
             </div>
+
 
             <div class="middle-content-grid">
 
