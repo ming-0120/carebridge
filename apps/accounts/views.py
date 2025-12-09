@@ -61,6 +61,8 @@ def login_view(request):
     # 관리자 역할 체크 (role 값은 'ADMIN' - 대문자)
     if user.role == 'ADMIN':
         return redirect('/admin_panel/')
+    elif user.role == 'DOCTOR':
+        return redirect('/mstaff/doctor_dashboard/')
 
     return redirect(next_url)
 

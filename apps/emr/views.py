@@ -19,6 +19,8 @@ from django.core import serializers
 from django.db.models import Count
 from django.db.models import DateField
 from django.db.models.functions import Cast
+from django.core.serializers.json import DjangoJSONEncoder
+
 
 KST = tz("Asia/Seoul")
 
@@ -86,6 +88,12 @@ def api_reserved_hours(request):
 # 의사 대시보드 화면
 # ---------------------------------------------------------
 def doctor_screen_dashboard(request):
+
+    user_role = request.session.get('role', '')
+    if user_role != 'DOCTOR':
+        return redirect('/')
+
+    user_id = request.session.get('user_id', '')
     currentYear = datetime.now().year
 
     items = []
@@ -116,11 +124,7 @@ def doctor_screen_dashboard(request):
     doctor = {}
     users = []
     try:
-        doctor = Doctors.objects.get(doctor_id=1)
-        # users = list(Users.objects.filter(
-        #     reservations__slot__doctor_id=doctor.doctor_id,
-        #     reservations__slot__slot_date=date.today()
-        # ))
+        doctor = Doctors.objects.get(user_id=user_id)
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
@@ -139,13 +143,22 @@ def doctor_screen_dashboard(request):
     except:
         print('error')
 
-    try:
-        now = datetime.now() 
-        seven_days_ago_date = now.date() - timedelta(days=7)
-        start_of_period = datetime.combine(seven_days_ago_date, time.min)
-        end_of_period = now
+    
+    now = datetime.now() 
+    seven_days_ago_date = now.date() - timedelta(days=7)
+    start_of_period = datetime.combine(seven_days_ago_date, time.min)
+    end_of_period = now
+    daily_medical_record_stats = []
+    medical_record_chart_data = []
+    daily_lab_orders_stats = []
+    lab_orders_chart_data = []
+    daily_treatment_stats = []
+    treatment_chart_data = []
+    daily_medical_record_completed_count = 0
+    daily_reservation_count = 0
 
-        daily_stats = list(MedicalRecord.objects.filter(
+    try:
+        daily_medical_record_stats = list(MedicalRecord.objects.filter(
             hos_id=doctor.hos_id,
             record_datetime__gte=start_of_period,
             record_datetime__lte=end_of_period
@@ -154,16 +167,68 @@ def doctor_screen_dashboard(request):
         ).values('record_date').annotate(
             count=Count('medical_record_id')
         ).order_by('record_date'))
-
-        medical_record_chart_data = []
         
-        for item in daily_stats:
+        for item in daily_medical_record_stats:
             medical_chart = {
                 'labels': item['record_date'].strftime('%Y-%m-%d'),
                 'data': item['count']
             }
             medical_record_chart_data.append(medical_chart)
+    except:
+        print('error')
 
+    try:
+        daily_lab_orders_stats = list(LabOrders.objects.filter(
+            medical_record__hos_id=doctor.hos_id,
+            status_datetime__gte=start_of_period,
+            status_datetime__lte=end_of_period,
+            status='Completed'
+        ).annotate(
+            status_date=Cast('status_datetime', output_field=DateField())
+        ).values('status_date').annotate(
+            count=Count('lab_order_id')
+        ).order_by('status_date'))
+
+        for item in daily_lab_orders_stats:
+            lab_orders_chart = {
+                'labels': item['status_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            lab_orders_chart_data.append(lab_orders_chart)
+    except:
+        print('error')
+
+    try:
+        daily_treatment_stats = list(TreatmentProcedures.objects.filter(
+            medical_record__hos_id=doctor.hos_id,
+            completion_datetime__gte=start_of_period,
+            completion_datetime__lte=end_of_period,
+            status='Completed'
+        ).annotate(
+            completion_date=Cast('completion_datetime', output_field=DateField())
+        ).values('completion_date').annotate(
+            count=Count('treatment_id')
+        ).order_by('completion_date'))
+
+        for item in daily_treatment_stats:
+            treatment_chart = {
+                'labels': item['completion_date'].strftime('%Y-%m-%d'),
+                'data': item['count']
+            }
+            treatment_chart_data.append(treatment_chart)
+    except:
+        print('error')
+
+    try:
+        daily_medical_record_completed_count = MedicalRecord.objects.filter(
+            doctor_id=doctor.doctor_id,
+            record_datetime__contains=str(date.today())
+        ).count()
+
+        daily_reservation_count = Reservations.objects.filter(
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=date.today() 
+        ).count()
     except:
         print('error')
 
@@ -172,6 +237,10 @@ def doctor_screen_dashboard(request):
         'users': users,
         'doctor': doctor,
         'medical_record_chart': json.dumps(medical_record_chart_data),
+        'lab_orders_chart': json.dumps(lab_orders_chart_data),
+        'treatment_chart': json.dumps(treatment_chart_data),
+        'daily_medical_record_completed_count': daily_medical_record_completed_count,
+        'daily_reservation_count': daily_reservation_count,
     }
 
     return render(request, 'emr/doctor_screen_dashboard.html', datas)
@@ -898,6 +967,56 @@ def set_doctor_memo(request):
     
 
     return JsonResponse({"result": 'Ok'})
+
+def get_reservation_medical_record(request):
+
+    date = request.GET['date']
+
+    doctor = {}
+    users = []
+    user_data_list = []
+    try:
+        doctor = Doctors.objects.get(doctor_id=1)
+
+        users = list(Reservations.objects.filter(
+            # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=date
+        ).select_related(
+            # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
+            'user', 
+            'slot' 
+        ).order_by(
+            # 정렬: TimeSlots의 start_time을 기준으로 오름차순 정렬
+            'slot__start_time' 
+        ))
+
+        for reservation in users:
+            user = reservation.user
+            slot = reservation.slot
+            
+            user_data_list.append({
+                'user': {
+                    'user_id': user.user_id,
+                    'gender': user.gender,
+                    'name': user.name,
+                    'email': user.email,
+                    'resident_reg_no': user.resident_reg_no,
+                },
+                'slot': {
+                    'slot_id': slot.slot_id,
+                    'start_time': slot.start_time, # time 객체
+                    'end_time': slot.end_time,     # time 객체
+                    'slot_date': slot.slot_date,   # date 객체
+                    'status': slot.status,
+                },
+            })
+    except:
+        print('error')
+
+    return JsonResponse({
+        'users': user_data_list,
+    })
 
 
 # ---------------------------------------------------------

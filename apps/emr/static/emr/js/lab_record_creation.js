@@ -163,6 +163,10 @@ function closeModal(id) {
 async function labPerformSearch() {
     const query = document.getElementById('labNameInput').value;
     const url = `/mstaff/lab_data_search/?search=${query}`;
+
+    $('#layerPopup').css('display', 'block');
+    $('#search').hide();
+
     const response = await fetch(url);
     const datas = await response.json();
     const table = [];
@@ -175,6 +179,9 @@ async function labPerformSearch() {
             </tr>
         `);
     }
+
+    $('#layerPopup').css('display', 'none');
+    $('#search').show();
 
     $('#labResultTable tbody').html(table.join('\n'));
 }

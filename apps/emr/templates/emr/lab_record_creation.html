@@ -16,10 +16,11 @@
 </head>
 <body>
 
-    <div class="header">
+    <!-- <div class="header">
         <div class="logo" onclick="location.href='main.html'">로고</div>
         <div class="user-info">00님</div>
-    </div>
+    </div> -->
+    {% include "emr/_header.html" %}
 
     <div class="container">
         <h2> 검사 기록 작성</h2>
@@ -128,7 +129,12 @@
                 
                 <div class="search-controls">
                     <input type="text" id="labNameInput" placeholder="검사항목명을 입력한다">
-                    <button onclick="labPerformSearch()">검색</button>
+                    <button onclick="labPerformSearch()">
+                        <div class="layerPopup" id="layerPopup">
+                            <div class="spinner"></div>
+                        </div>
+                        <span id="search">검색</span>
+                    </button>
                 </div>
 
                 <table class="result-table" id="labResultTable">

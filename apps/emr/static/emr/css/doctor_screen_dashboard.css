@@ -129,11 +129,11 @@ body {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    max-width: 400px;
+    width: 100%;
 }
 .chart-placeholder {
     background-color: #e9f0f5;
-    min-height: 200px;
+    min-height: 300px;
     border: 1px dashed #ced4da;
     border-radius: 4px;
     display: flex;
