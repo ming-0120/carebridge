@@ -42,6 +42,7 @@
         <form id="reservationForm" method="post" action="{% url 'reservation_page' %}">
             {% csrf_token %}
             <input type="hidden" name="hospital_id" id="reservationHospitalId">
+            <input type="hidden" name="department_id" id="reservationDepartmentId">
         </form>        
         <div class="modal-backdrop"></div>
         <div class="modal-dialog">

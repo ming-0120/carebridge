@@ -1,0 +1,146 @@
+{% load static %}
+
+{% block content %}
+{% include "core/_header.html" %}
+<div class="mypage-layout">
+
+    <!-- 왼쪽 마이페이지 메뉴 -->
+    <aside class="mypage-sidebar">
+        <ul>
+            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
+            <li><a href="{% url 'my_qna_list' %}" class="active">QnA 내역조회</a></li>
+            <li><a href="#">회원 정보수정</a></li>
+            <li><a href="#">즐겨 찾는 병원</a></li>
+            <li><a href="#">계정 탈퇴</a></li>
+        </ul>
+    </aside>
+
+    <!-- 오른쪽 컨텐츠 -->
+    <section class="mypage-content">
+        <h2>My QnA</h2>
+
+        <!-- 정렬 옵션 (등록일/답변유무) -->
+        <div class="qna-sort">
+            <a href="?sort=date_desc" {% if current_sort == "date_desc" %}class="on"{% endif %}>등록일▼</a>
+            <a href="?sort=date_asc" {% if current_sort == "date_asc" %}class="on"{% endif %}>등록일▲</a>
+            <a href="?sort=answer" {% if current_sort == "answer" %}class="on"{% endif %}>답변유무</a>
+        </div>
+
+        <div class="qna-table-wrapper">
+            <table class="qna-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>제목</th>
+                        <th>작성자</th>
+                        <th>등록일</th>
+                        <th>답변 유무</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if rows %}
+                        {% for row in rows %}
+                            {% with q=row.obj %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td class="title">
+                                    {{ q.title }}
+                                </td>
+                                <td>{{ q.author.name }}</td> {# Users 모델 필드명에 맞게 수정 #}
+                                <td>{{ q.created_at|date:"Y-m-d" }}</td>
+                                <td>{{ row.answer_label }}</td>
+                            </tr>
+                            {% endwith %}
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center">최근 3개월 내 QnA 이력이 없습니다.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="qna-write-btn-area">
+            <!-- 글쓰기 버튼: 실제 QnA 작성 URL로 수정 -->
+            <a href="#" class="btn btn-primary">글쓰기</a>
+        </div>
+    </section>
+</div>
+
+<style>
+.mypage-layout {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+}
+.mypage-sidebar {
+    width: 160px;
+    border: 1px solid #ddd;
+}
+.mypage-sidebar ul { list-style: none; margin:0; padding:0; }
+.mypage-sidebar li a {
+    display:block;
+    padding:12px 16px;
+    border-bottom:1px solid #eee;
+    text-decoration:none;
+    color:#333;
+}
+.mypage-sidebar li a.active {
+    background:#f2f4ff;
+    font-weight:600;
+}
+
+.mypage-content { flex:1; }
+
+.qna-table-wrapper {
+    margin-top:16px;
+    max-height:400px;
+    overflow-y:auto;
+    border:1px solid #ddd;
+}
+.qna-table {
+    width:100%;
+    border-collapse:collapse;
+    font-size:14px;
+}
+.qna-table th,
+.qna-table td {
+    border-bottom:1px solid #eee;
+    padding:8px 10px;
+    text-align:left;
+}
+.qna-table th { background:#f8f8f8; text-align:center; }
+.qna-table td:nth-child(1),
+.qna-table td:nth-child(5) { text-align:center; }
+
+.qna-sort {
+    margin-top:8px;
+    font-size:13px;
+}
+.qna-sort a {
+    margin-right:8px;
+    text-decoration:none;
+    color:#666;
+}
+.qna-sort a.on {
+    font-weight:600;
+    text-decoration:underline;
+}
+
+.qna-write-btn-area {
+    margin-top:16px;
+    text-align:center;
+}
+.btn.btn-primary {
+    display:inline-block;
+    padding:8px 24px;
+    border-radius:4px;
+    border:1px solid #4b6cff;
+    background:#4b6cff;
+    color:#fff;
+    text-decoration:none;
+    font-size:14px;
+}
+</style>
+{% endblock %}

@@ -32,6 +32,9 @@ urlpatterns = [
 
     # 감염병 통계 & 병원 페이지
     path('hospitals/', include('apps.hospitals.urls')),  # ← 이게 중요!!
+
+    # 마이페이지
+    path('mypage/', include('apps.mypage.urls')),  # ← 이게 중요!!
     
     # 실시간 응급실 조회 전용 라우팅
     path('emergency/', include('apps.emergency.urls')),

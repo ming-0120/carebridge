@@ -48,10 +48,20 @@ body {
     cursor: pointer;
 }
 
-.dept-list li.active {
-    background: #ffe0c2;
+/* 선택된 항목 */
+li.active a {
+    font-weight: bold;
+    color: #007bff;
+    border-bottom: 2px solid #007bff;
 }
 
+/* 비활성 항목 */
+li.disabled a {
+    color: #999;
+    pointer-events: none;
+    cursor: default;
+    opacity: 0.6;
+}
 /* 오른쪽 메인 영역 */
 .reservation-main {
     display: grid;
@@ -150,4 +160,8 @@ body {
     background: #fff;
     cursor: pointer;
     font-size: 16px;
+}
+.fc-day-selected {
+    background-color: #4da3ff !important;
+    color: white !important;
 }

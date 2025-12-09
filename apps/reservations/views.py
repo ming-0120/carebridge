@@ -1,8 +1,11 @@
 import json
 import math
+import os
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
+from django.urls import reverse
+import requests
 from apps.db.models.department import Department
 from apps.db.models.doctor import Doctors
 from apps.db.models.favorite import UserFavorite
@@ -86,30 +89,39 @@ def main_view(request):
     return render(request, "reservations/main.html", context)
 
 def reservation_page(request):
-    # 1) POST로 온 경우: hospital_id를 세션에 저장 후 GET으로 리다이렉트
+    currentYear = datetime.now().year
+    # 1) POST: 병원 id 세션 저장 + 진료과 코드 쿼리스트링으로 넘기기
     if request.method == "POST":
         hospital_id = request.POST.get("hospital_id")
+        # dep_code는 POST 또는 GET 어디에 있어도 받게끔
+        dep_code = request.POST.get("dept_id") or request.GET.get("dept_id")  # ★ 수정
+
         if not hospital_id:
-            return redirect("main")  # 병원 id 없으면 메인으로
+            return redirect("main")
 
         request.session["selected_hospital_id"] = hospital_id
-        return redirect("reservation_page")  # GET /reservations/ 로 다시 진입
 
-    # 2) GET인 경우: 세션에서 hospital_id 가져오기
+        if dep_code:
+            url = f"{reverse('reservation_page')}?dept_id={dep_code}"
+            return redirect(url)
+        else:
+            return redirect("reservation_page")
+        
+    # 2) GET: 세션에서 hospital_id 가져오기
     hospital_id = request.session.get("selected_hospital_id")
     if not hospital_id:
-        return redirect("main")  # 병원 선택 페이지
+        return redirect("main")
 
     hospital = get_object_or_404(Hospital, pk=hospital_id)
 
     # 3) 모든 진료과 목록
     departments = Department.objects.all().order_by("dep_name")
 
-    # 4) 주소에 ?department_id=IM 이 오면 그 과를 선택
-    dep_code = request.GET.get("department_id")  # 예: IM
-    if dep_code:
-        # Department 모델에서 코드 필드명이 dep_code인지 dep_id인지 확인해서 맞게 바꿀 것
-        selected_department = get_object_or_404(Department, dep_id=dep_code)
+    # 4) 주소에 ?dept_id=IM 이 오면 그 과를 선택
+    code = request.GET.get("dept_id")  # URL 파라미터 이름은 그대로 사용
+    if code:
+        # Department.dep_code 컬럼에 "IM" 같은 코드가 들어있다고 가정
+        selected_department = get_object_or_404(Department, dep_code=code)
     else:
         selected_department = departments.first()
 
@@ -118,14 +130,39 @@ def reservation_page(request):
         hos_id=hospital_id,
         dep=selected_department,
     ).select_related("user", "dep")
-
-    context = {
-        "hospital": hospital,
-        "departments": departments,
-        "selected_department": selected_department,
-        "doctors": doctors,
-    }
+    items = []
+    for i in range(2):
+        url = (
+            f'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/'
+            f'getRestDeInfo?solYear={currentYear}&numOfRows=100&ServiceKey={os.getenv("API_KEY")}&_type=json'
+        )
+        response = requests.get(url)
+        item = response.json()
+    
+        if item['response']['body']['items']['item']:
+            items += item['response']['body']['items']['item']
+    
+        currentYear += 1
+    
+    holidays = []
+    for data in items:
+        y = str(data['locdate'])[0:4]
+        m = str(data['locdate'])[4:6]
+        d = str(data['locdate'])[6:8]
+    
+        holidays.append({
+            'date': f'{y}-{m}-{d}',          # YYYY-MM-DD
+            'name': data['dateName']         # "삼일절"
+        })
+        context = {
+            "hospital": hospital,
+            "departments": departments,
+            "selected_department": selected_department,
+            "doctors": doctors,
+            "holidays": holidays,   # ← 추가
+        }
     return render(request, "reservations/reservation_page.html", context)
+
 
 def reserve_submit(request):
     """상세 페이지에서 '예약확정' 버튼 눌렀을 때 실제로 Reservations 생성"""
