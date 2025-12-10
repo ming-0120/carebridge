@@ -13,10 +13,28 @@ function openProcedureSearchModal() {
         alert('시술이 이미 시작되어 변경할 수 없습니다.');
         return;
     }
+
     document.getElementById('procedureSearchModal').style.visibility = 'visible';
     selectedProcedure = null;
     document.querySelectorAll('#procedureResultTable tbody tr').forEach(r => r.classList.remove('selected'));
+
+    $('#procedureNameInput').val('');
+    $('#procedureResultTable tbody').html('');
+    $('#procedureNameInput').focus();
 }
+
+function debounce(fn, delay) {
+  let timer = null;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+const debouncedTreatmentPerformSearch = debounce(function () {
+  treatmentPerformSearch(document.getElementById('procedureNameInput').value);
+}, 300);
+
 
 // 상태 업데이트
 function updateStatus(newStatus) {
@@ -74,10 +92,10 @@ function updateButtonVisibility() {
     }
 }
 
-// 다음 환자 이동
-function goToNextPatient() {
-    alert('다음 환자의 치료기록 화면으로 이동합니다.');
-}
+// // 다음 환자 이동
+// function goToNextPatient() {
+//     alert('다음 환자의 치료기록 화면으로 이동합니다.');
+// }
 
 // 모달 닫기
 function closeModal(id) {
@@ -87,12 +105,9 @@ function closeModal(id) {
 }
 
 // 모달 검색
-async function treatmentPerformSearch() {
-    const q = document.getElementById('procedureNameInput').value;
+async function treatmentPerformSearch(query) {
+    const q = query;
     url = `/mstaff/treatment_data_search/?search=${q}`;
-    
-    $('#layerPopup').css('display', 'block');
-    $('#search').hide();
 
     const response = await fetch(url);
     const datas = await response.json();
@@ -107,9 +122,6 @@ async function treatmentPerformSearch() {
         `);
     }
 
-    $('#layerPopup').css('display', 'none');
-    $('#search').show();
-
     $('#procedureResultTable tbody').html(table.join('\n'));
 }
 
@@ -123,6 +135,8 @@ function selectProcedure(row) {
         code: row.getAttribute('data-code'),
         name: row.getAttribute('data-name')
     };
+
+    confirmSelection();
 }
 
 // 모달 확인 → 입력란 반영
@@ -137,6 +151,8 @@ function confirmSelection() {
 
     closeModal('procedureSearchModal');
 }
+
+document.getElementById('procedureNameInput').addEventListener('input', debouncedTreatmentPerformSearch)
 
 // 초기 실행
 document.addEventListener('DOMContentLoaded', updateButtonVisibility);

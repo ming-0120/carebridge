@@ -1,4 +1,6 @@
 from django import template
+from datetime import date
+
 
 register = template.Library()
 
@@ -37,3 +39,25 @@ def rrn_to_birthdate(reg_num):
     birth_date = f"{full_year}-{mm}-{dd}"
     
     return birth_date
+
+@register.filter
+def calculate_age_from_rrn(rrn_string):
+    birth_date_part = rrn_string[:6]
+    gender_code = rrn_string[7]
+
+    if gender_code in ('1', '2', '5', '6', '9', '0'):
+        if gender_code in ('1', '2', '9', '0'):
+            century_prefix = 19
+        else:
+            century_prefix = 18
+    else:
+        century_prefix = 20
+
+    birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
+    birth_month = int(birth_date_part[2:4])
+    birth_day = int(birth_date_part[4:6])
+
+    today = date.today()
+
+  
+    return today.year - birth_year + 1

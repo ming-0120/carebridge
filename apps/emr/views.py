@@ -107,7 +107,13 @@ def doctor_screen_dashboard(request):
     doctor = {}
     users = []
     try:
-        doctor = Doctors.objects.get(user_id=user_id)
+        doctor = Doctors.objects.select_related(
+            'user',
+            'hos',
+            'dep',
+        ).get(
+            user_id=user_id
+        )
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
@@ -242,7 +248,7 @@ def hospital_staff_dashboard(request):
     treatment_pending_count = 0
     treatment_inprogress_count = 0
     try:
-        medical_records = Hospital.objects.get(hos_id=1).medicalrecord_set.all()
+        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
         for record in medical_records:
             try:
                 lab = LabOrders.objects.exclude(
@@ -326,7 +332,7 @@ def medical_record_creation(request):
     # 2) 환자(Users), 의사(Doctors) 객체 조회
     #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
     patient = Users.objects.get(user_id=patient_id)
-    doctor = Doctors.objects.get(doctor_id=1)
+    doctor = Doctors.objects.get(doctor_id=68)
 
     # 3) 화면용 파생 값 세팅
     #    주민번호 → 생년월일
@@ -964,14 +970,14 @@ def set_doctor_memo(request):
     return JsonResponse({"result": 'Ok'})
 
 def get_reservation_medical_record(request):
-
+    doctor_id = request.GET['doctor_id']
     date = request.GET['date']
 
     doctor = {}
     users = []
     user_data_list = []
     try:
-        doctor = Doctors.objects.get(doctor_id=1)
+        doctor = Doctors.objects.get(doctor_id=doctor_id)
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
