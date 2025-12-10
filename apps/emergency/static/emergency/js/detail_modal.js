@@ -11,13 +11,22 @@ function openHospitalDetail(erId) {
       document.getElementById("detail-title").innerText = data.er_name;
       document.getElementById("detail-address").innerText = data.er_address || "";
 
-      // Tags: CT, MRI, 분만실
+      // ================================
+      // Tags: CT / MRI / 분만실 / 수술실 / 중환자실
+      // (기존 구조 유지, 렌더링 부분만 정확히 수정)
+      // ================================
       const tagWrap = document.getElementById("detail-tags");
+      tagWrap.innerHTML = "";  // 초기화
+
       if (data.tags && data.tags.length > 0) {
-        tagWrap.innerHTML = data.tags.map(t => `<span class="tag">${t}</span>`).join("");
-      } else {
-        tagWrap.innerHTML = "";
+        data.tags.forEach(tag => {
+          const el = document.createElement("span");
+          el.classList.add("tag");
+          el.textContent = tag;
+          tagWrap.appendChild(el);
+        });
       }
+      // =================================
 
       // Message banner: ErMessage 표시
       const banner = document.getElementById("detail-banner");
@@ -40,7 +49,12 @@ function openHospitalDetail(erId) {
       updateAiReview(data.ai_review);
 
       // 지도 및 길찾기 버튼
-      setupMap(data.er_lat, data.er_lng, data.er_address);
+      setupMap(
+        data.er_lat,
+        data.er_lng,
+        data.er_address,
+        data.kakao_map_js_key
+      );
     })
     .catch(err => {
       console.error("상세 정보 로딩 실패:", err);
@@ -54,7 +68,6 @@ function fillStatusRow(key, available, total) {
   const statusTextEl = document.getElementById(`status-text-${key}`);
   const statusCountEl = document.getElementById(`status-count-${key}`);
 
-  // 원형 그래프 생성 (main.html과 동일한 방식)
   circleContainer.innerHTML = "";
   
   if (total !== null && total !== undefined && total >= 0 && available !== null && available !== undefined) {
@@ -72,7 +85,6 @@ function fillStatusRow(key, available, total) {
       colorClass = "red";
     }
 
-    // 원형 그래프 생성 (main.html의 _circle_cell.html과 동일한 구조)
     circleContainer.innerHTML = `
       <div class="status-circle ${colorClass}">
         <svg>
@@ -89,7 +101,6 @@ function fillStatusRow(key, available, total) {
       </div>
     `;
 
-    // 상태 텍스트
     let statusText = "";
     if (available === null || available === undefined) {
       statusText = "정보없음";
@@ -108,11 +119,9 @@ function fillStatusRow(key, available, total) {
       }
     }
     statusTextEl.innerText = statusText;
-
-    // 숫자 표시
     statusCountEl.innerText = `${available ?? "-"}/${total ?? "-"}`;
+
   } else {
-    // 정보 없음 (main.html의 _circle_cell.html과 동일한 구조)
     circleContainer.innerHTML = `
       <div class="status-circle none">
         <svg>
@@ -136,20 +145,17 @@ function fillStatusRow(key, available, total) {
 
 // AI 리뷰 요약 업데이트
 function updateAiReview(aiReview) {
-  const reviewContent = document.getElementById("detail-review-content");
   const sentimentDiv = document.getElementById("review-sentiment");
   const summaryText = document.getElementById("review-summary-text");
 
   if (aiReview && aiReview.summary) {
-    // 감성 분석 표시
     if (aiReview.positive_ratio !== null && aiReview.negative_ratio !== null) {
       const positivePercent = Math.round(aiReview.positive_ratio * 100);
       const negativePercent = Math.round(aiReview.negative_ratio * 100);
-      
+
       document.getElementById("positive-percent").innerText = `${positivePercent}%`;
       document.getElementById("negative-percent").innerText = `${negativePercent}%`;
 
-      // 시각적 바 생성 (10개 칸 기준)
       const positiveBars = Math.round(positivePercent / 10);
       const negativeBars = Math.round(negativePercent / 10);
       
@@ -171,7 +177,6 @@ function updateAiReview(aiReview) {
       sentimentDiv.classList.add("hidden");
     }
 
-    // 핵심 한줄 요약
     summaryText.innerText = aiReview.summary;
   } else {
     sentimentDiv.classList.add("hidden");
@@ -180,26 +185,57 @@ function updateAiReview(aiReview) {
 }
 
 
-// 지도 및 길찾기 설정
-function setupMap(lat, lng, address) {
+// 카카오 지도 미리보기 + 길찾기
+function setupMap(lat, lng, address, apiKey) {
   const mapDiv = document.getElementById("detail-map");
   const navBtn = document.getElementById("detail-navigation-btn");
 
-  if (lat && lng) {
-    // 카카오맵 길찾기 URL 생성
-    const kakaoMapUrl = `https://map.kakao.com/link/to/${encodeURIComponent(address)},${lat},${lng}`;
-    navBtn.onclick = () => {
-      window.open(kakaoMapUrl, '_blank');
-    };
+  // =============================
+  // (A) 길찾기 버튼 — 지도와 무관하게 항상 적용
+  // =============================
+  const kakaoLink = `https://map.kakao.com/link/to/${encodeURIComponent(
+    address
+  )},${lat},${lng}`;
+  navBtn.onclick = () => window.open(kakaoLink, "_blank");
 
-    // 지도 표시 (간단한 이미지 또는 iframe)
-    // 실제 구현 시 카카오맵 API를 사용할 수 있음
-    mapDiv.innerHTML = `<div style="width:100%; height:260px; background:#dcdcdc; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#666;">지도 표시 영역<br>(위도: ${lat}, 경도: ${lng})</div>`;
-  } else {
-    mapDiv.innerHTML = '<div style="width:100%; height:260px; background:#dcdcdc; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#666;">위치 정보 없음</div>';
-    navBtn.onclick = null;
+  // 지도정보 없으면 길찾기만 동작
+  if (!lat || !lng) {
+    mapDiv.innerHTML =
+      '<div style="width:100%; height:260px; background:#f1f1f1; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#666;">위치 정보 없음</div>';
+    return;
+  }
+
+  // =============================
+  // (B) 카카오맵 로딩 — 실패해도 길찾기에는 영향 없음
+  // =============================
+  try {
+    kakao.maps.load(function () {
+      const container = mapDiv;
+      const options = {
+        center: new kakao.maps.LatLng(lat, lng),
+        level: 3,
+      };
+
+      const map = new kakao.maps.Map(container, options);
+
+      new kakao.maps.Marker({
+        position: new kakao.maps.LatLng(lat, lng),
+        map: map,
+      });
+
+      setTimeout(() => {
+        map.relayout();
+        map.setCenter(new kakao.maps.LatLng(lat, lng));
+      }, 200);
+    });
+  } catch (e) {
+    console.warn("지도 로딩 실패 (길찾기 버튼은 정상):", e);
   }
 }
+
+
+
+
 
 
 // ESC 닫기

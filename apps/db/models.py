@@ -40,3 +40,5 @@ class MedicineData(models.Model):
 
     class Meta:
         db_table = 'medicine_data'
+
+from .emergency import ErInfo, ErStatus, ErStatusStaging, ErMessage

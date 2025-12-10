@@ -66,17 +66,29 @@
 
         {# 응급실 일반 #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
 
         {# 응급실 소아 #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
 
-        {# 분만실 #}
+        {# 분만실 (hv42/hvs26 → birth_available/birth_total) #}
         <div>
-          {% if st %}{% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}{% else %}{% include "emergency/_circle_cell.html" with available=None total=None %}{% endif %}
+          {% if st %}
+            {% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}
+          {% else %}
+            {% include "emergency/_circle_cell.html" with available=None total=None %}
+          {% endif %}
         </div>
 
         {# 음압격리 #}
@@ -97,7 +109,7 @@
           {% endif %}
         </div>
 
-        {# 코호트격리 #}
+        {# 코호트격리 (hv27/hvs59 → isolation_cohort_available/total) #}
         <div>
           {% if st %}
             {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total %}
@@ -105,7 +117,6 @@
             {% include "emergency/_circle_cell.html" with available=None total=None %}
           {% endif %}
         </div>
-
 
         <div class="favorite">★</div>
       </div>
@@ -139,12 +150,9 @@
     const userLat = sessionStorage.getItem("user_lat");
     const userLng = sessionStorage.getItem("user_lng");
     
-    // sessionStorage에 위치 정보가 있고, URL에 없으면 서버에 전달
     if (userLat && userLng) {
       const urlParams = new URLSearchParams(window.location.search);
       if (!urlParams.get("lat") && !urlParams.get("lng")) {
-        // 위치 정보를 서버에 전달하기 위해 AJAX로 요청
-        // 서버는 요청 헤더에서 위치 정보를 읽어서 처리
         fetch(window.location.pathname + window.location.search, {
           method: 'GET',
           headers: {
@@ -155,7 +163,6 @@
         })
         .then(response => response.text())
         .then(html => {
-          // 응답을 파싱하여 병원 목록만 업데이트
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, 'text/html');
           const newTableBox = doc.querySelector('.table-box');
@@ -172,7 +179,6 @@
   })();
 </script>
 
-<!-- home.js: 위치 → sessionStorage에만 저장 (URL에는 추가하지 않음) -->
 <script src="{% static 'core/js/home.js' %}"></script>
 
 {% endblock %}

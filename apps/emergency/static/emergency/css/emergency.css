@@ -74,6 +74,7 @@ header h1 {
   border-bottom:2px solid #d4dae2;
 }
 
+
 .row {
   display:grid;
   grid-template-columns: 1.6fr repeat(6,1fr) 0.5fr;
@@ -605,4 +606,44 @@ header h1 {
   background: #f3f4f6;
   cursor: pointer;
   white-space: nowrap;
+}
+
+.status-chip {
+    padding: 3px 8px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: white;
+}
+
+.status-chip.available {
+    background-color: #22c55e; /* 초록 */
+}
+
+.status-chip.unavailable {
+    background-color: #ef4444; /* 빨강 */
+}
+
+.status-chip.unknown {
+    background-color: #9ca3af; /* 회색 */
+}
+
+/* ====== 원형 그래프 정렬 개선 ====== */
+.row > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.status-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.table-header > div {
+    transform: translateX(120px); /* 원하는 만큼 오른쪽 */
 }

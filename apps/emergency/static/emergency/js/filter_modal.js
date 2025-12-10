@@ -1,14 +1,11 @@
-// ========================================
-// 응급 유형과 장비 자동 추천 매핑
-// - key: data-type 값
-// - value: data-equip 값 배열
-// ========================================
+// 응급 유형 → 필요한 장비 OR 조건 자동 선택
 const EMERGENCY_MAP = {
-  stroke:      ["ct", "mri", "angio", "icu"],        // 뇌출혈 / 뇌경색
-  traffic:     ["surgery", "icu"],                  // 교통사고
-  cardio:      ["surgery", "ventilator"],           // 심근경색
-  obstetrics:  ["delivery", "surgery"]              // 산모/분만
+  stroke: ["ct", "mri", "angio"],
+  traffic: ["ct", "angio"],
+  cardio: ["angio", "ventilator"],
+  obstetrics: ["delivery"],
 };
+
 
 // ========================================
 // 필터 모달 열기 (UI 유지)
@@ -39,7 +36,7 @@ function resetFilter() {
   [
     "etype",
     "ct", "mri", "angio",
-    "icu", "surgery", "delivery", "ventilator"
+    "delivery", "ventilator"
   ].forEach(k => params.delete(k));
 
   // 페이지 reload 적용
@@ -56,58 +53,116 @@ function applyFilter() {
   [
     "etype",
     "ct", "mri", "angio",
-    "icu", "surgery", "delivery", "ventilator"
+    "delivery", "ventilator"
   ].forEach(k => params.delete(k));
 
+  // ---------------------------
   // 응급 유형(etype)
+  // ---------------------------
   const activeTypeBtn = document.querySelector("#emergency-type-group .type-chip.active");
   if (activeTypeBtn) {
-    const typeKey = activeTypeBtn.dataset.type;  // stroke, traffic, ...
+    const typeKey = activeTypeBtn.dataset.type;  // stroke, traffic 등
     if (typeKey) params.set("etype", typeKey);
   }
 
-  // 장비 선택 반영
+  // ---------------------------
+  // 장비 선택 (OR 조건)
+  // ---------------------------
   document.querySelectorAll(".equip-chip.active").forEach(chip => {
     const equipKey = chip.dataset.equip;
-    if (equipKey) params.set(equipKey, "1");
+    if (equipKey) params.set(equipKey, "1");  // OR 조건의 핵심
   });
 
+  // ---------------------------
+  // 모달 닫기 + 페이지 리로드
+  // ---------------------------
   closeFilterModal();
-  window.location.search = params.toString(); // 페이지 리로드
+  window.location.search = params.toString();
 }
 
+
 // ========================================
-// chip UI interaction
+// chip UI init (문서 로드 시)
 // ========================================
 document.addEventListener("DOMContentLoaded", () => {
-  const typeBtns = document.querySelectorAll("#emergency-type-group .type-chip");
-  const equipChips = document.querySelectorAll(".equip-chip");
+  // URL 파라미터 읽기
+  const params = new URLSearchParams(window.location.search);
+  const currentEtype = params.get("etype");
 
-  const clearEquip = () =>
-    equipChips.forEach(c => c.classList.remove("active"));
+  // 초기 상태 복원 함수
+  function restoreFilterState() {
+    const typeChips = document.querySelectorAll("#emergency-type-group .type-chip");
+    const equipChips = document.querySelectorAll("#equip-group .equip-chip");
 
-  // 응급유형 클릭 시 자동 장비 추천
-  typeBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      typeBtns.forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
+    // etype 활성화
+    if (currentEtype) {
+      typeChips.forEach(chip => {
+        if (chip.dataset.type === currentEtype) {
+          chip.classList.add("active");
+        }
+      });
+    }
 
-      clearEquip();
+    // 장비(CT/MRI/Angio/분만실/ventilator) 활성화
+    equipChips.forEach(chip => {
+      const key = chip.dataset.equip;
+      if (params.get(key) === "1") {
+        chip.classList.add("active");
+      }
+    });
+  }
 
-      const typeKey = btn.dataset.type;
-      const mappedEquips = EMERGENCY_MAP[typeKey] || [];
+  // 초기 상태 복원
+  restoreFilterState();
 
-      mappedEquips.forEach(eqKey => {
-        const target = document.querySelector(`.equip-chip[data-equip="${eqKey}"]`);
-        if (target) target.classList.add("active");
+  // 이벤트 위임: 응급 유형 그룹에 클릭 이벤트 등록
+  const emergencyTypeGroup = document.getElementById("emergency-type-group");
+  if (emergencyTypeGroup) {
+    emergencyTypeGroup.addEventListener("click", (e) => {
+      const chip = e.target.closest(".type-chip");
+      if (!chip) return;
+
+      e.stopPropagation();
+      
+      // 타입 토글
+      const isActive = chip.classList.contains("active");
+      const allTypeChips = document.querySelectorAll("#emergency-type-group .type-chip");
+      allTypeChips.forEach(c => c.classList.remove("active"));
+      if (!isActive) {
+        chip.classList.add("active");
+      }
+
+      // 매핑된 장비 자동 활성화
+      const tKey = chip.dataset.type;
+      const equips = EMERGENCY_MAP[tKey] || [];
+      
+      // 모든 장비 칩 선택 해제
+      const allEquipChips = document.querySelectorAll("#equip-group .equip-chip");
+      allEquipChips.forEach(c => c.classList.remove("active"));
+      
+      // 매핑된 장비 활성화
+      equips.forEach(eq => {
+        // 모든 장비 칩을 순회하며 data-equip 속성 확인
+        allEquipChips.forEach(equipChip => {
+          if (equipChip.dataset.equip === eq) {
+            equipChip.classList.add("active");
+          }
+        });
       });
     });
-  });
+  }
 
-  // 장비 개별 선택/해제 (토글)
-  equipChips.forEach(chip =>
-    chip.addEventListener("click", () => chip.classList.toggle("active"))
-  );
+  // 이벤트 위임: 장비 그룹에 클릭 이벤트 등록
+  const equipGroup = document.getElementById("equip-group");
+  if (equipGroup) {
+    equipGroup.addEventListener("click", (e) => {
+      const chip = e.target.closest(".equip-chip");
+      if (!chip) return;
+
+      e.stopPropagation();
+      chip.classList.toggle("active");
+    });
+  }
 });
 
 // ========================================

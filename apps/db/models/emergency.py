@@ -13,6 +13,7 @@ class ErInfo(models.Model):
     er_sigungu = models.CharField(max_length=30)
     er_lat = models.FloatField(null=True, blank=True)
     er_lng = models.FloatField(null=True, blank=True)
+    place_id = models.CharField(max_length=20, null=True, blank=True)
 
     class Meta:
         db_table = "er_info"
@@ -37,8 +38,9 @@ class ErStatus(models.Model):
     er_child_available = models.IntegerField(null=True)
     er_child_total = models.IntegerField(null=True)
 
-    # ---- 분만실 ---- (Boolean)
-    birth_available = models.BooleanField(null=True)
+    # ---- 분만실 ---- (실시간 병상: hv42/hvs26)
+    birth_available = models.IntegerField(null=True)
+    birth_total = models.IntegerField(null=True)
 
     # ---- 음압 격리 ----
     negative_pressure_available = models.IntegerField(null=True)
@@ -50,11 +52,12 @@ class ErStatus(models.Model):
 
     # ---- 코호트 격리 ----
     isolation_cohort_available = models.IntegerField(null=True)
+    isolation_cohort_total = models.IntegerField(null=True)
 
     # ---- 장비 여부 ----
     has_ct = models.BooleanField(null=True)
     has_mri = models.BooleanField(null=True)
-    has_ecmo = models.BooleanField(null=True)
+    has_angio = models.BooleanField(null=True, blank=True)
     has_ventilator = models.BooleanField(null=True)
 
     class Meta:
@@ -83,24 +86,27 @@ class ErStatusStaging(models.Model):
     hv28 = models.IntegerField(null=True)     # available
     hvs02 = models.IntegerField(null=True)    # total
 
-    # ---- 분만실 ---- (세부 병상 없음)
-    birth_flag = models.CharField(max_length=5, null=True)
+    # ---- 분만실 ----
+    # hv42는 실제 응답에서 Y/N 형태가 섞여 있으므로 raw 문자열로 보관
+    hv42 = models.CharField(max_length=10, null=True)   # available (Y/N 또는 숫자)
+    hvs26 = models.IntegerField(null=True)              # total
 
     # ---- 음압 격리 ----
-    hv29 = models.IntegerField(null=True)
-    hvs03 = models.IntegerField(null=True)
+    hv29 = models.IntegerField(null=True)     # available
+    hvs03 = models.IntegerField(null=True)    # total
 
     # ---- 일반 격리 ----
-    hv30 = models.IntegerField(null=True)
-    hvs04 = models.IntegerField(null=True)
+    hv30 = models.IntegerField(null=True)     # available
+    hvs04 = models.IntegerField(null=True)    # total
 
     # ---- 코호트 격리 ----
-    hv27 = models.IntegerField(null=True)
+    hv27 = models.IntegerField(null=True)     # available
+    hvs59 = models.IntegerField(null=True)    # total (코호트 기준 병상 수)
 
     # ---- 장비 ----
     hvctayn = models.CharField(max_length=10, null=True)
     hvmriayn = models.CharField(max_length=10, null=True)
-    hvecmoayn = models.CharField(max_length=10, null=True)
+    hvangioayn = models.CharField(max_length=10, null=True)
     hvventiayn = models.CharField(max_length=10, null=True)
 
     class Meta:
@@ -110,19 +116,18 @@ class ErStatusStaging(models.Model):
     def __str__(self):
         return f"{self.hospital.hpid} @ {self.hvdate}"
 
+
 # ==========================================
 # 4. 응급실 메시지 (선택사항)
 # ==========================================
 class ErMessage(models.Model):
-    msg_id = models.AutoField(primary_key=True)
-    status = models.ForeignKey('ErStatus', on_delete=models.CASCADE)
-    # ENUM('MKioskTy1','MKioskTy2',...,'MKioskTy7')
-    type_code = models.CharField(max_length=20, null=True, blank=True)
+    hospital = models.ForeignKey("ErInfo", on_delete=models.CASCADE)
     message = models.TextField(null=True, blank=True)
-    updated_at = models.DateTimeField(null=True, blank=True)
+    message_time = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         db_table = "er_message"
+        unique_together = ("hospital", "message_time")
 
     def __str__(self):
-        return f"{self.type_code} - {self.status_id}"
+        return f"{self.hospital.er_name} @ {self.message_time}"
