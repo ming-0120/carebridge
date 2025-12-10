@@ -1,25 +1,4 @@
-// Mock data
-const records = [
-    { 
-        id: 1, date: '2025-03-10', type: 'progress_note', author: '김○○', time: '13:42',
-        soap: 'S] 환자 주관적 증상 내용....\nO] 의사의 객관적 관찰...\nA] 의학적 평가.....\nP] 치료 계획.....',
-        treatment: { name: 'Nebulizer', code: 'TR001', status: 'completed' },
-        lab: { name: 'CBC', specimen: '혈액(BLD)', urgent: 'FALSE' },
-        prescription: { name: 'Amoxicillin 500mg', code: 'DRUG022', status: '15(투여완료)' }
-    },
-    { 
-        id: 2, date: '2025-03-02', type: 'consult_note', author: '박○○', time: '10:00',
-        soap: 'S] 단순 상담 진행.\nO] 특이 소견 없음.\nA] 양호.\nP] 추적 관찰 예정.',
-        treatment: null, lab: null, prescription: null
-    },
-    { 
-        id: 3, date: '2025-02-21', type: 'h&p', author: '이○○', time: '09:00',
-        soap: 'S] 초기 내원 시 증상 기록.\nO] 신체 검사 결과.\nA] 감별 진단 필요.\nP] 검사 오더.',
-        treatment: { name: 'Dressing', code: 'TR002', status: 'completed' }, 
-        lab: { name: 'CRP', specimen: '소변(UR)', urgent: 'TRUE' }, 
-        prescription: { name: 'Ibuprofen 400mg', code: 'DRUG005', status: '15(투여완료)' }
-    }
-];
+
 
 // 초기 목록 생성
 function loadRecordList() {

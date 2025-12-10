@@ -959,8 +959,9 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
       // 스크롤 위치 복원
       window.scrollTo(0, currentScrollPosition);
       
-      // URL 업데이트 (히스토리 관리, 파라미터는 제거)
-      window.history.pushState({}, '', urlObj.pathname);
+      // URL 업데이트 (히스토리 관리, 쿼리 파라미터 유지)
+      // urlObj.toString() 또는 url을 사용하여 정렬 파라미터를 URL에 유지
+      window.history.pushState({}, '', urlObj.toString());
     }
   })
   .catch(error => {
@@ -1439,6 +1440,17 @@ function handlePaginationAjax(e, url) {
   // ========= URL 파싱 및 FormData 생성 =========
   // 목적: URL에서 파라미터를 추출하여 POST 요청용 FormData 생성
   const urlObj = new URL(url, window.location.origin);
+  
+  // 현재 URL의 정렬/검색 파라미터를 가져와서
+  // 새로 클릭한 페이지 URL에 없으면 채워 넣기
+  const currentUrl = new URL(window.location.href);
+  ['sort', 'order', 'search_type', 'search_keyword'].forEach(key => {
+    const currentValue = currentUrl.searchParams.get(key);
+    if (currentValue && !urlObj.searchParams.has(key)) {
+      urlObj.searchParams.set(key, currentValue);
+    }
+  });
+  
   const formData = new FormData();
   
   // URL 파라미터를 FormData에 추가

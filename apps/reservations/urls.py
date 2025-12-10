@@ -9,6 +9,6 @@ urlpatterns = [
     path("submit/", views.reserve_submit, name="reserve_submit"),
     path("confirm/", views.reservation_confirm, name="reservation_confirm"),
     path("api/doctor-reservations/", views.doctor_reservations_api, name="doctor_reservations_api"),
-    path("favorite/toggle/", views.toggle_favorite, name="toggle_favorite"),  # ★ 여기
+    path("favorite/toggle/", views.toggle_favorite, name="toggle_favorite"),
     path("api/doctor-slots/", views.doctor_slots_api, name="doctor_slots_api"),
 ]

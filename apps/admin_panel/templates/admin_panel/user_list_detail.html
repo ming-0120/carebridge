@@ -154,13 +154,14 @@
       
       목적: 사용자의 주소를 표시
         - detail-label: "주소" (라벨)
-        - detail-value: selected_user.address (사용자의 주소)
+        - detail-value: address_formatted (포맷팅된 주소) 또는 selected_user.address (원본 주소)
+          → address_formatted: (우편번호) 메인주소 상세주소 형식으로 포맷팅된 주소
           → selected_user: 선택된 사용자 객체
-          → address: 사용자의 주소
+          → address: 사용자의 주소 (원본)
     {% endcomment %}
     <div class="detail-item">
       <span class="detail-label">주소</span>
-      <span class="detail-value">{{ selected_user.address }}</span>
+      <span class="detail-value">{{ address_formatted|default:selected_user.address }}</span>
     </div>
     
     {% comment %}

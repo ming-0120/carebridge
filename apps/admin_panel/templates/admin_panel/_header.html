@@ -1,0 +1,110 @@
+{% load static %}
+{% comment %}
+  관리자 패널 공통 헤더 템플릿
+  
+  목적: 관리자 패널의 모든 페이지에서 공통으로 사용하는 헤더
+    - 로고: CareBridge 로고 이미지 및 관리자 대시보드 링크
+    - 사용자 정보: 로그인한 관리자 이름 표시
+    - 로그아웃 버튼: 로그아웃 기능 제공
+  
+  사용 방법:
+    {% include 'admin_panel/_header.html' %}
+{% endcomment %}
+<header class="header">
+  <link rel="stylesheet" href="{% static 'core/css/_header.css' %}">
+  
+  <div class="header-inner">
+    {% comment %}
+      로고 링크
+      
+      목적: 로고 클릭 시 관리자 대시보드로 이동
+        - href: {% url 'admin_dashboard' %} - 관리자 대시보드 URL
+        - CSS 클래스: logo-link (링크 스타일)
+    {% endcomment %}
+    <a href="{% url 'admin_dashboard' %}" class="logo-link">
+      <div class="logo">
+        {% comment %}
+          로고 이미지
+          
+          목적: CareBridge 로고 이미지 표시
+            - src: {% static 'core/img/logo_2.png' %} - 로고 이미지 경로
+            - alt: "CareBridge 관리자 대시보드" - 대체 텍스트 (접근성)
+            - CSS 클래스: logo-img (이미지 스타일)
+        {% endcomment %}
+        <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
+      </div>
+    </a>
+    
+    {% comment %}
+      유틸리티 영역
+      
+      목적: 사용자 정보 및 로그아웃 버튼 표시
+        - 사용자 이름: 로그인한 관리자 이름 표시
+        - 로그아웃 버튼: 로그아웃 기능 제공
+    {% endcomment %}
+    <div class="util">
+      {% comment %}
+        사용자 세션 확인 및 정보 표시
+        
+        목적: 로그인한 관리자 정보 표시
+          - request.session.username: 세션에 저장된 사용자 이름
+          - 로그인한 경우에만 표시
+      {% endcomment %}
+      {% if request.session.username %}
+        {% comment %}
+          환영 메시지
+          
+          목적: 로그인한 관리자에게 환영 메시지 표시
+            - {{ request.session.username }}: 사용자 이름
+            - CSS 클래스: welcome-text (텍스트 스타일)
+        {% endcomment %}
+        <span class="welcome-text">{{ request.session.username }}님 환영합니다</span>
+        
+        {% comment %}
+          로그아웃 버튼
+          
+          목적: 로그아웃 기능 제공
+            - type="button": 버튼 타입 (폼 제출 방지)
+            - id="logoutBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
+            - CSS 클래스: btn-logout (버튼 스타일)
+        {% endcomment %}
+        <button type="button" id="logoutBtn" class="btn-logout">로그아웃</button>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<script>
+  // admin_common.js에서 logoutBtn에 이벤트 리스너를 연결하므로,
+  // 이 스크립트 태그는 admin_common.js가 로드된 후에 위치해야 합니다.
+  // 또는 admin_common.js에서 DOMContentLoaded 이벤트 내에서 처리해야 합니다.
+  document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (confirm('로그아웃 하시겠습니까?')) {
+          // 로그아웃 폼 제출
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = "{% url 'logout' %}";
+          
+          const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                            document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                            '';
+          if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+          }
+          
+          document.body.appendChild(form);
+          form.submit();
+        }
+      });
+    }
+  });
+</script>
+

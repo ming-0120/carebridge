@@ -37,42 +37,61 @@
  * // 3. 향후 추가 초기화 로직이 필요하면 이 함수 내부에 작성
  */
 document.addEventListener('DOMContentLoaded', function() {
-  // ========= 추가 초기화 로직 영역 =========
-  // 목적: 향후 1:1 문의 상세 페이지에 특화된 초기화 로직을 추가할 수 있는 영역
-  //   - 확장성: 향후 추가 기능이 필요할 때 이 영역에 코드를 추가하면 됨
-  //   - 예시: 
-  //     - 문의 답변 작성 폼 유효성 검사 초기화
-  //     - 문의 상태 변경 버튼 이벤트 연결
-  //     - 문의 첨부파일 다운로드 기능 초기화
-  //     - 문의 삭제 확인 다이얼로그 초기화
-  //     - 문의 수정 모드 전환 기능 초기화
-  //     - 문의 이력 표시 기능 초기화
-  //     - 기타 문의 상세 페이지에 특화된 기능들
-  // 
-  // 현재 상태:
-  //   - 초기화 로직 없음: 현재는 공통 함수(admin_common.js)만 사용하므로 별도 초기화 로직이 필요하지 않음
-  //   - 공통 함수 사용: admin_common.js의 공통 함수들을 사용하여 페이지네이션, 검색 등 기능 제공
-  //   - 확장 가능: 향후 문의 상세 페이지에 특화된 기능이 필요하면 이 영역에 추가 가능
-  // 
-  // 주의사항:
-  //   - 이 함수는 DOM이 완전히 로드된 후에만 실행됨
-  //   - DOM 요소에 접근하기 전에 이 함수가 실행되었는지 확인 필요
-  //   - 공통 함수는 admin_common.js가 먼저 로드되어 있어야 함
-  // 추가 초기화 로직이 필요하면 여기에 작성
+  // ========= 답변 폼 제출 확인 처리 =========
+  // 목적: 답변 완료/취소 버튼 클릭 시 confirm 창을 띄워서 확인
+  //   - 사용자 경험(UX) 개선: 실수로 답변을 완료하거나 취소하는 것을 방지
+  //   - 안전성: 중요한 작업 전에 한 번 더 확인하는 절차 제공
   
-  // ========= 현재 초기화 상태 =========
-  // 목적: 현재 초기화 로직이 없음을 명시적으로 표시
-  //   - 코드 가독성: 다른 개발자가 현재 상태를 쉽게 이해할 수 있도록 함
-  //   - 유지보수성: 향후 초기화 로직을 추가할 위치를 명확히 표시
-  // 
-  // 현재는 공통 함수만 사용하므로 별도 초기화 로직 없음
-  //   - 공통 함수: admin_common.js에 정의된 공통 함수들을 사용
-  //     → 페이지네이션: handlePaginationAjax, attachPaginationListeners
-  //     → 검색: validateSearchForm
-  //     → 정렬: handleSortClick, getSortUrl
-  //     → 기타 공통 기능들
-  //   - 별도 초기화 불필요: 문의 상세 페이지에 특화된 초기화 로직이 현재는 필요하지 않음
-  //   - 향후 확장: 문의 상세 페이지에 특화된 기능이 필요하면 위의 "추가 초기화 로직 영역"에 작성
+  const replyForm = document.querySelector('form[method="post"]');
+  if (!replyForm) {
+    return;
+  }
+  
+  // 답변 완료 버튼 클릭 이벤트
+  const replyButton = document.getElementById('replyBtn');
+  if (replyButton) {
+    replyButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const replyContent = document.querySelector('textarea[name="reply_content"]').value.trim();
+      
+      // 답변 내용이 비어있으면 확인 없이 경고만 표시
+      if (!replyContent) {
+        alert('답변 내용을 입력해주세요.');
+        return;
+      }
+      
+      // confirm 창 표시
+      if (confirm('답변을 완료하시겠습니까?')) {
+        // 확인을 누르면 action 필드를 추가하고 폼 제출
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'reply';
+        replyForm.appendChild(actionInput);
+        replyForm.submit();
+      }
+    });
+  }
+  
+  // 답변 취소 버튼 클릭 이벤트
+  const cancelButton = document.getElementById('cancelBtn');
+  if (cancelButton) {
+    cancelButton.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      // confirm 창 표시
+      if (confirm('답변을 취소하시겠습니까?\n작성한 답변 내용이 삭제됩니다.')) {
+        // 확인을 누르면 action 필드를 추가하고 폼 제출
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'cancel';
+        replyForm.appendChild(actionInput);
+        replyForm.submit();
+      }
+    });
+  }
 });
 
 

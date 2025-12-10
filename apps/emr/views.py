@@ -45,6 +45,28 @@ from apps.db.models import (
 
 load_dotenv()
 
+def get_common_header_context(request):
+    user_id = request.session.get('user_id', None)
+    role = request.session.get('role', None)
+
+    doctor = None
+    department = ""
+    doctor_name = ""
+
+    if role == 'DOCTOR':
+        try:
+            doctor = Doctors.objects.get(user_id=user_id)
+            department = doctor.dep.dep_name if doctor.dep else ""
+            doctor_name = doctor.user.name
+        except:
+            pass
+
+    return {
+        "doctor": doctor,
+        "department": department,
+        "doctor_name": doctor_name,
+    }
+
 @require_GET
 def api_reserved_hours(request):
     doctor_id = request.GET.get("doctor_id")
@@ -464,20 +486,66 @@ def lab_record_creation(request):
             'files': files_dict_data,
         })
 
-        
-
 def medical_record_inquiry(request):
-    return render(request, "emr/medical_record_inquiry.html")
+    ctx = get_common_header_context(request)
+    return render(request, "emr/medical_record_inquiry.html", ctx)
 
 def patient_search_list(request):
-    return render(request, "emr/patient_search_list.html")
+    ctx = get_common_header_context(request)
+    return render(request, "emr/patient_search_list.html", ctx)
 
 def today_patient_list(request):
-    return render(request, "emr/today_patient_list.html")
+    ctx = get_common_header_context(request)
+    return render(request, "emr/today_patient_list.html", ctx)
 
 def view_previous_medical_records(request):
-    return render(request, "emr/view_previous_medical_records.html")
+    ctx = get_common_header_context(request)
 
+    patient_id = request.GET.get("patient_id")
+
+    patient = None
+    recent_record = None
+    department = ""
+    doctor_name = ""
+    visit_datetime = ""
+    
+    if patient_id:
+        try:
+            # 환자 기본 정보
+            patient = Users.objects.get(user_id=patient_id)
+
+            # 가장 최근 진료기록 1개 조회
+            recent_record = (
+                MedicalRecord.objects
+                .filter(user_id=patient_id)
+                .order_by('-record_datetime')
+                .select_related('doctor', 'doctor__user', 'doctor__dep')
+                .first()
+            )
+
+            if recent_record:
+                visit_datetime = recent_record.record_datetime.strftime("%Y-%m-%d %H:%M")
+
+                # 진료과
+                if recent_record.doctor and recent_record.doctor.dep:
+                    department = recent_record.doctor.dep.dep_name
+
+                # 담당의
+                if recent_record.doctor and recent_record.doctor.user:
+                    doctor_name = recent_record.doctor.user.name
+        
+        except:
+            pass
+
+    ctx.update({
+        "patient": patient,
+        "birth": extract_birth_date(patient.resident_reg_no) if patient else "",
+        "visit_datetime": visit_datetime,
+        "department": department,
+        "doctor_name": doctor_name,
+    })
+
+    return render(request, "emr/view_previous_medical_records.html", ctx)
 
 
 # ---------------------------------------------------------
@@ -545,13 +613,6 @@ def treatment_record_verification(request):
             return redirect('/mstaff/hospital_dashboard/')
         else:
             return render(request, "emr/treatment_record_verification.html", context)
-
-# ---------------------------------------------------------
-# 과거 진료기록 조회 화면
-# ---------------------------------------------------------
-def view_previous_medical_records(request):
-    return render(request, "emr/view_previous_medical_records.html")
-
 
 # ---------------------------------------------------------
 # 오늘의 환자 리스트 검색

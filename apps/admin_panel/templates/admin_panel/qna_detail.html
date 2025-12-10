@@ -53,82 +53,16 @@
   <link rel="stylesheet" href="{% static 'admin_panel/css/qna_detail.css' %}">
 </head>
 <body class="qna-detail-body">
-  <!-- 
+  {% comment %}
     헤더 섹션
     
     목적: 페이지 상단에 로고와 사용자 정보, 로그아웃 버튼을 표시
       - 로고: CareBridge 로고 이미지 및 대시보드 링크
       - 사용자 정보: 로그인한 관리자 이름 표시
       - 로그아웃 버튼: 로그아웃 기능 제공
-  -->
-  <header class="header">
-    <!-- 
-      헤더 내부 컨테이너
-      
-      목적: 헤더 내용을 담는 컨테이너
-        - 로고 영역: CareBridge 로고 및 대시보드 링크
-        - 유틸리티 영역: 사용자 정보 및 로그아웃 버튼
-    -->
-    <div class="header-inner">
-      <!-- 
-        로고 링크
-        
-        목적: 로고 클릭 시 관리자 대시보드로 이동
-          - href: {% url 'admin_dashboard' %} - 관리자 대시보드 URL
-          - CSS 클래스: logo-link (링크 스타일)
-      -->
-      <a href="{% url 'admin_dashboard' %}" class="logo-link">
-        <div class="logo">
-          <!-- 
-            로고 이미지
-            
-            목적: CareBridge 로고 이미지 표시
-              - src: {% static 'core/img/logo_2.png' %} - 로고 이미지 경로
-              - alt: "CareBridge 관리자 대시보드" - 대체 텍스트 (접근성)
-              - CSS 클래스: logo-img (이미지 스타일)
-          -->
-          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
-        </div>
-      </a>
-      
-      <!-- 
-        유틸리티 영역
-        
-        목적: 사용자 정보 및 로그아웃 버튼 표시
-          - 사용자 이름: 로그인한 관리자 이름 표시
-          - 로그아웃 버튼: 로그아웃 기능 제공
-      -->
-      <div class="util">
-        <!-- 
-          사용자 세션 확인 및 정보 표시
-          
-          목적: 로그인한 관리자 정보 표시
-            - request.session.username: 세션에 저장된 사용자 이름
-            - 로그인한 경우에만 표시
-        -->
-        {% if request.session.username %}
-          <!-- 
-            환영 메시지
-            
-            목적: 로그인한 관리자에게 환영 메시지 표시
-              - {{ request.session.username }}: 사용자 이름
-              - CSS 클래스: welcome-text (텍스트 스타일)
-          -->
-          <span class="welcome-text">{{ request.session.username }}님 환영합니다</span>
-          
-          <!-- 
-            로그아웃 버튼
-            
-            목적: 로그아웃 기능 제공
-              - type="button": 버튼 타입 (폼 제출 방지)
-              - id="logoutBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
-              - CSS 클래스: btn-logout (버튼 스타일)
-          -->
-          <button type="button" id="logoutBtn" class="btn-logout">로그아웃</button>
-        {% endif %}
-      </div>
-    </div>
-  </header>
+      - 공통 헤더 템플릿 사용: core/header.html
+  {% endcomment %}
+  {% include 'admin_panel/_header.html' %}
 
   <!-- 
     메인 컨테이너
@@ -368,34 +302,37 @@
           
           목적: 답변 완료 또는 답변 취소 버튼을 표시
             - CSS 클래스: action-buttons (액션 버튼 영역 스타일)
-            - 버튼: 답변 취소, 답변 완료
+            - 버튼: 답변 취소 (답변이 없는 경우만), 답변 완료
         -->
         <div class="action-buttons">
-          <!-- 
+          {% comment %}
             답변 취소 버튼
             
             목적: 작성한 답변을 취소하고 삭제
+              - 조건: 답변이 없는 경우에만 표시 ({% if not qna.reply %})
               - type="submit": 폼 제출 버튼
               - name="action": 액션 타입 필드 이름
               - value="cancel": 액션 값 (답변 취소)
               - CSS 클래스: btn-cancel (취소 버튼 스타일)
               - 텍스트: "답변 취소"
               - 동작: 서버에서 action 값이 "cancel"이면 답변을 삭제
-          -->
-          <button type="submit" name="action" value="cancel" class="btn-cancel">답변 취소</button>
+          {% endcomment %}
+          {% if not qna.reply %}
+            <button type="button" name="action" value="cancel" class="btn-cancel" id="cancelBtn">답변 취소</button>
+          {% endif %}
           
           <!-- 
             답변 완료 버튼
             
             목적: 작성한 답변을 저장하고 완료 처리
-              - type="submit": 폼 제출 버튼
+              - type="button": JavaScript에서 제어하기 위해 button 타입 사용
               - name="action": 액션 타입 필드 이름
               - value="reply": 액션 값 (답변 완료)
               - CSS 클래스: btn-complete (완료 버튼 스타일)
               - 텍스트: "답변 완료"
-              - 동작: 서버에서 action 값이 "reply"이면 답변을 저장
+              - 동작: JavaScript에서 확인 후 서버로 제출
           -->
-          <button type="submit" name="action" value="reply" class="btn-complete">답변 완료</button>
+          <button type="button" name="action" value="reply" class="btn-complete" id="replyBtn">답변 완료</button>
         </div>
       </form>
     </div>

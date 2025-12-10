@@ -55,82 +55,16 @@
   <link rel="stylesheet" href="{% static 'admin_panel/css/hospital_list.css' %}">
 </head>
 <body>
-  <!-- 
+  {% comment %}
     헤더 섹션
     
     목적: 페이지 상단에 로고와 사용자 정보, 로그아웃 버튼을 표시
       - 로고: CareBridge 로고 이미지 및 대시보드 링크
       - 사용자 정보: 로그인한 관리자 이름 표시
       - 로그아웃 버튼: 로그아웃 기능 제공
-  -->
-  <header class="header">
-    <!-- 
-      헤더 내부 컨테이너
-      
-      목적: 헤더 내용을 담는 컨테이너
-        - 로고 영역: CareBridge 로고 및 대시보드 링크
-        - 유틸리티 영역: 사용자 정보 및 로그아웃 버튼
-    -->
-    <div class="header-inner">
-      <!-- 
-        로고 링크
-        
-        목적: 로고 클릭 시 관리자 대시보드로 이동
-          - href: {% url 'admin_dashboard' %} - 관리자 대시보드 URL
-          - CSS 클래스: logo-link (링크 스타일)
-      -->
-      <a href="{% url 'admin_dashboard' %}" class="logo-link">
-        <div class="logo">
-          <!-- 
-            로고 이미지
-            
-            목적: CareBridge 로고 이미지 표시
-              - src: {% static 'core/img/logo_2.png' %} - 로고 이미지 경로
-              - alt: "CareBridge 관리자 대시보드" - 대체 텍스트 (접근성)
-              - CSS 클래스: logo-img (이미지 스타일)
-          -->
-          <img src="{% static 'core/img/logo_2.png' %}" alt="CareBridge 관리자 대시보드" class="logo-img">
-        </div>
-      </a>
-      
-      <!-- 
-        유틸리티 영역
-        
-        목적: 사용자 정보 및 로그아웃 버튼 표시
-          - 사용자 이름: 로그인한 관리자 이름 표시
-          - 로그아웃 버튼: 로그아웃 기능 제공
-      -->
-      <div class="util">
-        <!-- 
-          사용자 세션 확인 및 정보 표시
-          
-          목적: 로그인한 관리자 정보 표시
-            - request.session.username: 세션에 저장된 사용자 이름
-            - 로그인한 경우에만 표시
-        -->
-        {% if request.session.username %}
-          <!-- 
-            환영 메시지
-            
-            목적: 로그인한 관리자에게 환영 메시지 표시
-              - {{ request.session.username }}: 사용자 이름
-              - CSS 클래스: welcome-text (텍스트 스타일)
-          -->
-          <span class="welcome-text">{{ request.session.username }}님 환영합니다</span>
-          
-          <!-- 
-            로그아웃 버튼
-            
-            목적: 로그아웃 기능 제공
-              - type="button": 버튼 타입 (폼 제출 방지)
-              - id="logoutBtn": JavaScript에서 이벤트 리스너 연결을 위한 ID
-              - CSS 클래스: btn-logout (버튼 스타일)
-          -->
-          <button type="button" id="logoutBtn" class="btn-logout">로그아웃</button>
-        {% endif %}
-      </div>
-    </div>
-  </header>
+      - 공통 헤더 템플릿 사용: core/header.html
+  {% endcomment %}
+  {% include 'admin_panel/_header.html' %}
 
   <!-- 
     메인 컨테이너
@@ -409,16 +343,32 @@
             </th>
             
             <!-- 
-              개원일 컬럼 (정렬 가능)
+              등록일 컬럼 (정렬 가능)
               
-              목적: 병원 개원일을 표시하고 정렬 기능 제공
+              목적: 병원 등록일을 표시하고 정렬 기능 제공
                 - data-sort-field="created_at": 정렬 필드 이름
                 - 정렬 방향 표시: 현재 정렬 필드가 'created_at'이면 화살표 표시
             -->
             <th>
               <a href="#" data-sort-field="created_at" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
-                개원일
+                등록일
                 {% if sort_field == 'created_at' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              개원일 컬럼 (정렬 가능)
+              
+              목적: 병원 개원일을 표시하고 정렬 기능 제공
+                - data-sort-field="estb_date": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'estb_date'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="estb_date" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                개원일
+                {% if sort_field == 'estb_date' %}
                   {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
                 {% endif %}
               </a>
@@ -518,6 +468,15 @@
                   0명
                 {% endif %}
               </td>
+              
+              <!-- 
+                등록일 셀
+                
+                목적: 병원 등록일 표시 (yyyy.mm.dd 형식)
+                  - {{ item.created_at_formatted|default:"-" }}: 병원 등록일 (yyyy.mm.dd 형식)
+                  - |default:"-": created_at이 없으면 "-" 표시
+              -->
+              <td>{{ item.created_at_formatted|default:"-" }}</td>
               
               <!-- 
                 개원일 셀
