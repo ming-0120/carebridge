@@ -96,6 +96,11 @@ def register_view(request):
 
     # ---------- POST 처리 시작 ----------
     role = request.POST.get("role", "patient").strip()
+    # role 변환: "patient" → "PATIENT", "doctor" → "DOCTOR" (ROLE_CHOICES에 맞게 변환)
+    if role == "patient":
+        role = "PATIENT"
+    elif role == "doctor":
+        role = "DOCTOR"
     provider = request.POST.get("provider", "local").strip()  # hidden 으로 넘기기
 
     username = request.POST.get("username", "").strip()
@@ -120,7 +125,8 @@ def register_view(request):
     profil_url = request.POST.get("profil_url", "").strip()
 
     # 1) 역할별 주소 세팅 ----------------------
-    if role == "patient":
+    # role은 이미 "PATIENT" 또는 "DOCTOR"로 변환되었으므로 "patient" 대신 "PATIENT"로 체크
+    if role == "PATIENT":
         if zipcode or addr1 or addr2:
             address = f"{zipcode}|{addr1}|{addr2}"
         else:
@@ -160,7 +166,7 @@ def register_view(request):
         return redirect("register")
 
     # (4) 의사일 때 추가 검증
-    if role == "doctor":
+    if role == "DOCTOR":
         if not hospital_id:
             messages.error(request, "병원을 선택해주세요.")
             return redirect("register")

@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     'apps.social_auth',
     'apps.chatbot',
     'apps.mypage',
+    'apps.qna',
 ]
 
 MIDDLEWARE = [

@@ -38,7 +38,7 @@
 */
 html, body {
   height: 100vh;
-  overflow: hidden;
+  overflow: auto;
 }
 
 /* 
@@ -93,25 +93,8 @@ body {
 }
 
 /* 
-  스크롤바 숨기기 (스크롤 기능은 유지)
-  
-  목적: 스크롤바는 숨기되 스크롤 기능은 유지
-    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
-    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
-    - scrollbar-width: none - Firefox의 스크롤바 숨김
-    - 사용처: 모든 관리자 페이지
-    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+  스크롤바 표시 (기본 브라우저 스크롤바 사용)
 */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-}
-
-html, body {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* 
   ========= Header (공통) =========
@@ -480,24 +463,8 @@ html, body {
 }
 
 /* 
-  컨테이너 스크롤바 숨기기
-  
-  목적: 컨테이너의 스크롤바는 숨기되 스크롤 기능은 유지
-    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
-    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
-    - scrollbar-width: none - Firefox의 스크롤바 숨김
-    - 사용처: 모든 관리자 페이지의 컨테이너
-    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+  컨테이너 스크롤바 표시 (기본 브라우저 스크롤바 사용)
 */
-.container::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-}
-
-.container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* 
   ========= Tabs (공통) =========
@@ -759,22 +726,8 @@ html, body {
 /* 
   테이블 컨테이너 스크롤바 숨기기
   
-  목적: 테이블 컨테이너의 스크롤바는 숨기되 스크롤 기능은 유지
-    - webkit-scrollbar: Chrome, Safari 등 WebKit 기반 브라우저의 스크롤바 숨김
-    - -ms-overflow-style: none - IE/Edge의 스크롤바 숨김
-    - scrollbar-width: none - Firefox의 스크롤바 숨김
-    - 사용처: 테이블 컨테이너
-    - 이유: 깔끔한 UI를 위해 스크롤바를 숨기되 스크롤 기능은 유지
+  목적: 테이블 컨테이너의 스크롤바 표시 (기본 브라우저 스크롤바 사용)
 */
-.table-container::-webkit-scrollbar {
-  width: 0px;
-  background: transparent;
-}
-
-.table-container {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
 
 /* 
   사용자 테이블 기본 스타일

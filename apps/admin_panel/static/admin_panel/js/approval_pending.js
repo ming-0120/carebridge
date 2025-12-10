@@ -101,21 +101,28 @@ function toggleSelectAllApproval() {
   const checkboxes = document.querySelectorAll('input[name="doctor_checkbox"]');
   
   // ========= 각 체크박스 상태 업데이트 =========
-  // 목적: 모든 개별 체크박스의 상태를 전체 선택 체크박스와 동일하게 설정
+  // 목적: 전체 선택 체크박스가 체크된 경우, 일치한 의사 데이터만 체크
   //   - forEach(): 배열의 각 요소에 대해 함수 실행
   //   - checkboxes: 모든 개별 체크박스 (NodeList)
   //   - checkbox: 현재 처리 중인 체크박스 요소
   //   - 동작: 각 체크박스에 대해 상태 업데이트 및 스타일 업데이트
   checkboxes.forEach(checkbox => {
     // ========= 체크박스 상태 동기화 =========
-    // checkbox.checked = selectAllCheckbox.checked: 체크박스 상태를 전체 선택 체크박스와 동일하게 설정
-    //   - checkbox.checked: 개별 체크박스의 선택 상태 (true 또는 false)
-    //   - selectAllCheckbox.checked: 전체 선택 체크박스의 선택 상태 (true 또는 false)
-    //   - 동작: 개별 체크박스의 상태를 전체 선택 체크박스와 동일하게 설정
-    //   - 예: selectAllCheckbox.checked=true → 모든 checkbox.checked=true (전체 선택)
-    //   - 예: selectAllCheckbox.checked=false → 모든 checkbox.checked=false (전체 해제)
-    //   - 목적: 전체 선택/해제 기능 구현
-    checkbox.checked = selectAllCheckbox.checked;
+    // 전체 선택 체크박스가 체크된 경우:
+    //   - 일치한 의사 데이터만 체크 (면허번호가 유효한 의사만 체크)
+    // 전체 선택 체크박스가 해제된 경우:
+    //   - 모든 체크박스 해제
+    if (selectAllCheckbox.checked) {
+      // 일치한 의사 데이터만 체크 (면허번호가 유효한 의사만 체크)
+      // data-is-valid-license="true"인 경우에만 체크
+      const isValidLicenseAttr = checkbox.getAttribute('data-is-valid-license');
+      const isValidLicense = isValidLicenseAttr === 'true';
+      // 일치한 의사(isValidLicense === true)만 체크
+      checkbox.checked = isValidLicense === true;
+    } else {
+      // 전체 해제
+      checkbox.checked = false;
+    }
     
     // ========= 행 스타일 업데이트 =========
     // updateRowCheckboxClass(checkbox): 체크박스가 속한 행의 스타일 업데이트
@@ -242,26 +249,18 @@ function updateSelectedDoctors() {
   const allCheckboxes = document.querySelectorAll('input[name="doctor_checkbox"]');
   
   // ========= 전체 선택 체크박스 상태 계산 및 설정 =========
-  // selectAllCheckbox.checked = ...: 전체 선택 체크박스의 상태 설정
-  //   - checked: 체크박스의 선택 상태 (true 또는 false)
-  //   - 조건: allCheckboxes.length > 0 && doctorIds.length === allCheckboxes.length
-  //     → allCheckboxes.length > 0: 체크박스가 하나 이상 존재하는지 확인
-  //       → 목적: 체크박스가 없으면 전체 선택 체크박스를 체크하지 않음 (에러 방지)
-  //       → 예: 체크박스가 0개 → false (전체 선택 체크박스 해제)
-  //       → 예: 체크박스가 3개 → true (다음 조건 확인)
-  //     → doctorIds.length === allCheckboxes.length: 선택된 항목 수가 전체 항목 수와 같은지 확인
-  //       → 목적: 모든 항목이 선택되었는지 확인
-  //       → 예: 체크박스 3개, 선택된 항목 3개 → true (전체 선택 체크박스 체크)
-  //       → 예: 체크박스 3개, 선택된 항목 2개 → false (전체 선택 체크박스 해제)
-  //       → 예: 체크박스 3개, 선택된 항목 0개 → false (전체 선택 체크박스 해제)
-  //   - &&: 논리 AND 연산자 (두 조건이 모두 true여야 true)
-  //   - 결과:
-  //     → true: 모든 항목이 선택됨 → 전체 선택 체크박스 체크
-  //     → false: 일부만 선택되거나 선택되지 않음 → 전체 선택 체크박스 해제
-  //   - 목적: 전체 선택 체크박스가 실제 선택 상태를 정확히 반영하도록 함
-  //   - 사용자 경험(UX) 개선: 사용자가 전체 선택 상태를 한눈에 파악할 수 있음
-  //   - 주의: 체크박스가 없으면 항상 false (에러 방지)
-  selectAllCheckbox.checked = allCheckboxes.length > 0 && doctorIds.length === allCheckboxes.length;
+  // 전체 선택 체크박스는 일치한 의사 데이터가 모두 선택되었을 때 체크됨
+  //   - 일치한 의사 데이터(면허번호가 유효한 의사)만 기준으로 전체 선택 상태 결정
+  const validLicenseCheckboxes = Array.from(allCheckboxes).filter(
+    checkbox => checkbox.getAttribute('data-is-valid-license') === 'true'
+  );
+  const selectedValidLicenseCount = Array.from(allCheckboxes)
+    .filter(checkbox => checkbox.checked && checkbox.getAttribute('data-is-valid-license') === 'true')
+    .length;
+  
+  // 일치한 의사 데이터가 있고, 모두 선택되었을 때만 전체 선택 체크박스 체크
+  selectAllCheckbox.checked = validLicenseCheckboxes.length > 0 && 
+                              selectedValidLicenseCount === validLicenseCheckboxes.length;
 }
 
 /**
@@ -712,11 +711,11 @@ function attachCheckboxListeners() {
       //   - toggleSelectAllApproval(): 이 파일에 정의된 전체 선택/해제 함수
       //   - 동작:
       //     1. 전체 선택 체크박스의 상태 확인
-      //     2. 모든 개별 체크박스의 상태를 전체 선택 체크박스와 동기화
+      //     2. 면허번호가 유효하지 않은 의사만 체크
       //     3. 각 행의 클래스 업데이트 (시각적 피드백)
       //     4. 선택된 의사 목록 업데이트
-      //   - 목적: 전체 선택/해제 기능 구현
-      //   - 결과: 모든 체크박스가 선택되거나 해제됨
+      //   - 목적: 전체 선택/해제 기능 구현 (면허번호 불일치 의사만 선택)
+      //   - 결과: 면허번호가 유효하지 않은 의사만 선택되거나 모든 체크박스가 해제됨
       toggleSelectAllApproval();
     };
     
@@ -810,7 +809,7 @@ function attachCheckboxListeners() {
       //     1. 선택된 모든 체크박스의 value 값을 수집
       //     2. 쉼표로 구분된 문자열로 변환
       //     3. hidden input (doctorIdsInput)에 저장
-      //     4. 전체 선택 체크박스 상태 업데이트 (모든 항목이 선택되었는지 확인)
+      //     4. 전체 선택 체크박스 상태 업데이트 (면허번호 불일치 의사만 모두 선택되었는지 확인)
       //   - 목적: 선택된 의사 ID들을 폼 제출 시 서버로 전송하기 위함
       //   - 결과: 선택된 의사 ID들이 hidden input에 저장됨
       updateSelectedDoctors();
@@ -1113,11 +1112,21 @@ document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
   
   // ========= 페이지네이션 후 이벤트 리스너 재연결 함수 =========
-  // 목적: 페이지네이션 완료 후 테이블 행 클릭 이벤트 리스너를 다시 연결
+  // 목적: 페이지네이션 완료 후 모든 이벤트 리스너를 다시 연결
   //   - handlePaginationAjax 함수에서 호출됨
   //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
   window.reattachTableRowListeners = function() {
     attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
+    // 체크박스 이벤트 리스너 재연결
+    attachCheckboxListeners();
+    // 버튼 이벤트 리스너 재연결
+    attachButtonListeners();
+    // 정렬 링크 이벤트 리스너 재연결
+    attachSortListeners();
+    // 페이지네이션 링크 이벤트 리스너 재연결
+    if (typeof attachPaginationListeners === 'function') {
+      attachPaginationListeners();
+    }
   };
   
   // ========= 체크박스 이벤트 리스너 연결 =========

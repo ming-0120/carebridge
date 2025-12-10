@@ -67,8 +67,8 @@ function toggleSelectAllQna() {
   const checkboxes = document.querySelectorAll('input[name="qna_checkbox"]');
   
   // ========= 각 개별 체크박스 상태 동기화 =========
-  // 목적: 각 개별 문의 체크박스의 상태를 '전체 선택' 체크박스의 상태와 동기화
-  //   - 사용자 경험(UX) 개선: '전체 선택' 체크박스 클릭 시 모든 개별 체크박스가 동일한 상태로 변경
+  // 목적: 전체 선택 체크박스가 체크된 경우, 답변 완료된 문의만 체크
+  //   - 사용자 경험(UX) 개선: '전체 선택' 체크박스 클릭 시 답변 완료된 문의만 선택
   //   - 시각적 피드백: 선택된 행에 'checkbox-checked' 클래스를 추가하여 시각적으로 표시
   // 
   // checkboxes.forEach(checkbox => {...}): 각 개별 체크박스를 순회하며 상태 동기화
@@ -77,21 +77,25 @@ function toggleSelectAllQna() {
   //   - 화살표 함수: 각 체크박스에 대해 실행될 콜백 함수
   //   - 목적: 각 개별 체크박스의 상태를 '전체 선택' 체크박스와 동기화
   checkboxes.forEach(checkbox => {
-    // ========= 개별 체크박스 상태 동기화 =========
-    // 목적: 개별 체크박스의 checked 상태를 '전체 선택' 체크박스와 동일하게 설정
-    //   - 사용자 경험(UX) 개선: '전체 선택' 체크박스가 체크되면 모든 개별 체크박스도 체크됨
-    //   - 일관성 유지: '전체 선택' 체크박스와 개별 체크박스의 상태를 동기화
-    // 
-    // checkbox.checked = selectAllCheckbox.checked: 체크박스 상태 동기화
-    //   - checkbox.checked: 개별 체크박스의 checked 속성 (boolean)
-    //     → true: 체크됨
-    //     → false: 체크 해제됨
-    //   - selectAllCheckbox.checked: '전체 선택' 체크박스의 checked 속성 (boolean)
-    //     → true: 체크됨 (모든 개별 체크박스를 체크)
-    //     → false: 체크 해제됨 (모든 개별 체크박스를 해제)
-    //   - 목적: 개별 체크박스의 상태를 '전체 선택' 체크박스와 동일하게 설정
-    //   - 주의: 이렇게 설정하면 개별 체크박스의 상태가 '전체 선택' 체크박스와 항상 동기화됨
-    checkbox.checked = selectAllCheckbox.checked;
+    // ========= 체크박스 상태 동기화 =========
+    // 전체 선택 체크박스가 체크된 경우:
+    //   - 답변 완료된 문의(has_reply=true)만 체크
+    //   - 대기 상태 문의(has_reply=false)는 체크하지 않음 (이미 disabled 상태)
+    // 전체 선택 체크박스가 해제된 경우:
+    //   - 모든 체크박스 해제
+    if (selectAllCheckbox.checked) {
+      // 답변 완료 여부 확인 (data-has-reply 속성)
+      const hasReply = checkbox.getAttribute('data-has-reply') === 'true';
+      // 답변 완료된 문의만 체크 (disabled된 체크박스는 자동으로 체크되지 않음)
+      if (!checkbox.disabled && hasReply) {
+        checkbox.checked = true;
+      } else {
+        checkbox.checked = false;
+      }
+    } else {
+      // 전체 해제
+      checkbox.checked = false;
+    }
     
     // ========= 행의 CSS 클래스 업데이트 =========
     // 목적: 체크박스 상태에 따라 행의 CSS 클래스를 업데이트하여 시각적 피드백 제공
@@ -235,36 +239,19 @@ function updateSelectedQnas() {
   const allCheckboxes = document.querySelectorAll('input[name="qna_checkbox"]');
   
   // ========= '전체 선택' 체크박스 상태 결정 =========
-  // 목적: 모든 체크박스가 선택되어 있는지 확인하여 '전체 선택' 체크박스 상태를 설정
-  //   - 사용자 경험(UX) 개선: 모든 체크박스가 선택되어 있으면 '전체 선택' 체크박스도 자동으로 체크
-  //   - 일관성 유지: '전체 선택' 체크박스와 개별 체크박스의 상태를 동기화
-  // 
-  // selectAllCheckbox.checked = allCheckboxes.length > 0 && qnaIds.length === allCheckboxes.length:
-  //   '전체 선택' 체크박스 상태 설정
-  //   - selectAllCheckbox.checked: '전체 선택' 체크박스의 checked 속성 (boolean)
-  //     → true: 체크됨
-  //     → false: 체크 해제됨
-  //   - allCheckboxes.length > 0: 체크박스가 하나 이상 존재하는지 확인
-  //     → allCheckboxes.length: 전체 체크박스 개수
-  //     → > 0: 체크박스가 하나 이상 존재함
-  //     → 목적: 체크박스가 없는 경우를 방지 (빈 목록 처리)
-  //   - qnaIds.length === allCheckboxes.length: 선택된 체크박스 개수가 전체 체크박스 개수와 같은지 확인
-  //     → qnaIds.length: 선택된 체크박스 개수 (선택된 문의 ID 배열의 길이)
-  //     → allCheckboxes.length: 전체 체크박스 개수
-  //     → ===: 엄격한 동등 비교 (값과 타입이 모두 같아야 함)
-  //     → 목적: 모든 체크박스가 선택되어 있는지 확인
-  //   - &&: 논리 AND 연산자
-  //     → 두 조건이 모두 true일 때만 true 반환
-  //     → 체크박스가 하나 이상 존재하고, 모든 체크박스가 선택되어 있을 때만 '전체 선택' 체크박스를 체크
-  //   - 반환값: boolean
-  //     → true: 모든 체크박스가 선택되어 있음 → '전체 선택' 체크박스도 체크
-  //     → false: 일부만 선택되어 있거나 체크박스가 없음 → '전체 선택' 체크박스는 해제
-  //   - 목적: 모든 체크박스가 선택되어 있으면 '전체 선택' 체크박스도 자동으로 체크
-  //   - 예시:
-  //     → 전체 10개, 선택 10개 → true (모두 선택됨)
-  //     → 전체 10개, 선택 5개 → false (일부만 선택됨)
-  //     → 전체 0개 → false (체크박스가 없음)
-  selectAllCheckbox.checked = allCheckboxes.length > 0 && qnaIds.length === allCheckboxes.length;
+  // 전체 선택 체크박스는 답변 완료된 문의만 모두 선택되었을 때 체크됨
+  //   - 답변 완료된 문의만 선택 가능하므로, 해당 문의들이 모두 선택되었는지 확인
+  //   - 대기 상태 문의는 선택 불가능하므로 전체 선택 체크박스 상태 결정에 포함하지 않음
+  const completedCheckboxes = Array.from(allCheckboxes).filter(
+    checkbox => !checkbox.disabled && checkbox.getAttribute('data-has-reply') === 'true'
+  );
+  const selectedCompletedCount = Array.from(completedCheckboxes)
+    .filter(checkbox => checkbox.checked)
+    .length;
+  
+  // 답변 완료된 문의가 있고, 모두 선택되었을 때만 전체 선택 체크박스 체크
+  selectAllCheckbox.checked = completedCheckboxes.length > 0 && 
+                              selectedCompletedCount === completedCheckboxes.length;
 }
 
 /**
@@ -1481,6 +1468,16 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
   window.reattachTableRowListeners = function() {
     attachTableRowListeners();
+    // 체크박스 이벤트 리스너 재연결
+    attachCheckboxListeners();
+    // 정렬 링크 이벤트 리스너 재연결
+    attachSortListeners();
+    // 삭제 버튼 이벤트 리스너 재연결
+    attachButtonListeners();
+    // 페이지네이션 링크 이벤트 리스너 재연결
+    if (typeof attachPaginationListeners === 'function') {
+      attachPaginationListeners();
+    }
   };
   
   // ========= 정렬 링크 클릭 이벤트 리스너 연결 =========

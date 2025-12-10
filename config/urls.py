@@ -41,7 +41,9 @@ urlpatterns = [
     
     # 관리자 페이지
     # URL 규칙: 언더스코어(_) 사용
-    path('admin_panel/', include('apps.admin_panel.urls')),  
+    path('admin_panel/', include('apps.admin_panel.urls')),
+    # qna
+    path('qna/', include('apps.qna.urls')),
     
     # 의사 EMR
     path('mstaff/', include('apps.emr.urls')),

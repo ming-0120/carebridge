@@ -147,6 +147,37 @@ static/
 - 정적 파일 캐싱 고려
 - 페이지네이션 필수
 
+## 페이지네이션 및 정렬 규칙
+- **중요**: 페이지네이션 후 Python `sorted()` 함수 사용 금지
+  - 이유: 페이지네이션 후 Python 레벨에서 정렬하면 페이지 내부만 재정렬되어 전체 정렬이 깨짐
+  - 문제 예시:
+    ```python
+    # ❌ 잘못된 예시: 페이지네이션 후 정렬
+    page_obj, total_count = paginate_queryset(request, users, per_page=5)
+    users_with_number = sorted(
+        users_with_number,
+        key=lambda x: (not x['is_new_user'], x['user'].created_at),
+        reverse=True
+    )  # 이렇게 하면 페이지 내부만 정렬되어 전체 정렬이 깨짐
+    ```
+  - 올바른 방법:
+    ```python
+    # ✅ 올바른 예시: DB 레벨에서 정렬 후 페이지네이션
+    users = users.order_by('-created_at')  # DB에서 정렬
+    page_obj, total_count = paginate_queryset(request, users, per_page=5)
+    # 페이지네이션 후에는 정렬하지 않고 번호만 계산
+    users_with_number = []
+    for idx, user in enumerate(page_obj):
+        users_with_number.append({
+            'user': user,
+            'number': start_index + idx
+        })
+    ```
+  - 신규 가입자 표시 등 특별한 표시가 필요한 경우:
+    - 정렬 대신 템플릿에서 표시만 처리 (예: `is_new_user` 값으로 뱃지 표시)
+    - 정렬은 반드시 DB 레벨에서 처리 (`order_by()` 사용)
+  - 모든 목록 페이지(사용자목록, 의사목록, 병원목록, 승인대기, 1:1문의 등)에 동일하게 적용
+
 ## 주석 및 문서화
 - 복잡한 로직은 주석 작성
 - 함수/클래스 Docstring 작성 권장
@@ -187,6 +218,7 @@ static/
 - [ ] 보안 고려사항 확인
 - [ ] 성능 최적화 확인
 - [ ] 주석 및 문서화
+- [ ] 페이지네이션 후 Python `sorted()` 사용하지 않았는지 확인
 
 ## 참고사항
 - 프로젝트는 팀 프로젝트이므로 코드 가독성 중요

@@ -21,7 +21,8 @@ ROLE_CHOICES = (
     ('ADMIN', 'Admin'),
     ('NURSE', 'Nurse'),
     ('DOCTOR', 'Doctor'),
-    ('USER', 'User'),
+    ('PATIENT', 'Patient'),
+    ('USER', 'User'),  # 하위 호환성을 위해 유지
 )
 
 # users.withdrawal
