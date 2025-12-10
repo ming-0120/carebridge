@@ -69,5 +69,7 @@ function goToCreateRecord() {
 }
 
 function goToPreviousRecords() {
-    alert('이전 진료기록 보기 페이지로 이동합니다.');
+    if (!selectedPatientId) return;
+    window.location.href = `/mstaff/previous_records/?patient_id=${selectedPatientId}`;
 }
+
