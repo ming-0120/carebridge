@@ -14,7 +14,7 @@ class MedicalNewsletter(models.Model):
     url = models.URLField(unique=True)           # 상세 페이지 URL (중복 방지)
     created_at = models.DateTimeField(auto_now_add=True)  # 레코드 생성 시점
     updated_at = models.DateTimeField(auto_now=True)      # 레코드 수정 시점
-
+    image_url = models.URLField(max_length=500, blank=True, null=True, verbose_name="이미지 URL")
     class Meta:
         db_table = "medical_newsletter"   # ← 여기!! 원하는 테이블명 지정
 

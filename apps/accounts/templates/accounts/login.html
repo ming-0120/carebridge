@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
 </head>
   {% include "core/_header.html" %}
+  <script>
+    const initialRole = "{{ role|default:'PATIENT' }}";  
+</script>
 <body>
 
 <div class="auth-page">
@@ -24,13 +27,19 @@
             <span class="role-toggle__option role-toggle__option--right">의사</span>
           </label>
         </div>
+        <input type="hidden" name="role" id="roleInput" value="{{ role|default:'PATIENT' }}">
         <!-- 로그인 폼 -->
         <form method="POST" action="{% url 'login' %}" class="auth-form">
             {% csrf_token %}
-
-            <!-- 토글 값 저장 -->
-            <input type="hidden" name="role" id="roleInput" value="doctor">
-
+            {% if messages %}
+                <ul class="auth-messages">
+                    {% for message in messages %}
+                        <li class="auth-message auth-message--error">
+                            {{ message }}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
             <div class="form-group">
                 <label for="id_username">아이디</label>
                 <input id="id_username" type="text" name="username"
@@ -42,17 +51,6 @@
                 <input id="id_password" type="password" name="password"
                        placeholder="비밀번호를 입력하세요" required>
             </div>
-
-            {% if messages %}
-                <ul class="auth-messages">
-                    {% for message in messages %}
-                        <li class="auth-message auth-message--error">
-                            {{ message }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-
             <div class="auth-actions">
                 <button type="submit" class="btn btn--primary">로그인</button>
                 <a href="{% url 'register' %}" id="registerLink" class="btn btn--ghost">회원가입</a>

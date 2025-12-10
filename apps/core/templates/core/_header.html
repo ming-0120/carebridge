@@ -29,7 +29,7 @@
         {% if request.session.username %}
             <span>{{ request.session.username }}님 안녕하세요</span>
             |
-            <a href="#">마이페이지</a>
+            <a href="{% url 'reservation_list' %}">마이페이지</a>
             |
             <form action="{% url 'logout' %}" method="post" style="display:inline;">
                 {% csrf_token %}

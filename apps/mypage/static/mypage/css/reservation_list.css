@@ -34,9 +34,11 @@
 }
 
 .notice {
-    font-size: 13px;
-    color: #666;
-    margin: 12px 0 20px;
+    background: #f3f7ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
 }
 
 .reservation-table-wrapper {

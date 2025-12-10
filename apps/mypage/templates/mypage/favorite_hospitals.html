@@ -1,28 +1,11 @@
+{% extends "mypage/base_mypage.html" %}
 {% load static %}
 
-{% block content %}
-{% include "core/_header.html" %}
-<link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+{% block mypage_content %}
 <link rel="stylesheet" href="{% static 'mypage/css/favorite_hospitals.css' %}">
-<div class="mypage-layout">
-    <!-- 왼쪽 마이페이지 메뉴 -->
-    <aside class="mypage-sidebar">
-        <ul>
-            <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
-            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
-            <li><a href="{% url 'profile_edit' %}">회원 정보수정</a></li>
-            <li>
-                <a href="{% url 'favorite_hospitals' %}" class="active">
-                    즐겨 찾는 병원
-                </a>
-            </li>
-            <li><a href="{% url 'account_withdraw' %}" class="active">계정 탈퇴</a></li>
-        </ul>
-    </aside>
+<h2>즐겨 찾는 병원</h2>
 
-    <!-- 오른쪽 콘텐츠 -->
-    <section class="mypage-content">
-        <h2>즐겨 찾는 병원</h2>
+<!-- 오른쪽 콘텐츠 -->
 
         {% if favorites %}
             {% for fav in favorites %}
@@ -75,8 +58,6 @@
         {% else %}
             <p>등록된 즐겨찾기 병원이 없습니다.</p>
         {% endif %}
-    </section>
-</div>
 <!-- 메모 모달 오버레이 -->
 <div id="memoModal" class="memo-modal-overlay hidden">
   <div class="memo-modal">

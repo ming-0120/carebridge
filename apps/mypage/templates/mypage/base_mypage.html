@@ -1,0 +1,22 @@
+{% load static %}
+
+{% block content %}
+    {% include "core/_header.html" %}
+
+    <!-- 마이페이지 공통 레이아웃 CSS -->
+    <link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+
+    <div class="mypage-layout">
+        <!-- 왼쪽 마이페이지 메뉴 -->
+        <aside class="mypage-sidebar">
+            {% include "mypage/_sidebar.html" %}
+        </aside>
+
+        <!-- 오른쪽 콘텐츠 -->
+        <section class="mypage-content">
+            {% block mypage_content %}{% endblock %}
+        </section>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+{% endblock %}
