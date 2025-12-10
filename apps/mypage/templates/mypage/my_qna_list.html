@@ -1,23 +1,11 @@
+{% extends "mypage/base_mypage.html" %}
 {% load static %}
 
-{% block content %}
-{% include "core/_header.html" %}
-<div class="mypage-layout">
-
-    <!-- 왼쪽 마이페이지 메뉴 -->
-    <aside class="mypage-sidebar">
-        <ul>
-            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
-            <li><a href="{% url 'my_qna_list' %}" class="active">QnA 내역조회</a></li>
-            <li><a href="#">회원 정보수정</a></li>
-            <li><a href="#">즐겨 찾는 병원</a></li>
-            <li><a href="#">계정 탈퇴</a></li>
-        </ul>
-    </aside>
-
+{% block mypage_content %}
+<link rel="stylesheet" href="{% static 'mypage/css/reservation_list.css' %}">
+  <h2>My QnA</h2>
     <!-- 오른쪽 컨텐츠 -->
-    <section class="mypage-content">
-        <h2>My QnA</h2>
+    <section class="mypage-content">      
 
         <!-- 정렬 옵션 (등록일/답변유무) -->
         <div class="qna-sort">

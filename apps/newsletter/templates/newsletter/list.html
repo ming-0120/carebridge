@@ -22,27 +22,40 @@
               class="news-card-link"
             >
               <article class="news-card">
-                <div class="news-card-header">
-                  <span class="news-badge">
-                    {{ item.category|default:"보도자료" }}
-                  </span>
-                  <span class="news-date">
-                    {{ item.published_at|date:"Y.m.d" }}
-                  </span>
-                </div>
 
-                <h2 class="news-title">
-                  {{ item.title }}
-                </h2>
-
-                <p class="news-body">
-                  {% if item.body %}
-                    {{ item.body|truncatechars:150 }}
-                  {% else %}
-                    {{ item.summary|truncatechars:150 }}
-                  {% endif %}
-                </p>
-              </article>
+             <!-- 왼쪽 이미지 영역 -->
+               <div class="news-thumb">
+                 <img 
+                   src="{{ item.image_url|default:'/static/newsletter/img/default.jpg' }}" 
+                   alt="thumbnail"
+                 >
+               </div>
+             
+               <!-- 오른쪽 텍스트 영역 -->
+               <div class="news-content">
+                 <div class="news-card-header">
+                   <span class="news-badge">
+                     {{ item.category|default:"보도자료" }}
+                   </span>
+                   <span class="news-date">
+                     {{ item.published_at|date:"Y.m.d" }}
+                   </span>
+                 </div>
+               
+                 <h2 class="news-title">
+                   {{ item.title }}
+                 </h2>
+               
+                 <p class="news-body">
+                   {% if item.body %}
+                     {{ item.body|truncatechars:150 }}
+                   {% else %}
+                     {{ item.summary|truncatechars:150 }}
+                   {% endif %}
+                 </p>
+               </div>
+             
+             </article>
             </a>
           {% endfor %}
         </div>

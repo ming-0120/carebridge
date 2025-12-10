@@ -1,21 +1,9 @@
+{% extends "mypage/base_mypage.html" %}
 {% load static %}
 
-{% block content %}
-{% include "core/_header.html" %}
+{% block mypage_content %}
 <link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
 <div class="mypage-layout">
-    <!-- 왼쪽 마이페이지 메뉴 -->
-    <aside class="mypage-sidebar">
-        <ul>
-            <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
-            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
-            <li><a href="{% url 'profile_edit' %}" class="active">회원 정보수정</a></li>
-            <li><a href="#">즐겨 찾는 병원</a></li>
-            <li><a href="#">계정 탈퇴</a></li>
-        </ul>
-    </aside>
-
-    <!-- 오른쪽 컨텐츠 -->
     <section class="mypage-content">
         <h2>개인정보수정</h2>
 

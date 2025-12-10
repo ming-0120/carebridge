@@ -52,7 +52,13 @@
 .mypage-content form {
     max-width: 600px;
 }
-
+.notice{
+        background: #f3f7ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
 /* 한 줄 */
 .form-row {
     display: flex;

@@ -267,41 +267,48 @@ def delete_favorite(request, fav_id):
 def account_withdraw(request):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("login")  # 로그인 페이지 URL 이름에 맞게 수정
+        return redirect("login")
 
     user = Users.objects.filter(pk=user_id).first()
     if not user:
-        # 세션은 있는데 유저가 없으면 세션만 정리
         request.session.flush()
-        return redirect("home")  # 메인 페이지 등으로
+        return redirect("home")
+
+    # 카카오 계정 여부 판단 (DB + 세션 둘 다 고려)
+    is_kakao_user = (
+        getattr(user, "provider", None) == "kakao"
+        or request.session.get("auth_from") == "kakao"
+    )
 
     if request.method == "POST":
-        reason = request.POST.get("reason")
-        password = request.POST.get("password", "")
+        reason = request.POST.get("reason", "")
 
-        # 1) 비밀번호 검증
-        # Users.password 가 Django 해시 필드라면:
-        is_valid_password = check_password(password, user.password)
+        # 1) 로컬(local) 유저만 비밀번호 검증
+        if not is_kakao_user:
+            password = request.POST.get("password", "")
 
-        # 만약 평문으로 저장했다면 위 라인 대신:
-        # is_valid_password = (password == user.password)
+            is_valid_password = check_password(password, user.password)
+            # 만약 user.password가 평문이면:
+            # is_valid_password = (password == user.password)
 
-        if not is_valid_password:
-            messages.error(request, "비밀번호가 일치하지 않습니다.")
-            return render(request, "mypage/account_withdraw.html", {
-                "user": user,
-                "error": "비밀번호가 일치하지 않습니다.",
-            })
-        # 2) 사용자 삭제
-        user.withdrawal = 1
+            if not is_valid_password:
+                messages.error(request, "비밀번호가 일치하지 않습니다.")
+                return render(request, "mypage/account_withdraw.html", {
+                    "user": user,
+                    "error": "비밀번호가 일치하지 않습니다.",
+                    "is_kakao_user": is_kakao_user,
+                })
+
+        # 2) 탈퇴 처리 (withdrawal 필드 타입에 맞게 값 설정)
+        user.withdrawal = '1'   
         user.save()
 
         # 3) 세션/로그인 정보 제거
         request.session.flush()
 
-        # 4) 탈퇴 완료 후 이동
-        messages.success(request, "탈퇴가 완료되었습니다.")
         return redirect("home")
 
-    # GET 요청: 화면만 표시
-    return render(request, "mypage/account_withdraw.html", {"user": user})
+    return render(request, "mypage/account_withdraw.html", {
+        "user": user,
+        "is_kakao_user": is_kakao_user,
+    })

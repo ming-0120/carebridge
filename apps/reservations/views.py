@@ -201,7 +201,7 @@ def reserve_submit(request):
     slot.save()
 
     # 예약 완료 후 마이페이지의 예약 목록으로 이동 (url name 은 프로젝트에 맞게 바꿔주세요)
-    return redirect("mypage_reservations")  # TODO: 실제 url name 으로 수정
+    return redirect("reservation_list")  # TODO: 실제 url name 으로 수정
 
 
 def doctor_reservations_api(request):
