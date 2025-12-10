@@ -40,3 +40,13 @@ class MedicineData(models.Model):
 
     class Meta:
         db_table = 'medicine_data'
+
+class MedicalNewsletter(models.Model):
+    title = models.CharField(max_length=255)
+    url = models.URLField()
+    category = models.CharField(max_length=100, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    image_url = models.CharField(max_length=500, null=True, blank=True)
+
+    def __str__(self):
+        return self.title
