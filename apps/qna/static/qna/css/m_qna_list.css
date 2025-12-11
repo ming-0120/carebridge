@@ -1,0 +1,497 @@
+/* 
+  ========= QnA 목록 페이지 전용 CSS =========
+  
+  목적: QnA 목록 페이지(m_qna_list.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: QnA 목록 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: m_qna_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+  
+  주요 기능:
+    - QnA 목록 헤더: 페이지 제목 및 문의하기 버튼 영역
+    - QnA 테이블: QnA 목록을 표시하는 테이블 스타일
+    - 상태 배지: 답변 완료/대기 상태를 시각적으로 표시
+    - 페이지네이션: 페이지 이동 기능
+  
+  관련 파일:
+    - HTML: m_qna_list.html
+    - JavaScript: m_qna_list.js
+    - 공통 CSS: m_qna_common.css
+*/
+
+/* 공통 CSS는 m_qna_common.css를 참조하세요 */
+
+/* 
+  ========= QnA 목록 헤더 =========
+  
+  목적: QnA 목록 페이지의 헤더 영역 스타일
+    - 레이아웃: 제목과 문의하기 버튼을 양쪽 끝에 배치
+*/
+
+/* 
+  QnA 목록 헤더 컨테이너
+  
+  목적: QnA 목록 페이지의 헤더 영역을 담는 컨테이너 스타일
+    - display: flex - 플렉스 레이아웃
+    - justify-content: space-between - 양쪽 끝 정렬
+    - align-items: center - 수직 중앙 정렬
+    - margin-bottom: 24px - 하단 마진
+    - flex-shrink: 0 - 축소 방지
+    - 사용처: QnA 목록 페이지의 헤더 영역 (.qna-header)
+*/
+.qna-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+/* 
+  QnA 목록 페이지 제목
+  
+  목적: QnA 목록 페이지의 메인 제목 스타일
+    - font-size: 24px - 큰 글씨 크기
+    - font-weight: 700 - 굵은 글씨
+    - color: #1B3C73 - 메인 색상 (진한 파란색)
+    - margin: 0 - 마진 제거
+    - 사용처: QnA 목록 페이지의 제목 (.qna-title)
+*/
+.qna-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin: 0;
+}
+
+.qna-title-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: inline-block;
+}
+
+.qna-title-link:hover {
+  color: #152A5A;
+}
+
+/* 
+  ========= 버튼 스타일 =========
+  
+  목적: QnA 목록 헤더의 액션 버튼 스타일
+    - 문의하기 버튼: 새 문의 작성 페이지로 이동
+*/
+
+/* 
+  문의하기 버튼 기본 스타일
+  
+  목적: 문의하기 버튼의 기본 스타일
+    - display: inline-block - 인라인 블록 요소
+    - padding: 10px 20px - 내부 여백
+    - background-color: #1B3C73 - 파란색 배경 (메인 색상)
+    - color: #fff - 흰색 텍스트
+    - text-decoration: none - 링크 밑줄 제거
+    - border-radius: 6px - 둥근 모서리
+    - font-weight: 600 - 굵은 글씨
+    - font-size: 14px - 글씨 크기
+    - border: none - 테두리 제거
+    - cursor: pointer - 포인터 커서
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 문의하기 버튼 (.qna-header .btn-write)
+*/
+.qna-header .btn-write {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #1B3C73;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  문의하기 버튼 호버 효과
+  
+  목적: 문의하기 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #152A5A - 더 진한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.qna-header .btn-write:hover {
+  background-color: #152A5A;
+}
+
+/* 
+  ========= 검색 영역 =========
+  
+  목적: QnA 검색 기능을 제공하는 영역 스타일
+*/
+
+.qna-search {
+  margin-bottom: 24px;
+}
+
+.search-form {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.search-input {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid #e1e4ec;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: #1B3C73;
+}
+
+.btn-search {
+  padding: 10px 20px;
+  background-color: #1B3C73;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-search:hover {
+  background-color: #152A5A;
+}
+
+/* 
+  ========= QnA 테이블 스타일 =========
+  
+  목적: QnA 목록을 표시하는 테이블 스타일
+    - 사용자 경험(UX) 개선: 일관된 테이블 디자인 제공
+    - 반응형: 화면 크기에 따라 가로 스크롤 처리
+    - 인터랙션: 행 호버 및 선택 상태 스타일
+*/
+
+/* 
+  테이블 컨테이너
+  
+  목적: 테이블을 감싸는 컨테이너 스타일
+    - overflow-x: auto - 가로 스크롤 처리
+    - margin-bottom: 24px - 하단 마진
+*/
+.table-container {
+  overflow-x: auto;
+  margin-bottom: 24px;
+}
+
+/* 
+  QnA 테이블 기본 스타일
+  
+  목적: QnA 목록 테이블의 기본 스타일
+    - width: 100% - 전체 너비 사용
+    - min-width: 600px - 최소 너비 (작은 화면에서 가로 스크롤 발생)
+    - border-collapse: collapse - 테두리 병합
+    - font-size: 14px - 글씨 크기
+    - background-color: #fff - 흰색 배경
+    - 사용처: QnA 목록 테이블 (.qna-table)
+*/
+.qna-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 14px;
+  background-color: #fff;
+}
+
+/* 
+  QnA 테이블 헤더 영역
+  
+  목적: QnA 테이블 헤더의 배경색 설정
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용처: QnA 테이블 헤더 (thead)
+*/
+.qna-table thead {
+  background-color: #F8FAFF;
+}
+
+/* 
+  QnA 테이블 헤더 셀
+  
+  목적: QnA 테이블 헤더 셀의 스타일
+    - padding: 12px - 내부 여백
+    - text-align: left - 왼쪽 정렬
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 메인 색상 (진한 파란색)
+    - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
+    - 사용처: QnA 테이블 헤더 셀 (th)
+*/
+.qna-table th {
+  padding: 12px;
+  text-align: left;
+  font-weight: 600;
+  color: #1B3C73;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+/* 
+  QnA 테이블 데이터 셀
+  
+  목적: QnA 테이블 데이터 셀의 스타일
+    - padding: 12px - 내부 여백
+    - border-bottom: 1px solid #f0f0f0 - 하단 테두리 (매우 연한 회색)
+    - 사용처: QnA 테이블 데이터 셀 (td)
+*/
+.qna-table td {
+  padding: 12px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* 
+  QnA 행 기본 스타일
+  
+  목적: QnA 목록 테이블의 행 기본 스타일
+    - cursor: pointer - 포인터 커서 (클릭 가능함을 표시)
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: QnA 목록 테이블의 행 (tr.qna-row)
+*/
+.qna-row {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+/* 
+  QnA 행 호버 효과
+  
+  목적: QnA 행에 마우스를 올렸을 때 배경색 변경
+    - background-color: #F8FAFF - 연한 파란색 배경
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.qna-row:hover {
+  background-color: #F8FAFF;
+}
+
+/* 
+  QnA 행 활성화 효과
+  
+  목적: QnA 행을 클릭했을 때 배경색 변경
+    - background-color: #E9F1FF - 더 진한 파란색 배경
+    - 사용자 경험(UX) 개선: 클릭 상태를 시각적으로 표시
+*/
+.qna-row:active {
+  background-color: #E9F1FF;
+}
+
+/* 
+  ========= 상태 배지 =========
+  
+  목적: QnA의 답변 상태를 시각적으로 표시하는 배지 스타일
+    - 사용자 경험(UX) 개선: QnA의 답변 상태를 색상으로 구분하여 한눈에 파악 가능
+    - 상태별 색상:
+      → 답변 완료: 초록색 배경
+      → 답변 대기: 주황색 배경
+*/
+
+/* 
+  상태 배지 기본 스타일
+  
+  목적: 모든 상태 배지에 공통으로 적용되는 기본 스타일
+    - display: inline-block - 인라인 블록 요소로 표시 (배지 형태)
+    - padding: 4px 12px - 내부 여백 (상하 4px, 좌우 12px)
+    - border-radius: 12px - 둥근 모서리 (배지 형태)
+    - font-size: 12px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - 사용처: 모든 상태 배지 (.status-badge)
+    - 사용 예시: <span class="status-badge status-completed">답변완료</span>
+*/
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* 
+  답변 완료 상태 배지 스타일
+  
+  목적: 답변이 완료된 QnA의 상태를 표시하는 배지 스타일
+    - background-color: #10B981 - 초록색 배경 (성공 색상)
+    - color: #fff - 흰색 텍스트
+    - 사용처: 답변 완료 상태 배지 (.status-badge.status-completed)
+    - 사용 예시: <span class="status-badge status-completed">답변완료</span>
+    - 의미: QnA에 대한 답변이 작성되어 완료된 상태
+*/
+.status-completed {
+  background-color: #10B981;
+  color: #fff;
+}
+
+/* 
+  답변 대기 상태 배지 스타일
+  
+  목적: 답변이 아직 작성되지 않은 QnA의 상태를 표시하는 배지 스타일
+    - background-color: #F59E0B - 주황색 배경 (경고 색상)
+    - color: #fff - 흰색 텍스트
+    - 사용처: 답변 대기 상태 배지 (.status-badge.status-waiting)
+    - 사용 예시: <span class="status-badge status-waiting">답변대기</span>
+    - 의미: QnA에 대한 답변이 아직 작성되지 않은 상태
+*/
+.status-waiting {
+  background-color: #F59E0B;
+  color: #fff;
+}
+
+/* 
+  ========= 데이터 없음 =========
+  
+  목적: QnA 데이터가 없을 때 표시되는 메시지 스타일
+*/
+
+/* 
+  데이터 없음 메시지
+  
+  목적: 테이블에 QnA 데이터가 없을 때 표시되는 메시지 스타일
+    - text-align: center - 중앙 정렬
+    - padding: 40px - 내부 여백
+    - color: #999 - 회색 텍스트
+    - 사용처: 테이블에 데이터가 없을 때 (td.no-data)
+*/
+.no-data {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}
+
+/* 
+  ========= 페이지네이션 =========
+  
+  목적: 페이지 이동 기능을 제공하는 페이지네이션 스타일
+    - 사용자 경험(UX) 개선: 많은 데이터를 페이지 단위로 나누어 가독성 향상
+*/
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.page-link {
+  display: inline-block;
+  padding: 8px 12px;
+  border: 1px solid #e1e4ec;
+  border-radius: 6px;
+  color: #1B3C73;
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.page-link:hover {
+  background-color: #F8FAFF;
+  border-color: #1B3C73;
+}
+
+.page-link.active {
+  background-color: #1B3C73;
+  color: #fff;
+  border-color: #1B3C73;
+}
+
+.page-link.disabled {
+  color: #999;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.page-link.disabled:hover {
+  background-color: transparent;
+  border-color: #e1e4ec;
+}
+
+/* 
+  ========= 반응형 디자인 =========
+  
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
+    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
+    - 주요 브레이크포인트:
+      → 모바일: 768px 이하
+*/
+
+/* 
+  모바일 화면 스타일 (768px 이하)
+  
+  목적: 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 768px - 최대 너비 768px까지 적용
+    - 헤더 세로 배치: 제목과 버튼을 세로로 배치
+    - 제목 글씨 크기 축소
+    - 버튼 마진 조정
+    - 사용처: 모바일 화면 (768px 이하)
+*/
+@media (max-width: 768px) {
+  /* 
+    QnA 목록 헤더 세로 배치
+    
+    목적: 모바일 화면에서 헤더를 세로로 배치
+      - flex-direction: column - 세로 방향 배치
+      - align-items: flex-start - 왼쪽 정렬
+      - gap: 16px - 요소 간 간격
+  */
+  .qna-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+         /*
+           QnA 목록 페이지 제목 글씨 크기 축소
+
+           목적: 모바일 화면에서 제목 글씨 크기 축소
+             - font-size: 20px - 글씨 크기 축소 (기본 24px → 20px)
+         */
+         .qna-title,
+         .qna-title-link {
+           font-size: 20px;
+         }
+
+  /* 
+    검색 폼 세로 배치
+    
+    목적: 모바일 화면에서 검색 폼을 세로로 배치
+      - flex-direction: column - 세로 방향 배치
+  */
+  .search-form {
+    flex-direction: column;
+  }
+
+  /* 
+    검색 입력 필드 너비 조정
+    
+    목적: 모바일 화면에서 검색 입력 필드 너비 조정
+      - width: 100% - 전체 너비 사용
+  */
+  .search-input {
+    width: 100%;
+  }
+
+  /* 
+    검색 버튼 너비 조정
+    
+    목적: 모바일 화면에서 검색 버튼 너비 조정
+      - width: 100% - 전체 너비 사용
+  */
+  .btn-search {
+    width: 100%;
+  }
+}
+
+

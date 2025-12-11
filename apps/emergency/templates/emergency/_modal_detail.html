@@ -1,75 +1,92 @@
+{% load static %}
+{% load status_filters %}
+
 <div id="detail-modal" class="modal-overlay hidden">
   <div class="modal-wrap detail-large">
 
     <button class="modal-close" onclick="closeDetailModal()">×</button>
 
-    <!-- Header -->
+    <!-- Header: 병원명 + 주소 + 즐겨찾기 -->
     <div class="detail-header">
-      <h1 id="detail-title" class="detail-title"></h1>
-      <p id="detail-meta" class="detail-meta"></p>
+      <div class="detail-header-top">
+        <h1 id="detail-title" class="detail-title"></h1>
+        <div id="detail-favorite" class="detail-favorite">★</div>
+      </div>
+      <p id="detail-address" class="detail-address"></p>
       <div id="detail-tags" class="tag-row"></div>
     </div>
 
-    <!-- Message Banner -->
+    <!-- Message Banner: ErMessage 표시 -->
     <div id="detail-banner" class="message-banner hidden"></div>
 
-    <!-- 병상 현황 -->
+    <!-- 병상 현황: 가로 1열 원형 그래프 -->
     <h3 class="section-title">병상 현황</h3>
-
-    <div class="detail-bed-grid">
-
-      <div class="bed-item">
-        <div id="circle-er" class="circle"></div>
-        <div class="bed-label">응급실</div>
-        <div id="er-count" class="bed-count"></div>
+    <div class="detail-status-grid">
+      <div class="status-item">
+        <div class="status-item-label">응급실 일반</div>
+        <div id="status-circle-er" class="status-circle-container"></div>
       </div>
 
-      <div class="bed-item">
-        <div id="circle-child" class="circle"></div>
-        <div class="bed-label">소아응급</div>
-        <div id="child-count" class="bed-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">응급실 소아</div>
+        <div id="status-circle-child" class="status-circle-container"></div>
       </div>
 
-      <div class="bed-item">
-        <div id="circle-birth" class="circle"></div>
-        <div class="bed-label">분만실</div>
-        <div id="birth-count" class="bed-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">분만실</div>
+        <div id="status-circle-birth" class="status-circle-container"></div>
       </div>
 
-      <div class="bed-item">
-        <div id="circle-negative" class="circle"></div>
-        <div class="bed-label">음압격리</div>
-        <div id="negative-count" class="bed-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">음압격리</div>
+        <div id="status-circle-negative" class="status-circle-container"></div>
       </div>
 
-      <div class="bed-item">
-        <div id="circle-isolation" class="circle"></div>
-        <div class="bed-label">일반격리</div>
-        <div id="isolation-count" class="bed-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">일반격리</div>
+        <div id="status-circle-isolation" class="status-circle-container"></div>
       </div>
 
-      <div class="bed-item">
-        <div id="circle-cohort" class="circle"></div>
-        <div class="bed-label">코호트</div>
-        <div id="cohort-count" class="bed-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">코호트격리</div>
+        <div id="status-circle-cohort" class="status-circle-container"></div>
       </div>
-
     </div>
 
     <!-- 하단 2단 구성 -->
     <div class="detail-bottom">
 
-      <!-- AI 리뷰 -->
+      <!-- AI 리뷰 요약 -->
       <div class="detail-box">
-        <h3>AI 리뷰 요약</h3>
-        <p id="detail-review">리뷰 데이터 준비중...</p>
+        <h3 class="detail-box-title">AI 리뷰 요약</h3>
+        <div id="detail-review-content">
+          <div id="review-sentiment" class="review-sentiment hidden">
+            <div class="sentiment-bar">
+              <div class="sentiment-positive">
+                <span>긍정</span>
+                <span id="positive-percent">0%</span>
+              </div>
+              <div class="sentiment-negative">
+                <span>부정</span>
+                <span id="negative-percent">0%</span>
+              </div>
+            </div>
+            <div class="sentiment-visual">
+              <div id="positive-bars" class="sentiment-bars positive-bars"></div>
+              <div id="negative-bars" class="sentiment-bars negative-bars"></div>
+            </div>
+          </div>
+          <div id="review-summary" class="review-summary">
+            <p id="review-summary-text">리뷰 데이터 준비중...</p>
+          </div>
+        </div>
       </div>
 
-      <!-- 지도 -->
+      <!-- 위치 / 길찾기 -->
       <div class="detail-box">
-        <h3>위치 / 길찾기</h3>
+        <h3 class="detail-box-title">위치 / 길찾기</h3>
         <div id="detail-map" class="detail-map">지도 로딩중...</div>
-        <button class="btn primary">길찾기</button>
+        <button id="detail-navigation-btn" class="btn primary navigation-btn">길찾기</button>
       </div>
 
     </div>

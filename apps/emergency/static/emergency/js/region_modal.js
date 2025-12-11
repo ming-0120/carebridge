@@ -1,4 +1,22 @@
 // ===============================
+// CSRF 토큰 가져오기 함수
+// ===============================
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ===============================
 // 모달 열기 / 닫기
 // ===============================
 function openRegionModal() {
@@ -22,24 +40,33 @@ function closeRegionModal() {
 }
 
 // ===============================
-// 상태 지역 선택 (URL 파라미터에서 초기값 읽기)
+// 상태 지역 선택 (템플릿에서 전달된 초기값 사용)
 // ===============================
-const urlParams = new URLSearchParams(window.location.search);
-let selectedSido = urlParams.get("sido") || "";
-let selectedSigungu = urlParams.get("sigungu") || "";
+let selectedSido = window.selectedSido || "";
+let selectedSigungu = window.selectedSigungu || "";
 
 // ===============================
 // 시/도 선택
 // ===============================
 function selectSido(sido, sigunguKeyword) {
   selectedSido = sido;
-  selectedSigungu = "";
+  selectedSigungu = "전체";  // "" 대신 "전체"로 명시적 설정
 
   document.querySelectorAll(".sido-item").forEach(el => {
     el.classList.toggle("active", el.textContent.trim() === sido);
   });
 
   loadSigungu(sido, sigunguKeyword);
+  
+  // 시/군/구 UI도 "전체"로 초기화
+  setTimeout(() => {
+    document.querySelectorAll(".sigungu-item").forEach(el => {
+      el.classList.remove("active");
+      if (el.textContent.trim() === "전체") {
+        el.classList.add("active");
+      }
+    });
+  }, 100);  // loadSigungu 완료 후 실행
 }
 
 // ===============================
@@ -148,25 +175,68 @@ function filterSigungu(keyword) {
 // 적용
 // ===============================
 function applyRegionFilter() {
-  const params = new URLSearchParams(window.location.search);
-
-  if (selectedSido) params.set("sido", selectedSido);
-  else params.delete("sido");
-
-  if (selectedSigungu && selectedSigungu !== "전체") params.set("sigungu", selectedSigungu);
-  else params.delete("sigungu");
-
-  window.location.search = params.toString();
+  // 시/도가 변경되었는데 시/군/구가 이전 값으로 남아있으면 "전체"로 초기화
+  // (시/군/구가 선택되지 않았거나 빈 문자열이면 "전체"로 처리)
+  if (!selectedSigungu || selectedSigungu === "") {
+    selectedSigungu = "전체";
+  }
+  
+  // POST 방식으로 지역 정보 전송
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'region',
+      sido: selectedSido && selectedSido !== "전체" ? selectedSido : "",
+      sigungu: selectedSigungu && selectedSigungu !== "전체" ? selectedSigungu : ""
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('지역 필터 적용 실패:', err);
+    alert('지역 필터 적용에 실패했습니다.');
+  });
 }
 
 // ===============================
 // 초기화
 // ===============================
 function resetRegion() {
-  const params = new URLSearchParams(window.location.search);
-  params.delete("sido");
-  params.delete("sigungu");
-
-  const query = params.toString();
-  window.location.href = window.location.pathname + (query ? "?" + query : "");
+  // POST 방식으로 지역 정보 초기화
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'region',
+      sido: "",
+      sigungu: ""
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('지역 필터 초기화 실패:', err);
+    alert('지역 필터 초기화에 실패했습니다.');
+  });
 }

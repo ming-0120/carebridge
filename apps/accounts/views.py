@@ -77,8 +77,7 @@ def login_view(request, default_role="PATIENT", template_name="accounts/login.ht
                 'username': username,
                 'role': 'DOCTOR',   # 토글이 의사로 보이게
             })
-
-    # 세션 저장
+        
     request.session['user_id'] = user.user_id
     request.session['username'] = user.name
     request.session['role'] = user.role
@@ -90,8 +89,10 @@ def login_view(request, default_role="PATIENT", template_name="accounts/login.ht
     if user.role == 'ADMIN':
         return redirect('/admin_panel/')
     elif user.role == 'DOCTOR':
-        # 여기까지 왔으면 verified=True 보장
         return redirect('/mstaff/doctor_dashboard/')
+    elif user.role == 'NURSE':
+        return redirect('mstaff/hospital_dashboard/')
+    
 
     # 일반 환자, 그 외 역할은 next_url 로
     return redirect(next_url)
@@ -347,4 +348,10 @@ def admin_login_view(request):
         request,
         default_role="ADMIN",
         template_name="accounts/admin_login.html",  # 관리자용 화면  # 필요 없으면 기본 login.html 그대로 써도 됨
+    )
+def nurse_login_view(request):
+    return login_view(
+        request,
+        default_role="NURSE",
+        template_name="accounts/nurse_login.html",  # 관리자용 화면  # 필요 없으면 기본 login.html 그대로 써도 됨
     )

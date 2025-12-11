@@ -10,7 +10,7 @@
             {% elif role == 'DOCTOR' %}
                 <a href="{% url 'doctor_dashboard' %}">
             {% elif role == 'ADMIN' %}
-                <a href="{% url 'admin_home' %}">
+                <a href="{% url 'admin_dashboard' %}">
             {% else %}
                 <a href="{% url 'home' %}">
             {% endif %}
@@ -28,9 +28,9 @@
     <div class="nav-wrapper">
 {% if request.session.role != 'DOCTOR' and request.session.role != 'ADMIN' %}
 <nav class="nav">
-    <a href="#emergency">응급실 조회</a>
+    <a href="{% url 'emergency_main' %}">응급실 조회</a>
     <a href="{% url 'reservation_main' %}">병원 예약</a>
-    <a href="{% url 'qna:qna_list' %}">QnA</a>
+    <a href="{% url 'qna_list' %}">QnA</a>
     <a href="{% url 'newsletter_list' %}">메디컬 레터</a>
     <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
 </nav>

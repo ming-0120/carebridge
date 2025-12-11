@@ -1,0 +1,111 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QnA 상세보기 - CareBridge</title>
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_post.css' %}">
+</head>
+<body>
+  {% include "core/_header.html" %}
+  
+  <main class="qna-main">
+    <div class="qna-container">
+      <div class="qna-header">
+        <h1>QnA 상세보기</h1>
+        <div class="qna-header-actions">
+          <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+          {% if is_owner %}
+            <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+              {% csrf_token %}
+              <button type="submit" class="btn-delete">삭제</button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- 문의 상세 섹션 -->
+      <div class="inquiry-section">
+        <div class="inquiry-section-title">문의 상세</div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">작성자</span>
+          <span class="inquiry-detail-value">{{ qna.user.username }} ({{ qna.user.name }})</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">연락처</span>
+          <span class="inquiry-detail-value">{{ qna.user.phone|default:"-" }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">이메일</span>
+          <span class="inquiry-detail-value">
+            <a href="mailto:{{ qna.user.email }}">{{ qna.user.email }}</a>
+          </span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">제목</span>
+          <span class="inquiry-detail-value">{{ qna.title }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">내용</span>
+          <div class="inquiry-detail-value">
+            <div class="inquiry-content">{{ qna.content }}</div>
+          </div>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">작성일시</span>
+          <span class="inquiry-detail-value">{{ qna.created_at|date:"Y.m.d H:i" }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">공개설정</span>
+          <span class="inquiry-detail-value">
+            {% if qna.privacy == 'PUBLIC' %}
+              공개
+            {% else %}
+              비공개
+            {% endif %}
+          </span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">상태</span>
+          <span class="inquiry-detail-value">
+            {% if qna.reply %}
+              <span class="qna-replied">답변완료</span>
+            {% else %}
+              <span class="qna-pending">답변대기</span>
+            {% endif %}
+          </span>
+        </div>
+      </div>
+
+      <!-- 답변 섹션 -->
+      {% if qna.reply %}
+        <div class="reply-section">
+          <div class="reply-section-title">답변 내용</div>
+          <div class="reply-content">
+            {{ qna.reply|linebreaks }}
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer class="footer">
+    © CareBridge All Rights Reserved.
+  </footer>
+
+  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
+  <script src="{% static 'qna/js/m_qna_post.js' %}"></script>
+</body>
+</html>
+
+

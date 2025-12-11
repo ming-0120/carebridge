@@ -1,0 +1,41 @@
+{% comment %}
+  QnA 공통 템플릿 (Base 템플릿)
+  
+  목적: QnA 관련 페이지들의 공통 구조를 제공하는 base 템플릿
+    - 헤더: core/_header.html을 include하여 공통 헤더 사용
+    - 푸터: 공통 푸터 제공
+    - 공통 CSS/JS: m_qna_common.css, m_qna_common.js 로드
+  
+  사용 방법:
+    {% extends "m_qna_common.html" %}
+    {% block content %}
+      <!-- 페이지별 내용 -->
+    {% endblock %}
+{% endcomment %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}QnA - CareBridge{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  {% include "core/_header.html" %}
+  
+  <main class="qna-main">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    © CareBridge All Rights Reserved.
+  </footer>
+
+  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
+
+

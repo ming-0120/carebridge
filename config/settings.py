@@ -15,9 +15,11 @@ import os
 import environ
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
 # 로그인 후/로그아웃 후 이동할 URL
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
+
 # django-environ 초기화
 env = environ.Env(
     DEBUG=(bool, False),
@@ -33,12 +35,14 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # 기본 설정들
 DEBUG = True
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u')
+
 # 카카오 관련 설정
 KAKAO_REST_API_KEY = env('KAKAO_REST_API_KEY', default='')
 KAKAO_REDIRECT_URI = env(
     'KAKAO_REDIRECT_URI',
     default=''  # 비어 있으면 나중에 build_absolute_uri로 대체
 )
+KAKAO_MAP_JS_KEY = os.getenv("KAKAO_MAP_JS_KEY")
 
 ALLOWED_HOSTS = []
 
@@ -99,7 +103,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+# https://doc`s.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
