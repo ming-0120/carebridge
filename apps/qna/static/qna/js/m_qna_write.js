@@ -255,12 +255,17 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // 이메일 도메인 직접입력 처리
-  if (emailDomain) {
+  if (emailDomain && emailDomainCustom) {
     emailDomain.addEventListener('change', handleEmailDomainChange);
     
-    // 초기 상태에서 직접입력이 선택되어 있으면 표시 (동의 후에만 표시됨)
-    if (emailDomain.value === '직접입력' && emailDomainCustom) {
+    // 초기 상태 설정: 직접입력이 선택되어 있거나 커스텀 도메인 값이 있으면 표시
+    const emailDomainValue = emailDomain.value;
+    const customDomainValue = emailDomainCustom.value;
+    
+    if (emailDomainValue === '직접입력' || (customDomainValue && emailDomainValue !== 'naver.com' && emailDomainValue !== 'gmail.com' && emailDomainValue !== 'daum.net' && emailDomainValue !== 'kakao.com')) {
       emailDomainCustom.style.display = 'block';
+    } else {
+      emailDomainCustom.style.display = 'none';
     }
   }
 

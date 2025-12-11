@@ -187,7 +187,7 @@
                   <option value="kakao.com" {% if email_parts.domain == 'kakao.com' %}selected{% endif %}>kakao.com</option>
                   <option value="직접입력" {% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}selected{% endif %}>직접입력</option>
                 </select>
-                <input type="text" id="email-domain-custom" class="writer-input email-input-custom" value="{% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}{{ email_parts.domain }}{% endif %}" placeholder="직접입력" style="display: {% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}block{% else %}none{% endif %};">
+                <input type="text" id="email-domain-custom" class="writer-input email-input-custom" value="{% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}{{ email_parts.domain }}{% endif %}" placeholder="직접입력">
               </div>
             </div>
           </div>
