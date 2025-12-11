@@ -34,7 +34,7 @@
         padding:6px 0;
   "></div>
 
-  <button id="filter-tags-reset" class="filter-reset-btn">선택 초기화 ✕</button>
+  <button id="filter-tags-reset" class="filter-reset-btn">선택 초기화</button>
 </div>
 
 
@@ -133,27 +133,59 @@
 
 <script>
   window.regionDict = JSON.parse('{{ region_dict_json|safe }}');
+  // 템플릿에서 전달된 초기값 설정 (session 기반)
+  window.selectedSido = '{{ selected_sido|default:"" }}';
+  window.selectedSigungu = '{{ selected_sigungu|default:"" }}';
+  window.selectedEtype = '{{ selected_etype|default:"" }}';
+  window.selectedFilters = JSON.parse('{{ selected_filters|safe }}');
 
   // -------------------------
-  // 거리 순 정렬 기능
+  // CSRF 토큰 가져오기 함수
+  // -------------------------
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  // -------------------------
+  // 거리 순 정렬 기능 (POST 방식)
   // -------------------------
   function sortByDistance() {
-      const url = new URL(window.location.href);
-      url.searchParams.set("sort", "distance");
-
-      // ★ 추가: sessionStorage의 위치 정보를 URL로 함께 전달
-      const lat = sessionStorage.getItem("user_lat");
-      const lng = sessionStorage.getItem("user_lng");
-
-      if (lat && lng) {
-          url.searchParams.set("lat", lat);
-          url.searchParams.set("lng", lng);
+    // POST 방식으로 정렬 설정 전송
+    fetch('/emergency/update_preferences/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        action: 'sort',
+        sort: 'distance'
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+        sessionStorage.setItem('emergency_button_click', 'true');
+        // 페이지 새로고침
+        window.location.reload();
       }
-
-      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-      sessionStorage.setItem('emergency_button_click', 'true');
-
-      window.location.href = url.toString();
+    })
+    .catch(err => {
+      console.error('정렬 설정 실패:', err);
+      alert('정렬 설정에 실패했습니다.');
+    });
   }
 
   
@@ -195,4 +227,6 @@
 
 <script src="{% static 'core/js/home.js' %}"></script>
 
+
 {% endblock %}
+

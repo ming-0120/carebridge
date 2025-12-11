@@ -3,14 +3,16 @@ from django.http import JsonResponse
 from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
-
-import math
-import json
+from django.views.decorators.csrf import csrf_exempt
 from collections import defaultdict
-
 from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
 from apps.db.models.review import AiReview
 from django.conf import settings
+
+
+import math
+import json
+
 
 
 def _haversine_km(lat1, lon1, lat2, lon2):
@@ -205,11 +207,13 @@ def emergency_main(request):
         selected_sort, selected_etype, region_dict_json
     """
 
-    # 1) GET 파라미터 읽기
-    selected_sido = request.GET.get("sido")
-    selected_sigungu = request.GET.get("sigungu")
-    selected_sort = request.GET.get("sort")  # "distance" 또는 None (기본값: 종합점수)
-    selected_etype = request.GET.get("etype") or ""  # stroke, traffic, cardio, obstetrics
+    # 1) SESSION 값 읽기 (GET 완전 제거)
+    selected_sido = request.session.get("region_sido")
+    selected_sigungu = request.session.get("region_sigungu")
+    selected_sort = request.session.get("sort", "score")   # 기본 정렬: score
+    selected_etype = request.session.get("etype", "")      # 선택된 응급유형(없으면 "")
+    selected_filters = request.session.get("filters", {})  # CT/MRI/Angio 등 필터 세트
+
 
     # -------------------------------------------------------
     # 응급유형 → 필요한 장비 매핑
@@ -229,14 +233,28 @@ def emergency_main(request):
         required_equips.update(EMERGENCY_MAP[selected_etype])
 
     # 사용자가 장비칩을 직접 선택한 경우 → OR 조건 추가
+    # session에서 필터 정보 읽기
+    session_filters = request.session.get("filters", {})
     for eq in ["ct", "mri", "angio", "delivery", "ventilator"]:
-        if request.GET.get(eq) == "1":
+        # session에서 먼저 확인, 없으면 GET 파라미터 확인 (하위 호환성)
+        if session_filters.get(eq) == "1" or request.GET.get(eq) == "1":
             required_equips.add(eq)
 
 
     # 위치 정보
-    user_lat = request.GET.get("lat") or request.headers.get("X-User-Lat")
-    user_lng = request.GET.get("lng") or request.headers.get("X-User-Lng")
+    # ★★★★★ GET → SESSION → HEADER 순서로 읽기 ★★★★★
+    user_lat = (
+        request.GET.get("lat")
+        or request.session.get("lat")
+        or request.headers.get("X-User-Lat")
+    )
+
+    user_lng = (
+        request.GET.get("lng")
+        or request.session.get("lng")
+        or request.headers.get("X-User-Lng")
+    )
+
 
     # 문자열 -> float 변환 (실패 시 None)
     def to_float(value):
@@ -550,3 +568,45 @@ def hospital_detail_json(request, er_id: int):
     }
 
     return JsonResponse(data)
+
+# =========================================
+# ★  통합 POST API 엔드포인트  ★
+# =========================================
+@csrf_exempt
+def update_preferences(request):
+    """
+    통합 POST API:
+    action: "sort" | "region" | "filter" | "reset"
+    모든 UI 동작을 POST + session 기반으로 처리함.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "POST only"}, status=400)
+
+    data = json.loads(request.body)
+    action = data.get("action")
+
+    # 0) 모든 설정 초기화 (새로고침 시)
+    if action == "reset":
+        request.session.pop("region_sido", None)
+        request.session.pop("region_sigungu", None)
+        request.session.pop("sort", None)
+        request.session.pop("etype", None)
+        request.session.pop("filters", None)
+
+    # 1) 정렬 설정
+    elif action == "sort":
+        request.session["sort"] = data.get("sort")
+
+    # 2) 지역 설정
+    elif action == "region":
+        request.session["region_sido"] = data.get("sido")
+        request.session["region_sigungu"] = data.get("sigungu")
+
+    # 3) 필터 설정 (etype, ct, mri, angio 등)
+    elif action == "filter":
+        request.session["etype"] = data.get("etype", "")
+        request.session["filters"] = data.get("filters", {})
+
+    request.session.save()
+    return JsonResponse({"status": "ok"})
+

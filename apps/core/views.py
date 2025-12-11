@@ -9,6 +9,10 @@ from apps.db.models import DailyVisit, MedicalNewsletter  # 일일 방문자 수
 from django.db.models import F  # 데이터베이스 필드 참조 및 원자적 업데이트를 위한 F 객체
 
 
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+
 def home(request):
     today = timezone.now().date()
 
@@ -29,4 +33,20 @@ def home(request):
             'newsletters': newsletters
         }
     )
-   
+
+
+
+@csrf_exempt
+def save_location(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        lat = data.get("lat")
+        lng = data.get("lng")
+
+        request.session["lat"] = lat
+        request.session["lng"] = lng
+
+        return JsonResponse({"status": "ok", "lat": lat, "lng": lng})
+
+    return JsonResponse({"error": "invalid method"}, status=400)
+
