@@ -22,6 +22,7 @@ from django.db.models.functions import Cast
 from django.core.serializers.json import DjangoJSONEncoder
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from django.forms.models import model_to_dict
 
 
 KST = tz("Asia/Seoul")
@@ -1071,6 +1072,55 @@ def get_reservation_medical_record(request):
     return JsonResponse({
         'users': user_data_list,
     })
+
+def get_lab_record(request):
+    lab_order = []
+    lab_pending_count = 0
+    lab_sampled_count = 0
+    lab_is_urgent_count = 0
+    try:
+        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        for record in medical_records:
+            try:
+                lab = LabOrders.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    order_datetime__contains=str(date.today())
+                )
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                lab_order.append({
+                    'lab': model_to_dict(lab),
+                    'user': model_to_dict(user),
+                    'doctor': model_to_dict(doctor),
+                    'doctor_info': model_to_dict(doctor_info),
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if lab.status == 'Pending':
+                    lab_pending_count += 1
+                if lab.status == 'Sampled':
+                    lab_sampled_count += 1
+                if lab.is_urgent == True:
+                    lab_is_urgent_count += 1
+            except:
+                print('LabOrders error')
+    except:
+        print('Hospital error')
+
+    context = {
+       'lab_order': lab_order,
+       'lab_pending_count': lab_pending_count,
+       'lab_sampled_count': lab_sampled_count,
+       'lab_is_urgent_count': lab_is_urgent_count,
+    }
+
+    return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
+
+    
 
 
 # ---------------------------------------------------------

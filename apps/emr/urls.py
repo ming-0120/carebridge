@@ -25,5 +25,6 @@ urlpatterns = [
     path("api/today-patients/", api_today_patients, name="api_today_patients"),
     path('set_doctor_memo/', views.set_doctor_memo, name='set_doctor_memo'),
     path('get_reservation_medical_record/', views.get_reservation_medical_record, name='get_reservation_medical_record'),
+    path('get_lab_record/', views.get_lab_record, name="get_lab_record"),
 ]
         
