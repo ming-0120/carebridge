@@ -1,0 +1,117 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
+  <title>QnA 목록 - CareBridge</title>
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_list.css' %}">
+</head>
+<body>
+  {% include "core/_header.html" %}
+  
+  <main class="qna-main">
+    <div class="qna-container">
+      <div class="qna-header">
+        <h1 class="qna-title">QnA 목록</h1>
+        <a href="{% url 'qna:qna_write' %}" class="btn-write">문의하기</a>
+      </div>
+
+      <div class="qna-search">
+        <form method="get" action="{% url 'qna:qna_list' %}" class="search-form">
+          <input type="text" name="search" value="{{ search_keyword|default:'' }}" placeholder="제목 또는 내용으로 검색" class="search-input">
+          <button type="submit" class="btn-search">검색</button>
+        </form>
+      </div>
+
+      <div class="table-container">
+        <table class="qna-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>문의 제목</th>
+              <th>문의 일자</th>
+              <th>공개 설정</th>
+              <th>상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if page_obj %}
+              {% for qna in page_obj %}
+                <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
+                  <td>{% if page_obj.has_previous %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}</td>
+                  <td>{{ qna.title }}</td>
+                  <td>{{ qna.created_at|date:"Y-m-d" }}</td>
+                  <td>
+                    {% if qna.privacy == 'PUBLIC' %}
+                      공개
+                    {% else %}
+                      비공개
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if qna.reply %}
+                      <span class="status-badge status-completed">답변 완료</span>
+                    {% else %}
+                      <span class="status-badge status-waiting">답변 대기</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="no-data">등록된 QnA가 없습니다.</td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="5" class="no-data">등록된 QnA가 없습니다.</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      {% if page_obj.has_other_pages %}
+        <div class="pagination">
+          {% if page_obj.has_previous %}
+            <a href="?page=1{% if search_keyword %}&search={{ search_keyword }}{% endif %}" class="page-link">«</a>
+            <a href="?page={{ page_obj.previous_page_number }}{% if search_keyword %}&search={{ search_keyword }}{% endif %}" class="page-link"><</a>
+          {% else %}
+            <span class="page-link disabled">«</span>
+            <span class="page-link disabled"><</span>
+          {% endif %}
+
+          {% if page_obj.paginator.num_pages > 0 %}
+            {% for num in page_obj.paginator.page_range %}
+              {% if page_obj.number == num %}
+                <span class="page-link active">{{ num }}</span>
+              {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <a href="?page={{ num }}{% if search_keyword %}&search={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+              {% endif %}
+            {% endfor %}
+          {% else %}
+            <span class="page-link active">1</span>
+          {% endif %}
+
+          {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}{% if search_keyword %}&search={{ search_keyword }}{% endif %}" class="page-link">></a>
+            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_keyword %}&search={{ search_keyword }}{% endif %}" class="page-link">»</a>
+          {% else %}
+            <span class="page-link disabled">></span>
+            <span class="page-link disabled">»</span>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <footer class="footer">
+    © CareBridge All Rights Reserved.
+  </footer>
+
+  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
+  <script src="{% static 'qna/js/m_qna_list.js' %}"></script>
+</body>
+</html>
+

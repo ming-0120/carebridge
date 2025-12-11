@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QnA 작성 - CareBridge</title>
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_write.css' %}">
+</head>
+<body>
+  {% include "core/_header.html" %}
+  
+  <main class="qna-main">
+    <div class="qna-container">
+      <div class="qna-header">
+        <h1>QnA 작성</h1>
+        <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+      </div>
+
+      {% if error %}
+        <div class="qna-error">
+          <p>{{ error }}</p>
+        </div>
+      {% endif %}
+
+      <form method="post" action="{% url 'qna:qna_write' %}" class="qna-form">
+        {% csrf_token %}
+        
+        <div class="form-group">
+          <label for="title">제목</label>
+          <input type="text" id="title" name="title" value="{{ title|default:'' }}" required class="form-input">
+        </div>
+
+        <div class="form-group">
+          <label for="content">내용</label>
+          <textarea id="content" name="content" rows="10" required class="form-textarea">{{ content|default:'' }}</textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="privacy">공개 설정</label>
+          <select id="privacy" name="privacy" class="form-select">
+            <option value="PUBLIC" {% if privacy == 'PUBLIC' or not privacy %}selected{% endif %}>공개</option>
+            <option value="PRIVATE" {% if privacy == 'PRIVATE' %}selected{% endif %}>비공개</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-submit">등록</button>
+          <a href="{% url 'qna:qna_list' %}" class="btn-cancel">취소</a>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © CareBridge All Rights Reserved.
+  </footer>
+
+  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
+  <script src="{% static 'qna/js/m_qna_write.js' %}"></script>
+</body>
+</html>
+
+

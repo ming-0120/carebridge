@@ -1,0 +1,81 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QnA 상세보기 - CareBridge</title>
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  <link rel="stylesheet" href="{% static 'qna/css/m_qna_post.css' %}">
+</head>
+<body>
+  {% include "core/_header.html" %}
+  
+  <main class="qna-main">
+    <div class="qna-container">
+      <div class="qna-header">
+        <h1>QnA 상세보기</h1>
+        <div class="qna-header-actions">
+          <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+          <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">삭제</button>
+          </form>
+        </div>
+      </div>
+
+      <div class="qna-post">
+        <div class="qna-post-header">
+          <h2>{{ qna.title }}</h2>
+          <div class="qna-post-meta">
+            <span class="qna-date">{{ qna.created_at|date:"Y.m.d H:i" }}</span>
+            <span class="qna-privacy">
+              {% if qna.privacy == 'PUBLIC' %}
+                공개
+              {% else %}
+                비공개
+              {% endif %}
+            </span>
+            {% if qna.reply %}
+              <span class="qna-replied">답변완료</span>
+            {% else %}
+              <span class="qna-pending">답변대기</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="qna-post-content">
+          <div class="qna-question">
+            <h3>문의 내용</h3>
+            <div class="qna-content-text">
+              {{ qna.content|linebreaks }}
+            </div>
+          </div>
+
+          {% if qna.reply %}
+            <div class="qna-answer">
+              <h3>답변</h3>
+              <div class="qna-content-text">
+                {{ qna.reply|linebreaks }}
+              </div>
+            </div>
+          {% else %}
+            <div class="qna-answer qna-answer-pending">
+              <p>답변 대기 중입니다.</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    © CareBridge All Rights Reserved.
+  </footer>
+
+  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
+  <script src="{% static 'qna/js/m_qna_post.js' %}"></script>
+</body>
+</html>
+
+

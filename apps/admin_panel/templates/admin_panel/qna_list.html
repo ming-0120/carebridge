@@ -64,7 +64,7 @@
       - 로그아웃 버튼: 로그아웃 기능 제공
       - 공통 헤더 템플릿 사용: core/header.html
   {% endcomment %}
-  {% include 'admin_panel/_header.html' %}
+  {% include 'core/_header.html' %}
 
   <!-- 
     메인 컨테이너
@@ -156,31 +156,39 @@
       -->
       <div>
         <!-- 
-          더미 데이터 생성 버튼 (개발 환경용)
+          더미 데이터 생성 폼 (개발 환경용)
           
           목적: 테스트용 더미 문의 데이터를 생성
-            - href: {% url 'create_qna_dummy' %} - 더미 데이터 생성 URL
+            - method="post": POST 메서드로 서버에 데이터 전송
+            - action: {% url 'create_qna_dummy' %} - 더미 데이터 생성 URL
             - CSS 클래스: 
               → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
               → btn-create-dummy: 더미 데이터 생성 버튼 전용 스타일
             - 텍스트: "더미 데이터 생성"
             - 주의: 프로덕션 환경에서는 제거하거나 접근 제한 필요
         -->
-        <a href="{% url 'create_qna_dummy' %}" class="btn-delete btn-create-dummy">더미 데이터 생성</a>
+        <form method="post" action="{% url 'create_qna_dummy' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-delete btn-create-dummy">더미 데이터 생성</button>
+        </form>
         
         <!-- 
-          더미 데이터 삭제 버튼 (개발 환경용)
+          더미 데이터 삭제 폼 (개발 환경용)
           
           목적: 생성된 더미 문의 데이터를 삭제
-            - href: {% url 'delete_qna_dummy' %} - 더미 데이터 삭제 URL
-            - id="deleteQnaDummyBtn": JavaScript에서 확인 메시지를 표시하기 위한 ID
+            - method="post": POST 메서드로 서버에 데이터 전송
+            - action: {% url 'delete_qna_dummy' %} - 더미 데이터 삭제 URL
+            - id="deleteQnaDummyForm": JavaScript에서 확인 메시지를 표시하기 위한 ID
             - CSS 클래스: 
               → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
               → btn-delete-dummy: 더미 데이터 삭제 버튼 전용 스타일
             - 텍스트: "더미 데이터 삭제"
             - 주의: JavaScript에서 확인 메시지를 표시하여 실수로 삭제하는 것을 방지
         -->
-        <a href="{% url 'delete_qna_dummy' %}" class="btn-delete btn-delete-dummy" id="deleteQnaDummyBtn">더미 데이터 삭제</a>
+        <form method="post" action="{% url 'delete_qna_dummy' %}" id="deleteQnaDummyForm" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn-delete btn-delete-dummy" id="deleteQnaDummyBtn">더미 데이터 삭제</button>
+        </form>
         
         <!-- 
           선택 항목 삭제 폼

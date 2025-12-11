@@ -1529,30 +1529,38 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 주의: 요소가 없으면 null이 반환됨
   const deleteBtn = document.getElementById('deleteQnaDummyBtn');
   
-  // ========= 더미 데이터 삭제 버튼 존재 확인 및 이벤트 리스너 연결 =========
-  // 목적: 더미 데이터 삭제 버튼이 존재하는 경우에만 클릭 이벤트 리스너를 연결
-  //   - 안전성: 버튼이 없으면 에러 발생 방지
-  //   - 데이터 보호: 버튼 클릭 시 확인 메시지를 표시하여 실수 방지
+  // ========= 더미 데이터 삭제 폼 존재 확인 및 이벤트 리스너 연결 =========
+  // 목적: 더미 데이터 삭제 폼이 존재하는 경우에만 submit 이벤트 리스너를 연결
+  //   - 안전성: 폼이 없으면 에러 발생 방지
+  //   - 데이터 보호: 폼 제출 시 확인 메시지를 표시하여 실수 방지
   // 
-  // if (deleteBtn): 더미 데이터 삭제 버튼이 존재하는지 확인
-  //   - deleteBtn: 버튼 요소 (HTMLElement 객체) 또는 null
-  //   - truthy 값이면 true (버튼이 존재함)
-  //   - falsy 값(null)이면 false (버튼이 없음)
-  //   - 목적: 버튼이 있는 경우에만 이벤트 리스너 연결
-  if (deleteBtn) {
-    // ========= 클릭 이벤트 리스너 연결 =========
-    // 목적: 더미 데이터 삭제 버튼 클릭 시 확인 메시지를 표시하고 사용자가 취소하면 폼 제출 방지
+  // const deleteForm = document.getElementById('deleteQnaDummyForm'): 더미 데이터 삭제 폼 찾기
+  //   - getElementById: ID로 요소를 찾는 메서드
+  //   - 'deleteQnaDummyForm': 폼 요소의 ID 속성
+  //   - 반환값: HTMLElement 객체 (HTMLFormElement) 또는 null (요소가 없으면)
+  //   - 목적: 더미 데이터 삭제 폼을 찾기
+  //   - 주의: 요소가 없으면 null이 반환됨
+  const deleteForm = document.getElementById('deleteQnaDummyForm');
+  
+  // if (deleteForm): 더미 데이터 삭제 폼이 존재하는지 확인
+  //   - deleteForm: 폼 요소 (HTMLFormElement 객체) 또는 null
+  //   - truthy 값이면 true (폼이 존재함)
+  //   - falsy 값(null)이면 false (폼이 없음)
+  //   - 목적: 폼이 있는 경우에만 이벤트 리스너 연결
+  if (deleteForm) {
+    // ========= 폼 제출 이벤트 리스너 연결 =========
+    // 목적: 더미 데이터 삭제 폼 제출 시 확인 메시지를 표시하고 사용자가 취소하면 폼 제출 방지
     //   - 사용자 경험(UX) 개선: 더미 데이터 삭제 전 확인 메시지를 표시하여 실수 방지
     //   - 데이터 보호: 사용자가 취소하면 폼 제출을 방지하여 데이터 삭제 방지
     // 
-    // deleteBtn.addEventListener('click', function(e) {...}): 클릭 이벤트 리스너 연결
+    // deleteForm.addEventListener('submit', function(e) {...}): 폼 제출 이벤트 리스너 연결
     //   - addEventListener: 이벤트 리스너를 추가하는 메서드
-    //   - 'click': 이벤트 타입 (클릭 이벤트)
+    //   - 'submit': 이벤트 타입 (폼 제출 이벤트)
     //   - function(e): 이벤트 핸들러 함수
-    //     → e: 클릭 이벤트 객체 (Event 객체)
+    //     → e: 폼 제출 이벤트 객체 (SubmitEvent 객체)
     //     → 이벤트 객체를 통해 preventDefault() 등을 호출할 수 있음
-    //   - 목적: 버튼 클릭 시 확인 메시지를 표시하고 사용자가 취소하면 폼 제출 방지
-    deleteBtn.addEventListener('click', function(e) {
+    //   - 목적: 폼 제출 시 확인 메시지를 표시하고 사용자가 취소하면 폼 제출 방지
+    deleteForm.addEventListener('submit', function(e) {
       // ========= 확인 메시지 표시 및 폼 제출 방지 =========
       // 목적: 사용자가 확인 메시지에서 '취소'를 클릭한 경우 폼 제출을 방지
       //   - 사용자 경험(UX) 개선: 사용자가 취소하면 데이터 삭제를 방지
@@ -1573,7 +1581,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 
         // e.preventDefault(): 이벤트의 기본 동작 방지
         //   - preventDefault: 이벤트의 기본 동작을 방지하는 메서드
-        //   - <button> 또는 <form>의 기본 동작: 폼 제출
+        //   - <form>의 기본 동작: 폼 제출
         //   - 목적: 사용자가 '취소'를 클릭한 경우 폼 제출을 방지하여 데이터 삭제 방지
         //   - 주의: preventDefault를 호출하지 않으면 폼이 제출되어 데이터가 삭제됨
         e.preventDefault();
@@ -1581,5 +1589,5 @@ document.addEventListener('DOMContentLoaded', function() {
       // 주의: 사용자가 '확인'을 클릭한 경우 폼이 정상적으로 제출됨
     });
   }
-  // 주의: deleteBtn이 null이면 이벤트 리스너를 연결하지 않음
+  // 주의: deleteForm이 null이면 이벤트 리스너를 연결하지 않음
 });
