@@ -14,69 +14,71 @@ from apps.db.models.hospital import Hospital
 from apps.db.models.users import Users
 from apps.db.models.doctor import Doctors
 @require_http_methods(["GET", "POST"])
-def login_view(request):
+def login_view(request, default_role="PATIENT", template_name="accounts/login.html"):
     next_url = request.GET.get('next') or request.POST.get('next') or '/'
     just_registered_role = request.session.pop("just_registered_role", None)
 
-    # ---------- GET: 로그인 폼 ----------
     if request.method == 'GET':
-        # 회원가입 직후라면 그 role 사용, 아니면 기본 PATIENT
-        role = (just_registered_role or "PATIENT").upper()
+        role = (just_registered_role or default_role).upper()
 
-        return render(request, 'accounts/login.html', {
+        return render(request, template_name, {
             'next': next_url,
             'just_registered_role': just_registered_role,
             'role': role,
         })
+
+    current_role = request.POST.get("role", default_role).upper()
 
     username = request.POST.get('username', '').strip()
     password = request.POST.get('password', '')
 
     if not username or not password:
         messages.error(request, "아이디와 비밀번호를 모두 입력해 주세요.")
-        return render(request, 'accounts/login.html', {
+        return render(request, template_name, {
             'next': next_url,
             'username': username,
-            'role': just_registered_role,   # 기본값
+            'role': current_role,
         })
 
     try:
         user = Users.objects.get(username=username, provider='local')
     except Users.DoesNotExist:
         messages.error(request, "아이디 또는 비밀번호가 일치하지 않습니다.")
-        return render(request, 'accounts/login.html', {
+        return render(request, template_name, {
             'next': next_url,
             'username': username,
-            'role': just_registered_role,
+            'role': current_role,
         })
 
     if not check_password(password, user.password):
         messages.error(request, "아이디 또는 비밀번호가 일치하지 않습니다.")
-        return render(request, 'accounts/login.html', {
+        return render(request, template_name, {
             'next': next_url,
             'username': username,
-            'role': just_registered_role,
+            'role': current_role,
         })
 
     if user.withdrawal == '1':
         messages.error(request, "탈퇴 처리된 계정입니다.")
-        return render(request, 'accounts/login.html', {
+        return render(request, template_name, {
             'next': next_url,
             'username': username,
-            'role': just_registered_role,
+            'role': current_role,
         })
-    
+
+    # 의사 로그인 추가 검사
     if user.role == 'DOCTOR':
         doctor = Doctors.objects.filter(user=user.user_id).first()
         # doctor row가 없거나, verified=False 이면 로그인 자체 막기
         if not doctor or not doctor.verified:
             messages.error(request, "미인증 회원입니다. 인증 절차를 기다려 주세요.")
-            return render(request, 'accounts/login.html', {
+            return render(request, template_name, {
                 'next': next_url,
                 'username': username,
                 'role': 'DOCTOR',   # 토글이 의사로 보이게
             })
 
+    # 세션 저장
     request.session['user_id'] = user.user_id
     request.session['username'] = user.name
     request.session['role'] = user.role
@@ -93,7 +95,6 @@ def login_view(request):
 
     # 일반 환자, 그 외 역할은 next_url 로
     return redirect(next_url)
-
 
 @require_http_methods(["GET", "POST"])
 def register_view(request):
@@ -223,7 +224,10 @@ def register_view(request):
         final_username = username
 
     # (3) 아이디 중복 검사 (local / kakao 모두 적용)
-    if final_username and Users.objects.filter(username=final_username).exists():
+    if final_username and Users.objects.filter(
+            username=final_username,
+            withdrawal=0
+    ).exists():
         messages.error(request, "이미 사용 중인 아이디입니다.")
         return render(request, "accounts/register.html", base_context)
 
@@ -336,3 +340,11 @@ def logout_view(request):
             pass
 
     return redirect('/')
+
+def admin_login_view(request):
+    # 기본 role 힌트를 ADMIN 으로, 템플릿도 관리자용으로 쓰고 싶다면 여기서만 바꿔줌
+    return login_view(
+        request,
+        default_role="ADMIN",
+        template_name="accounts/admin_login.html",  # 관리자용 화면  # 필요 없으면 기본 login.html 그대로 써도 됨
+    )

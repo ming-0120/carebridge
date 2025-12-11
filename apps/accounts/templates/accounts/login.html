@@ -31,6 +31,7 @@
         <!-- 로그인 폼 -->
         <form method="POST" action="{% url 'login' %}" class="auth-form">
             {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}">
             {% if messages %}
                 <ul class="auth-messages">
                     {% for message in messages %}

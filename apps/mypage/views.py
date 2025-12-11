@@ -98,13 +98,6 @@ def my_qna_list(request):
         "current_sort": sort,
     }
     return render(request, "mypage/my_qna_list.html", context)
-
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-
-from apps.db.models import Users  # 실제 경로 맞게
-
-
 def profile_edit(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -113,13 +106,19 @@ def profile_edit(request):
     user = get_object_or_404(Users, pk=user_id)
 
     # --------------------------
+    # (0) 의사라면 환자 페이지 접근 못하게 → 의사용 대시보드로 이동
+    # --------------------------
+    if str(getattr(user, "role", "")).upper() == "DOCTOR":
+        return redirect("/mstaff/doctor_dashboard")   # 너가 준 의사 URL
+
+    # --------------------------
     # 1) 주민번호 → 생년월일
     # --------------------------
     birth_display = ""
     raw = getattr(user, "resident_reg_no", "")
 
     if raw and len(raw) >= 6:
-        front = raw.split("-")[0]          # 앞 6자리
+        front = raw.split("-")[0]
         yy = int(front[0:2])
         mm = front[2:4]
         dd = front[4:6]
@@ -137,7 +136,7 @@ def profile_edit(request):
         birth_display = f"{year:04d}-{mm}-{dd}"
 
     # --------------------------
-    # 2) 주소 분해 (DB → 화면용)
+    # 2) 주소 분해
     # --------------------------
     zipcode = ""
     addr1 = ""
@@ -154,10 +153,9 @@ def profile_edit(request):
             addr2 = parts[2]
 
     # --------------------------
-    # 3) POST: 저장 처리
+    # 3) POST: 저장
     # --------------------------
     if request.method == "POST":
-        # 이메일 앞/뒤, 선택 도메인
         email_local = request.POST.get("email_local", "").strip()
         email_domain_input = request.POST.get("email_domain_input", "").strip()
         email_domain_select = request.POST.get("email_domain_select", "").strip()
@@ -169,19 +167,16 @@ def profile_edit(request):
 
         email = f"{email_local}@{email_domain}" if email_local and email_domain else ""
 
-        # 연락처/주소 (폼에서 새로 입력된 값)
         phone = request.POST.get("phone", "").strip()
         zipcode = request.POST.get("zipcode", "").strip()
         addr1 = request.POST.get("addr1", "").strip()
         addr2 = request.POST.get("addr2", "").strip()
 
-        # 주소 다시 하나의 문자열로 합쳐 저장
         if zipcode or addr1 or addr2:
             user.address = f"{zipcode}|{addr1}|{addr2}"
         else:
             user.address = ""
 
-        # 저장 (변경 가능한 필드만)
         if email:
             user.email = email
         user.phone = phone
@@ -191,7 +186,7 @@ def profile_edit(request):
         return redirect("profile_edit")
 
     # --------------------------
-    # 4) GET: 이메일 분해 + context
+    # 4) 이메일 분리 + context
     # --------------------------
     email_local = ""
     email_domain = ""
@@ -212,6 +207,8 @@ def profile_edit(request):
     }
     return render(request, "mypage/profile_edit.html", context)
 
+
+
 def favorite_hospitals(request):
     user_id = request.session.get("user_id")
     print(">>> session user_id =", user_id)
@@ -226,10 +223,6 @@ def favorite_hospitals(request):
         .order_by("created_at")
     )
 
-    print(">>> favorites.count() =", favorites.count())
-    print(">>> favorites.values() =", list(
-        favorites.values("fav_id", "user_id", "er_id", "hos_id", "memo")
-    ))
 
     context = {
         "favorites": favorites,
@@ -301,6 +294,7 @@ def account_withdraw(request):
 
         # 2) 탈퇴 처리 (withdrawal 필드 타입에 맞게 값 설정)
         user.withdrawal = '1'   
+        user.username = f"{user.username}_deleted_{user.id}"
         user.save()
 
         # 3) 세션/로그인 정보 제거

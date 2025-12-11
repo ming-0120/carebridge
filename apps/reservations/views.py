@@ -32,6 +32,10 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 def main_view(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        login_url = reverse("login")
+        return redirect(f"{login_url}?next={request.get_full_path()}")
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
 

@@ -72,38 +72,44 @@ const holidayEvents = HOLIDAYS.map(h => ({
     display: "background",  // 날짜 배경 표시
     // color: "#ffe6e6",    // 필요하면 색 지정 가능
 }));
-
-    // ============================
-    // 2. FullCalendar 초기화
-    // ============================
-    const calendarEl = document.getElementById("calendar");
+// ============================
+// 2. FullCalendar 초기화
+// ============================
+const calendarEl = document.getElementById("calendar");
 const selectedDateInput = document.getElementById("selectedDate");
 
 if (calendarEl) {
-    // 오늘 ~ 오늘+14일까지만 유효
+    // 오늘 ~ 오늘+14일까지만 "예약 가능" 범위
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const limit = new Date(today);
-    limit.setDate(limit.getDate() + 15); // end 는 exclusive 이므로 +15
+    limit.setDate(limit.getDate() + 14);  // 오늘 포함 2주
 
-    const startStr = today.toISOString().split("T")[0];
-    const endStr = limit.toISOString().split("T")[0];
+    // 예약 가능 여부 판별 함수
+    function isDisabledDate(dateObj) {
+        const d = new Date(dateObj);
+        d.setHours(0, 0, 0, 0);
+
+        const day = d.getDay(); // 0:일, 6:토
+
+        const isWeekend = (day === 0 || day === 6);
+        const isOutOfRange = (d < today || d > limit);
+
+        return isWeekend || isOutOfRange;
+    }
 
     const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: "dayGridMonth",
+        initialView: "dayGridMonth",   // 한달 전체 보이기
         locale: "ko",
         height: "auto",
-
-        // 오늘 이전 + 2주 이후는 회색/비활성
-        validRange: {
-            start: startStr, // 오늘
-            end: endStr,     // 오늘+15일 (실제 선택/표시는 오늘~오늘+14일)
-        },
+        showNonCurrentDates: false,  // 이번 달이 아닌 날짜(이전/다음 달) 숫자 안 보이게
+        fixedWeekCount: false,       // 꼭 6줄 채우지 말고, 필요한 주 수만 표시
+        // ★ validRange 삭제 (날짜를 가리지 않으려고)
 
         // 의사별 예약 이벤트
         events: function (info, successCallback, failureCallback) {
-            const doctorIdInput = document.getElementById("selectedDoctorId"); // 사용 중인 id에 맞게 조정
+            const doctorIdInput = document.getElementById("selectedDoctorId");
             const doctorId = doctorIdInput ? doctorIdInput.value : null;
 
             if (!doctorId) {
@@ -129,31 +135,55 @@ if (calendarEl) {
                 });
         },
 
-        // 날짜 클릭 시 타임슬롯 로드
+        // ★ 각 날짜 셀이 렌더링될 때 회색 처리
+        dayCellDidMount: function (info) {
+            const dateObj = info.date;
+            const clickedDate = info.dateStr;
+
+            const disabled = isDisabledDate(dateObj);
+            const isHoliday = HOLIDAYS.some(h => h.date === clickedDate);
+
+            if (disabled || isHoliday) {
+                info.el.classList.add("fc-day-disabled");
+            }
+        },
+
         dateClick: function (info) {
             const clickedDate = info.dateStr;
-            // 1) 기존 선택 제거
-            document.querySelectorAll(".fc-daygrid-day").forEach(day => {
-                day.classList.remove("fc-day-selected");
-            });
-        
-            // 2) 현재 클릭한 날짜 셀에 선택 표시
-            const cell = document.querySelector(`.fc-daygrid-day[data-date="${clickedDate}"]`);
-            if (cell) {
-                cell.classList.add("fc-day-selected");
+            const dateObj = info.date;
+
+            // 1) 주말 / 2주 범위 밖 / 과거 날짜 차단
+            if (isDisabledDate(dateObj)) {
+                alert("해당 날짜에는 예약이 불가합니다.");
+                return;
             }
-            // 공휴일이면 막기
+
+            // 2) 공휴일 차단
             const isHoliday = HOLIDAYS.some(h => h.date === clickedDate);
             if (isHoliday) {
                 alert("공휴일에는 예약이 불가합니다.");
                 return;
             }
 
+            // 3) 날짜 선택 표시
+            document.querySelectorAll(".fc-daygrid-day").forEach(dayCell => {
+                dayCell.classList.remove("fc-day-selected");
+            });
+
+            const cell = document.querySelector(
+                `.fc-daygrid-day[data-date="${clickedDate}"]`
+            );
+            if (cell) {
+                cell.classList.add("fc-day-selected");
+            }
+
+            // 4) 선택 날짜 저장
             if (selectedDateInput) {
                 selectedDateInput.value = clickedDate;
             }
 
-            const doctorIdInput = document.getElementById("selectedDoctorId"); // 실제 id와 맞추기
+            // 5) 의사 선택 여부 확인
+            const doctorIdInput = document.getElementById("selectedDoctorId");
             const doctorId = doctorIdInput ? doctorIdInput.value : null;
 
             if (!doctorId) {
@@ -161,6 +191,7 @@ if (calendarEl) {
                 return;
             }
 
+            // 6) 타임 슬롯 로드
             loadSlots(doctorId, clickedDate);
         },
     });

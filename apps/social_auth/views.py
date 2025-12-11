@@ -68,8 +68,6 @@ def kakao_callback(request):
         "provider": "kakao",
         "provider_id": str(kakao_id),        
         "name": nickname,
-        # 필요하면 email도 같이 넣기
-        # "email": account.get("email", ""),
     }
 
     # 이미 가입된 카카오 유저인지 확인
