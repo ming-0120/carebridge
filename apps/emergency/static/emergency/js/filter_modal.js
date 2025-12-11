@@ -157,13 +157,11 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
 
-    // 장비(CT/MRI/Angio/분만실/ventilator) 활성화
-    // views.py에서 GET 파라미터로 장비 필터를 읽고 있으므로, 
-    // 여기서는 URL 파라미터를 확인하되 나중에 session 기반으로 변경 가능
-    const params = new URLSearchParams(window.location.search);
+    // 장비 필터 복원: session 기반 (window.selectedFilters 사용)
+    const currentFilters = window.selectedFilters || {};
     equipChips.forEach(chip => {
       const key = chip.dataset.equip;
-      if (params.get(key) === "1") {
+      if (currentFilters[key] === "1") {
         chip.classList.add("active");
       }
     });

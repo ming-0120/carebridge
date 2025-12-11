@@ -1,45 +1,92 @@
 {% load status_filters %}
 
-{% if total != None and total >= 0 %}
-    {% with pct=available|percent:total %}
-    <div class="status-wrap">
-        <div class="circle
-            {% if pct >= 70 %}
-                green
-            {% elif pct >= 30 %}
-                orange
-            {% elif pct > 0 %}
-                red
-            {% else %}
-                none
-            {% endif %}
-        ">
-            <svg>
-                <circle class="meter
-                    {% if pct == 0 %}none{% endif %}
-                "
-                    cx="24" cy="24" r="20"
-                    stroke-dasharray="{{ available|circle_dasharray:total }}"
-                    stroke="#e0e0e0"
-                    fill="none"
-                    stroke-width="4"
-                    stroke-linecap="round">
-                </circle>
-            </svg>
+{% comment %}
+원형 그래프 표시 로직:
+- 원형 그래프 안: 혼잡도 텍스트 (원활, 보통, 혼잡, 가능, 불가능)
+- 원형 그래프 아래: 숫자 (available/total만 표시, 단일 숫자는 "-"로 표시)
+- type_name: "er_general", "er_child", "birth", "negative_pressure", "isolation_general", "isolation_cohort"
+{% endcomment %}
 
-            <span class="label">
-                {% if available != None and total != None and total > 0 %}
-                    {{ available }}/{{ total }}
-                {% elif available != None %}
-                    {{ available }}
-                {% else %}
-                    0
-                {% endif %}
-            </span>
+{% if available != None or total != None %}
+    {% congestion_text available total type_name as congestion_label %}
+    {% congestion_color_class available total type_name as color_class %}
+    
+    {% if total != None and total > 0 and available != None %}
+        {# 정상 케이스: available과 total이 모두 있고, total > 0 #}
+        {% with pct=available|percent:total %}
+        <div class="status-wrap">
+            <div class="circle {{ color_class }}">
+                <svg>
+                    {# 배경 원: available == 0이면 색상으로, 아니면 회색으로 표시 #}
+                    <circle class="meter-bg"
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="125.66, 125.66"
+                        {% if available == 0 and color_class == "red" %}
+                            stroke="#E53935"
+                        {% else %}
+                            stroke="#e0e0e0"
+                        {% endif %}
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
+                    </circle>
+                    {# 진행 원 (색상으로 표시, available > 0일 때만 표시) #}
+                    {% if available > 0 %}
+                    <circle class="meter"
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="{{ available|circle_dasharray:total }}"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
+                    </circle>
+                    {% endif %}
+                </svg>
+                <span class="label">{{ congestion_label }}</span>
+            </div>
+            <div class="status-value">
+                {{ available }}/{{ total }}
+            </div>
         </div>
-    </div>
-    {% endwith %}
+        {% endwith %}
+    {% elif available != None and available >= 0 %}
+        {# available만 있고 total이 None이거나 0인 경우: "-" 표시 (원형 그래프 없음) #}
+        <div class="status-wrap">
+            <div class="circle none">
+                <svg>
+                    <circle class="meter none"
+                            cx="24" cy="24" r="20"
+                            stroke-dasharray="0, 125.66"
+                            stroke="#e0e0e0"
+                            fill="none"
+                            stroke-width="4"
+                            stroke-linecap="round">
+                    </circle>
+                </svg>
+                <span class="label">-</span>
+            </div>
+            <div class="status-value">-</div>
+        </div>
+    {% else %}
+        {# available이 None이고 total만 있는 경우: "-" 표시 #}
+        <div class="status-wrap">
+            <div class="circle none">
+                <svg>
+                    <circle class="meter none"
+                            cx="24" cy="24" r="20"
+                            stroke-dasharray="0, 125.66"
+                            stroke="#e0e0e0"
+                            fill="none"
+                            stroke-width="4"
+                            stroke-linecap="round">
+                    </circle>
+                </svg>
+                <span class="label">-</span>
+            </div>
+            <div class="status-value">-</div>
+        </div>
+    {% endif %}
 {% else %}
+    {# available과 total이 모두 None인 경우: "-" 표시 #}
     <div class="status-wrap">
         <div class="circle none">
             <svg>
@@ -54,6 +101,7 @@
             </svg>
             <span class="label">-</span>
         </div>
+        <div class="status-value">-</div>
     </div>
 {% endif %}
 

@@ -320,9 +320,17 @@ def emergency_main(request):
 
     # 4) 현재 선택된 시/군/구 목록
     if selected_sido:
+        # 표준화 로직 적용 (get_sigungu와 동일)
+        # DB에 "경북", "경남" 등으로 저장되어 있을 수 있으므로 여러 변형 허용
+        std_sido = normalize_sido_name(selected_sido)
         sigungu_list = (
             ErInfo.objects
-            .filter(er_sido=selected_sido)
+            .filter(er_sido__in=[
+                selected_sido,
+                std_sido,
+                selected_sido.replace("도", ""),
+                std_sido.replace("도", ""),
+            ])
             .values_list("er_sigungu", flat=True)
             .distinct()
             .order_by("er_sigungu")
@@ -443,6 +451,8 @@ def emergency_main(request):
     # 표준화 + 중복 제거
     sido_list = sorted({ normalize_sido_name(s) for s in raw_sido_list })
 
+    # selected_filters를 JSON으로 직렬화 (템플릿에서 사용)
+    selected_filters_json = json.dumps(selected_filters, ensure_ascii=False)
 
     context = {
         "hospitals": hospital_data,
@@ -451,9 +461,12 @@ def emergency_main(request):
         "selected_sigungu": selected_sigungu or "",
         "selected_sort": selected_sort,
         "selected_etype": selected_etype,
+        "selected_filters": selected_filters_json,  # JSON 문자열로 전달
         "sigungu_list": sigungu_list,
         "sido_list": sido_list,
         "region_dict_json": region_dict_json,
+        "KAKAO_MAP_JS_KEY": settings.KAKAO_MAP_JS_KEY,  # 카카오맵 SDK 키 추가
+        "GOOGLE_API_KEY": settings.GOOGLE_API_KEY,  # GOOGLE_MAPS_API_KEY → GOOGLE_API_KEY로 변경
     }
 
     return render(request, "emergency/main.html", context)
@@ -469,9 +482,18 @@ def get_sigungu(request):
     if not sido:
         return JsonResponse({"sigungu": []})
 
+    # emergency_main과 동일한 표준화 로직 적용
+    # DB에 "경북", "경남" 등으로 저장되어 있을 수 있으므로 여러 변형 허용
+    std_sido = normalize_sido_name(sido)
+    
     sigungus = (
         ErInfo.objects
-        .filter(er_sido=sido)
+        .filter(er_sido__in=[
+            sido,
+            std_sido,
+            sido.replace("도", ""),
+            std_sido.replace("도", ""),
+        ])
         .values_list("er_sigungu", flat=True)
         .distinct()
         .order_by("er_sigungu")
