@@ -1795,7 +1795,12 @@ def create_qna_dummy_data(request):
     더미 1:1 문의 데이터 생성
     - 테스트용 문의 데이터 생성 (5개)
     - 일부는 답변이 있는 문의, 일부는 답변이 없는 문의로 생성
+    - POST 방식만 허용
     """
+    # POST 방식 체크
+    if request.method != 'POST':
+        return redirect('qna_list')
+    
     from datetime import timedelta
     import random
     
@@ -1973,7 +1978,12 @@ def delete_qna_dummy_data(request):
     """
     더미 1:1 문의 데이터 삭제
     - 제목이 '더미 문의'로 시작하는 문의들 삭제
+    - POST 방식만 허용
     """
+    # POST 방식 체크
+    if request.method != 'POST':
+        return redirect('qna_list')
+    
     # ========= 더미 문의 데이터 삭제 =========
     # 목적: 테스트용으로 생성된 더미 문의 데이터를 일괄 삭제
     #   - 제목이 '더미 문의'로 시작하는 모든 문의를 삭제

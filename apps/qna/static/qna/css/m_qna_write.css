@@ -1,0 +1,214 @@
+/*
+  ========= QnA 작성 페이지 전용 CSS =========
+
+  목적: QnA 작성 페이지(m_qna_write.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: QnA 작성 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: m_qna_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+
+  주요 기능:
+    - QnA 작성 헤더: 페이지 제목 및 목록 버튼 영역
+    - QnA 작성 폼: 문의 작성 폼 스타일
+    - 에러 메시지: 유효성 검사 에러 메시지 표시
+
+  관련 파일:
+    - HTML: m_qna_write.html
+    - JavaScript: m_qna_write.js
+    - 공통 CSS: m_qna_common.css
+*/
+
+/* 공통 CSS는 m_qna_common.css를 참조하세요 */
+
+/*
+  ========= QnA 작성 헤더 =========
+
+  목적: QnA 작성 페이지의 헤더 영역 스타일
+    - 레이아웃: 제목과 목록 버튼을 양쪽 끝에 배치
+*/
+
+.qna-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.qna-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin: 0;
+}
+
+.btn-list {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #1B3C73;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-list:hover {
+  background-color: #152A5A;
+}
+
+/*
+  ========= 에러 메시지 =========
+
+  목적: 유효성 검사 에러 메시지 표시 스타일
+*/
+
+.qna-error {
+  background-color: #FEE2E2;
+  border: 1px solid #FCA5A5;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+
+.qna-error p {
+  color: #DC2626;
+  font-size: 14px;
+  margin: 0;
+}
+
+/*
+  ========= QnA 작성 폼 =========
+
+  목적: QnA 작성 폼 스타일
+*/
+
+.qna-form {
+  background-color: #fff;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.form-group {
+  margin-bottom: 24px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 8px;
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #e1e4ec;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  border-color: #1B3C73;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 200px;
+  font-family: inherit;
+}
+
+.form-select {
+  cursor: pointer;
+}
+
+/*
+  ========= 폼 액션 버튼 =========
+
+  목적: 폼 제출 및 취소 버튼 스타일
+*/
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 32px;
+}
+
+.btn-submit,
+.btn-cancel {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-submit {
+  background-color: #1B3C73;
+  color: #fff;
+}
+
+.btn-submit:hover {
+  background-color: #152A5A;
+}
+
+.btn-cancel {
+  background-color: #6B7280;
+  color: #fff;
+}
+
+.btn-cancel:hover {
+  background-color: #4B5563;
+}
+
+/*
+  ========= 반응형 디자인 =========
+
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+*/
+
+@media (max-width: 768px) {
+  .qna-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .qna-header h1 {
+    font-size: 20px;
+  }
+
+  .btn-list {
+    width: 100%;
+    text-align: center;
+  }
+
+  .qna-form {
+    padding: 16px;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .btn-submit,
+  .btn-cancel {
+    width: 100%;
+    text-align: center;
+  }
+}
+

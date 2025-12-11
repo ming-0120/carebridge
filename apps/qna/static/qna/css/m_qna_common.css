@@ -1,0 +1,121 @@
+/* 
+  ========= QnA 공통 CSS =========
+  
+  목적: QnA 관련 페이지들에 공통으로 적용되는 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: QnA 관련 페이지들에 일관된 디자인 제공
+    - 공통 레이아웃: 메인 컨테이너, 푸터 등 공통 레이아웃 스타일
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+  
+  주요 기능:
+    - 메인 컨테이너: QnA 관련 페이지의 메인 컨테이너 스타일
+    - 푸터: 공통 푸터 스타일
+  
+  관련 파일:
+    - HTML: m_qna_list.html, m_qna_write.html, m_qna_post.html
+    - 페이지별 CSS: m_qna_list.css, m_qna_write.css, m_qna_post.css
+*/
+
+/* 
+  ========= 메인 컨테이너 =========
+  
+  목적: QnA 관련 페이지의 메인 컨테이너 스타일
+    - 레이아웃: 페이지의 주요 내용을 담는 컨테이너
+    - 반응형: 화면 크기에 따라 너비 조정
+*/
+
+/* 
+  QnA 메인 영역
+  
+  목적: QnA 관련 페이지의 메인 영역 스타일
+    - padding: 24px - 내부 여백
+    - max-width: 1200px - 최대 너비 (PC 화면 기준)
+    - margin: 0 auto - 중앙 정렬
+    - 사용처: QnA 관련 페이지의 메인 영역 (.qna-main)
+*/
+.qna-main {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* 
+  QnA 컨테이너
+  
+  목적: QnA 관련 페이지의 컨테이너 스타일
+    - width: 100% - 전체 너비 사용
+    - 사용처: QnA 관련 페이지의 컨테이너 (.qna-container)
+*/
+.qna-container {
+  width: 100%;
+}
+
+/* 
+  ========= 푸터 =========
+  
+  목적: 공통 푸터 스타일
+    - 레이아웃: 페이지 하단에 위치
+    - 텍스트 정렬: 중앙 정렬
+*/
+
+/* 
+  푸터
+  
+  목적: 공통 푸터 스타일
+    - padding: 24px - 내부 여백
+    - text-align: center - 중앙 정렬
+    - color: #999 - 회색 텍스트
+    - background-color: #f8f9fa - 연한 회색 배경
+    - margin-top: 48px - 상단 마진
+    - 사용처: 공통 푸터 (.footer)
+*/
+.footer {
+  padding: 24px;
+  text-align: center;
+  color: #999;
+  background-color: #f8f9fa;
+  margin-top: 48px;
+}
+
+/* 
+  ========= 반응형 디자인 =========
+  
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
+    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
+    - 주요 브레이크포인트:
+      → 모바일: 768px 이하
+*/
+
+/* 
+  모바일 화면 스타일 (768px 이하)
+  
+  목적: 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 768px - 최대 너비 768px까지 적용
+    - 패딩 축소: 모바일 화면에서 패딩 축소
+    - 사용처: 모바일 화면 (768px 이하)
+*/
+@media (max-width: 768px) {
+  /* 
+    QnA 메인 영역 패딩 축소
+    
+    목적: 모바일 화면에서 메인 영역 패딩 축소
+      - padding: 16px - 패딩 축소 (기본 24px → 16px)
+  */
+  .qna-main {
+    padding: 16px;
+  }
+
+  /* 
+    푸터 패딩 축소
+    
+    목적: 모바일 화면에서 푸터 패딩 축소
+      - padding: 16px - 패딩 축소 (기본 24px → 16px)
+      - margin-top: 24px - 상단 마진 축소 (기본 48px → 24px)
+  */
+  .footer {
+    padding: 16px;
+    margin-top: 24px;
+  }
+}
+
+
