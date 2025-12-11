@@ -6,6 +6,24 @@ const EMERGENCY_MAP = {
   obstetrics: ["delivery"],
 };
 
+// ========================================
+// CSRF 토큰 가져오기 함수
+// ========================================
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 
 // ========================================
 // 필터 모달 열기 (UI 유지)
@@ -27,64 +45,94 @@ function closeFilterModal() {
 }
 
 // ========================================
-// Reset 버튼 동작: UI + URL 완전 초기화
+// Reset 버튼 동작: UI + POST 방식으로 초기화
 // ========================================
 function resetFilter() {
   resetFilterUIOnly();
 
-  const params = new URLSearchParams(window.location.search);
-  [
-    "etype",
-    "ct", "mri", "angio",
-    "delivery", "ventilator"
-  ].forEach(k => params.delete(k));
-
-  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-  sessionStorage.setItem('emergency_button_click', 'true');
-
-  // 페이지 reload 적용
-  window.location.search = params.toString();
+  // POST 방식으로 필터 정보 초기화
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'filter',
+      etype: "",
+      filters: {}
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('필터 초기화 실패:', err);
+    alert('필터 초기화에 실패했습니다.');
+  });
 }
 
 // ========================================
-// Apply (선택값을 쿼리스트링으로 반영)
+// Apply (POST 방식으로 필터 적용)
 // ========================================
 function applyFilter() {
-  const params = new URLSearchParams(window.location.search);
-
-  // 이전 값 제거
-  [
-    "etype",
-    "ct", "mri", "angio",
-    "delivery", "ventilator"
-  ].forEach(k => params.delete(k));
-
   // ---------------------------
-  // 응급 유형(etype)
+  // 응급 유형(etype) 수집
   // ---------------------------
   const activeTypeBtn = document.querySelector("#emergency-type-group .type-chip.active");
+  let etype = "";
   if (activeTypeBtn) {
     const typeKey = activeTypeBtn.dataset.type;  // stroke, traffic 등
-    if (typeKey) params.set("etype", typeKey);
+    if (typeKey) etype = typeKey;
   }
 
   // ---------------------------
-  // 장비 선택 (OR 조건)
+  // 장비 선택 수집 (OR 조건)
   // ---------------------------
+  const filters = {};
   document.querySelectorAll(".equip-chip.active").forEach(chip => {
     const equipKey = chip.dataset.equip;
-    if (equipKey) params.set(equipKey, "1");  // OR 조건의 핵심
+    if (equipKey) {
+      filters[equipKey] = "1";  // OR 조건의 핵심
+    }
   });
 
   // ---------------------------
-  // 모달 닫기 + 페이지 리로드
+  // POST 방식으로 필터 정보 전송
   // ---------------------------
-  closeFilterModal();
-  
-  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-  sessionStorage.setItem('emergency_button_click', 'true');
-  
-  window.location.search = params.toString();
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'filter',
+      etype: etype,
+      filters: filters
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 모달 닫기
+      closeFilterModal();
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('필터 적용 실패:', err);
+    alert('필터 적용에 실패했습니다.');
+  });
 }
 
 
@@ -92,9 +140,8 @@ function applyFilter() {
 // chip UI init (문서 로드 시)
 // ========================================
 document.addEventListener("DOMContentLoaded", () => {
-  // URL 파라미터 읽기
-  const params = new URLSearchParams(window.location.search);
-  const currentEtype = params.get("etype");
+  // 템플릿에서 전달된 초기값 사용 (session 기반)
+  const currentEtype = window.selectedEtype || "";
 
   // 초기 상태 복원 함수
   function restoreFilterState() {
@@ -111,6 +158,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // 장비(CT/MRI/Angio/분만실/ventilator) 활성화
+    // views.py에서 GET 파라미터로 장비 필터를 읽고 있으므로, 
+    // 여기서는 URL 파라미터를 확인하되 나중에 session 기반으로 변경 가능
+    const params = new URLSearchParams(window.location.search);
     equipChips.forEach(chip => {
       const key = chip.dataset.equip;
       if (params.get(key) === "1") {

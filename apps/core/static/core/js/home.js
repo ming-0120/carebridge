@@ -18,6 +18,20 @@ function saveUserLocation() {
       sessionStorage.setItem("user_lng", lng);
       sessionStorage.setItem("user_location_ts", Date.now().toString());
 
+      // ★★★★★ Django 세션에도 위치 저장 요청 ★★★★★
+      fetch("/api/save_location/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+        body: JSON.stringify({ lat: lat, lng: lng })
+      })
+      .then(res => res.json())
+      .then(data => console.log("서버 세션 저장 완료:", data))
+      .catch(err => console.error("서버 세션 저장 실패:", err));
+
+
       console.log("위치 저장 완료:", lat, lng);
 
       if (window.location.pathname.includes('/emergency/') || window.location.pathname.includes('/reservations/')) {
@@ -210,4 +224,19 @@ function escapeHtml(str) {
 
 function nl2br(str) {
   return str.replace(/\n/g, "<br>");
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
 }

@@ -1,4 +1,22 @@
 // ===============================
+// CSRF 토큰 가져오기 함수
+// ===============================
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.substring(0, name.length + 1) === (name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+// ===============================
 // 모달 열기 / 닫기
 // ===============================
 function openRegionModal() {
@@ -22,11 +40,10 @@ function closeRegionModal() {
 }
 
 // ===============================
-// 상태 지역 선택 (URL 파라미터에서 초기값 읽기)
+// 상태 지역 선택 (템플릿에서 전달된 초기값 사용)
 // ===============================
-const urlParams = new URLSearchParams(window.location.search);
-let selectedSido = urlParams.get("sido") || "";
-let selectedSigungu = urlParams.get("sigungu") || "";
+let selectedSido = window.selectedSido || "";
+let selectedSigungu = window.selectedSigungu || "";
 
 // ===============================
 // 시/도 선택
@@ -148,41 +165,62 @@ function filterSigungu(keyword) {
 // 적용
 // ===============================
 function applyRegionFilter() {
-  const params = new URLSearchParams(window.location.search);
-
-  // 기존 파라미터 유지 (sort, 필터 등)
-  // sido 파라미터 설정
-  if (selectedSido && selectedSido !== "전체") {
-    params.set("sido", selectedSido);
-  } else {
-    params.delete("sido");
-  }
-
-  // sigungu 파라미터 설정
-  if (selectedSigungu && selectedSigungu !== "전체") {
-    params.set("sigungu", selectedSigungu);
-  } else {
-    params.delete("sigungu");
-  }
-
-  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-  sessionStorage.setItem('emergency_button_click', 'true');
-
-  // 페이지 이동 (기존 파라미터 유지)
-  window.location.search = params.toString();
+  // POST 방식으로 지역 정보 전송
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'region',
+      sido: selectedSido && selectedSido !== "전체" ? selectedSido : "",
+      sigungu: selectedSigungu && selectedSigungu !== "전체" ? selectedSigungu : ""
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('지역 필터 적용 실패:', err);
+    alert('지역 필터 적용에 실패했습니다.');
+  });
 }
 
 // ===============================
 // 초기화
 // ===============================
 function resetRegion() {
-  const params = new URLSearchParams(window.location.search);
-  params.delete("sido");
-  params.delete("sigungu");
-
-  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-  sessionStorage.setItem('emergency_button_click', 'true');
-
-  const query = params.toString();
-  window.location.href = window.location.pathname + (query ? "?" + query : "");
+  // POST 방식으로 지역 정보 초기화
+  fetch('/emergency/update_preferences/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: JSON.stringify({
+      action: 'region',
+      sido: "",
+      sigungu: ""
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'ok') {
+      // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+      sessionStorage.setItem('emergency_button_click', 'true');
+      // 페이지 새로고침
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error('지역 필터 초기화 실패:', err);
+    alert('지역 필터 초기화에 실패했습니다.');
+  });
 }
