@@ -36,16 +36,6 @@
     }
   });
 
-  // 새로고침 시 쿼리 파라미터(지역/필터) 초기화
-  document.addEventListener("DOMContentLoaded", function() {
-    if (window.performance && performance.navigation &&
-        performance.navigation.type === performance.navigation.TYPE_RELOAD) {
-
-      var url = new URL(window.location.href);
-      url.search = "";
-      window.location.replace(url.toString());
-    }
-  });
 </script>
 
 </body>

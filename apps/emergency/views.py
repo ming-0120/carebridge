@@ -249,12 +249,20 @@ def emergency_main(request):
     user_lng_f = to_float(user_lng)
 
     # 지역 선택 여부 확인
-    has_region_filter = bool(selected_sido)
+    # 시/도가 선택되었는지 확인 (시/군/구는 "전체"일 수 있음)
+    has_sido_filter = selected_sido not in (None, "", "전체")
+    # 시/도와 시/군/구가 모두 선택되었는지 확인 (완전한 지역 필터)
+    has_region_filter = (
+        has_sido_filter and
+        selected_sigungu not in (None, "", "전체")
+    )
+
 
     # 2) 기본 병원 queryset (ErInfo에서 시작)
     hospitals_qs = ErInfo.objects.all()
 
-    if selected_sido:
+    # 시/도 필터링 (시/도가 선택되었고 "전체"가 아닐 때만)
+    if selected_sido and selected_sido != "전체":
         std_sido = normalize_sido_name(selected_sido)
         hospitals_qs = hospitals_qs.filter(er_sido__in=[
             selected_sido,
@@ -263,8 +271,8 @@ def emergency_main(request):
             std_sido.replace("도",""),
         ])
 
-
-    if selected_sigungu:
+    # 시/군/구 필터링 (시/군/구가 선택되었고 "전체"가 아닐 때만)
+    if selected_sigungu and selected_sigungu != "전체":
         hospitals_qs = hospitals_qs.filter(er_sigungu=selected_sigungu)
 
     # status(실시간) 정보 미리 가져오기 (N+1 방지)
@@ -353,14 +361,15 @@ def emergency_main(request):
             continue
         
         # 지역 선택이 없을 때만 거리 및 점수 계산
-        if not has_region_filter:
+        if not has_sido_filter:
+            # 시/도가 선택되지 않았을 때: 거리 기반 필터링 적용
             score, distance_km = calculate_score(
                 hos, user_lat_f, user_lng_f, selected_etype, latest_status
             )
             hos.score = score
             hos.distance_km = distance_km
             
-            # 반경 30km 필터링
+            # 반경 30km 필터링 (위치 정보가 있을 때만)
             if user_lat_f and user_lng_f:
                 if distance_km is None or distance_km > 30:
                     continue
@@ -378,15 +387,15 @@ def emergency_main(request):
                 if not latest_status or not getattr(latest_status, "birth_available", None):
                     continue
         else:
-            # 지역 선택이 있을 때는 거리/점수 계산하지 않음
+            # 시/도가 선택되었을 때: 거리/점수 계산하지 않음 (위치 정보 없어도 표시)
             hos.score = 0
             hos.distance_km = None
         
         hospital_data.append(hos)
     
     # 6) 정렬 로직
-    if not has_region_filter:
-        # 지역 선택이 없을 때
+    if not has_sido_filter:
+        # 시/도가 선택되지 않았을 때: 거리/점수 기반 정렬
         if selected_sort == "distance":
             # "가장 가까운 응급실" 버튼 클릭 시: 거리 순으로 정렬
             hospital_data.sort(
@@ -396,7 +405,7 @@ def emergency_main(request):
             # 기본값: 종합점수 높은 순으로 정렬
             hospital_data.sort(key=lambda h: h.score, reverse=True)
     else:
-        # 지역 선택이 있을 때는 병원명 순으로 정렬
+        # 시/도가 선택되었을 때는 병원명 순으로 정렬 (시/군/구가 "전체"여도)
         hospital_data.sort(key=lambda h: (h.er_name or ""))
 
     # 7) 화면 상단 요약용 문구

@@ -150,12 +150,25 @@ function filterSigungu(keyword) {
 function applyRegionFilter() {
   const params = new URLSearchParams(window.location.search);
 
-  if (selectedSido) params.set("sido", selectedSido);
-  else params.delete("sido");
+  // 기존 파라미터 유지 (sort, 필터 등)
+  // sido 파라미터 설정
+  if (selectedSido && selectedSido !== "전체") {
+    params.set("sido", selectedSido);
+  } else {
+    params.delete("sido");
+  }
 
-  if (selectedSigungu && selectedSigungu !== "전체") params.set("sigungu", selectedSigungu);
-  else params.delete("sigungu");
+  // sigungu 파라미터 설정
+  if (selectedSigungu && selectedSigungu !== "전체") {
+    params.set("sigungu", selectedSigungu);
+  } else {
+    params.delete("sigungu");
+  }
 
+  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+  sessionStorage.setItem('emergency_button_click', 'true');
+
+  // 페이지 이동 (기존 파라미터 유지)
   window.location.search = params.toString();
 }
 
@@ -166,6 +179,9 @@ function resetRegion() {
   const params = new URLSearchParams(window.location.search);
   params.delete("sido");
   params.delete("sigungu");
+
+  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+  sessionStorage.setItem('emergency_button_click', 'true');
 
   const query = params.toString();
   window.location.href = window.location.pathname + (query ? "?" + query : "");

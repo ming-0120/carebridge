@@ -150,7 +150,7 @@ class Command(BaseCommand):
 
                 existing.message = msg_text
                 existing.message_time = incoming_time
-                existing.message_type = msg_type
+                # existing.message_type = msg_type
                 existing.save()
                 total_update += 1
 
@@ -159,7 +159,7 @@ class Command(BaseCommand):
                     hospital=hos,
                     message=msg_text,
                     message_time=incoming_time,
-                    message_type=msg_type,
+                    # message_type=msg_type,
                 )
                 total_insert += 1
 

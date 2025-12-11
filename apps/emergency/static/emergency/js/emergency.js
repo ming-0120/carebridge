@@ -50,16 +50,33 @@ document.addEventListener('keydown', function(e) {
 });
 
 // ===============================
-// 새로고침 시 저장된 상태 초기화 (위치 정보는 제외)
+// 새로고침 시 저장된 상태 초기화 (위치 정보 및 버튼 클릭 플래그는 제외)
 // ===============================
 window.addEventListener("load", () => {
   localStorage.clear();
-  // sessionStorage의 위치 정보는 유지하고 나머지만 초기화
+  // sessionStorage의 위치 정보와 버튼 클릭 플래그는 유지하고 나머지만 초기화
   const userLat = sessionStorage.getItem("user_lat");
   const userLng = sessionStorage.getItem("user_lng");
+  const buttonClick = sessionStorage.getItem("emergency_button_click");
   sessionStorage.clear();
   if (userLat) sessionStorage.setItem("user_lat", userLat);
   if (userLng) sessionStorage.setItem("user_lng", userLng);
+  if (buttonClick) sessionStorage.setItem("emergency_button_click", buttonClick);
+  
+  // 새로고침 시 쿼리 파라미터 초기화 (버튼 클릭이 아닌 경우에만)
+  // 플래그를 보존한 후에 확인하므로 실행 순서 문제 없음
+  if (!buttonClick) {
+    // 버튼 클릭이 아닌 경우 (새로고침 또는 직접 URL 입력)
+    if (window.location.search) {
+      var url = new URL(window.location.href);
+      url.search = "";
+      window.location.replace(url.toString());
+      return;
+    }
+  } else {
+    // 버튼 클릭 플래그 제거 (다음 새로고침을 위해)
+    sessionStorage.removeItem("emergency_button_click");
+  }
 });
 
 // ===============================
@@ -143,6 +160,10 @@ function renderFilterTags() {
   resetBtn.addEventListener("click", () => {
     params.delete("etype");
     Object.keys(EQUIP_LABEL).forEach(key => params.delete(key));
+    
+    // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+    sessionStorage.setItem('emergency_button_click', 'true');
+    
     window.location.search = params.toString();
   });
 }

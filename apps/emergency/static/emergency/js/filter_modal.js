@@ -39,6 +39,9 @@ function resetFilter() {
     "delivery", "ventilator"
   ].forEach(k => params.delete(k));
 
+  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+  sessionStorage.setItem('emergency_button_click', 'true');
+
   // 페이지 reload 적용
   window.location.search = params.toString();
 }
@@ -77,6 +80,10 @@ function applyFilter() {
   // 모달 닫기 + 페이지 리로드
   // ---------------------------
   closeFilterModal();
+  
+  // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
+  sessionStorage.setItem('emergency_button_click', 'true');
+  
   window.location.search = params.toString();
 }
 
