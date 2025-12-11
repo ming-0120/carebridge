@@ -98,6 +98,8 @@ def my_qna_list(request):
         "current_sort": sort,
     }
     return render(request, "mypage/my_qna_list.html", context)
+
+
 def profile_edit(request):
     user_id = request.session.get("user_id")
     if not user_id:
@@ -105,11 +107,9 @@ def profile_edit(request):
 
     user = get_object_or_404(Users, pk=user_id)
 
-    # --------------------------
-    # (0) 의사라면 환자 페이지 접근 못하게 → 의사용 대시보드로 이동
-    # --------------------------
-    if str(getattr(user, "role", "")).upper() == "DOCTOR":
-        return redirect("/mstaff/doctor_dashboard")   # 너가 준 의사 URL
+    # 역할 분기 (필드/값은 프로젝트에 맞게 수정)
+    # 예: user.role 이 "DOCTOR" / "PATIENT"
+    is_doctor = str(getattr(user, "role", "")).upper() == "DOCTOR"
 
     # --------------------------
     # 1) 주민번호 → 생년월일
@@ -118,7 +118,7 @@ def profile_edit(request):
     raw = getattr(user, "resident_reg_no", "")
 
     if raw and len(raw) >= 6:
-        front = raw.split("-")[0]
+        front = raw.split("-")[0]          # 앞 6자리
         yy = int(front[0:2])
         mm = front[2:4]
         dd = front[4:6]
@@ -133,29 +133,31 @@ def profile_edit(request):
         else:
             year = 1900 + yy
 
-        birth_display = f"{year:04d}-{mm}-{dd}"
+        birth_display = f"{year:04d}년 {mm}월 {dd}일"
 
     # --------------------------
-    # 2) 주소 분해
+    # 2) 주소 분해 (DB → 화면용)  : 환자에게만 사용
     # --------------------------
     zipcode = ""
     addr1 = ""
     addr2 = ""
 
-    raw_addr = user.address or ""
-    if raw_addr:
-        parts = raw_addr.split("|")
-        if len(parts) >= 1:
-            zipcode = parts[0]
-        if len(parts) >= 2:
-            addr1 = parts[1]
-        if len(parts) >= 3:
-            addr2 = parts[2]
+    if not is_doctor:
+        raw_addr = user.address or ""
+        if raw_addr:
+            parts = raw_addr.split("|")
+            if len(parts) >= 1:
+                zipcode = parts[0]
+            if len(parts) >= 2:
+                addr1 = parts[1]
+            if len(parts) >= 3:
+                addr2 = parts[2]
 
     # --------------------------
-    # 3) POST: 저장
+    # 3) POST: 저장 처리
     # --------------------------
     if request.method == "POST":
+        # 이메일 앞/뒤, 선택 도메인
         email_local = request.POST.get("email_local", "").strip()
         email_domain_input = request.POST.get("email_domain_input", "").strip()
         email_domain_select = request.POST.get("email_domain_select", "").strip()
@@ -167,26 +169,38 @@ def profile_edit(request):
 
         email = f"{email_local}@{email_domain}" if email_local and email_domain else ""
 
+        # 연락처
         phone = request.POST.get("phone", "").strip()
-        zipcode = request.POST.get("zipcode", "").strip()
-        addr1 = request.POST.get("addr1", "").strip()
-        addr2 = request.POST.get("addr2", "").strip()
 
-        if zipcode or addr1 or addr2:
-            user.address = f"{zipcode}|{addr1}|{addr2}"
-        else:
-            user.address = ""
+        # 의사: 주소는 병원에서 관리 → 주소 갱신 안 함
+        if not is_doctor:
+            zipcode = request.POST.get("zipcode", "").strip()
+            addr1 = request.POST.get("addr1", "").strip()
+            addr2 = request.POST.get("addr2", "").strip()
 
+            # 주소 다시 하나의 문자열로 합쳐 저장
+            if zipcode or addr1 or addr2:
+                user.address = f"{zipcode}|{addr1}|{addr2}"
+            else:
+                user.address = ""
+
+        # 저장 (변경 가능한 필드만)
         if email:
             user.email = email
         user.phone = phone
+
+        # 의사라면 프로필 사진 업로드(필드명이 있을 때만 사용)
+        if is_doctor and "profile_image" in request.FILES:
+            # Users 모델에 profile_image 필드가 있을 때만
+            if hasattr(user, "profile_image"):
+                user.profile_image = request.FILES["profile_image"]
 
         user.save()
         messages.success(request, "회원 정보가 수정되었습니다.")
         return redirect("profile_edit")
 
     # --------------------------
-    # 4) 이메일 분리 + context
+    # 4) GET: 이메일 분해 + context
     # --------------------------
     email_local = ""
     email_domain = ""
@@ -204,8 +218,17 @@ def profile_edit(request):
         "zipcode": zipcode,
         "addr1": addr1,
         "addr2": addr2,
+        "is_doctor": is_doctor,
     }
-    return render(request, "mypage/profile_edit.html", context)
+
+    # 의사 / 환자 템플릿 분기
+    if is_doctor:
+        template_name = "mypage/profile_edit_doctor.html"
+    else:
+        template_name = "mypage/profile_edit.html"
+
+    return render(request, template_name, context)
+
 
 
 
