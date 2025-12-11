@@ -20,6 +20,8 @@ from django.db.models import Count
 from django.db.models import DateField
 from django.db.models.functions import Cast
 from django.core.serializers.json import DjangoJSONEncoder
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 
 KST = tz("Asia/Seoul")
@@ -869,32 +871,22 @@ def api_create_medical_record(request):
             slot_id=slot_id
         )
 
-        # -----------------------------------------------------
-        # ★ 오늘 날짜 예약이면 오늘 날짜 medical_record 자동 생성
-        # -----------------------------------------------------
-        today = localdate()
+    target_hos_id = 137
 
-        # reserved_at은 aware datetime → 날짜만 비교
-        if reserved_at.date() == today:
-            exists_today_record = MedicalRecord.objects.filter(
-                user_id=patient_id,
-                record_datetime__date=today
-            ).exists()
+    # Redis 채널 레이어 가져오기
+    channel_layer = get_channel_layer()
 
-            if not exists_today_record:
-                MedicalRecord.objects.create(
-                    record_type="consult",
-                    ptnt_div_cd="N",
-                    record_datetime=timezone.now(),
-                    doctor_id=doctor_id,
-                    hos_id=hos_id,
-                    user_id=patient_id,
-                    assessment="",
-                    subjective="",
-                    objective="",
-                    plan="",
-                    record_content=""
-                )
+    # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
+    group_name = f'hospital_group_{target_hos_id}'
+
+    if order_type:
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "chart_update_event", 
+                "message": order_type
+            }
+        )
 
     return JsonResponse({
         "result": "ok",
