@@ -277,7 +277,6 @@
     height: 120px;
     border-radius: 50%;
     border: 1px solid #ccc;
-    background: url('/static/core/img/profile_default.svg') center/60% no-repeat;
 }
 
 .upload-btn {

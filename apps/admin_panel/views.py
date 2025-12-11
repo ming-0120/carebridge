@@ -115,8 +115,7 @@ def generate_dummy_email(username, role='PATIENT', index=0):
 
 def get_request_param(request, param_name, default=''):
     """
-    GET 또는 POST 요청에서 파라미터 값을 가져오는 공통 함수
-    POST 우선, 없으면 GET 사용
+    POST 요청에서 파라미터 값을 가져오는 공통 함수
     
     Args:
         request: HTTP 요청 객체
@@ -126,7 +125,7 @@ def get_request_param(request, param_name, default=''):
     Returns:
         파라미터 값 또는 기본값
     """
-    return request.POST.get(param_name) or request.GET.get(param_name, default)
+    return request.POST.get(param_name, default)
 
 def paginate_queryset(request, queryset, per_page=5):
     """쿼리셋을 페이지네이션 처리하는 공통 함수"""
@@ -1013,6 +1012,11 @@ def approval_pending(request):
 
 def qna_list(request):
     """1:1 문의 목록 조회, 삭제 처리, 정렬, 페이지네이션"""
+    # 관리자 권한 체크
+    user_role = request.session.get('role', '')
+    if user_role != 'ADMIN':
+        return redirect('/')
+    
     # 삭제 처리 (POST 요청)
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1023,7 +1027,7 @@ def qna_list(request):
             if qna_ids:
                 # 대기 상태(reply가 없는 상태)의 문의는 삭제하지 않음
                 Qna.objects.filter(qna_id__in=qna_ids, reply__isnull=False).delete()
-            return redirect('qna_list')
+            return redirect('/admin_panel/qna_list/')
     
     # 파라미터 추출
     sort_field = get_request_param(request, 'sort', '')
@@ -1111,6 +1115,11 @@ def qna_detail(request, qna_id):
     - 문의 상세 정보 조회
     - 답변 저장 처리 (POST 요청)
     """
+    # 관리자 권한 체크
+    user_role = request.session.get('role', '')
+    if user_role != 'ADMIN':
+        return redirect('/')
+    
     # ========= 문의 조회 (사용자 정보 미리 로드) =========
     # get_object_or_404(): 객체를 조회하고, 없으면 404 에러 페이지를 반환하는 Django 함수
     #   - Qna.objects.select_related('user'): Qna 모델의 모든 객체에 접근하고 관련 객체(user)를 미리 로드
@@ -1168,24 +1177,24 @@ def qna_detail(request, qna_id):
                 qna.save()
                 
                 # ========= 답변 저장 후 문의 목록 페이지로 리다이렉트 =========
-                # redirect('qna_list'): 답변 저장이 완료된 후 문의 목록 페이지로 리다이렉트
-                #   - 'qna_list': URL 패턴 이름 (apps/admin_panel/urls.py에서 정의)
+                # redirect('/admin_panel/qna_list/'): 답변 저장이 완료된 후 문의 목록 페이지로 리다이렉트
+                #   - '/admin_panel/qna_list/': 관리자 패널의 QnA 목록 페이지 절대 경로
                 #   - 리다이렉트 이유: POST 요청 후 GET 요청으로 전환하여 페이지 새로고침
                 #     (브라우저의 뒤로가기 버튼으로 POST 요청이 다시 실행되는 것을 방지)
                 #   - 반환값: HttpResponseRedirect 객체 (HTTP 302 응답)
                 # 결과: 답변 저장 후 문의 목록 페이지가 새로고침되어 변경사항이 반영됨
                 #   - 문의 목록에서 해당 문의의 상태가 "답변 완료"로 표시됨
-                return redirect('qna_list')
+                return redirect('/admin_panel/qna_list/')
         elif action == 'cancel':
             # ========= 답변 취소 처리 =========
             # 관리자가 답변 작성을 취소하고 목록으로 돌아가는 경우
             # 답변을 저장하지 않고 문의 목록 페이지로 리다이렉트
-            # redirect('qna_list'): 문의 목록 페이지로 리다이렉트
-            #   - 'qna_list': URL 패턴 이름 (apps/admin_panel/urls.py에서 정의)
+            # redirect('/admin_panel/qna_list/'): 문의 목록 페이지로 리다이렉트
+            #   - '/admin_panel/qna_list/': 관리자 패널의 QnA 목록 페이지 절대 경로
             #   - 반환값: HttpResponseRedirect 객체 (HTTP 302 응답)
             # 결과: 답변 작성 페이지에서 문의 목록 페이지로 이동
             #   - 답변 내용은 저장되지 않음
-            return redirect('qna_list')
+            return redirect('/admin_panel/qna_list/')
     
     # ========= 템플릿에 전달할 컨텍스트 데이터 구성 =========
     # context: Django 템플릿에 전달할 변수들을 담은 딕셔너리
@@ -1795,7 +1804,12 @@ def create_qna_dummy_data(request):
     더미 1:1 문의 데이터 생성
     - 테스트용 문의 데이터 생성 (5개)
     - 일부는 답변이 있는 문의, 일부는 답변이 없는 문의로 생성
+    - POST 방식만 허용
     """
+    # POST 방식 체크
+    if request.method != 'POST':
+        return redirect('qna_list')
+    
     from datetime import timedelta
     import random
     
@@ -1973,7 +1987,12 @@ def delete_qna_dummy_data(request):
     """
     더미 1:1 문의 데이터 삭제
     - 제목이 '더미 문의'로 시작하는 문의들 삭제
+    - POST 방식만 허용
     """
+    # POST 방식 체크
+    if request.method != 'POST':
+        return redirect('qna_list')
+    
     # ========= 더미 문의 데이터 삭제 =========
     # 목적: 테스트용으로 생성된 더미 문의 데이터를 일괄 삭제
     #   - 제목이 '더미 문의'로 시작하는 모든 문의를 삭제

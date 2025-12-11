@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from apps.db.models import Reservations, Qna, Users
+from apps.db.models.doctor import Doctors
 from apps.db.models.favorite import UserFavorite
 from django.contrib.auth.hashers import check_password
 
@@ -107,24 +108,32 @@ def profile_edit(request):
 
     user = get_object_or_404(Users, pk=user_id)
 
-    # 역할 분기 (필드/값은 프로젝트에 맞게 수정)
-    # 예: user.role 이 "DOCTOR" / "PATIENT"
-    is_doctor = str(getattr(user, "role", "")).upper() == "DOCTOR"
+    # 역할 판단
+    role = str(getattr(user, "role", "")).upper()
+    is_doctor = (role == "DOCTOR")
 
     # --------------------------
-    # 1) 주민번호 → 생년월일
+    # 의사 → Doctors 모델 로딩
+    # --------------------------
+    doctor = None
+    if is_doctor:
+        try:
+            doctor = Doctors.objects.get(user=user)
+        except Doctors.DoesNotExist:
+            doctor = None   # 의사 데이터가 없을 경우 대비
+
+    # --------------------------
+    # 생년월일 계산 (Users 기준)
     # --------------------------
     birth_display = ""
     raw = getattr(user, "resident_reg_no", "")
-
     if raw and len(raw) >= 6:
-        front = raw.split("-")[0]          # 앞 6자리
+        front = raw.split("-")[0]
         yy = int(front[0:2])
         mm = front[2:4]
         dd = front[4:6]
-
-        back = raw.split("-")[1] if "-" in raw else ""
-        gender_digit = back[0] if back else "1"
+        back = raw.split("-")[1] if "-" in raw else "1"
+        gender_digit = back[0]
 
         if gender_digit in ["1", "2"]:
             year = 1900 + yy
@@ -133,10 +142,10 @@ def profile_edit(request):
         else:
             year = 1900 + yy
 
-        birth_display = f"{year:04d}년 {mm}월 {dd}일"
+        birth_display = f"{year}년 {mm}월 {dd}일"
 
     # --------------------------
-    # 2) 주소 분해 (DB → 화면용)  : 환자에게만 사용
+    # 환자: 주소 분리
     # --------------------------
     zipcode = ""
     addr1 = ""
@@ -146,18 +155,16 @@ def profile_edit(request):
         raw_addr = user.address or ""
         if raw_addr:
             parts = raw_addr.split("|")
-            if len(parts) >= 1:
-                zipcode = parts[0]
-            if len(parts) >= 2:
-                addr1 = parts[1]
-            if len(parts) >= 3:
-                addr2 = parts[2]
+            zipcode = parts[0] if len(parts) > 0 else ""
+            addr1 = parts[1] if len(parts) > 1 else ""
+            addr2 = parts[2] if len(parts) > 2 else ""
 
     # --------------------------
-    # 3) POST: 저장 처리
+    # POST 처리
     # --------------------------
     if request.method == "POST":
-        # 이메일 앞/뒤, 선택 도메인
+
+        # 이메일
         email_local = request.POST.get("email_local", "").strip()
         email_domain_input = request.POST.get("email_domain_input", "").strip()
         email_domain_select = request.POST.get("email_domain_select", "").strip()
@@ -169,65 +176,66 @@ def profile_edit(request):
 
         email = f"{email_local}@{email_domain}" if email_local and email_domain else ""
 
-        # 연락처
-        phone = request.POST.get("phone", "").strip()
+        # 연락처 갱신
+        user.phone = request.POST.get("phone", "").strip()
 
-        # 의사: 주소는 병원에서 관리 → 주소 갱신 안 함
+        # 주소는 환자만
         if not is_doctor:
             zipcode = request.POST.get("zipcode", "").strip()
             addr1 = request.POST.get("addr1", "").strip()
             addr2 = request.POST.get("addr2", "").strip()
 
-            # 주소 다시 하나의 문자열로 합쳐 저장
-            if zipcode or addr1 or addr2:
-                user.address = f"{zipcode}|{addr1}|{addr2}"
-            else:
-                user.address = ""
+            user.address = f"{zipcode}|{addr1}|{addr2}" if (zipcode or addr1 or addr2) else ""
 
-        # 저장 (변경 가능한 필드만)
         if email:
             user.email = email
-        user.phone = phone
 
-        # 의사라면 프로필 사진 업로드(필드명이 있을 때만 사용)
-        if is_doctor and "profile_image" in request.FILES:
-            # Users 모델에 profile_image 필드가 있을 때만
-            if hasattr(user, "profile_image"):
-                user.profile_image = request.FILES["profile_image"]
+        # 의사: profile_image 는 Doctors 모델에 저장한다고 가정
+        if is_doctor:
+            if doctor and "profil_url" in request.FILES:
+                doctor.profil_url = request.FILES["profil_url"]
+                doctor.save()
 
         user.save()
         messages.success(request, "회원 정보가 수정되었습니다.")
         return redirect("profile_edit")
 
     # --------------------------
-    # 4) GET: 이메일 분해 + context
+    # GET: 이메일 분리
     # --------------------------
-    email_local = ""
-    email_domain = ""
     if user.email:
         try:
             email_local, email_domain = user.email.split("@", 1)
-        except ValueError:
+        except:
             email_local = user.email
+            email_domain = ""
+    else:
+        email_local = ""
+        email_domain = ""
 
+    # --------------------------
+    # 컨텍스트
+    # --------------------------
     context = {
         "user": user,
+        "doctor": doctor,             # ← 의사 전용 데이터
+        "is_doctor": is_doctor,
+        "birth_display": birth_display,
         "email_local": email_local,
         "email_domain": email_domain,
-        "birth_display": birth_display,
         "zipcode": zipcode,
         "addr1": addr1,
         "addr2": addr2,
-        "is_doctor": is_doctor,
     }
 
-    # 의사 / 환자 템플릿 분기
+    # --------------------------
+    # 템플릿 분기
+    # --------------------------
     if is_doctor:
-        template_name = "mypage/profile_edit_doctor.html"
+        return render(request, "mypage/profile_edit_doctor.html", context)
     else:
-        template_name = "mypage/profile_edit.html"
+        return render(request, "mypage/profile_edit.html", context)
 
-    return render(request, template_name, context)
 
 
 

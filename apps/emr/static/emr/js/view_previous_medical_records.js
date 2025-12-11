@@ -1,42 +1,58 @@
+let records = [];
 
+document.addEventListener("DOMContentLoaded", () => {
+    const userId = PATIENT_ID;
 
-// 초기 목록 생성
+    fetch(`/mstaff/api/previous-records/${userId}/`)
+        .then(res => res.json())
+        .then(data => {
+            records = data.records;
+            loadRecordList();
+        });
+});
+
+// ---------------------------------------------
+// 1) 이전 진료기록 목록 생성
+// ---------------------------------------------
 function loadRecordList() {
     const listContent = document.querySelector('#recordList .list-content');
     listContent.innerHTML = '';
-    
-    records.forEach(record => {
+
+    records.forEach(rec => {
         const item = document.createElement('div');
         item.className = 'list-item';
-        item.setAttribute('data-id', record.id);
+        item.dataset.id = rec.medical_record_id;
+
         item.innerHTML = `
-            ${record.date} | 기록유형: ${record.type} <br>
-            작성의: ${record.author} <span style="float:right; color:#007bff;">[상세보기]</span>
+            ${formatDate(rec.record_datetime)}
+            <br>
+            <span style="color:#555;">진료유형: ${rec.record_type}</span>
         `;
-        item.onclick = () => selectRecord(item, record);
+
+        item.onclick = () => selectRecord(item, rec);
         listContent.appendChild(item);
     });
-    
+
     if (records.length > 0) {
         selectRecord(document.querySelector('.list-item'), records[0]);
     }
 }
 
-// 기록 선택 시 중앙·오른쪽 업데이트
+// ---------------------------------------------
+// 2) 상세보기 (SOAP + 오더 요약)
+// ---------------------------------------------
 function selectRecord(selectedItem, record) {
-    document.querySelectorAll('.list-item').forEach(item => item.classList.remove('selected'));
+
+    document.querySelectorAll('.list-item').forEach(i => i.classList.remove('selected'));
     selectedItem.classList.add('selected');
 
-    document.getElementById('soapDetail').innerHTML = `
-        <div style="font-size: 13px; color: #6c757d; margin-bottom: 15px;">
-            진료일시: ${record.date} ${record.time} | 작성의: ${record.author} | 기록유형: ${record.type}
-        </div>
+    document.getElementById("soapDetail").innerHTML = `
         <div class="read-only-text">
-            <pre style="margin: 0;">
-<strong>[S]</strong> ${record.soap.match(/S\] (.*)\n/)?.[1] || '내용 없음'}
-<strong>[O]</strong> ${record.soap.match(/O\] (.*)\n/)?.[1] || '내용 없음'}
-<strong>[A]</strong> ${record.soap.match(/A\] (.*)\n/)?.[1] || '내용 없음'}
-<strong>[P]</strong> ${record.soap.match(/P\] (.*)/)?.[1] || '내용 없음'}
+            <pre>
+<strong>[S]</strong> ${record.subjective || ''}
+<strong>[O]</strong> ${record.objective || ''}
+<strong>[A]</strong> ${record.assessment || ''}
+<strong>[P]</strong> ${record.plan || ''}
             </pre>
         </div>
     `;
@@ -44,46 +60,137 @@ function selectRecord(selectedItem, record) {
     updateOrderSummaries(record);
 }
 
+// ---------------------------------------------
+// 3) 치료 / 검사 / 처방 요약
+// ---------------------------------------------
 function updateOrderSummaries(record) {
-    document.getElementById('treatmentSummary').innerHTML = record.treatment ? `
-        <div class="order-content-row"><strong>처치명:</strong> ${record.treatment.name}</div>
-        <div class="order-content-row"><strong>코드:</strong> ${record.treatment.code}</div>
-        <div class="order-content-row"><strong>상태:</strong> ${record.treatment.status}</div>
-        <button class="detail-button" onclick="openDetailModal('treatment')">자세히</button>
-    ` : `<p style="color: #6c757d; font-size: 13px;">연결된 치료기록 없음</p>`;
-    
 
-    document.getElementById('labOrderSummary').innerHTML = record.lab ? `
-        <div class="order-content-row"><strong>검사명:</strong> ${record.lab.name}</div>
-        <div class="order-content-row"><strong>검체:</strong> ${record.lab.specimen}</div>
-        <div class="order-content-row"><strong>긴급 여부:</strong> ${record.lab.urgent}</div>
-        <button class="detail-button" onclick="openDetailModal('lab')">자세히</button>
-    ` : `<p style="color: #6c757d; font-size: 13px;">연결된 검사 오더 없음</p>`;
+    // 치료 요약
+    if (record.treatment.length > 0) {
+        const t = record.treatment[0];
+        document.getElementById('treatmentSummary').innerHTML = `
+            <div class="order-content-row"><strong>처치명:</strong> ${t.procedure_name}</div>
+            <div class="order-content-row"><strong>상태:</strong> ${t.status}</div>
+            <button class="detail-button detail-treatment">자세히 보기</button>
+        `;
+    } else {
+        document.getElementById('treatmentSummary').innerHTML =
+            `<p style="color:#777;">등록된 치료기록 없음</p>`;
+    }
 
+    // 검사 요약
+    if (record.lab.length > 0) {
+        const lb = record.lab[0];
+        document.getElementById('labOrderSummary').innerHTML = `
+            <div class="order-content-row"><strong>항목:</strong> ${lb.lab_nm}</div>
+            <div class="order-content-row"><strong>검체:</strong> ${lb.specimen_cd}</div>
+            <div class="order-content-row"><strong>상태:</strong> ${lb.status}</div>
+            <button class="detail-button detail-lab">자세히 보기</button>
+        `;
+    } else {
+        document.getElementById('labOrderSummary').innerHTML =
+            `<p style="color:#777;">등록된 검사오더 없음</p>`;
+    }
 
-    document.getElementById('prescriptionSummary').innerHTML = record.prescription ? `
-        <div class="order-content-row"><strong>약품명:</strong> ${record.prescription.name}</div>
-        <div class="order-content-row"><strong>코드:</strong> ${record.prescription.code}</div>
-        <div class="order-content-row"><strong>상태:</strong> ${record.prescription.status}</div>
-        <button class="detail-button" onclick="openDetailModal('prescription')">자세히</button>
-    ` : `<p style="color: #6c757d; font-size: 13px;">연결된 처방기록 없음</p>`;
+    // 처방 요약
+    if (record.prescriptions.length > 0) {
+        const p = record.prescriptions[0];
+        document.getElementById('prescriptionSummary').innerHTML = `
+            <div class="order-content-row"><strong>약품명:</strong> ${p.order_name}</div>
+            <div class="order-content-row"><strong>용량:</strong> ${p.dose}</div>
+            <div class="order-content-row"><strong>횟수:</strong> ${p.frequency}</div>
+            <button class="detail-button detail-prescription">자세히 보기</button>
+        `;
+    } else {
+        document.getElementById('prescriptionSummary').innerHTML =
+            `<p style="color:#777;">등록된 처방 없음</p>`;
+    }
+
+    // 이벤트 등록
+    const tBtn = document.querySelector('.detail-treatment');
+    if (tBtn) tBtn.onclick = () => openDetailModal('treatment', record);
+
+    const lBtn = document.querySelector('.detail-lab');
+    if (lBtn) lBtn.onclick = () => openDetailModal('lab', record);
+
+    const pBtn = document.querySelector('.detail-prescription');
+    if (pBtn) pBtn.onclick = () => openDetailModal('prescription', record);
 }
 
-// 모달 열기
-function openDetailModal(type) {
+// ---------------------------------------------
+// 4) 날짜 포맷
+// ---------------------------------------------
+function formatDate(dt) {
+    if (!dt) return "";
+    if (typeof dt !== "string") return dt;
+    return dt.replace("T", " ").slice(0, 16);
+}
+
+// ---------------------------------------------
+// 5) 모달 상세 데이터 바인딩
+// ---------------------------------------------
+function openDetailModal(type, record) {
+
     document.querySelectorAll('.modal-overlay').forEach(m => m.style.visibility = 'hidden');
 
-    let modalId = null;
-    if (type === 'treatment') modalId = 'treatmentDetailModal';
-    if (type === 'lab') modalId = 'labDetailModal';
-    if (type === 'prescription') modalId = 'prescriptionDetailModal';
+    // 치료 상세
+    if (type === 'treatment' && record.treatment.length > 0) {
+        const t = record.treatment[0];
 
-    if (modalId) document.getElementById(modalId).style.visibility = 'visible';
+        document.getElementById("treat_name").innerText = t.procedure_name || "";
+        document.getElementById("treat_code").innerText = t.procedure_code || "";
+        document.getElementById("treat_site").innerText = t.treatment_site || "";
+        document.getElementById("treat_exec").innerText = formatDate(t.execution_datetime);
+        document.getElementById("treat_done").innerText = formatDate(t.completion_datetime);
+        document.getElementById("treat_status").innerText = t.status || "";
+        document.getElementById("treat_note").innerText = t.result_notes || "";
+        document.getElementById("treat_doctor").innerText = record.doctor_name || "";
+
+        document.getElementById('treatmentDetailModal').style.visibility = 'visible';
+        return;
+    }
+
+    // 검사 상세
+    if (type === 'lab' && record.lab.length > 0) {
+        const lb = record.lab[0];
+
+        document.getElementById("lab_name").innerText = lb.lab_nm || "";
+        document.getElementById("lab_code").innerText = lb.lab_cd || "";
+        document.getElementById("lab_specimen").innerText = lb.specimen_cd || "";
+        document.getElementById("lab_order_dt").innerText = formatDate(lb.order_datetime);
+        document.getElementById("lab_status").innerText = lb.status || "";
+        document.getElementById("lab_status_dt").innerText = formatDate(lb.status_datetime);
+        document.getElementById("lab_emergency").innerText = lb.is_urgent ? "예" : "아니오";
+        document.getElementById("lab_note").innerText = lb.requisition_note || "";
+        document.getElementById("lab_doctor").innerText = record.doctor_name || "";
+
+        document.getElementById('labDetailModal').style.visibility = 'visible';
+        return;
+    }
+
+    // 처방 상세
+    if (type === 'prescription' && record.prescriptions.length > 0) {
+        const p = record.prescriptions[0];
+
+        document.getElementById("drug_name").innerText = p.order_name || "";
+        document.getElementById("drug_code").innerText = p.order_code || "";
+        document.getElementById("drug_dose").innerText = p.dose || "";
+        document.getElementById("drug_freq").innerText = p.frequency || "";
+
+        document.getElementById("drug_order_dt").innerText = formatDate(p.order_datetime);
+        document.getElementById("drug_start_dt").innerText = formatDate(p.start_datetime);
+        document.getElementById("drug_end_dt").innerText = formatDate(p.end_datetime);
+        document.getElementById("drug_status").innerText = p.status || "";
+        document.getElementById("drug_note").innerText = p.notes || "";
+        document.getElementById("drug_doctor").innerText = record.doctor_name || "";
+
+        document.getElementById('prescriptionDetailModal').style.visibility = 'visible';
+    }
 }
 
-// 모달 닫기
+// ---------------------------------------------
+// 6) 모달 닫기
+// ---------------------------------------------
 function closeModal(id) {
     document.getElementById(id).style.visibility = 'hidden';
 }
-
-document.addEventListener('DOMContentLoaded', loadRecordList);

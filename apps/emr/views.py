@@ -20,6 +20,8 @@ from django.db.models import Count
 from django.db.models import DateField
 from django.db.models.functions import Cast
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Max
+from django.utils.timezone import make_aware
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.forms.models import model_to_dict
@@ -491,6 +493,101 @@ def lab_record_creation(request):
 
 def medical_record_inquiry(request):
     ctx = get_common_header_context(request)
+
+    patient_id = request.GET.get("patient_id")
+    if not patient_id:
+        return render(request, "emr/medical_record_inquiry.html", ctx)
+
+    patient = Users.objects.get(user_id=patient_id)
+    birth = extract_birth_date(patient.resident_reg_no)
+    age = calculate_age_from_rrn(patient.resident_reg_no)
+
+    recent_record = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .order_by("-record_datetime")
+        .first()
+    )
+    recent_visit_date = (
+        recent_record.record_datetime.strftime("%Y.%m.%d")
+        if recent_record else "기록 없음"
+    )
+
+    visits = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .select_related("doctor", "doctor__user")
+        .order_by("-record_datetime")
+    )
+
+    visit_list = []
+
+    for v in visits:
+        visit_date = v.record_datetime.date()
+        doctor_name = v.doctor.user.name if v.doctor and v.doctor.user else ""
+
+        # LabOrders → 리스트
+        lab_list = []
+        try:
+            lab_obj = v.laborders
+            if lab_obj:
+                lab_list.append({
+                    "lab_nm": lab_obj.lab_nm,
+                    "status": lab_obj.status,
+                    "status_datetime": lab_obj.status_datetime,
+                    "specimen_cd": lab_obj.specimen_cd,
+                    "requisition_note": getattr(lab_obj, "requisition_note", "")
+                })
+        except:
+            pass
+
+        # TreatmentProcedures → 리스트
+        treat_list = []
+        try:
+            treat_obj = v.treatmentprocedures
+            if treat_obj:
+                treat_list.append({
+                    "procedure_name": treat_obj.procedure_name,
+                    "execution_datetime": treat_obj.execution_datetime,
+                    "status": treat_obj.status,
+                    "result_notes": treat_obj.result_notes,
+                })
+        except:
+            pass
+
+        # MedicineOrders → 리스트
+        med_data = []
+        try:
+            med_order = v.medicineorders
+            if med_order:
+                med_data = list(med_order.medicinedata_set.all())
+        except:
+            med_data = []
+
+        visit_list.append({
+            "record_id": v.medical_record_id,
+            "date": visit_date,
+            "datetime": v.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "doctor": doctor_name,
+
+            "consult": {
+                "type": v.record_type,
+                "content": v.record_content,
+            },
+
+            "lab": lab_list,
+            "prescriptions": med_data,
+            "treatment": treat_list,
+        })
+
+    ctx.update({
+        "patient": patient,
+        "birth": birth,
+        "age": age,
+        "recent_visit_date": recent_visit_date,
+        "visits": visit_list,
+    })
+
     return render(request, "emr/medical_record_inquiry.html", ctx)
 
 def patient_search_list(request):
@@ -550,6 +647,134 @@ def view_previous_medical_records(request):
 
     return render(request, "emr/view_previous_medical_records.html", ctx)
 
+def get_previous_medical_records(request, user_id):
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                mr.medical_record_id,
+                mr.record_type,
+                mr.record_datetime,
+                mr.subjective,
+                mr.objective,
+                mr.assessment,
+                mr.plan,
+
+                tp.procedure_name,
+                tp.execution_datetime,
+                tp.completion_datetime,
+                tp.status AS tp_status,
+                tp.result_notes,
+
+                lb.lab_nm,
+                lb.specimen_cd,
+                lb.status AS lab_status,
+                lb.status_datetime,
+
+                md.order_code,
+                md.order_name,
+                md.dose,
+                md.frequency,
+
+                mo.order_datetime,
+                mo.start_datetime,
+                mo.stop_datetime,
+                mo.notes,
+
+                u.name AS doctor_name
+
+            FROM medical_record mr
+            LEFT JOIN treatment_procedures tp 
+                ON mr.medical_record_id = tp.medical_record_id
+            LEFT JOIN lab_orders lb 
+                ON mr.medical_record_id = lb.medical_record_id
+            LEFT JOIN medicine_orders mo 
+                ON mr.medical_record_id = mo.medical_record_id
+            LEFT JOIN medicine_data md
+                ON mo.order_id = md.order_id
+            LEFT JOIN doctors d
+                ON mr.doctor_id = d.doctor_id
+            LEFT JOIN users u
+                ON d.user_id = u.user_id
+            WHERE mr.user_id = %s
+            ORDER BY mr.record_datetime DESC
+
+        """, [user_id])
+
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]  # ← 컬럼명 자동 획득
+
+    records = {}
+
+    def to_kst(dt):
+        if dt is None:
+            return None
+        aware_utc = make_aware(dt, tz("UTC"))
+        return aware_utc.astimezone(KST)
+
+    for row in rows:
+        row_data = dict(zip(columns, row))   # ← ★ 핵심 수정
+
+        # 시간 변환
+        row_data["record_datetime"] = to_kst(row_data["record_datetime"])
+        row_data["execution_datetime"] = to_kst(row_data.get("execution_datetime"))
+        row_data["completion_datetime"] = to_kst(row_data.get("completion_datetime"))
+        row_data["status_datetime"] = to_kst(row_data.get("status_datetime"))
+        row_data["order_datetime"] = to_kst(row_data.get("order_datetime"))
+        row_data["start_datetime"] = to_kst(row_data.get("start_datetime"))
+        row_data["stop_datetime"] = to_kst(row_data.get("stop_datetime"))
+
+        mr_id = row_data["medical_record_id"]
+
+        if mr_id not in records:
+            records[mr_id] = {
+                "medical_record_id": mr_id,
+                "record_type": row_data["record_type"],
+                "record_datetime": row_data["record_datetime"],
+                "subjective": row_data["subjective"],
+                "objective": row_data["objective"],
+                "assessment": row_data["assessment"],
+                "plan": row_data["plan"],
+                "doctor_name": row_data["doctor_name"],   # 추가
+                "treatment": [],
+                "lab": [],
+                "prescriptions": []
+            }
+
+        # 치료기록
+        if row_data["procedure_name"]:
+            records[mr_id]["treatment"].append({
+                "procedure_name": row_data["procedure_name"],
+                "execution_datetime": row_data["execution_datetime"],
+                "completion_datetime": row_data["completion_datetime"],
+                "status": row_data["tp_status"],
+                "result_notes": row_data["result_notes"]
+            })
+
+        # 검사
+        if row_data["lab_nm"]:
+            records[mr_id]["lab"].append({
+                "lab_nm": row_data["lab_nm"],
+                "specimen_cd": row_data["specimen_cd"],
+                "status": row_data["lab_status"],
+                "status_datetime": row_data["status_datetime"]
+            })
+
+        # 처방
+        if row_data["order_code"]:
+            records[mr_id]["prescriptions"].append({
+                "order_code": row_data["order_code"],
+                "order_name": row_data["order_name"],
+                "dose": row_data["dose"],
+                "frequency": row_data["frequency"],
+                "order_datetime": row_data["order_datetime"],
+                "start_datetime": row_data["start_datetime"],
+                "end_datetime": row_data["stop_datetime"],
+                "notes": row_data["notes"],
+                "status": row_data.get("tp_status")  # 또는 lab_status처럼 원하는 상태값 매핑
+            })
+
+    return JsonResponse({"records": list(records.values())})
 
 # ---------------------------------------------------------
 # 치료/처치 기록 검증
@@ -851,14 +1076,29 @@ def api_create_medical_record(request):
         if local_hour < 9 or local_hour > 17:
             return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
 
-
+        # ------------------------------
+        # 예약 시간 충돌 검사 (의사 기준)
+        # ------------------------------
         exists = Reservations.objects.filter(
             slot__doctor_id=doctor_id,
             reserved_at=reserved_at
         ).exists()
 
         if exists:
-            return JsonResponse({"error": "이미 예약된 시간입니다"}, status=400)
+            return JsonResponse({"error": "이미 해당 의사에게 예약된 시간입니다"}, status=400)
+
+
+        # ------------------------------
+        # 예약 시간 충돌 검사 (환자 기준)  ← ★ 새로 추가
+        # ------------------------------
+        patient_conflict = Reservations.objects.filter(
+            user_id=patient_id,
+            reserved_at=reserved_at
+        ).exists()
+
+        if patient_conflict:
+            return JsonResponse({"error": "해당 시간에 이미 환자의 다른 예약이 존재합니다"}, status=400)
+
 
     if reserved_at:
         slot_id = get_or_create_slot_id(int(doctor_id), reserved_at, reserved_end)
@@ -903,6 +1143,7 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
     end_time = reserved_end.time()
 
     with connection.cursor() as cursor:
+        # 의사 + 날짜 + 시간대 → 슬롯 고유
         cursor.execute(
             """
             SELECT slot_id
@@ -920,17 +1161,19 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
             return row[0]
 
         now = timezone.now()
+
+        # ★ 의사마다 독립적인 슬롯 생성
         cursor.execute(
             """
             INSERT INTO time_slots
-                (slot_date, start_time, end_time, status, capacity, created_at, doctor_id)
+                (doctor_id, slot_date, start_time, end_time, status, capacity, created_at)
             VALUES
                 (%s, %s, %s, %s, %s, %s, %s)
             """,
-            [slot_date, start_time, end_time, "reserved", 1, now, doctor_id],
+            [doctor_id, slot_date, start_time, end_time, "reserved", 1, now],
         )
-        return cursor.lastrowid
 
+        return cursor.lastrowid
 
 
 # ---------------------------------------------------------
@@ -1007,6 +1250,81 @@ def api_search_patient(request):
         })
 
     return JsonResponse({"results": results})
+
+def api_patient_recent_records(request, patient_id):
+
+    # 최근 진료
+    recent_consult = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .order_by('-record_datetime')
+        .values(
+            'medical_record_id',
+            'record_datetime',
+            'record_type',
+            'subjective',
+            'objective',
+            'assessment',
+            'plan'
+        )
+        .first()
+    )
+
+    # 최근 처방
+    recent_prescription = (
+        MedicineData.objects
+        .filter(order__medical_record__user_id=patient_id)
+        .order_by('-order__order_datetime')
+        .values(
+            'order_name',
+            'order_code',
+            'dose',
+            'frequency',
+            'order__order_datetime'
+        )
+        .first()
+    )
+
+    # 최근 검사
+    recent_lab = (
+        LabOrders.objects
+        .filter(medical_record__user_id=patient_id)
+        .order_by('-order_datetime')
+        .values(
+            'lab_nm',
+            'specimen_cd',
+            'status',
+            'order_datetime',
+            'status_datetime'
+        )
+        .first()
+    )
+
+    # 최근 치료
+    recent_treatment = (
+        TreatmentProcedures.objects
+        .filter(medical_record__user_id=patient_id)
+        .order_by('-execution_datetime')
+        .values(
+            'procedure_name',
+            'procedure_code',
+            'execution_datetime',
+            'completion_datetime',
+            'status',
+            'result_notes'
+        )
+        .first()
+    )
+
+    return JsonResponse({
+        "consult": recent_consult,
+        "prescription": recent_prescription,
+        "lab": recent_lab,
+        "treatment": recent_treatment
+    })
+
+
+
 
 @csrf_exempt
 def set_doctor_memo(request):

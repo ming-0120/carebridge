@@ -1,0 +1,323 @@
+/*
+  ========= QnA 상세보기 페이지 전용 CSS =========
+
+  목적: QnA 상세보기 페이지(m_qna_post.html)에만 적용되는 전용 CSS 스타일 정의
+    - 사용자 경험(UX) 개선: QnA 상세보기 페이지에 특화된 UI 제공
+    - 공통 스타일 확장: m_qna_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
+    - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+    - 관리자 패널 qna_detail.css 스타일 참고
+
+  주요 기능:
+    - QnA 상세보기 헤더: 페이지 제목 및 액션 버튼 영역
+    - QnA 게시글: 문의 내용 및 답변 표시
+    - 상태 표시: 답변 완료/대기 상태 표시
+
+  관련 파일:
+    - HTML: m_qna_post.html
+    - JavaScript: m_qna_post.js
+    - 공통 CSS: m_qna_common.css
+    - 참고: apps/admin_panel/static/admin_panel/css/qna_detail.css
+*/
+
+/* 공통 CSS는 m_qna_common.css를 참조하세요 */
+
+/*
+  ========= QnA 상세보기 헤더 =========
+
+  목적: QnA 상세보기 페이지의 헤더 영역 스타일
+    - 레이아웃: 제목과 액션 버튼을 양쪽 끝에 배치
+*/
+
+.qna-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-shrink: 0;
+}
+
+.qna-header h1 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e1e4ec;
+}
+
+.qna-header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+/*
+  ========= 버튼 스타일 =========
+
+  목적: QnA 상세보기 페이지의 액션 버튼 스타일
+*/
+
+.btn-list,
+.btn-delete {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-list {
+  background-color: #1B3C73;
+  color: #fff;
+}
+
+.btn-list:hover {
+  background-color: #152A5A;
+}
+
+.btn-delete {
+  background-color: #EF4444;
+  color: #fff;
+}
+
+.btn-delete:hover {
+  background-color: #DC2626;
+}
+
+/*
+  ========= 문의 상세 섹션 =========
+
+  목적: 문의 상세 정보를 표시하는 섹션 스타일
+    - 관리자 패널 qna_detail.css의 inquiry-section 스타일 참고
+*/
+
+.inquiry-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.inquiry-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 10px;
+}
+
+.inquiry-detail-item {
+  display: flex;
+  padding: 6px 0;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.inquiry-detail-item:last-child {
+  border-bottom: none;
+}
+
+.inquiry-detail-label {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.inquiry-detail-value {
+  flex: 1;
+  font-size: 14px;
+  color: #222;
+}
+
+.inquiry-detail-value a {
+  color: #1B3C73;
+  text-decoration: underline;
+}
+
+.inquiry-content {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/*
+  ========= 답변 섹션 =========
+
+  목적: 답변 내용을 표시하는 섹션 스타일
+    - 관리자 패널 qna_detail.css의 reply-section 스타일 참고
+*/
+
+.reply-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.reply-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 10px;
+}
+
+.reply-content {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 40px;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #222;
+}
+
+.reply-section-pending {
+  background-color: #FEF3C7;
+}
+
+.reply-content-pending {
+  text-align: center;
+  color: #92400E;
+  padding: 20px;
+}
+
+.reply-content-pending p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/*
+  ========= 상태 배지 =========
+
+  목적: 답변 완료/대기 상태를 표시하는 배지 스타일
+*/
+
+.qna-replied {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #10B981;
+  color: #fff;
+  display: inline-block;
+}
+
+.qna-pending {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background-color: #F59E0B;
+  color: #fff;
+  display: inline-block;
+}
+
+/*
+  ========= 반응형 디자인 =========
+
+  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
+*/
+
+@media (max-width: 768px) {
+  .qna-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .qna-header h1 {
+    font-size: 20px;
+    width: 100%;
+  }
+
+  .qna-header-actions {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-list,
+  .btn-delete {
+    width: 100%;
+    text-align: center;
+  }
+
+  .inquiry-section,
+  .reply-section {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .inquiry-section-title,
+  .reply-section-title {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+
+  .inquiry-detail-item {
+    flex-direction: column;
+    padding: 12px 0;
+    gap: 6px;
+  }
+
+  .inquiry-detail-label {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .inquiry-detail-value {
+    font-size: 13px;
+  }
+
+  .inquiry-content {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 60px;
+  }
+
+  .reply-content {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 60px;
+    max-height: 200px;
+  }
+}
+
+@media (max-width: 480px) {
+  .qna-header h1 {
+    font-size: 18px;
+  }
+
+  .inquiry-section,
+  .reply-section {
+    padding: 12px;
+  }
+
+  .inquiry-detail-item {
+    padding: 10px 0;
+  }
+
+  .inquiry-content,
+  .reply-content {
+    font-size: 12px;
+    max-height: 150px;
+  }
+}

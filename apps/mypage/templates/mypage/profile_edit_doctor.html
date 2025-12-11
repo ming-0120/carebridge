@@ -26,19 +26,17 @@
             <div class="form-row profile-row">
                 <label>프로필</label>
                 <div class="doctor-profile-box">
-
-                    <!-- 프로필 이미지가 있으면 표시 -->
-                    {% if user.profile_image %}
-                        <img src="{{ user.profile_image.url }}" class="doctor-profile-img" alt="프로필">
+                    {% if doctor.profil_url %}
+                        <img src="{{ doctor.profil_url }}" alt="프로필">
                     {% else %}
                         <!-- 기본 아이콘(이미지 없음) -->
-                        <div class="doctor-profile-placeholder"></div>
+                         <img src="{% static 'core/img/default_profile.png' %}" alt="default" style="width:150px;">
                     {% endif %}
 
                     <!-- 업로드 버튼 -->
                     <label class="btn upload-btn">
                         프로필 사진 등록
-                        <input type="file" name="profile_image" accept="image/*" hidden>
+                        <input type="file" name="profil_url" accept="image/*" hidden>
                     </label>
 
                     <!-- 안내 문구 -->

@@ -62,7 +62,7 @@
       - 로그아웃 버튼: 로그아웃 기능 제공
       - 공통 헤더 템플릿 사용: core/header.html
   {% endcomment %}
-  {% include 'admin_panel/_header.html' %}
+  {% include 'core/_header.html' %}
 
   <!-- 
     메인 컨테이너
@@ -252,7 +252,7 @@
             → qna.qna_id: 문의 ID (URL 파라미터)
           - CSRF 토큰: CSRF 공격 방지를 위한 토큰 필수
       -->
-      <form method="post" action="{% url 'qna_detail' qna.qna_id %}">
+      <form id="qndFrom" method="post" action="{% url 'qna_detail' qna.qna_id %}">
         <!-- 
           CSRF 토큰
           

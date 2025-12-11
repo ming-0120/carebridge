@@ -18,12 +18,18 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from apps.core import views as core_views
+from apps.emergency import views as emergency_views
+
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
 
     # 메인 홈페이지
     path('', include('apps.core.urls')),
+    path("api/save_location/", core_views.save_location, name="save_location"),
+
 
     # 희원가입
     path('accounts/', include('apps.accounts.urls')),
@@ -40,6 +46,8 @@ urlpatterns = [
     
     # 실시간 응급실 조회 전용 라우팅
     path('emergency/', include('apps.emergency.urls')),
+    path("emergency/update/", emergency_views.update_preferences, name="emergency_update"),
+
     
     # 관리자 페이지
     # URL 규칙: 언더스코어(_) 사용
