@@ -63,6 +63,17 @@
   margin: 0;
 }
 
+.qna-title-link {
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: inline-block;
+}
+
+.qna-title-link:hover {
+  color: #152A5A;
+}
+
 /* 
   ========= 버튼 스타일 =========
   
@@ -441,15 +452,16 @@
     gap: 16px;
   }
 
-  /* 
-    QnA 목록 페이지 제목 글씨 크기 축소
-    
-    목적: 모바일 화면에서 제목 글씨 크기 축소
-      - font-size: 20px - 글씨 크기 축소 (기본 24px → 20px)
-  */
-  .qna-title {
-    font-size: 20px;
-  }
+         /*
+           QnA 목록 페이지 제목 글씨 크기 축소
+
+           목적: 모바일 화면에서 제목 글씨 크기 축소
+             - font-size: 20px - 글씨 크기 축소 (기본 24px → 20px)
+         */
+         .qna-title,
+         .qna-title-link {
+           font-size: 20px;
+         }
 
   /* 
     검색 폼 세로 배치

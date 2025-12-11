@@ -5,6 +5,7 @@
     - 사용자 경험(UX) 개선: QnA 상세보기 페이지에 특화된 UI 제공
     - 공통 스타일 확장: m_qna_common.css의 공통 스타일을 확장하여 페이지별 특수 스타일 추가
     - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
+    - 관리자 패널 qna_detail.css 스타일 참고
 
   주요 기능:
     - QnA 상세보기 헤더: 페이지 제목 및 액션 버튼 영역
@@ -15,6 +16,7 @@
     - HTML: m_qna_post.html
     - JavaScript: m_qna_post.js
     - 공통 CSS: m_qna_common.css
+    - 참고: apps/admin_panel/static/admin_panel/css/qna_detail.css
 */
 
 /* 공통 CSS는 m_qna_common.css를 참조하세요 */
@@ -39,6 +41,8 @@
   font-weight: 700;
   color: #1B3C73;
   margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e1e4ec;
 }
 
 .qna-header-actions {
@@ -85,52 +89,127 @@
 }
 
 /*
-  ========= QnA 게시글 =========
+  ========= 문의 상세 섹션 =========
 
-  목적: QnA 게시글 내용을 표시하는 영역 스타일
+  목적: 문의 상세 정보를 표시하는 섹션 스타일
+    - 관리자 패널 qna_detail.css의 inquiry-section 스타일 참고
 */
 
-.qna-post {
-  background-color: #fff;
-  border: 1px solid #e1e4ec;
+.inquiry-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
   border-radius: 8px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: 14px;
+  margin-bottom: 12px;
 }
 
-.qna-post-header {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-.qna-post-header h2 {
-  font-size: 20px;
+.inquiry-section-title {
+  font-size: 16px;
   font-weight: 600;
   color: #1B3C73;
-  margin: 0 0 12px 0;
+  margin-bottom: 10px;
 }
 
-.qna-post-meta {
+.inquiry-detail-item {
   display: flex;
-  gap: 16px;
-  align-items: center;
-  flex-wrap: wrap;
+  padding: 6px 0;
+  border-bottom: 1px solid #E0E0E0;
 }
 
-.qna-date {
+.inquiry-detail-item:last-child {
+  border-bottom: none;
+}
+
+.inquiry-detail-label {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 600;
   color: #666;
+  flex-shrink: 0;
+}
+
+.inquiry-detail-value {
+  flex: 1;
+  font-size: 14px;
+  color: #222;
+}
+
+.inquiry-detail-value a {
+  color: #1B3C73;
+  text-decoration: underline;
+}
+
+.inquiry-content {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 40px;
+  max-height: 120px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/*
+  ========= 답변 섹션 =========
+
+  목적: 답변 내용을 표시하는 섹션 스타일
+    - 관리자 패널 qna_detail.css의 reply-section 스타일 참고
+*/
+
+.reply-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.reply-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin-bottom: 10px;
+}
+
+.reply-content {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 10px;
+  min-height: 40px;
+  max-height: 300px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #222;
+}
+
+.reply-section-pending {
+  background-color: #FEF3C7;
+}
+
+.reply-content-pending {
+  text-align: center;
+  color: #92400E;
+  padding: 20px;
+}
+
+.reply-content-pending p {
+  margin: 0;
   font-size: 14px;
 }
 
-.qna-privacy {
-  padding: 4px 12px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background-color: #F8FAFF;
-  color: #1B3C73;
-}
+/*
+  ========= 상태 배지 =========
+
+  목적: 답변 완료/대기 상태를 표시하는 배지 스타일
+*/
 
 .qna-replied {
   padding: 4px 12px;
@@ -139,6 +218,7 @@
   font-weight: 600;
   background-color: #10B981;
   color: #fff;
+  display: inline-block;
 }
 
 .qna-pending {
@@ -148,54 +228,7 @@
   font-weight: 600;
   background-color: #F59E0B;
   color: #fff;
-}
-
-/*
-  ========= QnA 내용 =========
-
-  목적: QnA 문의 내용 및 답변을 표시하는 영역 스타일
-*/
-
-.qna-post-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.qna-question,
-.qna-answer {
-  padding: 16px;
-  border-radius: 6px;
-}
-
-.qna-question {
-  background-color: #F8FAFF;
-}
-
-.qna-answer {
-  background-color: #F0F9FF;
-}
-
-.qna-answer-pending {
-  background-color: #FEF3C7;
-  text-align: center;
-  color: #92400E;
-}
-
-.qna-question h3,
-.qna-answer h3 {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1B3C73;
-  margin: 0 0 12px 0;
-}
-
-.qna-content-text {
-  color: #333;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-wrap: break-word;
+  display: inline-block;
 }
 
 /*
@@ -213,6 +246,7 @@
 
   .qna-header h1 {
     font-size: 20px;
+    width: 100%;
   }
 
   .qna-header-actions {
@@ -226,14 +260,64 @@
     text-align: center;
   }
 
-  .qna-post {
+  .inquiry-section,
+  .reply-section {
     padding: 16px;
+    margin-bottom: 16px;
   }
 
-  .qna-post-meta {
+  .inquiry-section-title,
+  .reply-section-title {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+
+  .inquiry-detail-item {
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    padding: 12px 0;
+    gap: 6px;
+  }
+
+  .inquiry-detail-label {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .inquiry-detail-value {
+    font-size: 13px;
+  }
+
+  .inquiry-content {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 60px;
+  }
+
+  .reply-content {
+    padding: 12px;
+    font-size: 13px;
+    min-height: 60px;
+    max-height: 200px;
   }
 }
 
+@media (max-width: 480px) {
+  .qna-header h1 {
+    font-size: 18px;
+  }
+
+  .inquiry-section,
+  .reply-section {
+    padding: 12px;
+  }
+
+  .inquiry-detail-item {
+    padding: 10px 0;
+  }
+
+  .inquiry-content,
+  .reply-content {
+    font-size: 12px;
+    max-height: 150px;
+  }
+}

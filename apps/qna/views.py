@@ -8,7 +8,7 @@ QnA 앱 뷰 함수들
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.db.models import Q
+from django.db.models import Q, Case, When, Value, IntegerField
 from django.utils import timezone
 
 from apps.db.models import Qna, Users
@@ -32,15 +32,21 @@ def qna_list(request):
     except Users.DoesNotExist:
         return redirect('login')
     
-    # 검색 파라미터
-    search_keyword = request.GET.get('search', '').strip()
-    page_number = request.GET.get('page', 1)
+    # 검색 파라미터 (POST 방식)
+    search_keyword = request.POST.get('search', '').strip()
+    page_number = request.POST.get('page', 1)
     
-    # QnA 목록 조회 (로그인한 사용자 본인의 문의 + 관리자가 만든 더미데이터)
+    # QnA 목록 조회 (로그인한 사용자 본인의 문의 + 다른 사람이 공개로 설정한 글 + 관리자가 만든 더미데이터)
     # select_related('user'): user 정보를 미리 로드하여 N+1 쿼리 문제 방지
-    # 더미데이터는 제목이 "더미 문의"로 시작하는 문의
+    # 
+    # 필터 조건:
+    # 1. 본인이 작성한 글 (Q(user=user)) - 공개/비공개 상관없이 모두 표시
+    # 2. 다른 사람이 공개로 설정한 글 (Q(privacy='PUBLIC') & ~Q(user=user)) - 공개 글만 표시
+    # 3. 더미데이터 표시 (Q(title__startswith='더미 문의')) - 관리자가 생성한 테스트 데이터
     qnas = Qna.objects.select_related('user').filter(
-        Q(user=user) | Q(title__startswith='더미 문의')
+        Q(user=user) | 
+        (Q(privacy='PUBLIC') & ~Q(user=user)) | 
+        Q(title__startswith='더미 문의')
     )
     
     # 검색 필터 적용
@@ -50,8 +56,20 @@ def qna_list(request):
             Q(content__icontains=search_keyword)
         )
     
-    # 최신순 정렬 (created_at 기준 내림차순)
-    qnas = qnas.order_by('-created_at')
+    # 답변이 올려진 시간 순으로 정렬
+    # 1. 답변이 있는 것(reply가 있는 것)을 먼저 표시
+    # 2. 답변이 있는 것들은 문의 작성 시간(created_at) 기준 내림차순 (최신 답변 먼저)
+    # 3. 답변이 없는 것들은 문의 작성 시간(created_at) 기준 내림차순
+    # 주의: Qna 모델에 답변 작성 시간 필드가 없으므로, 답변이 있는 것들을 우선 표시하고
+    #       그 안에서 문의 작성 시간 순으로 정렬합니다.
+    qnas = qnas.annotate(
+        has_reply=Case(
+            When(reply__isnull=False, reply='', then=Value(0)),
+            When(reply__isnull=False, then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField()
+        )
+    ).order_by('-has_reply', '-created_at')
     
     # 페이지네이션 (10개씩)
     paginator = Paginator(qnas, 10)
@@ -86,11 +104,22 @@ def qna_write(request):
         title = request.POST.get('title', '').strip()
         content = request.POST.get('content', '').strip()
         privacy = request.POST.get('privacy', 'PUBLIC')
+        privacy_consent = request.POST.get('privacy_consent', '')
         
         # 유효성 검사
         if not title or not content:
             context = {
                 'error': '제목과 내용을 입력해주세요.',
+                'title': title,
+                'content': content,
+                'privacy': privacy,
+            }
+            return render(request, 'm_qna_write.html', context)
+        
+        # 개인정보 수집·이용 동의 확인 (필수)
+        if privacy_consent != 'agree':
+            context = {
+                'error': '개인정보 수집·이용에 동의해주세요.',
                 'title': title,
                 'content': content,
                 'privacy': privacy,
@@ -117,7 +146,54 @@ def qna_write(request):
         return redirect('qna:qna_list')
     
     # GET 요청: 작성 폼 표시
-    return render(request, 'm_qna_write.html')
+    # 생년월일 추출 (resident_reg_no에서 추출)
+    birth_date = None
+    if user.resident_reg_no:
+        # 주민등록번호 형식: YYMMDD-XXXXXXX 또는 YYYYMMDD-XXXXXXX
+        reg_no = user.resident_reg_no.replace('-', '')
+        if len(reg_no) >= 6:
+            year = reg_no[:2]
+            month = reg_no[2:4]
+            day = reg_no[4:6]
+            # 1900년대 또는 2000년대 판단 (7번째 자리로 판단)
+            if len(reg_no) >= 7:
+                gender_code = reg_no[6]
+                if gender_code in ['1', '2', '5', '6']:  # 1900년대
+                    year = '19' + year
+                elif gender_code in ['3', '4', '7', '8']:  # 2000년대
+                    year = '20' + year
+            birth_date = f"{year}-{month}-{day}"
+    
+    # 전화번호 분리 (010-1234-5678 형식)
+    phone_parts = {'area': '', 'middle': '', 'last': ''}
+    if user.phone:
+        phone_split = user.phone.split('-')
+        if len(phone_split) >= 3:
+            phone_parts['area'] = phone_split[0]
+            phone_parts['middle'] = phone_split[1]
+            phone_parts['last'] = phone_split[2]
+        elif len(phone_split) == 1 and len(user.phone) >= 10:
+            # 하이픈 없는 경우 (01012345678)
+            phone_parts['area'] = user.phone[:3]
+            phone_parts['middle'] = user.phone[3:7]
+            phone_parts['last'] = user.phone[7:]
+    
+    # 이메일 분리 (user@domain.com 형식)
+    email_parts = {'username': '', 'domain': ''}
+    if user.email:
+        email_split = user.email.split('@')
+        if len(email_split) >= 2:
+            email_parts['username'] = email_split[0]
+            email_parts['domain'] = email_split[1]
+    
+    context = {
+        'user': user,
+        'birth_date': birth_date,
+        'phone_parts': phone_parts,
+        'email_parts': email_parts,
+    }
+    
+    return render(request, 'm_qna_write.html', context)
 
 
 def qna_post(request, qna_id):
@@ -145,8 +221,12 @@ def qna_post(request, qna_id):
         )
     )
     
+    # 본인이 작성한 글인지 확인 (더미데이터는 제외)
+    is_owner = (qna.user == user) and (not qna.title.startswith('더미 문의'))
+    
     context = {
         'qna': qna,
+        'is_owner': is_owner,
     }
     
     return render(request, 'm_qna_post.html', context)
