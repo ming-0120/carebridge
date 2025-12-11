@@ -99,11 +99,6 @@ def my_qna_list(request):
     }
     return render(request, "mypage/my_qna_list.html", context)
 
-from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib import messages
-
-from apps.db.models import Users  # 실제 경로 맞게
-
 
 def profile_edit(request):
     user_id = request.session.get("user_id")
@@ -111,6 +106,10 @@ def profile_edit(request):
         return redirect("login")
 
     user = get_object_or_404(Users, pk=user_id)
+
+    # 역할 분기 (필드/값은 프로젝트에 맞게 수정)
+    # 예: user.role 이 "DOCTOR" / "PATIENT"
+    is_doctor = str(getattr(user, "role", "")).upper() == "DOCTOR"
 
     # --------------------------
     # 1) 주민번호 → 생년월일
@@ -134,24 +133,25 @@ def profile_edit(request):
         else:
             year = 1900 + yy
 
-        birth_display = f"{year:04d}-{mm}-{dd}"
+        birth_display = f"{year:04d}년 {mm}월 {dd}일"
 
     # --------------------------
-    # 2) 주소 분해 (DB → 화면용)
+    # 2) 주소 분해 (DB → 화면용)  : 환자에게만 사용
     # --------------------------
     zipcode = ""
     addr1 = ""
     addr2 = ""
 
-    raw_addr = user.address or ""
-    if raw_addr:
-        parts = raw_addr.split("|")
-        if len(parts) >= 1:
-            zipcode = parts[0]
-        if len(parts) >= 2:
-            addr1 = parts[1]
-        if len(parts) >= 3:
-            addr2 = parts[2]
+    if not is_doctor:
+        raw_addr = user.address or ""
+        if raw_addr:
+            parts = raw_addr.split("|")
+            if len(parts) >= 1:
+                zipcode = parts[0]
+            if len(parts) >= 2:
+                addr1 = parts[1]
+            if len(parts) >= 3:
+                addr2 = parts[2]
 
     # --------------------------
     # 3) POST: 저장 처리
@@ -169,22 +169,31 @@ def profile_edit(request):
 
         email = f"{email_local}@{email_domain}" if email_local and email_domain else ""
 
-        # 연락처/주소 (폼에서 새로 입력된 값)
+        # 연락처
         phone = request.POST.get("phone", "").strip()
-        zipcode = request.POST.get("zipcode", "").strip()
-        addr1 = request.POST.get("addr1", "").strip()
-        addr2 = request.POST.get("addr2", "").strip()
 
-        # 주소 다시 하나의 문자열로 합쳐 저장
-        if zipcode or addr1 or addr2:
-            user.address = f"{zipcode}|{addr1}|{addr2}"
-        else:
-            user.address = ""
+        # 의사: 주소는 병원에서 관리 → 주소 갱신 안 함
+        if not is_doctor:
+            zipcode = request.POST.get("zipcode", "").strip()
+            addr1 = request.POST.get("addr1", "").strip()
+            addr2 = request.POST.get("addr2", "").strip()
+
+            # 주소 다시 하나의 문자열로 합쳐 저장
+            if zipcode or addr1 or addr2:
+                user.address = f"{zipcode}|{addr1}|{addr2}"
+            else:
+                user.address = ""
 
         # 저장 (변경 가능한 필드만)
         if email:
             user.email = email
         user.phone = phone
+
+        # 의사라면 프로필 사진 업로드(필드명이 있을 때만 사용)
+        if is_doctor and "profile_image" in request.FILES:
+            # Users 모델에 profile_image 필드가 있을 때만
+            if hasattr(user, "profile_image"):
+                user.profile_image = request.FILES["profile_image"]
 
         user.save()
         messages.success(request, "회원 정보가 수정되었습니다.")
@@ -209,8 +218,19 @@ def profile_edit(request):
         "zipcode": zipcode,
         "addr1": addr1,
         "addr2": addr2,
+        "is_doctor": is_doctor,
     }
-    return render(request, "mypage/profile_edit.html", context)
+
+    # 의사 / 환자 템플릿 분기
+    if is_doctor:
+        template_name = "mypage/profile_edit_doctor.html"
+    else:
+        template_name = "mypage/profile_edit.html"
+
+    return render(request, template_name, context)
+
+
+
 
 def favorite_hospitals(request):
     user_id = request.session.get("user_id")
@@ -226,10 +246,6 @@ def favorite_hospitals(request):
         .order_by("created_at")
     )
 
-    print(">>> favorites.count() =", favorites.count())
-    print(">>> favorites.values() =", list(
-        favorites.values("fav_id", "user_id", "er_id", "hos_id", "memo")
-    ))
 
     context = {
         "favorites": favorites,
@@ -267,41 +283,49 @@ def delete_favorite(request, fav_id):
 def account_withdraw(request):
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("login")  # 로그인 페이지 URL 이름에 맞게 수정
+        return redirect("login")
 
     user = Users.objects.filter(pk=user_id).first()
     if not user:
-        # 세션은 있는데 유저가 없으면 세션만 정리
         request.session.flush()
-        return redirect("home")  # 메인 페이지 등으로
+        return redirect("home")
+
+    # 카카오 계정 여부 판단 (DB + 세션 둘 다 고려)
+    is_kakao_user = (
+        getattr(user, "provider", None) == "kakao"
+        or request.session.get("auth_from") == "kakao"
+    )
 
     if request.method == "POST":
-        reason = request.POST.get("reason")
-        password = request.POST.get("password", "")
+        reason = request.POST.get("reason", "")
 
-        # 1) 비밀번호 검증
-        # Users.password 가 Django 해시 필드라면:
-        is_valid_password = check_password(password, user.password)
+        # 1) 로컬(local) 유저만 비밀번호 검증
+        if not is_kakao_user:
+            password = request.POST.get("password", "")
 
-        # 만약 평문으로 저장했다면 위 라인 대신:
-        # is_valid_password = (password == user.password)
+            is_valid_password = check_password(password, user.password)
+            # 만약 user.password가 평문이면:
+            # is_valid_password = (password == user.password)
 
-        if not is_valid_password:
-            messages.error(request, "비밀번호가 일치하지 않습니다.")
-            return render(request, "mypage/account_withdraw.html", {
-                "user": user,
-                "error": "비밀번호가 일치하지 않습니다.",
-            })
-        # 2) 사용자 삭제
-        user.withdrawal = 1
+            if not is_valid_password:
+                messages.error(request, "비밀번호가 일치하지 않습니다.")
+                return render(request, "mypage/account_withdraw.html", {
+                    "user": user,
+                    "error": "비밀번호가 일치하지 않습니다.",
+                    "is_kakao_user": is_kakao_user,
+                })
+
+        # 2) 탈퇴 처리 (withdrawal 필드 타입에 맞게 값 설정)
+        user.withdrawal = '1'   
+        user.username = f"{user.username}_deleted_{user.id}"
         user.save()
 
         # 3) 세션/로그인 정보 제거
         request.session.flush()
 
-        # 4) 탈퇴 완료 후 이동
-        messages.success(request, "탈퇴가 완료되었습니다.")
         return redirect("home")
 
-    # GET 요청: 화면만 표시
-    return render(request, "mypage/account_withdraw.html", {"user": user})
+    return render(request, "mypage/account_withdraw.html", {
+        "user": user,
+        "is_kakao_user": is_kakao_user,
+    })

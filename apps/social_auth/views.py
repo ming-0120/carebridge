@@ -1,3 +1,4 @@
+from pyexpat.errors import messages
 import requests
 from django.conf import settings
 from django.http import HttpResponseBadRequest
@@ -68,11 +69,27 @@ def kakao_callback(request):
         "provider_id": str(kakao_id),        
         "name": nickname,
     }
+
+    # 이미 가입된 카카오 유저인지 확인
     if Users.objects.filter(provider="kakao", provider_id=str(kakao_id)).exists(): 
+        user = Users.objects.get(provider="kakao", provider_id=str(kakao_id))
+
+        # ★ 탈퇴 계정이면: 다시 가입 플로우로
+        if user.withdrawal == '1':
+            request.session["kakao_notice"] = "기존 탈퇴 이력이 있어 다시 회원가입을 진행해야 합니다."
+            return redirect("/accounts/register/?provider=kakao")
+
+        # 활성 계정이면 바로 로그인 처리
         request.session["auth_from"] = "kakao"
         request.session["kakao_id"] = str(kakao_id)
-        request.session["name"] = nickname               
-        request.session["username"] = nickname  # ← 이 줄 추가
+
+        request.session["user_id"] = user.user_id
+        request.session["username"] = user.name
+        request.session["role"] = user.role
+
+        request.session.set_expiry(30 * 60)
+
         return redirect("/")
     else:
+        request.session["kakao_notice"] = "카카오 계정으로 처음 방문하셨습니다. 추가 정보를 입력해 주세요."
         return redirect("/accounts/register/?provider=kakao")

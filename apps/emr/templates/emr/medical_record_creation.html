@@ -10,10 +10,7 @@
 </head>
 <body>
 
-    <div class="header">
-        <div class="logo">로고</div>
-        <div class="user-info">강민경님</div>
-    </div>
+    {% include "core/_header.html" %}
 
     <!-- 전체 FORM -->
     <form id="recordForm" method="POST" action="/mstaff/api/medical-record/create/">

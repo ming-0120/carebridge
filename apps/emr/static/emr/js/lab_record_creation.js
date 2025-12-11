@@ -58,6 +58,18 @@ function addAttachment(input) {
 //     li.remove();
 // }
 
+function debounce(fn, delay) {
+  let timer = null;
+  return function (...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+const debouncedLabPerformSearch = debounce(function () {
+  labPerformSearch(document.getElementById('labNameInput').value);
+}, 300);
+
 function removeAttachment(button, uniqueId) {
     
     // 1. fileList에서 해당 uniqueId를 가진 파일의 인덱스를 찾습니다.
@@ -150,6 +162,10 @@ function goToNextPatient() {
 /* 모달 열기 */
 function openLabSearchModal() {
     document.getElementById('labSearchModal').style.visibility = 'visible';
+
+    $('#labNameInput').val('');
+    $('#labResultTable tbody').html('');
+    $('#labNameInput').focus();
 }
 
 /* 모달 닫기 */
@@ -160,12 +176,9 @@ function closeModal(id) {
 }
 
 /* 검색 기능 (Mock) */
-async function labPerformSearch() {
-    const query = document.getElementById('labNameInput').value;
+async function labPerformSearch(q) {
+    const query = q;
     const url = `/mstaff/lab_data_search/?search=${query}`;
-
-    $('#layerPopup').css('display', 'block');
-    $('#search').hide();
 
     const response = await fetch(url);
     const datas = await response.json();
@@ -180,9 +193,6 @@ async function labPerformSearch() {
         `);
     }
 
-    $('#layerPopup').css('display', 'none');
-    $('#search').show();
-
     $('#labResultTable tbody').html(table.join('\n'));
 }
 
@@ -195,6 +205,8 @@ function selectLabItem(row) {
         code: row.getAttribute('data-code'),
         name: row.getAttribute('data-name')
     };
+
+    confirmSelection()
 }
 
 /* 선택 항목을 main UI에 반영 */
@@ -216,3 +228,5 @@ document.addEventListener('DOMContentLoaded', () => {
         $(`#specimenType option[value=${select}]`).prop("selected", true);
     } 
 });
+
+document.getElementById('labNameInput').addEventListener('input', debouncedLabPerformSearch)

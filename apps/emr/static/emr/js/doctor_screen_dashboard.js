@@ -32,7 +32,7 @@ window.onload = function() {
             info.dayEl.style.backgroundColor = '#2c6cc5aa';
             console.log(info.dateStr);
 
-            const url = `/mstaff/get_reservation_medical_record/?date=${info.dateStr}`;
+            const url = `/mstaff/get_reservation_medical_record/?date=${info.dateStr}&doctor_id=${doctor_id}`;
             response = await fetch(url);
 
             const datas = await response.json();
@@ -47,7 +47,7 @@ window.onload = function() {
                         <div class="patient-list-item" onclick="">
                             <h4>성명: ${d.user.name}</h4>
                             <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
-                            <p>예약시간: ${d.slot.start_time}</p>
+                            <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
                         </div>    
                     `)
                 }
@@ -66,6 +66,57 @@ window.onload = function() {
             const holiday = holidays && holidays.find((h) => h.date == dateStr);
             if (holiday) return ["fc-holiday-cell"];
             return [];
+        },
+        locale: "ko",
+        customButtons: {
+            // ⭐ 'myTodayButton'이라는 사용자 정의 버튼 정의
+            myTodayButton: {
+                text: '오늘', // 버튼에 표시될 텍스트
+                click: async function() {
+                    calendar.today(); 
+
+                    selectedDate.style.backgroundColor = '#ffffff';
+                    selectedDate = undefined;
+
+                    if (document.getElementsByClassName('fc-day-today')[0]) {
+                        document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)';
+                    }
+                    d = new Date();
+                    const year = d.getFullYear();
+                    // getMonth()는 0부터 시작하므로 +1을 해주고, padStart로 두 자릿수를 맞춥니다.
+                    const month = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const today = `${year}-${month}-${day}`;
+
+                    const url = `/mstaff/get_reservation_medical_record/?date=${today}&doctor_id=${doctor_id}`;
+                    response = await fetch(url);
+
+                    const datas = await response.json();
+
+                    if (response.status == 200) {
+                        const result = [];
+                        result.push(`
+                            <h3>예약 환자 (${datas.users.length}명)</h3>    
+                        `)
+                        for (d of datas.users) {
+                            result.push(`
+                                <div class="patient-list-item" onclick="">
+                                    <h4>성명: ${d.user.name}</h4>
+                                    <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
+                                    <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
+                                </div>    
+                            `)
+                        }
+                        $('#patinetList').html(result.join('\n'));
+                    }
+                }
+            }
+        },
+        headerToolbar: {
+            // ⭐ 내장 'today' 대신 사용자 정의 버튼 이름 사용
+            left: 'title', 
+            center: '',
+            right: 'myTodayButton prev,next',
         },
     });
     calendar.render();

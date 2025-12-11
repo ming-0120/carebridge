@@ -1,106 +1,65 @@
+{% extends "mypage/base_mypage.html" %}
 {% load static %}
-{% block content %}
-{% include "core/_header.html" %}
 
-<link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
-<link rel="stylesheet" href="{% static 'mypage/css/account_withdraw.css' %}">
+{% block mypage_content %}
+    <link rel="stylesheet" href="{% static 'mypage/css/account_withdraw.css' %}">
 
-<div class="mypage-layout">
-    <!-- 왼쪽 마이페이지 메뉴 -->
-    <aside class="mypage-sidebar">
-        <ul>
-            <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
-            <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
-            <li><a href="{% url 'profile_edit' %}">회원 정보수정</a></li>
-            <li><a href="{% url 'favorite_hospitals' %}">즐겨 찾는 병원</a></li>
-            <li>
-                <a href="{% url 'account_withdraw' %}" class="active">
-                    계정 탈퇴
-                </a>
-            </li>
-        </ul>
-    </aside>
+    <h2>계정 탈퇴</h2>
 
-    <!-- 오른쪽 콘텐츠 -->
-    <section class="mypage-content withdraw-content">
-        <h2>계정 탈퇴</h2>
+    <!-- 상단 경고 박스 -->
+    <div class="withdraw-notice">
+        <p>
+            회원 탈퇴하시면 회원정보는 모두 파기되며, 회원으로 가능한 온라인 서비스 사용이
+            불가능합니다.
+        </p>
+        <p>
+            재가입 시, 이전 기록은 조회할 수 없으므로 유의하시기 바랍니다.
+        </p>
+    </div>
 
-        <!-- 상단 경고 박스 -->
-        <div class="withdraw-notice">
-            <p>
-                회원 탈퇴하시면 회원정보는 모두 파기되며, 회원으로 가능한 온라인 서비스 사용이
-                불가능합니다.
-            </p>
-            <p>
-                재가입 시, 이전 기록은 조회할 수 없으므로 유의하시기 바랍니다.
-            </p>
+    <form id="withdrawForm" method="post">
+        {% csrf_token %}
+
+        <!-- 탈퇴사유 -->
+        <div class="form-group">
+            <label class="form-label">탈퇴사유</label>
+            <div class="reason-list">
+                <label>
+                    <input type="radio" name="reason" value="아이디 변경" required>
+                    아이디 변경을 위해서
+                </label>
+                <label>
+                    <input type="radio" name="reason" value="이용하지 않음">
+                    더 이상 이용하지 않거나, 이용하지 못하게 되어서
+                </label>
+                <label>
+                    <input type="radio" name="reason" value="정보 부족">
+                    필요한 &amp; 유용한 정보가 없어서
+                </label>
+                <label>
+                    <input type="radio" name="reason" value="개인정보 우려">
+                    개인정보 유출이 우려되어서
+                </label>
+            </div>
         </div>
+         {% if not is_kakao_user %}
+        <!-- 비밀번호 확인 -->
+        <div class="form-group">
+            <label class="form-label" for="password">비밀번호</label>
+            <input type="password" id="password" name="password" required>
+            {% if error %}
+                <p class="error-text">{{ error }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+        <!-- 버튼 -->
+        <div class="withdraw-actions">
+            <button type="submit" class="btn-withdraw">탈퇴</button>
+            <button type="button" id="btnCancel" class="btn-cancel">취소</button>
+        </div>
+    </form>
+{% endblock %}
 
-        <form id="withdrawForm" method="post">
-            {% csrf_token %}
-
-            <!-- 탈퇴사유 -->
-            <div class="form-group">
-                <label class="form-label">탈퇴사유</label>
-                <div class="reason-list">
-                    <label>
-                        <input type="radio" name="reason" value="아이디 변경" required>
-                        아이디 변경을 위해서
-                    </label>
-                    <label>
-                        <input type="radio" name="reason" value="이용하지 않음">
-                        더 이상 이용하지 않거나, 이용하지 못하게 되어서
-                    </label>
-                    <label>
-                        <input type="radio" name="reason" value="정보 부족">
-                        필요한 &amp; 유용한 정보가 없어서
-                    </label>
-                    <label>
-                        <input type="radio" name="reason" value="개인정보 우려">
-                        개인정보 유출이 우려되어서
-                    </label>
-                </div>
-            </div>
-
-            <!-- 비밀번호 확인 -->
-            <div class="form-group">
-                <label class="form-label" for="password">비밀번호</label>
-                <input type="password" id="password" name="password" required>
-                {% if error %}
-                    <p class="error-text">{{ error }}</p>
-                {% endif %}
-            </div>
-
-            <!-- 버튼 -->
-            <div class="withdraw-actions">
-                <button type="submit" class="btn-withdraw">탈퇴</button>
-                <button type="button" id="btnCancel" class="btn-cancel">취소</button>
-            </div>
-        </form>
-    </section>
-</div>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const form = document.getElementById("withdrawForm");
-    const btnCancel = document.getElementById("btnCancel");
-
-    // 탈퇴 버튼 클릭 시 확인 alert
-    form.addEventListener("submit", function (e) {
-        const ok = confirm("정말 탈퇴하시겠습니까? 탈퇴 후에는 복구가 불가능합니다.");
-        if (!ok) {
-            e.preventDefault();
-        }
-    });
-
-    // 취소 버튼: 되돌아가기 확인
-    btnCancel.addEventListener("click", function () {
-        const ok = confirm("탈퇴를 취소하시겠습니까? 이전 페이지로 돌아갑니다.");
-        if (ok) {
-            history.back();
-        }
-    });
-});
-</script>
-
+{% block extra_js %}
+<script src="{% static 'mypage/js/account_withdraw.js' %}"></script>
 {% endblock %}

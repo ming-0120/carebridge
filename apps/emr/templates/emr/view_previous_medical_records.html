@@ -10,17 +10,20 @@
 </head>
 <body>
 
+    {% include "core/_header.html" %}
+
     <div class="container">
         <h2>이전 진료기록 보기</h2>
         
         <div class="patient-info-header">
-            <span><strong>환자명:</strong> 홍길순</span>
-            <span><strong>성별:</strong> 여자</span>
-            <span><strong>생년월일:</strong> 1990-02-10</span>
-            <span><strong>방문일시:</strong> 2025-03-14 09:42</span>
-            <span><strong>진료과:</strong> 내과</span>
-            <span><strong>담당의:</strong> 박○○</span>
+            <span><strong>환자명:</strong> {{ patient.name }}</span>
+            <span><strong>성별:</strong> {{ patient.gender }}</span>
+            <span><strong>생년월일:</strong> {{ birth }}</span>
+            <span><strong>방문일시:</strong> {{ visit_datetime }}</span>
+            <span><strong>진료과:</strong> {{ department }}</span>
+            <span><strong>담당의:</strong> {{ doctor_name }}</span>
         </div>
+
 
         <div class="record-view-grid">
             

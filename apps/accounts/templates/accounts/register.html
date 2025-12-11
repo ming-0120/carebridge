@@ -8,12 +8,15 @@
 
     <!-- 로그인 공통 스타일 -->
     <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
-    <!-- 회원가입 전용 스타일 -->
     <link rel="stylesheet" href="{% static 'accounts/css/register.css' %}">
 </head>
 <body>
 {% include "core/_header.html" %}
-
+{% if kakao_notice %}
+<script>
+    alert("{{ kakao_notice|escapejs }}");
+</script>
+{% endif %}
 <div class="join-page">
     <div class="join-container">
         <div class="join-header">
@@ -31,18 +34,15 @@
 
             <!-- provider 구분 -->
             <input type="hidden" name="provider"
-                   value="{% if from_kakao %}kakao{% else %}local{% endif %}">
+                   value="{% if from_kakao %}kakao{% else %}{{ provider|default:'local' }}{% endif %}">
 
             <!-- role: 카카오면 patient 고정 -->
             {% if from_kakao %}
-                <input type="hidden" name="role" id="roleInput" value="patient">
+                <input type="hidden" name="role" id="roleInput" value="PATIENT">
             {% else %}
-                <input type="hidden" name="role" id="roleInput" value="{{ role }}">
+                <input type="hidden" name="role" id="roleInput" value="{{ role|default:'PATIENT' }}">
             {% endif %}
 
-           
-
-            <!-- 이름 -->
             <div class="join-row">
                 <label for="id_name" class="join-label">
                     이름<span class="required">*</span>
@@ -52,15 +52,14 @@
                            type="text"
                            name="name"
                            class="join-input"
-                           value="{% if from_kakao %}{{ kakao_name }}{% endif %}"
+                           value="{% if from_kakao %}{{ kakao_name }}{% else %}{{ name }}{% endif %}"
                            placeholder="이름을 입력해주세요"
                            required>
                 </div>
             </div>
 
-            <!-- 비밀번호 (카카오면 숨김) -->
             {% if not from_kakao %}
-             <!-- 아이디 -->
+            <!-- 아이디 -->
             <div class="join-row">
                 <label for="id_username" class="join-label">
                     아이디<span class="required">*</span>
@@ -71,6 +70,7 @@
                                type="text"
                                name="username"
                                class="join-input"
+                               value="{{ username }}"
                                placeholder="{% if from_kakao %}카카오와 함께 사용할 아이디를 입력해주세요{% else %}아이디를 입력해주세요{% endif %}"
                                required>
                         <button type="button" id="check-username-btn" class="btn-line">
@@ -80,6 +80,7 @@
                     <div id="username-msg" class="msg"></div>
                 </div>
             </div>
+
             <div class="join-row">
                 <label for="id_password1" class="join-label">
                     비밀번호<span class="required">*</span>
@@ -119,12 +120,19 @@
                 <span class="join-label">성별<span class="required">*</span></span>
                 <div class="join-field">
                     <div class="radio-inline">
-                        <label><input type="radio" name="gender" value="M" required> 남자</label>
-                        <label><input type="radio" name="gender" value="F"> 여자</label>
+                        <label>
+                            <input type="radio" name="gender" value="M" required
+                                   {% if gender == "M" %}checked{% endif %}> 남자
+                        </label>
+                        <label>
+                            <input type="radio" name="gender" value="F"
+                                   {% if gender == "F" %}checked{% endif %}> 여자
+                        </label>
                     </div>
                 </div>
             </div>
-            <!-- 주민등록번호 (일반 회원가입 전용) -->
+
+            <!-- 주민등록번호 -->
             <div class="join-row">
                 <span class="join-label">주민등록번호<span class="required">*</span></span>
                 <div class="join-field">
@@ -145,11 +153,12 @@
                                autocomplete="off"
                                required>
                     </div>
-                    <input type="hidden" name="resident_reg_no" id="resident_reg_no">
+                    <!-- JS에서 rrn_front + rrn_back 합쳐서 세팅 -->
+                    <input type="hidden" name="resident_reg_no" id="resident_reg_no" value="{{ resident_reg_no }}">
                 </div>
             </div>
 
-            <!-- 휴대폰 (일반 회원가입 전용) -->
+            <!-- 휴대폰 -->
             <div class="join-row">
                 <label for="id_phone" class="join-label">휴대폰<span class="required">*</span></label>
                 <div class="join-field">
@@ -157,6 +166,7 @@
                            type="text"
                            name="phone"
                            class="join-input"
+                           value="{{ phone }}"
                            placeholder="예: 010-0000-0000"
                            maxlength="13"
                            required>
@@ -188,8 +198,8 @@
                         </select>
                     </div>
 
-                    <input type="hidden" id="email" name="email">
-
+                    <!-- 서버에서 받은 email 값을 그대로 유지 -->
+                    <input type="hidden" id="email" name="email" value="{{ email }}">
                 </div>
             </div>
 
@@ -198,8 +208,14 @@
                 <span class="join-label">광고/소식 메일</span>
                 <div class="join-field">
                     <div class="radio-inline">
-                        <label><input type="radio" name="mail_confirm" value="Y" required> 수신 동의</label>
-                        <label><input type="radio" name="mail_confirm" value="N"> 수신 거부</label>
+                        <label>
+                            <input type="radio" name="mail_confirm" value="Y" required
+                                   {% if mail_confirm == "Y" %}checked{% endif %}> 수신 동의
+                        </label>
+                        <label>
+                            <input type="radio" name="mail_confirm" value="N"
+                                   {% if mail_confirm == "N" %}checked{% endif %}> 수신 거부
+                        </label>
                     </div>
                 </div>
             </div>
@@ -215,16 +231,19 @@
                         </button>
                     </div>
 
-                    <input type="text" id="addr_num" class="join-input" name="zipcode"  placeholder="우편번호" readonly required>
-                    <input type="text" id="addr" class="join-input" name="addr1" placeholder="주소" readonly required style="margin-top:8px;">
-                    <input type="text" id="addr_detail" class="join-input" name="addr2" placeholder="상세주소" required style="margin-top:8px;">
+                    <input type="text" id="addr_num" class="join-input" name="zipcode"
+                           placeholder="우편번호" readonly required value="{{ zipcode }}">
+                    <input type="text" id="addr" class="join-input" name="addr1"
+                           placeholder="주소" readonly required style="margin-top:8px;" value="{{ addr1 }}">
+                    <input type="text" id="addr_detail" class="join-input" name="addr2"
+                           placeholder="상세주소" required style="margin-top:8px;" value="{{ addr2 }}">
 
                     <input type="hidden" id="address_full" name="address">
                 </div>
             </div>
 
             <!-- 의사 전용 (카카오면 role=patient 이므로 자동으로 사라짐) -->
-            {% if role == "doctor" and not from_kakao %}
+            {% if role == "DOCTOR" and not from_kakao %}
 
             <!-- 병원 -->
             <div class="join-row">
@@ -242,7 +261,7 @@
                                required>
                         <button type="button" id="hospital-search-btn" class="btn-line">검색</button>
                     </div>
-                    <input type="hidden" name="hospital_id" id="hospital_id">
+                    <input type="hidden" name="hospital_id" id="hospital_id" value="{{ hospital_id }}">
                 </div>
             </div>
 
@@ -256,6 +275,7 @@
                            type="text"
                            name="license_number"
                            class="join-input"
+                           value="{{ license_no }}"
                            required>
                 </div>
             </div>
@@ -272,7 +292,10 @@
                             required>
                         <option value="">선택</option>
                         {% for d in departments %}
-                            <option value="{{ d.dep_id }}">{{ d.dep_name }}</option>
+                            <option value="{{ d.dep_id }}"
+                                {% if department_id|stringformat:"s" == d.dep_id|stringformat:"s" %}selected{% endif %}>
+                                {{ d.dep_name }}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>
@@ -346,16 +369,6 @@
                 </ul>
             </div>
 
-            {% if messages %}
-            <ul class="auth-messages">
-                {% for message in messages %}
-                    <li class="auth-message auth-message--error">
-                        {{ message }}
-                    </li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-
             <!-- 제출 버튼 -->
             <div class="join-submit">
                 <button type="submit" class="btn-main">가입하기</button>
@@ -395,10 +408,19 @@
   </div>
 </div>
 
+{% if messages %}
+<script>
+    {% for message in messages %}
+        alert("{{ message|escapejs }}");
+    {% endfor %}
+</script>
+{% endif %}
+
 <script>
     const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
 </script>
 <script src="{% static 'accounts/js/register.js' %}"></script>
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
 </body>
 </html>

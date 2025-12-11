@@ -34,23 +34,32 @@
     </script>
 </head>
 <body>
-    <!-- <div class="header">
-        <div class="logo" onclick="location.href='main.html'">로고</div>
-        <div class="user-info">00님</div>
-    </div> -->
-    {% include "emr/_header.html" %}
+      {% include "core/_header.html" %}
 
     <div class="dashboard-container">
 
         <div class="card doctor-profile">
             <h3>나의 정보</h3>
             <div class="profile-content">
-                <img src="https://via.placeholder.com/100/007bff/ffffff?text=Doctor" alt="의사 이미지">
-                <p>성명: <strong>강민경</strong></p>
-                <p>나이: <strong>24세</strong></p>
-                <p>근무병원: <strong>강내과</strong></p>
-                <p>담당과: <strong>내과</strong></p>
+                {% if doctor.profil_url != None %}
+                    <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                {% else %}
+                    <img src="{% static 'accounts/img/default_profile.png' %}" alt="의사 이미지">
+                {% endif %}
+                <p>성명: <strong>{{ doctor.user.name }}</strong></p>
+                <p>나이: <strong>{{ doctor.user.resident_reg_no | calculate_age_from_rrn }}세</strong></p>
+                <p>근무병원: <strong>{{ doctor.hos.name }}</strong></p>
+                <p>담당과: <strong>{{ doctor.dep.dep_name }}</strong></p>
             </div>
+
+            <br><br>
+
+            <h3>🔍 환자 검색</h3>
+                <div class="search-container">
+                    <input type="text" placeholder="홍길" value="홍길">
+                    <button onclick="alert('환자 조회 리스트 화면으로 이동')">검색</button>
+                </div>
+            <p class="search-desc">현재 재직 중인 병원 내 환자만 조회 가능합니다.</p>
         </div>
 
         <div class="card calendar">
@@ -66,7 +75,7 @@
                 <div class="patient-list-item" onclick="">
                     <h4>성명: {{ user.user.name }}</h4>
                     <p>생년월일: {{ user.user.resident_reg_no | rrn_to_birthdate }} | 성별: {% if user.user.gender == 'F' %}여{% else %}남{% endif %}</p>
-                    <p>예약시간: {{ user.slot.start_time }}</p>
+                    <p>예약시간: {{ user.slot.slot_date | date:"Y-m-d" }} {{ user.slot.start_time | time:"H:i:s" }}</p>
                 </div>
             {% endfor %}
         </div>
@@ -77,21 +86,16 @@
             <p style="font-size: 12px; color: #28a745; text-align: right;">(마우스 커서 이탈 시 자동 저장)</p>
         </div>
 
-        <div class="card patient-search">
-            <h3>🔍 환자 검색</h3>
-            <div class="search-container">
-                <input type="text" placeholder="홍길" value="홍길">
-                <button onclick="alert('환자 조회 리스트 화면으로 이동')">검색</button>
-            </div>
-            <p class="search-desc">현재 재직 중인 병원 내 환자만 조회 가능합니다.</p>
-        </div>
+        <!-- <div class="card patient-search">
+            
+        </div> -->
 
 
         <div class="card chart-weekly">
             <h3>📊 7일간 환자의 진료 및 오더 통계</h3>
             <div class="chart-container">
                 <div class="chart-placeholder">
-                    <canvas id="dailyStatsChart" width="600px"></canvas>
+                    <canvas id="dailyStatsChart" width="600px" height="130vh"></canvas>
                 </div>
             </div>
         </div>
@@ -99,7 +103,7 @@
         <div class="card chart-daily">
             <h3>📈 오늘 진료 환자 통계</h3>
             <div class="chart-placeholder">
-                    <canvas id="dailyMedicalRecordChart"></canvas>
+                    <canvas id="dailyMedicalRecordChart" height="130vh"></canvas>
             </div>
         </div>
 
@@ -192,7 +196,10 @@
                             'rgb(153, 102, 255)',
                         ]
                     }]
-                }
+                },
+                options: {
+                    responsive: false,
+                },
             })
         })
         

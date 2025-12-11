@@ -32,6 +32,10 @@ def haversine(lat1, lon1, lat2, lon2):
 
 
 def main_view(request):
+    user_id = request.session.get("user_id")
+    if not user_id:
+        login_url = reverse("login")
+        return redirect(f"{login_url}?next={request.get_full_path()}")
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
 
@@ -201,7 +205,7 @@ def reserve_submit(request):
     slot.save()
 
     # 예약 완료 후 마이페이지의 예약 목록으로 이동 (url name 은 프로젝트에 맞게 바꿔주세요)
-    return redirect("mypage_reservations")  # TODO: 실제 url name 으로 수정
+    return redirect("reservation_list")  # TODO: 실제 url name 으로 수정
 
 
 def doctor_reservations_api(request):

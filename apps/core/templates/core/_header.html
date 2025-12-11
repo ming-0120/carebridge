@@ -1,15 +1,24 @@
 {% load static %}
 
 <header class="header">
-
   <link rel="stylesheet" href="{% static 'core/css/_header.css' %}">
-
   <div class="header-inner">
     <div class="logo">
-        <a href="{% url 'home' %}">
-            <img src="{% static 'core/img/logo_2.png' %}" alt="" style="width:200px; margin-top:10px;">
-        </a>
+        {% with role=request.session.role %}
+            {% if role == 'PATIENT' %}
+                <a href="{% url 'home' %}">
+            {% elif role == 'DOCTOR' %}
+                <a href="{% url 'doctor_dashboard' %}">
+            {% elif role == 'ADMIN' %}
+                <a href="{% url 'admin_dashboard' %}">
+            {% else %}
+                <a href="{% url 'home' %}">
+            {% endif %}
+                <img src="{% static 'core/img/logo_2.png' %}" alt="" style="width:200px; margin-top:10px;">
+            </a>
+        {% endwith %}
     </div>
+
     <!-- 햄버거 버튼 -->
     <button class="menu-toggle" type="button" aria-label="메뉴 열기">
       <span></span>
@@ -17,20 +26,25 @@
       <span></span>
     </button>
     <div class="nav-wrapper">
-      <nav class="nav">
-        <a href="#emergency">응급실 조회</a>
-        <a href="{% url 'main' %}">병원 예약</a>
-        <a href="#qna">QnA</a>
-        <a href="{% url 'newsletter_list' %}">메디컬 레터</a>
-        <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
-      </nav>
-
+{% if request.session.role != 'DOCTOR' and request.session.role != 'ADMIN' %}
+<nav class="nav">
+    <a href="#emergency">응급실 조회</a>
+    <a href="{% url 'reservation_main' %}">병원 예약</a>
+    <a href="{% url 'qna:qna_list' %}">QnA</a>
+    <a href="{% url 'newsletter_list' %}">메디컬 레터</a>
+    <a href="{% url 'infectious_stat' %}">감염병 통계 보기</a>
+</nav>
+{% endif %}
       <div class="util">
         {% if request.session.username %}
             <span>{{ request.session.username }}님 안녕하세요</span>
             |
-            <a href="#">마이페이지</a>
+            {% if request.session.role == 'PATIENT' %}
+              <a href="{% url 'reservation_list' %}">마이페이지</a>
+            {% elif request.session.role == 'DOCTOR' %}
+              <a href="{% url 'profile_edit' %}">마이페이지</a>
             |
+            {% endif %}
             <form action="{% url 'logout' %}" method="post" style="display:inline;">
                 {% csrf_token %}
                 <button type="submit" style="background:none; border:none; cursor:pointer;">

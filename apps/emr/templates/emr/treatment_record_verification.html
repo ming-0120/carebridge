@@ -16,11 +16,7 @@
 </head>
 <body>
 
-    <!-- <div class="header">
-        <div class="logo">로고</div>
-        <div class="user-info">00님</div>
-    </div> -->
-    {% include "emr/_header.html" %}
+    {% include "core/_header.html" %}
 
     <div class="container">
         <h2>치료 기록 화면</h2>
@@ -113,12 +109,6 @@
                 
                 <div class="search-controls">
                     <input type="text" id="procedureNameInput" placeholder="시술/처치명을 입력한다">
-                    <button onclick="treatmentPerformSearch()">
-                        <div class="layerPopup" id="layerPopup">
-                            <div class="spinner"></div>
-                        </div>
-                        <span id="search">검색</span>
-                    </button>
                 </div>
 
                 <table class="result-table" id="procedureResultTable">
@@ -133,10 +123,10 @@
                 </table>
             </div>
 
-            <div class="modal-footer">
+            <!-- <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal('procedureSearchModal')">취소</button>
                 <button class="btn-confirm" onclick="confirmSelection()">확인</button>
-            </div>
+            </div> -->
 
         </div>
     </div>

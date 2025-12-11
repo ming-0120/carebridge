@@ -165,3 +165,28 @@ li.disabled a {
     background-color: #4da3ff !important;
     color: white !important;
 }
+.fc-toolbar-chunk{
+    display:none;
+}
+.fc-day-sat,
+.fc-day-sun {
+    background-color: #f0f0f0 !important;
+    pointer-events: none !important;
+    opacity: 0.6; 
+}
+.calendar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.calendar-header h3 {
+    margin: 0;
+}
+
+.calendar-header .note {
+    margin: 0;
+    font-size: 13px;
+    color: red;
+}

@@ -52,7 +52,13 @@
 .mypage-content form {
     max-width: 600px;
 }
-
+.notice{
+        background: #f3f7ff;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    font-size: 14px;
+}
 /* 한 줄 */
 .form-row {
     display: flex;
@@ -250,4 +256,38 @@
     .input-zip {
         width: 50%;
     }
+}
+/* 의사 프로필 페이지 */
+.doctor-profile-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.doctor-profile-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+
+.doctor-profile-placeholder {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 1px solid #ccc;
+    background: url('/static/core/img/profile_default.svg') center/60% no-repeat;
+}
+
+.upload-btn {
+    display: inline-block;
+    padding: 6px 12px;
+    cursor: pointer;
+}
+
+.profile-guide {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.4;
 }

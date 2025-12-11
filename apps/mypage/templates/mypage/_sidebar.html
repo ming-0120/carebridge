@@ -1,0 +1,11 @@
+<ul>
+    <li><a href="{% url 'my_qna_list' %}">QnA 이력조회</a></li>
+    <li><a href="{% url 'reservation_list' %}">예약조회</a></li>
+    <li><a href="{% url 'profile_edit' %}">회원 정보수정</a></li>
+    <li><a href="{% url 'favorite_hospitals' %}">즐겨 찾는 병원</a></li>
+    <li>
+        <a href="{% url 'account_withdraw' %}" class="{% if request.resolver_match.url_name == 'account_withdraw' %}active{% endif %}">
+            계정 탈퇴
+        </a>
+    </li>
+</ul>

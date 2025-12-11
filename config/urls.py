@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -41,11 +43,14 @@ urlpatterns = [
     
     # 관리자 페이지
     # URL 규칙: 언더스코어(_) 사용
-    path('admin_panel/', include('apps.admin_panel.urls')),  
+    path('admin_panel/', include('apps.admin_panel.urls')),
+    # qna
+    path('qna/', include('apps.qna.urls')),
     
     # 의사 EMR
     path('mstaff/', include('apps.emr.urls')),
     path("", include("apps.newsletter.urls")), 
 ]
-
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
