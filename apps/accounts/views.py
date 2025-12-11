@@ -92,6 +92,7 @@ def login_view(request, default_role="PATIENT", template_name="accounts/login.ht
     elif user.role == 'DOCTOR':
         # 여기까지 왔으면 verified=True 보장
         return redirect('/mstaff/doctor_dashboard/')
+    
 
     # 일반 환자, 그 외 역할은 next_url 로
     return redirect(next_url)
