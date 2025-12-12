@@ -31,7 +31,7 @@ socket.onmessage = function(e) {
         if (data.message == 'lab') {
             getLabRecord();
         } else if (data.message == 'treatment') {
-            console.log(data.message);
+            getTreatmentRecord();
         }
     }
 };
@@ -78,10 +78,51 @@ async function getLabRecord() {
     }
 
     document.querySelector('#labTable tbody').innerHTML = result.join('\n');
-    // $('#labTable tbody').html(result.join('\n'));
     $('#labPending').html(datas.lab_pending_count);
     $('#labSampled').html(datas.lab_sampled_count);
     $('#labEmergency').html(datas.lab_is_urgent_count);
-
-    // window.location.reload();
 }
+
+async function getTreatmentRecord() {
+    response = await fetch('/mstaff/get_treatment_record/');
+    const datas = await response.json();
+    const result = [];
+
+    for(d of datas.treatment_order) {
+        result.push(`<tr>
+            <td>${d.user.name}</td>
+            <td>${d.user_age}</td>
+            <td>
+                ${d.user.gender == 'F' ? '여' : '남'}
+            </td>
+            <td>
+                ${d.doctor_info.name}
+            </td>
+            <td>
+                <button 
+                    class="status-button 
+                        ${d.treatment.status == 'Pending' ? 'status-pending':'status-sampled'}"
+                    
+                    onclick="goToRecord(
+                        'Treatment', 
+                        '${d.treatment.treatment_id}',
+                        '${d.user.user_id}',
+                        '${d.record_id}'
+                    );"
+                >
+                    ${d.treatment.status == 'Pending' ? 'PENDING':'IN PROGRESS'}
+                </button>
+            </td>
+        </tr>`);
+    }
+
+    document.querySelector('#treatmentTable tbody').innerHTML = result.join('\n');
+    $('#treatmentPending').html(datas.treatment_pending_count);
+    $('#treatmentInProgress').html(datas.treatment_inprogress_count);
+}
+
+window.addEventListener('pageshow', function(event) {
+    // event.persisted가 true이면 페이지가 BFcache에서 복원되었다는 의미입니다.
+    getLabRecord();
+    getTreatmentRecord();
+});

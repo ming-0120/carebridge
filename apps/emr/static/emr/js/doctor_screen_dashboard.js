@@ -44,7 +44,7 @@ window.onload = function() {
                 `)
                 for (d of datas.users) {
                     result.push(`
-                        <div class="patient-list-item" onclick="">
+                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
                             <h4>성명: ${d.user.name}</h4>
                             <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                             <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -75,8 +75,11 @@ window.onload = function() {
                 click: async function() {
                     calendar.today(); 
 
-                    selectedDate.style.backgroundColor = '#ffffff';
-                    selectedDate = undefined;
+                    if (selectedDate) {
+                        selectedDate.style.backgroundColor = '#ffffff';
+                        selectedDate = undefined;
+                    }
+                    
 
                     if (document.getElementsByClassName('fc-day-today')[0]) {
                         document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)';
@@ -100,7 +103,7 @@ window.onload = function() {
                         `)
                         for (d of datas.users) {
                             result.push(`
-                                <div class="patient-list-item" onclick="">
+                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
                                     <h4>성명: ${d.user.name}</h4>
                                     <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                                     <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -109,6 +112,8 @@ window.onload = function() {
                         }
                         $('#patinetList').html(result.join('\n'));
                     }
+
+                    toTodayPatient();
                 }
             }
         },
@@ -198,4 +203,12 @@ function rrnToBirthdate(regNum) {
     const birthDate = `${fullYear}-${mm}-${dd}`;
     
     return birthDate;
+}
+
+function toMedicalRecord(patient_id) {
+    window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
+}
+
+function toTodayPatient() {
+    window.location.href = `/mstaff/today_list/`
 }

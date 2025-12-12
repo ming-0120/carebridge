@@ -20,8 +20,8 @@
             <div class="card status-box">
                 <h3>치료 대기</h3>
                 <div class="status-counts">
-                    <div class="count-item pending">대기 <strong>{{ treatment_pending_count }}명</strong></div>
-                    <div class="count-item inprogress">진행중 <strong>{{ treatment_inprogress_count }}명</strong></div>
+                    <div class="count-item pending">대기 <strong id="treatmentPending">{{ treatment_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong id="treatmentInProgress">{{ treatment_inprogress_count }}명</strong></div>
                 </div>
             </div>
             
@@ -40,7 +40,7 @@
             
             <div class="card list-panel">
                 <h3>치료 대기중인 환자</h3>
-                <table class="patient-table">
+                <table class="patient-table" id="treatmentTable">
                     <thead>
                         <tr>
                             <th>이름</th>

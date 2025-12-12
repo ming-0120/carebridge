@@ -426,6 +426,8 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
+        hos_id = request.session.get('user_id', '')
+
         try:
             user = Users.objects.get(user_id=user_id)
             medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
@@ -446,13 +448,6 @@ def lab_record_creation(request):
                 order.requisition_note = special_notes
 
                 order.save()
-                
-            elif current_status == 'Sampled':
-                order.status_datetime = datetime.now()
-                order.status = 'Completed'
-                order.requisition_note = special_notes
-
-                order.save()
 
                 for file in uploaded_files:
                     labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
@@ -462,8 +457,6 @@ def lab_record_creation(request):
                     files = list(LabUpload.objects.filter(lab_order__pk=order.lab_order_id))
                 except:
                     print('error')
-
-
 
         except:
             print('error')
@@ -483,6 +476,20 @@ def lab_record_creation(request):
         python_user_data[0]['fields']['user_id'] = python_user_data[0]['pk']
         python_medical_record_data[0]['fields']['medical_record_id'] = python_medical_record_data[0]['pk']
         python_order_data[0]['fields']['lab_order_id'] = python_order_data[0]['pk']
+
+        # Redis 채널 레이어 가져오기
+        channel_layer = get_channel_layer()
+
+        # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
+        group_name = f'hospital_group_{hos_id}'
+
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "chart_update_event", 
+                "message": "lab"
+            }
+        )
 
         return JsonResponse({
             'user': python_user_data[0]['fields'],
@@ -1438,6 +1445,49 @@ def get_lab_record(request):
 
     return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
 
+def get_treatment_record(request):
+    treatment_order = []
+    treatment_pending_count = 0
+    treatment_inprogress_count = 0
+    try:
+        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        for record in medical_records:
+            try:
+                treatment = TreatmentProcedures.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    execution_datetime__contains=str(date.today()),
+                )
+
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                treatment_order.append({
+                    'treatment': model_to_dict(treatment),
+                    'user': model_to_dict(user),
+                    'doctor': model_to_dict(doctor),
+                    'doctor_info': model_to_dict(doctor_info),
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if treatment.status == 'Pending':
+                    treatment_pending_count += 1
+                if treatment.status == 'In progress':
+                    treatment_inprogress_count += 1
+            except:
+                print('TreatmentProcedures error')    
+    except:
+        print('Hospital error')
+
+    context = {
+       'treatment_order': treatment_order,
+       'treatment_pending_count': treatment_pending_count,
+       'treatment_inprogress_count': treatment_inprogress_count
+    }
+
+    return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
     
 
 
