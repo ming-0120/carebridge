@@ -20,3 +20,5 @@ document.addEventListener('DOMContentLoaded', function() {
   console.log('QnA 상세보기 페이지 JavaScript 로드 완료');
 });
 
+
+

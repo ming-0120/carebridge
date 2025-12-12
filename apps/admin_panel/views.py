@@ -131,6 +131,11 @@ def paginate_queryset(request, queryset, per_page=5):
     """쿼리셋을 페이지네이션 처리하는 공통 함수"""
     paginator = Paginator(queryset, per_page)
     page_number = get_request_param(request, 'page', 1)
+    # page_number를 정수로 변환 (문자열로 전달될 수 있음)
+    try:
+        page_number = int(page_number) if page_number else 1
+    except (ValueError, TypeError):
+        page_number = 1
     page_obj = paginator.get_page(page_number)
     total_count = queryset.count()
     return page_obj, total_count
@@ -944,6 +949,11 @@ def approval_pending(request):
     # 페이지네이션
     page_obj, total_count = paginate_queryset(request, pending_doctors, per_page=5)
     
+    # 디버깅: 페이지 번호 확인
+    page_number_from_request = get_request_param(request, 'page', 1)
+    print(f'[approval_pending] 요청된 page 파라미터: {page_number_from_request}, 타입: {type(page_number_from_request)}')
+    print(f'[approval_pending] 실제 page_obj.number: {page_obj.number}, 전체 페이지 수: {page_obj.paginator.num_pages}')
+    
     # 면허번호 검증 및 번호 계산
     doctors_with_validation = []
     start_index = (page_obj.number - 1) * page_obj.paginator.per_page + 1
@@ -987,8 +997,11 @@ def approval_pending(request):
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).update(verified=True)
             elif action == 'reject':
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).delete()
-        
-        return redirect('approval_pending')
+            
+            # 승인/거절 처리 후 리다이렉트 (AJAX 요청이 아닌 경우에만)
+            # 페이지네이션 AJAX 요청은 리다이렉트하지 않음
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect('approval_pending')
     
     # 컨텍스트 데이터
     context = {
@@ -996,6 +1009,7 @@ def approval_pending(request):
         'pending_doctors': page_obj,
         'doctors_with_validation': doctors_with_validation,
         'selected_doctor': selected_doctor,
+        'selected_doctor_id': selected_doctor_id if selected_doctor_id else '',
         'total_pending_count': pending_doctors.count(),
         'sort_field': sort_field,
         'sort_order': sort_order,
