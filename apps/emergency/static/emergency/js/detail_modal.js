@@ -18,6 +18,22 @@ function openHospitalDetail(erId) {
           document.getElementById("detail-address").innerText =
             data.er_address || "";
 
+          // 즐겨찾기 상태 표시
+          const favoriteElement = document.getElementById("detail-favorite");
+          if (favoriteElement) {
+            // 별표 텍스트가 없으면 추가
+            if (!favoriteElement.textContent.trim()) {
+              favoriteElement.textContent = '★';
+            }
+            favoriteElement.setAttribute('data-er-id', data.er_id || erId);
+            // 즐겨찾기 상태에 따라 클래스 추가/제거
+            if (data.is_favorite) {
+              favoriteElement.classList.add('on');
+            } else {
+              favoriteElement.classList.remove('on');
+            }
+          }
+
           // 태그 표시
           const tagWrap = document.getElementById("detail-tags");
           tagWrap.innerHTML = "";
@@ -107,17 +123,29 @@ function fillStatusRow(key, available, total) {
     else if (pct >= 30) colorClass = "orange";
     else if (pct > 0) colorClass = "red";
 
+    // 배경 원의 stroke 색상 결정 (available == 0이고 red일 때만 빨간색)
+    const bgStrokeColor = (available === 0 && colorClass === "red") ? "#E53935" : "#e0e0e0";
+
     circleContainer.innerHTML = `
       <div class="status-circle ${colorClass}">
         <svg>
-          <circle class="meter ${pct === 0 ? "none" : ""}"
+          <circle class="meter-bg"
             cx="24" cy="24" r="20"
-            stroke-dasharray="${dashArray}"
-            stroke="#e0e0e0"
+            stroke-dasharray="125.66, 125.66"
+            stroke="${bgStrokeColor}"
             fill="none"
             stroke-width="4"
             stroke-linecap="round">
           </circle>
+          ${available > 0 ? `
+          <circle class="meter"
+            cx="24" cy="24" r="20"
+            stroke-dasharray="${dashArray}"
+            fill="none"
+            stroke-width="4"
+            stroke-linecap="round">
+          </circle>
+          ` : ''}
         </svg>
         <span class="label">${available}/${total}</span>
       </div>
@@ -126,10 +154,17 @@ function fillStatusRow(key, available, total) {
     circleContainer.innerHTML = `
       <div class="status-circle none">
         <svg>
+          <circle class="meter-bg"
+            cx="24" cy="24" r="20"
+            stroke-dasharray="125.66, 125.66"
+            stroke="#e0e0e0"
+            fill="none"
+            stroke-width="4"
+            stroke-linecap="round">
+          </circle>
           <circle class="meter none"
             cx="24" cy="24" r="20"
             stroke-dasharray="0, 125.66"
-            stroke="#e0e0e0"
             fill="none"
             stroke-width="4"
             stroke-linecap="round">
@@ -263,4 +298,94 @@ function closeDetailModal() {
 
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") closeDetailModal();
+});
+
+// ======================================
+// 상세 모달 즐겨찾기 토글 함수
+// ======================================
+function toggleDetailFavorite(event, erId) {
+  // 이벤트 전파 중지
+  event.stopPropagation();
+  event.preventDefault();
+  
+  // CSRF 토큰 가져오기
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.substring(0, name.length + 1) === (name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  
+  // AJAX 요청으로 즐겨찾기 토글
+  fetch('/emergency/toggle_favorite/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'X-CSRFToken': getCookie('csrftoken')
+    },
+    body: `er_id=${erId}`
+  })
+  .then(response => {
+    if (response.status === 401) {
+      // 비로그인 상태
+      const confirmLogin = confirm('로그인 후 이용하실 수 있습니다.');
+      if (confirmLogin) {
+        // 로그인 페이지로 이동 (현재 URL을 next 파라미터로 전달)
+        const currentUrl = encodeURIComponent(window.location.href);
+        window.location.href = `/accounts/login/?next=${currentUrl}`;
+      }
+      return null;
+    }
+    return response.json();
+  })
+  .then(data => {
+    if (data && data.ok) {
+      // 즐겨찾기 상태 업데이트
+      const favoriteElement = document.getElementById('detail-favorite');
+      if (favoriteElement) {
+        if (data.is_favorite) {
+          favoriteElement.classList.add('on');
+        } else {
+          favoriteElement.classList.remove('on');
+        }
+      }
+      
+      // 메인 페이지의 별표도 동기화 (같은 er_id를 가진 요소 찾기)
+      const mainFavorite = document.querySelector(`.favorite[data-er-id="${erId}"]`);
+      if (mainFavorite) {
+        if (data.is_favorite) {
+          mainFavorite.classList.add('on');
+        } else {
+          mainFavorite.classList.remove('on');
+        }
+      }
+    }
+  })
+  .catch(err => {
+    console.error('즐겨찾기 토글 실패:', err);
+  });
+}
+
+// ======================================
+// 상세 모달 즐겨찾기 클릭 이벤트 리스너
+// ======================================
+document.addEventListener('DOMContentLoaded', function() {
+  // 이벤트 위임 방식으로 상세 모달의 즐겨찾기 버튼 클릭 처리
+  document.addEventListener('click', function(event) {
+    const favoriteElement = event.target.closest('#detail-favorite');
+    if (favoriteElement) {
+      const erId = favoriteElement.getAttribute('data-er-id');
+      if (erId) {
+        toggleDetailFavorite(event, parseInt(erId, 10));
+      }
+    }
+  });
 });

@@ -164,6 +164,14 @@
   transform: rotate(-90deg);
 }
 
+.status-circle .meter-bg {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dashoffset: 0;
+  stroke: #e0e0e0;
+}
+
 .status-circle .meter {
   fill: none;
   stroke-width: 4;
