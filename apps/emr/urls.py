@@ -30,7 +30,7 @@ urlpatterns = [
     path('api/previous-records/<int:user_id>/', get_previous_medical_records),
     path('api/patient/<str:patient_id>/recent-records/', views.api_patient_recent_records, name="api_patient_recent_records"),
     path("mstaff/api/previous-records/<int:user_id>/", get_previous_medical_records),
-
     path('get_lab_record/', views.get_lab_record, name="get_lab_record"),
+    path('get_treatment_record/', views.get_treatment_record, name="get_treatment_record"),
 ]
         
