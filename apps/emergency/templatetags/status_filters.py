@@ -26,22 +26,60 @@ def circle_dasharray(available, total):
     """
     SVG 원형 그래프용 stroke-dasharray 값 계산
     원주 = 2 * π * r = 2 * π * 20 ≈ 125.66
+    퍼센트 기반으로 계산 (available / total * 100)
     """
     import math
     try:
         if available is None or total is None:
             return "0, 125.66"
-        available = int(available) if available else 0
+        # available이 음수인 경우 0으로 처리
+        available = max(0, int(available) if available else 0)
         total = int(total) if total else 0
         if total <= 0:
             return "0, 125.66"
         
         circumference = 2 * math.pi * 20  # r = 20
+        # 퍼센트 계산: available / total
         pct = available / total
+        # 퍼센트를 0~1 범위로 제한 (available이 total보다 큰 경우 방지)
+        pct = max(0.0, min(1.0, pct))
         dash_length = pct * circumference
         return f"{dash_length:.2f}, {circumference:.2f}"
     except (ValueError, TypeError, ZeroDivisionError):
         return "0, 125.66"
+
+
+@register.filter
+def circle_dashoffset(available, total):
+    """
+    SVG 원형 그래프용 stroke-dashoffset 값 계산
+    12시 기준 시계방향으로 채워지도록 offset 계산
+    원주 = 2 * π * r = 2 * π * 20 ≈ 125.66
+    available이 많을수록 offset이 작아져서 더 많이 채워짐
+    offset = circumference * (1 - pct)
+    """
+    import math
+    try:
+        if available is None or total is None:
+            return 125.66  # 완전히 비어있음
+        # available이 음수인 경우 0으로 처리
+        available = max(0, int(available) if available else 0)
+        total = int(total) if total else 0
+        if total <= 0:
+            return 125.66  # 완전히 비어있음
+        
+        circumference = 2 * math.pi * 20  # r = 20
+        # 퍼센트 계산: available / total
+        pct = available / total
+        # 퍼센트를 0~1 범위로 제한
+        pct = max(0.0, min(1.0, pct))
+        # offset 계산: 전체 원주에서 채워진 부분을 뺀 값
+        # available이 0이면 offset = circumference (비어있음)
+        # available이 total이면 offset = 0 (가득 참)
+        dash_offset = circumference * (1 - pct)
+        return f"{dash_offset:.2f}"
+    except (ValueError, TypeError, ZeroDivisionError):
+        return "125.66"
 
 
 @register.filter
@@ -140,6 +178,10 @@ def congestion_text(available, total, type_name):
     if available is None:
         return "-"
     
+    # available이 음수인 경우 0으로 처리
+    if available < 0:
+        available = 0
+    
     # 분만실 특수 처리: 현재 가용수 기준
     if type_name == "birth":
         if available >= 1:
@@ -187,6 +229,10 @@ def congestion_color_class(available, total, type_name):
     """
     if available is None:
         return "none"
+    
+    # available이 음수인 경우 0으로 처리
+    if available < 0:
+        available = 0
     
     # 분만실 특수 처리: 현재 가용수 기준
     if type_name == "birth":

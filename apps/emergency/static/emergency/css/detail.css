@@ -42,9 +42,15 @@
 
 .detail-header-top {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: flex-start;
   margin-bottom: 8px;
+}
+
+.detail-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .detail-title {
@@ -60,6 +66,7 @@
   cursor: pointer;
   transition: 0.2s ease;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .detail-favorite:hover {
@@ -141,12 +148,11 @@
 }
 
 .status-circle-container {
-  width: 48px;
-  height: 48px;
-  position: relative;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .status-circle {
@@ -161,7 +167,7 @@
 .status-circle svg {
   width: 48px;
   height: 48px;
-  transform: rotate(-90deg);
+  transform: rotate(-90deg);  /* 12시 기준으로 시작하도록 변경 */
 }
 
 .status-circle .meter-bg {
@@ -176,8 +182,9 @@
   fill: none;
   stroke-width: 4;
   stroke-linecap: round;
-  transition: stroke-dasharray 0.3s ease;
-  stroke-dashoffset: 0;
+  stroke-dasharray: 125.66, 125.66;  /* 원주 전체를 dash로 설정 */
+  stroke-dashoffset: var(--dash-offset, 125.66);  /* CSS 변수 사용, 기본값은 비어있음 */
+  transition: stroke-dashoffset 0.6s ease;  /* 값 변경 시 부드럽게 전환 */
 }
 
 .status-circle.green .meter {
@@ -223,6 +230,15 @@
 
 .status-circle.none .label {
   color: #999;
+}
+
+/* 원형 그래프 아래 숫자 표시 */
+.status-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2c2c2c;
+  margin-top: 2px;
+  line-height: 1.2;
 }
 
 /* 하단 2단 구성 */
@@ -307,7 +323,7 @@
 /* 지도 */
 .detail-map {
   width: 100%;
-  height: 260px;
+  height: 400px;  /* AI 리뷰 제거로 인해 높이 증가 */
   background: #dcdcdc;
   border-radius: 12px;
   margin-bottom: 12px;

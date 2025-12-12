@@ -560,7 +560,7 @@ def hospital_detail_json(request, er_id: int):
             "er_child_available": latest_status.er_child_available,
             "er_child_total": latest_status.er_child_total,
             "birth_available": latest_status.birth_available,
-            # birth_total 제거 (Boolean만 사용)
+            "birth_total": latest_status.birth_total,  # 메인 페이지와 동일하게 전달
             "negative_pressure_available": latest_status.negative_pressure_available,
             "negative_pressure_total": latest_status.negative_pressure_total,
             "isolation_general_available": latest_status.isolation_general_available,
