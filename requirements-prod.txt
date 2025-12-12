@@ -1,0 +1,19 @@
+# ===== Django Core =====
+Django==5.2.8
+
+# ===== Database (MySQL) =====
+mysqlclient==2.2.7
+
+# ===== Environment Variable Management =====
+django-environ==0.12.0
+python-dotenv==1.1.1
+
+# ===== Image Handling =====
+pillow==11.3.0
+
+# ===== HTTP Requests =====
+requests==2.32.5
+
+# ===== WSGI Server =====
+gunicorn
+
