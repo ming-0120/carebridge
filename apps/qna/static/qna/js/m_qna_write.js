@@ -135,6 +135,140 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // ========= 개인정보 동의 시 자동 입력 기능 =========
+  // 목적: 개인정보 수집 동의 라디오 버튼을 체크하면 작성자 정보 필드가 활성화되고 자동 입력됨
+  
+  const privacyConsentAgree = document.querySelector('input[name="privacy_consent"][value="agree"]');
+  const privacyConsentDisagree = document.querySelector('input[name="privacy_consent"][value="disagree"]');
+  const writerInfoGroup = document.getElementById('writer-info-group');
+  const formContentGroups = document.querySelectorAll('.form-content-group');
+  const formActionsGroup = document.querySelector('.form-actions-group');
+  const writerBirth = document.getElementById('writer-birth');
+  const phoneArea = document.getElementById('phone-area');
+  const phoneMiddle = document.getElementById('phone-middle');
+  const phoneLast = document.getElementById('phone-last');
+  const emailUsername = document.getElementById('email-username');
+  const emailDomain = document.getElementById('email-domain');
+  const emailDomainCustom = document.getElementById('email-domain-custom');
+  
+  // DB에서 가져온 원본 값 저장 (페이지 로드 시 한 번만 저장)
+  const originalValues = {
+    birth: writerBirth ? writerBirth.value : '',
+    phoneArea: phoneArea ? phoneArea.value : '',
+    phoneMiddle: phoneMiddle ? phoneMiddle.value : '',
+    phoneLast: phoneLast ? phoneLast.value : '',
+    emailUsername: emailUsername ? emailUsername.value : '',
+    emailDomain: emailDomain ? emailDomain.value : '',
+    emailDomainCustom: emailDomainCustom ? emailDomainCustom.value : '',
+    emailDomainCustomDisplay: emailDomain && emailDomain.value === '직접입력' ? 'block' : 'none'
+  };
+  
+  // 작성자 정보 섹션 및 폼 내용 숨기기
+  function hideWriterInfoSection() {
+    if (writerInfoGroup) {
+      writerInfoGroup.style.display = 'none';
+    }
+    // 제목, 내용, 공개 설정 숨기기
+    formContentGroups.forEach(group => {
+      if (group) group.style.display = 'none';
+    });
+    // 등록/취소 버튼 숨기기
+    if (formActionsGroup) {
+      formActionsGroup.style.display = 'none';
+    }
+  }
+  
+  // 작성자 정보 섹션 및 폼 내용 보이기
+  function showWriterInfoSection() {
+    if (writerInfoGroup) {
+      writerInfoGroup.style.display = 'block';
+    }
+    // 제목, 내용, 공개 설정 보이기
+    formContentGroups.forEach(group => {
+      if (group) group.style.display = 'block';
+    });
+    // 등록/취소 버튼 보이기
+    if (formActionsGroup) {
+      formActionsGroup.style.display = 'flex';
+    }
+  }
+  
+  // DB 값으로 복원
+  function restoreOriginalValues() {
+    // 값 복원
+    if (writerBirth) writerBirth.value = originalValues.birth;
+    if (phoneArea) phoneArea.value = originalValues.phoneArea;
+    if (phoneMiddle) phoneMiddle.value = originalValues.phoneMiddle;
+    if (phoneLast) phoneLast.value = originalValues.phoneLast;
+    if (emailUsername) emailUsername.value = originalValues.emailUsername;
+    if (emailDomain) emailDomain.value = originalValues.emailDomain;
+    if (emailDomainCustom) {
+      emailDomainCustom.value = originalValues.emailDomainCustom;
+      emailDomainCustom.style.display = originalValues.emailDomainCustomDisplay;
+    }
+    
+    // 필드 활성화
+    if (writerBirth) writerBirth.readOnly = false;
+    if (phoneArea) phoneArea.disabled = false;
+    if (phoneMiddle) phoneMiddle.readOnly = false;
+    if (phoneLast) phoneLast.readOnly = false;
+    if (emailUsername) emailUsername.readOnly = false;
+    if (emailDomain) emailDomain.disabled = false;
+    if (emailDomainCustom) emailDomainCustom.readOnly = false;
+  }
+  
+  // 이메일 도메인 직접입력 처리 함수
+  function handleEmailDomainChange() {
+    if (emailDomain && emailDomainCustom) {
+      if (emailDomain.value === '직접입력') {
+        emailDomainCustom.style.display = 'block';
+        emailDomainCustom.focus();
+      } else {
+        emailDomainCustom.style.display = 'none';
+        emailDomainCustom.value = '';
+      }
+    }
+  }
+  
+  // 초기 상태: 작성자 정보 섹션 및 폼 내용 숨김 (CSS에서 이미 숨김 처리되어 있지만 명시적으로 호출)
+  hideWriterInfoSection();
+  
+  // 개인정보 수집 동의 체크 시
+  if (privacyConsentAgree) {
+    privacyConsentAgree.addEventListener('change', function() {
+      if (this.checked) {
+        showWriterInfoSection();
+        restoreOriginalValues();
+        // 이메일 도메인 직접입력 상태 복원
+        handleEmailDomainChange();
+      }
+    });
+  }
+  
+  // 개인정보 수집 동의 불가 체크 시
+  if (privacyConsentDisagree) {
+    privacyConsentDisagree.addEventListener('change', function() {
+      if (this.checked) {
+        hideWriterInfoSection();
+      }
+    });
+  }
+  
+  // 이메일 도메인 직접입력 처리
+  if (emailDomain && emailDomainCustom) {
+    emailDomain.addEventListener('change', handleEmailDomainChange);
+    
+    // 초기 상태 설정: 직접입력이 선택되어 있거나 커스텀 도메인 값이 있으면 표시
+    const emailDomainValue = emailDomain.value;
+    const customDomainValue = emailDomainCustom.value;
+    
+    if (emailDomainValue === '직접입력' || (customDomainValue && emailDomainValue !== 'naver.com' && emailDomainValue !== 'gmail.com' && emailDomainValue !== 'daum.net' && emailDomainValue !== 'kakao.com')) {
+      emailDomainCustom.style.display = 'block';
+    } else {
+      emailDomainCustom.style.display = 'none';
+    }
+  }
+
   // ========= 초기화 완료 로그 =========
   // 목적: 페이지 초기화가 완료되었음을 콘솔에 로그로 출력
   //   - 디버깅: 개발자 도구의 콘솔에서 초기화 상태를 확인할 수 있음

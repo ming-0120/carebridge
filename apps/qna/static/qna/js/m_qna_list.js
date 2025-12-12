@@ -32,7 +32,7 @@
  * // 테이블 행 클릭 시 자동 호출
  * goToQnaDetail(1);
  * // 결과:
- * // 1. QnA ID 1의 상세 페이지 URL 생성: /qna/post/1/
+ * // 1. QnA ID 1의 상세 페이지 URL 생성: /qna/1/
  * // 2. 해당 URL로 페이지 이동
  */
 function goToQnaDetail(qnaId) {
@@ -41,7 +41,7 @@ function goToQnaDetail(qnaId) {
     return;
   }
   
-  const url = `/qna/post/${qnaId}/`;
+  const url = `/qna/${qnaId}/`;
   console.log('이동할 URL:', url);
   window.location.href = url;
 }
@@ -118,8 +118,74 @@ function attachTableRowListeners() {
  * // 결과:
  * // 1. 테이블 행 클릭 이벤트 리스너 연결
  */
+/**
+ * 페이지네이션 POST 방식 처리
+ * 
+ * 목적: 페이지네이션 링크를 POST 방식으로 처리
+ */
+function handlePaginationClick(e) {
+  e.preventDefault();
+  const page = e.target.getAttribute('data-page');
+  const search = e.target.getAttribute('data-search') || '';
+  
+  if (!page) return;
+  
+  // POST 방식으로 폼 생성 및 제출
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = window.location.pathname;
+  
+  // CSRF 토큰 추가
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken.value;
+    form.appendChild(csrfInput);
+  } else {
+    // 검색 폼에서 CSRF 토큰 가져오기
+    const searchForm = document.querySelector('.search-form');
+    if (searchForm) {
+      const searchCsrf = searchForm.querySelector('[name=csrfmiddlewaretoken]');
+      if (searchCsrf) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = searchCsrf.value;
+        form.appendChild(csrfInput);
+      }
+    }
+  }
+  
+  // 페이지 번호 추가
+  const pageInput = document.createElement('input');
+  pageInput.type = 'hidden';
+  pageInput.name = 'page';
+  pageInput.value = page;
+  form.appendChild(pageInput);
+  
+  // 검색 키워드 추가
+  if (search) {
+    const searchInput = document.createElement('input');
+    searchInput.type = 'hidden';
+    searchInput.name = 'search';
+    searchInput.value = search;
+    form.appendChild(searchInput);
+  }
+  
+  document.body.appendChild(form);
+  form.submit();
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners();
+  
+  // 페이지네이션 링크에 이벤트 리스너 연결
+  const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+  paginationLinks.forEach(link => {
+    link.addEventListener('click', handlePaginationClick);
+  });
 });
 
 

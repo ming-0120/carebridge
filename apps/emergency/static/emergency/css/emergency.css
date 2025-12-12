@@ -9,7 +9,10 @@ body {
   color:#1f2430;
 }
 
-.page-wrap {max-width:1180px;margin:0 auto;}
+.page-wrap {
+  max-width:1440px;  /* 1180px → 1440px로 증가 */
+  margin:0 auto;
+}
 
 header h1 {
   font-size:30px;
@@ -74,6 +77,19 @@ header h1 {
   border-bottom:2px solid #d4dae2;
 }
 
+/* 헤더 중앙정렬 */
+.table-header > div {
+  text-align:center;  /* 중앙정렬 */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+/* 기관명 컬럼은 왼쪽 정렬 유지 */
+.table-header > div:first-child {
+  text-align:left;
+  justify-content:flex-start;
+}
 
 .row {
   display:grid;
@@ -85,10 +101,25 @@ header h1 {
   transition:0.2s ease;
   cursor:pointer;
 }
+
 .row:hover {
   background:#f1f6fd;
   box-shadow: inset 0 0 0 1.5px #2d83ff;
   z-index:10;
+}
+
+/* 행의 각 셀 중앙정렬 (기관명 제외) */
+.row > div {
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+/* 기관명 컬럼은 왼쪽 정렬 유지 */
+.row > div:first-child {
+  align-items:flex-start;
+  text-align:left;
 }
 
 .h-name {
@@ -106,14 +137,16 @@ header h1 {
 }
 
 .status-wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  width:100%;
   text-align:center;
   font-size:13px;
   font-weight:600;
   color:#2c2c2c;
+  gap:4px;  /* 원형 그래프와 텍스트 사이 간격 */
 }
 
 .circle {
@@ -123,13 +156,21 @@ header h1 {
   display:flex;
   justify-content:center;
   align-items:center;
-  margin:0 auto 4px;
+  margin:0 auto;
 }
 
 .circle svg {
   width:48px;
   height:48px;
   transform:rotate(-90deg);
+}
+
+.circle .meter-bg {
+  fill:none;
+  stroke-width:4;
+  stroke-linecap:round;
+  stroke-dashoffset:0;
+  stroke:#e0e0e0;
 }
 
 .circle .meter {
@@ -150,6 +191,11 @@ header h1 {
 }
 
 .circle.red .meter {
+  stroke:#E53935;
+  color:#E53935;
+}
+
+.circle.red .meter-bg {
   stroke:#E53935;
 }
 
@@ -184,6 +230,15 @@ header h1 {
 
 .circle.none .label {
   color:#999;
+}
+
+/* 원형 그래프 아래 숫자 표시 */
+.status-value {
+  font-size:12px;
+  font-weight:600;
+  color:#2c2c2c;
+  margin-top:2px;
+  line-height:1.2;
 }
 
 .favorite {
@@ -644,6 +699,10 @@ header h1 {
     height: 100%;
 }
 
+/* ====== 기존의 잘못된 transform 제거 ====== */
+/* 아래 코드는 제거하거나 주석 처리 */
+/*
 .table-header > div {
-    transform: translateX(120px); /* 원하는 만큼 오른쪽 */
+    transform: translateX(120px);
 }
+*/

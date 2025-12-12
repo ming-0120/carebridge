@@ -8,6 +8,9 @@
     <!-- 카카오 지도 SDK -->
     <script type="text/javascript"
             src="//dapi.kakao.com/v2/maps/sdk.js?appkey=07a1ee90c6bb59b57c894dd5312eca93&libraries=services"></script>
+    <script>
+        const ACTIVE_DEPT = "{{ active_dept|default:'' }}";
+    </script>
     <link rel="stylesheet" href="{% static 'reservations/css/main.css' %}">
 </head>
 <body>
@@ -16,13 +19,12 @@
         <!-- (1) 진료과 메뉴 -->
         <div class="main">
             <aside class="sidebar">
-                <button class="dept-btn active" data-dept="내과">내과</button>
+                <button class="dept-btn" data-dept="내과">내과</button>
                 <button class="dept-btn" data-dept="외과">외과</button>
                 <button class="dept-btn" data-dept="정형외과">정형외과</button>
                 <button class="dept-btn" data-dept="이비인후과">이비인후과</button>
                 <button class="dept-btn" data-dept="소아과">소아과</button>
             </aside>
-
             <!-- (2) 지도 -->
             <section class="map-wrapper">
                 <div id="map"></div>

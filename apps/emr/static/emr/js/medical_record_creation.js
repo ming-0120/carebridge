@@ -40,7 +40,8 @@ function openTimeModal() {
 -------------------------- */
 async function fetchReservedHoursForModal(dateVal) {
     try {
-        const res = await fetch(`/mstaff/api/reserved-hours/?doctor_id=1&date=${dateVal}`);
+        const res = await fetch(`/mstaff/api/reserved-hours/?doctor_id=${CURRENT_DOCTOR_ID}&date=${dateVal}`);
+
         const data = await res.json();
 
         const reserved = new Set(data.reserved_hours || []);

@@ -68,22 +68,28 @@ document.addEventListener("DOMContentLoaded", function () {
     function initMap() {
         const container = document.getElementById("map");
         const options = {
-            center: new kakao.maps.LatLng(userLat, userLon),
+            center: new kakao.maps.LatLng(userLat || 37.4979, userLon || 127.0276),
             level: 4,
         };
         map = new kakao.maps.Map(container, options);
 
-        // 기본 진료과: 내과 (없으면 첫 번째 키)
-        const defaultDept = hospitalData["내과"]
-            ? "내과"
-            : Object.keys(hospitalData)[0];
+        // 1순위: 서버에서 내려준 ACTIVE_DEPT (예: "정형외과")
+        // 2순위: hospitalData에 "내과"가 있으면 "내과"
+        // 3순위: hospitalData의 첫 번째 키
+        let defaultDept = (typeof ACTIVE_DEPT !== "undefined" && ACTIVE_DEPT)
+            ? ACTIVE_DEPT
+            : (hospitalData["내과"] ? "내과" : Object.keys(hospitalData)[0]);    
 
         if (defaultDept) {
             updateView(defaultDept);
-            // 사이드바 버튼 active 도 같이 맞추기
+
             const btns = document.querySelectorAll(".dept-btn");
             btns.forEach((b) => {
-                if (b.dataset.dept === defaultDept) b.classList.add("active");
+                if (b.dataset.dept === defaultDept) {
+                    b.classList.add("active");
+                } else {
+                    b.classList.remove("active");
+                }
             });
         }
     }

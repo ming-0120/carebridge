@@ -12,6 +12,11 @@
 
     {% include "core/_header.html" %}
 
+    <script>
+        const PATIENT_ID = "{{ patient.user_id }}";
+    </script>
+
+
     <div class="container">
         <h2>이전 진료기록 보기</h2>
         
@@ -58,57 +63,77 @@
     </div>
 
     <!-- Treatment Modal -->
+    <!-- Treatment Modal -->
     <div class="modal-overlay" id="treatmentDetailModal">
         <div class="modal-content">
-            <div class="modal-header">치료기록 상세 모달창 (8페이지)</div>
-            <div class="modal-body">
-                <div class="modal-detail-row"><strong>처치명:</strong> Nebulizer</div>
-                <div class="modal-detail-row"><strong>처치 코드:</strong> TR001</div>
-                <div class="modal-detail-row"><strong>처치 부위:</strong> -</div>
-                <div class="modal-detail-row"><strong>시행 시각:</strong> 2025-03-14 10:20</div>
-                <div class="modal-detail-row"><strong>완료 시각:</strong> 2025-03-14 10:35</div>
-                <div class="modal-detail-row"><strong>상태:</strong> completed</div>
-                <div class="modal-detail-row"><strong>특이사항:</strong> 정상 진행</div>
-                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+
+            <div class="modal-header">치료기록 상세</div>
+
+            <div class="modal-body treatment-body">
+    처치명: <span id="treat_name"></span><br>
+    코드: <span id="treat_code"></span><br>
+    처치부위: <span id="treat_site"></span><br>
+    시행 시각: <span id="treat_exec"></span><br>
+    완료 시각: <span id="treat_done"></span><br>
+    상태: <span id="treat_status"></span><br>
+    특이사항: <span id="treat_note"></span><br>
+    담당의사: <span id="treat_doctor"></span><br>
             </div>
-            <div class="modal-footer"><button onclick="closeModal('treatmentDetailModal')">닫기</button></div>
+
+            <div class="modal-footer">
+                <button onclick="closeModal('treatmentDetailModal')">닫기</button>
+            </div>
         </div>
     </div>
 
     <!-- Lab Modal -->
     <div class="modal-overlay" id="labDetailModal">
         <div class="modal-content">
-            <div class="modal-header">검사오더 상세 모달창 (9페이지)</div>
-            <div class="modal-body">
-                <div class="modal-detail-row"><strong>검사 항목명:</strong> CBC</div>
-                <div class="modal-detail-row"><strong>검사 코드:</strong> LAB001</div>
-                <div class="modal-detail-row"><strong>검체:</strong> 혈액(BLD)</div>
-                <div class="modal-detail-row"><strong>오더 입력 시각:</strong> 2025-03-14 09:20</div>
-                <div class="modal-detail-row"><strong>상태:</strong> COMPLETED</div>
-                <div class="modal-detail-row"><strong>상태 변경 시각:</strong> 2025-03-14 10:05</div>
-                <div class="modal-detail-row"><strong>응급 여부:</strong> FALSE</div>
-                <div class="modal-detail-row"><strong>특이사항:</strong> 없음</div>
-                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+
+            <div class="modal-header">검사오더 상세</div>
+
+            <div class="modal-body lab-body">
+    검사 항목명: <span id="lab_name"></span><br>
+    코드: <span id="lab_code"></span><br>
+    검체: <span id="lab_specimen"></span><br>
+    오더 시각: <span id="lab_order_dt"></span><br>
+    상태: <span id="lab_status"></span><br>
+    상태 변경 시각: <span id="lab_status_dt"></span><br>
+    응급 여부: <span id="lab_emergency"></span><br>
+    특이사항: <span id="lab_note"></span><br>
+    담당의사: <span id="lab_doctor"></span><br>
             </div>
-            <div class="modal-footer"><button onclick="closeModal('labDetailModal')">닫기</button></div>
+
+            <div class="modal-footer">
+                <button onclick="closeModal('labDetailModal')">닫기</button>
+            </div>
         </div>
     </div>
+
 
     <!-- Prescription Modal -->
     <div class="modal-overlay" id="prescriptionDetailModal">
         <div class="modal-content">
-            <div class="modal-header">처방기록 상세 모달창 (10페이지)</div>
-            <div class="modal-body">
-                <div class="modal-detail-row"><strong>처방명:</strong> Amoxicillin 500mg</div>
-                <div class="modal-detail-row"><strong>처방 코드:</strong> DRUG022</div>
-                <div class="modal-detail-row"><strong>오더 날짜:</strong> 2025-03-14 09:52</div>
-                <div class="modal-detail-row"><strong>처방 상태:</strong> 15 (투여완료)</div>
-                <div class="modal-detail-row"><strong>적용 시작 시각:</strong> 2025-03-14</div>
-                <div class="modal-detail-row"><strong>적용 종료 시각:</strong> 2025-03-19</div>
-                <div class="modal-detail-row"><strong>특이사항:</strong> 없음</div>
-                <div class="modal-detail-row"><strong>담당 의사:</strong> 박○○</div>
+
+            <div class="modal-header">처방기록 상세</div>
+
+            <div class="modal-body prescription-body">
+                처방명: <span id="drug_name"></span><br>
+                코드: <span id="drug_code"></span><br>
+                오더시각: <span id="drug_order_dt"></span><br>
+                용량: <span id="drug_dose"></span><br>
+                횟수: <span id="drug_freq"></span><br>
+                투약시작: <span id="drug_start_dt"></span><br>
+                투약종료: <span id="drug_end_dt"></span><br>
+                상태: <span id="drug_status"></span><br>
+                특이사항: <span id="drug_note"></span><br>
+                담당의사: <span id="drug_doctor"></span><br>
             </div>
-            <div class="modal-footer"><button onclick="closeModal('prescriptionDetailModal')">닫기</button></div>
+
+
+            <div class="modal-footer">
+                <button onclick="closeModal('prescriptionDetailModal')">닫기</button>
+            </div>
         </div>
     </div>
 

@@ -67,54 +67,54 @@
         {# 응급실 일반 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}
+            {% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total type_name="er_general" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="er_general" %}
           {% endif %}
         </div>
 
         {# 응급실 소아 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}
+            {% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total type_name="er_child" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="er_child" %}
           {% endif %}
         </div>
 
         {# 분만실 (hv42/hvs26 → birth_available/birth_total) #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}
+            {% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total type_name="birth" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="birth" %}
           {% endif %}
         </div>
 
         {# 음압격리 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}
+            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total type_name="negative_pressure" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="negative_pressure" %}
           {% endif %}
         </div>
 
         {# 일반격리 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total type_name="isolation_general" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="isolation_general" %}
           {% endif %}
         </div>
 
         {# 코호트격리 (hv27/hvs59 → isolation_cohort_available/total) #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total type_name="isolation_cohort" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="isolation_cohort" %}
           {% endif %}
         </div>
 
@@ -137,7 +137,7 @@
   window.selectedSido = '{{ selected_sido|default:"" }}';
   window.selectedSigungu = '{{ selected_sigungu|default:"" }}';
   window.selectedEtype = '{{ selected_etype|default:"" }}';
-  window.selectedFilters = JSON.parse('{{ selected_filters|safe }}');
+  window.selectedFilters = JSON.parse('{{ selected_filters|safe|default:"{}" }}');
 
   // -------------------------
   // CSRF 토큰 가져오기 함수

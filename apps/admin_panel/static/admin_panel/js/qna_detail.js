@@ -42,16 +42,18 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 사용자 경험(UX) 개선: 실수로 답변을 완료하거나 취소하는 것을 방지
   //   - 안전성: 중요한 작업 전에 한 번 더 확인하는 절차 제공
   
-  const replyForm = document.querySelector('form[method="post"]');
-  if (!replyForm) {
-    return;
-  }
+  // const replyForm = document.querySelector('form[method="post"]');
+  // if (!replyForm) {
+  //   return;
+  // }
   
   // 답변 완료 버튼 클릭 이벤트
   const replyButton = document.getElementById('replyBtn');
   if (replyButton) {
     replyButton.addEventListener('click', function(e) {
       e.preventDefault();
+      // const replyForm = document.querySelector('form[method="post"]');
+      const replyForm = document.getElementById('qndFrom');
       
       const replyContent = document.querySelector('textarea[name="reply_content"]').value.trim();
       
@@ -63,12 +65,20 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // confirm 창 표시
       if (confirm('답변을 완료하시겠습니까?')) {
+        // 기존 action 필드 제거 (중복 방지)
+        const existingAction = replyForm.querySelector('input[name="action"]');
+        if (existingAction) {
+          existingAction.remove();
+        }
+        
         // 확인을 누르면 action 필드를 추가하고 폼 제출
         const actionInput = document.createElement('input');
         actionInput.type = 'hidden';
         actionInput.name = 'action';
         actionInput.value = 'reply';
         replyForm.appendChild(actionInput);
+        
+        console.log('답변 완료 폼 제출:', replyForm.action);
         replyForm.submit();
       }
     });
@@ -79,15 +89,24 @@ document.addEventListener('DOMContentLoaded', function() {
   if (cancelButton) {
     cancelButton.addEventListener('click', function(e) {
       e.preventDefault();
+      const replyForm = document.querySelector('form[method="post"]');
       
       // confirm 창 표시
       if (confirm('답변을 취소하시겠습니까?\n작성한 답변 내용이 삭제됩니다.')) {
+        // 기존 action 필드 제거 (중복 방지)
+        const existingAction = replyForm.querySelector('input[name="action"]');
+        if (existingAction) {
+          existingAction.remove();
+        }
+        
         // 확인을 누르면 action 필드를 추가하고 폼 제출
         const actionInput = document.createElement('input');
         actionInput.type = 'hidden';
         actionInput.name = 'action';
         actionInput.value = 'cancel';
         replyForm.appendChild(actionInput);
+        
+        console.log('답변 취소 폼 제출:', replyForm.action);
         replyForm.submit();
       }
     });
