@@ -51,7 +51,7 @@ body {
 /* 그리드 영역 지정 (스토리보드 1페이지 기반) - 데스크톱 (3단) */
 .doctor-profile { grid-area: 1 / 1 / 2 / 2; } /* 2번 영역 */
 .calendar { grid-area: 1 / 2 / 2 / 3; } /* 3번 영역 */
-.patient-list { grid-area: 1 / 3 / 2 / 3; } /* 4번 영역 (세로로 확장) */
+.patient-list { grid-area: 1 / 3 / 2 / 3; height: 460px; overflow-y: auto; } /* 4번 영역 (세로로 확장) */
 .memo { grid-area: 2 / 1 / 3 / 2; } /* 5번 영역 */
 .patient-search { grid-area: 3 / 1 / 4 / 2; } /* 6번 영역 */
 .chart-weekly { grid-area: 2 / 2 / 3 / 2; } /* 7번 영역 (세로로 확장) */

@@ -668,7 +668,46 @@ def medical_record_inquiry(request):
 
 def patient_search_list(request):
     ctx = get_common_header_context(request)
-    return render(request, "emr/patient_search_list.html", ctx)
+
+    keyword = request.GET.get("searchQuery", "").strip()
+
+    # 병원 ID 가져오기
+    user_id = request.session.get("user_id")
+    try:
+        doctor = Doctors.objects.get(user_id=user_id)
+        hos_id = doctor.hos_id
+    except Doctors.DoesNotExist:
+        print('error')
+
+    try:
+        # 병원과 연결된 환자 필터링
+        patients = Users.objects.filter(
+            Q(reservations__slot__doctor__hos_id=hos_id) |
+            Q(medicalrecord__hos_id=hos_id)
+        ).distinct()
+
+        # 검색 키워드 필터
+        patients = patients.filter(
+            Q(name__icontains=keyword) |
+            Q(resident_reg_no__startswith=keyword)
+        )
+
+        results = []
+        for p in patients:
+            rrn = p.resident_reg_no or ""
+            dob = None
+            if len(rrn) >= 8:
+                dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+
+            results.append({
+                "user_id": p.user_id,
+                "name": p.name,
+                "gender": p.gender,
+                "birth_date": dob,
+            })
+        return render(request, "emr/patient_search_list.html", {"patients": results})
+    except Exception as e:
+        return render(request, "emr/patient_search_list.html", {})
 
 def today_patient_list(request):
     ctx = get_common_header_context(request)

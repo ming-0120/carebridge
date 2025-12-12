@@ -127,6 +127,15 @@ header h1 {
   font-weight:700;
   color:#1f2430;
   margin-bottom:6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.update-time {
+  font-size: 12px;
+  font-weight: 500;
+  color: #888;
 }
 
 .h-subinfo {
@@ -162,7 +171,7 @@ header h1 {
 .circle svg {
   width:48px;
   height:48px;
-  transform:rotate(-90deg);
+  transform:rotate(-90deg);  /* 12시 기준으로 시작하도록 변경 */
 }
 
 .circle .meter-bg {
@@ -177,8 +186,9 @@ header h1 {
   fill:none;
   stroke-width:4;
   stroke-linecap:round;
-  transition:stroke-dasharray 0.3s ease;
-  stroke-dashoffset:0;
+  stroke-dasharray:125.66, 125.66;  /* 원주 전체를 dash로 설정 */
+  stroke-dashoffset:var(--dash-offset, 125.66);  /* CSS 변수 사용, 기본값은 비어있음 */
+  transition:stroke-dashoffset 0.6s ease;  /* 값 변경 시 부드럽게 전환 */
 }
 
 /* 색상별 스타일 */

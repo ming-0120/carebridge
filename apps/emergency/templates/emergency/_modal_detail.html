@@ -9,8 +9,10 @@
     <!-- Header: 병원명 + 주소 + 즐겨찾기 -->
     <div class="detail-header">
       <div class="detail-header-top">
-        <h1 id="detail-title" class="detail-title"></h1>
-        <div id="detail-favorite" class="detail-favorite" data-er-id="">★</div>
+        <div class="detail-title-wrapper">
+          <h1 id="detail-title" class="detail-title"></h1>
+          <div id="detail-favorite" class="detail-favorite" data-er-id="">★</div>
+        </div>
       </div>
       <p id="detail-address" class="detail-address"></p>
       <div id="detail-tags" class="tag-row"></div>
@@ -53,34 +55,8 @@
       </div>
     </div>
 
-    <!-- 하단 2단 구성 -->
+    <!-- 하단: 위치 / 길찾기 -->
     <div class="detail-bottom">
-
-      <!-- AI 리뷰 요약 -->
-      <div class="detail-box">
-        <h3 class="detail-box-title">AI 리뷰 요약</h3>
-        <div id="detail-review-content">
-          <div id="review-sentiment" class="review-sentiment hidden">
-            <div class="sentiment-bar">
-              <div class="sentiment-positive">
-                <span>긍정</span>
-                <span id="positive-percent">0%</span>
-              </div>
-              <div class="sentiment-negative">
-                <span>부정</span>
-                <span id="negative-percent">0%</span>
-              </div>
-            </div>
-            <div class="sentiment-visual">
-              <div id="positive-bars" class="sentiment-bars positive-bars"></div>
-              <div id="negative-bars" class="sentiment-bars negative-bars"></div>
-            </div>
-          </div>
-          <div id="review-summary" class="review-summary">
-            <p id="review-summary-text">리뷰 데이터 준비중...</p>
-          </div>
-        </div>
-      </div>
 
       <!-- 위치 / 길찾기 -->
       <div class="detail-box">
