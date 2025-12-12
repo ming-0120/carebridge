@@ -1183,6 +1183,17 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 목적: URL에 의사 ID가 있는지 확인
   const selectedDoctorId = urlParams.get('doctor_id');
   
+  // ========= 기본 상태에서 상세정보 섹션 숨기기 =========
+  // 목적: URL에 doctor_id가 없으면 상세정보 섹션을 완전히 숨김
+  //   - 사용자 경험(UX) 개선: 아무것도 선택하지 않은 기본 상태에서는 상세정보가 보이지 않도록 함
+  //   - 데이터 일관성: 선택된 의사가 없으면 상세정보도 표시하지 않음
+  if (!selectedDoctorId) {
+    const detailSection = document.querySelector('.user-detail-section');
+    if (detailSection) {
+      detailSection.remove();
+    }
+  }
+  
   // ========= 선택된 의사 행에 selected 클래스 추가 =========
   // 목적: URL에 의사 ID가 있으면 해당 의사 행을 선택 상태로 표시
   //   - 사용자 경험(UX) 개선: 페이지 새로고침 후에도 선택된 행이 유지됨

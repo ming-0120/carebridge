@@ -56,20 +56,10 @@ def qna_list(request):
             Q(content__icontains=search_keyword)
         )
     
-    # 답변이 올려진 시간 순으로 정렬
-    # 1. 답변이 있는 것(reply가 있는 것)을 먼저 표시
-    # 2. 답변이 있는 것들은 문의 작성 시간(created_at) 기준 내림차순 (최신 답변 먼저)
-    # 3. 답변이 없는 것들은 문의 작성 시간(created_at) 기준 내림차순
-    # 주의: Qna 모델에 답변 작성 시간 필드가 없으므로, 답변이 있는 것들을 우선 표시하고
-    #       그 안에서 문의 작성 시간 순으로 정렬합니다.
-    qnas = qnas.annotate(
-        has_reply=Case(
-            When(reply__isnull=False, reply='', then=Value(0)),
-            When(reply__isnull=False, then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField()
-        )
-    ).order_by('-has_reply', '-created_at')
+    # 문의 일자 최신순으로 정렬
+    # - created_at 기준 내림차순 (최신 문의가 먼저 표시)
+    # - 답변 유무와 관계없이 문의 작성 시간 순으로 정렬
+    qnas = qnas.order_by('-created_at')
     
     # 페이지네이션 (10개씩)
     paginator = Paginator(qnas, 10)

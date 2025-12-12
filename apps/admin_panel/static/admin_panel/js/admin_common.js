@@ -213,7 +213,8 @@ function selectItem(event, itemId, paramName = 'id') {
     // data.detail_html: 서버에서 반환한 상세 정보 HTML 문자열
     //   - 예: '<div class="user-detail-section">...</div>'
     //   - 존재 여부 확인: 서버에서 상세 정보를 반환했는지 확인
-    if (data.detail_html) {
+    //   - 빈 문자열 체크: 상세 정보가 없으면 기존 상세 정보 섹션 제거
+    if (data.detail_html && data.detail_html.trim()) {
       // ========= 임시 DOM 요소 생성 및 HTML 파싱 =========
       // 목적: 서버에서 받은 HTML 문자열을 실제 DOM 요소로 변환
       //   - innerHTML을 직접 사용하면 보안 위험(XSS)이 있지만, 서버에서 신뢰할 수 있는 데이터이므로 사용
@@ -288,6 +289,13 @@ function selectItem(event, itemId, paramName = 'id') {
         }
       } else if (currentDetailSection) {
         // 상세 정보가 없으면 제거
+        currentDetailSection.remove();
+      }
+    } else {
+      // ========= 상세 정보가 없을 때 기존 상세 정보 섹션 제거 =========
+      // 목적: 선택이 해제되었거나 상세 정보가 없을 때 상세 정보 섹션을 완전히 숨김
+      //   - 사용자 경험(UX) 개선: 선택이 해제되면 상세 정보도 함께 사라지도록 함
+      if (currentDetailSection) {
         currentDetailSection.remove();
       }
     }

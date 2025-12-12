@@ -34,17 +34,6 @@
               <h2 class="terms-title">개인정보수집 및 이용동의 (필수)</h2>
             </div>
 
-            <div class="terms-options">
-              <label class="terms-option">
-                <input type="radio" name="privacy_consent" value="agree" required>
-                <span>개인정보 수집 동의.</span>
-              </label>
-              <label class="terms-option">
-                <input type="radio" name="privacy_consent" value="disagree">
-                <span>개인정보수집 및 이용에 동의 불가.</span>
-              </label>
-            </div>
-
             <div class="terms-box">
               <h3>1. 개인정보 수집 목적</h3>
               <ul>
@@ -139,6 +128,17 @@
                 <li>이메일: support@carebridge.com</li>
               </ul>
             </div>
+
+            <div class="terms-options">
+              <label class="terms-option">
+                <input type="radio" name="privacy_consent" value="agree" required>
+                <span>개인정보 수집 동의.</span>
+              </label>
+              <label class="terms-option">
+                <input type="radio" name="privacy_consent" value="disagree">
+                <span>개인정보수집 및 이용에 동의 불가.</span>
+              </label>
+            </div>
           </div>
         </div>
 
@@ -153,41 +153,34 @@
             <div class="writer-info-item">
               <span class="writer-info-label">생년월일</span>
               <div class="writer-info-value">
-                <input type="text" id="writer-birth" class="writer-input" value="{{ birth_date|default:'' }}" readonly>
+                <span class="writer-text">{{ birth_date|default:'' }}</span>
               </div>
             </div>
             
             <div class="writer-info-item">
               <span class="writer-info-label">연락처</span>
               <div class="writer-info-value writer-phone-group">
-                <select id="phone-area" class="writer-select">
-                  <option value="010" {% if phone_parts.area == '010' %}selected{% endif %}>010</option>
-                  <option value="011" {% if phone_parts.area == '011' %}selected{% endif %}>011</option>
-                  <option value="016" {% if phone_parts.area == '016' %}selected{% endif %}>016</option>
-                  <option value="017" {% if phone_parts.area == '017' %}selected{% endif %}>017</option>
-                  <option value="018" {% if phone_parts.area == '018' %}selected{% endif %}>018</option>
-                  <option value="019" {% if phone_parts.area == '019' %}selected{% endif %}>019</option>
-                </select>
+                <span class="writer-text">{{ phone_parts.area|default:'' }}</span>
+                <input type="hidden" name="phone_area" value="{{ phone_parts.area|default:'' }}">
                 <span class="phone-separator">-</span>
-                <input type="text" id="phone-middle" class="writer-input phone-input" value="{{ phone_parts.middle|default:'' }}" maxlength="4" readonly>
+                <span class="writer-text">{{ phone_parts.middle|default:'' }}</span>
                 <span class="phone-separator">-</span>
-                <input type="text" id="phone-last" class="writer-input phone-input" value="{{ phone_parts.last|default:'' }}" maxlength="4" readonly>
+                <span class="writer-text">{{ phone_parts.last|default:'' }}</span>
               </div>
             </div>
             
             <div class="writer-info-item">
               <span class="writer-info-label">이메일</span>
               <div class="writer-info-value writer-email-group">
-                <input type="text" id="email-username" class="writer-input email-input" value="{{ email_parts.username|default:'' }}" readonly>
+                <span class="writer-text">{{ email_parts.username|default:'' }}</span>
                 <span class="email-separator">@</span>
-                <select id="email-domain" class="writer-select">
-                  <option value="naver.com" {% if email_parts.domain == 'naver.com' %}selected{% endif %}>naver.com</option>
-                  <option value="gmail.com" {% if email_parts.domain == 'gmail.com' %}selected{% endif %}>gmail.com</option>
-                  <option value="daum.net" {% if email_parts.domain == 'daum.net' %}selected{% endif %}>daum.net</option>
-                  <option value="kakao.com" {% if email_parts.domain == 'kakao.com' %}selected{% endif %}>kakao.com</option>
-                  <option value="직접입력" {% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}selected{% endif %}>직접입력</option>
-                </select>
-                <input type="text" id="email-domain-custom" class="writer-input email-input-custom" value="{% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}{{ email_parts.domain }}{% endif %}" placeholder="직접입력">
+                {% if email_parts.domain and email_parts.domain != 'naver.com' and email_parts.domain != 'gmail.com' and email_parts.domain != 'daum.net' and email_parts.domain != 'kakao.com' %}
+                <span class="writer-text">{{ email_parts.domain }}</span>
+                <input type="hidden" name="email_domain" value="{{ email_parts.domain }}">
+                {% else %}
+                <span class="writer-text">{{ email_parts.domain|default:'' }}</span>
+                <input type="hidden" name="email_domain" value="{{ email_parts.domain|default:'' }}">
+                {% endif %}
               </div>
             </div>
           </div>

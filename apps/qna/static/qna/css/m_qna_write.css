@@ -217,6 +217,29 @@
   flex: 1;
   font-size: 14px;
   color: #222;
+  max-width: 400px;
+}
+
+.writer-text {
+  display: inline-block;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #222;
+  background-color: #F5F5F5;
+  border: none;
+  border-radius: 6px;
+  min-width: 60px;
+  text-align: left;
+}
+
+.writer-phone-group .writer-text {
+  min-width: 50px;
+  max-width: 80px;
+}
+
+.writer-email-group .writer-text {
+  min-width: 80px;
+  max-width: 150px;
 }
 
 .writer-input {
@@ -226,7 +249,12 @@
   font-size: 14px;
   background-color: #fff;
   width: 100%;
+  max-width: 300px;
   box-sizing: border-box;
+}
+
+#writer-birth {
+  max-width: 200px;
 }
 
 .writer-input:focus {
@@ -241,11 +269,20 @@
   font-size: 14px;
   background-color: #fff;
   cursor: pointer;
+  min-width: 80px;
+  max-width: 120px;
 }
 
 .writer-select:focus {
   outline: none;
   border-color: #1B3C73;
+}
+
+.writer-select:disabled {
+  background-color: #F5F5F5;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
 }
 
 .writer-phone-group {
@@ -262,6 +299,7 @@
 .phone-input {
   flex: 1;
   min-width: 0;
+  max-width: 80px;
 }
 
 .writer-email-group {
@@ -278,11 +316,13 @@
 .email-input {
   flex: 1;
   min-width: 0;
+  max-width: 150px;
 }
 
 .email-input-custom {
   flex: 1;
   min-width: 0;
+  max-width: 150px;
 }
 
 /*
@@ -308,9 +348,10 @@
 
 .terms-options {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-direction: row;
+  gap: 24px;
   margin-bottom: 16px;
+  align-items: center;
 }
 
 .terms-option {
@@ -452,7 +493,16 @@
 
   .writer-info-value {
     width: 100%;
+    max-width: 100%;
     font-size: 13px;
+  }
+
+  .writer-input {
+    max-width: 100%;
+  }
+
+  .writer-select {
+    max-width: 100%;
   }
 
   .writer-phone-group,
@@ -465,6 +515,7 @@
   .email-input,
   .email-input-custom {
     width: 100%;
+    max-width: 100%;
     margin-top: 4px;
   }
 }

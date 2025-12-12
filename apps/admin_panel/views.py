@@ -115,7 +115,7 @@ def generate_dummy_email(username, role='PATIENT', index=0):
 
 def get_request_param(request, param_name, default=''):
     """
-    POST 요청에서 파라미터 값을 가져오는 공통 함수
+    GET 또는 POST 요청에서 파라미터 값을 가져오는 공통 함수
     
     Args:
         request: HTTP 요청 객체
@@ -125,7 +125,8 @@ def get_request_param(request, param_name, default=''):
     Returns:
         파라미터 값 또는 기본값
     """
-    return request.POST.get(param_name, default)
+    # GET 요청에서 먼저 확인, 없으면 POST 요청에서 확인
+    return request.GET.get(param_name) or request.POST.get(param_name, default)
 
 def paginate_queryset(request, queryset, per_page=5):
     """쿼리셋을 페이지네이션 처리하는 공통 함수"""
@@ -439,20 +440,30 @@ def user_list(request):
         else:
             number = start_index + idx
         
-        # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+        # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
         birth_date = None
         if user.resident_reg_no:
             reg_no = user.resident_reg_no.replace('-', '')  # 하이픈 제거
-            if len(reg_no) >= 6:
+            if len(reg_no) >= 7:
                 yy = reg_no[0:2]
                 mm = reg_no[2:4]
                 dd = reg_no[4:6]
+                gender_code = reg_no[6] if len(reg_no) > 6 else None
                 
                 try:
                     month_int = int(mm)
                     day_int = int(dd)
                     if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                        birth_date = f'{yy}.{mm}.{dd}'
+                        # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                        if gender_code in ['1', '2', '5', '6']:
+                            yyyy = f'19{yy}'
+                        elif gender_code in ['3', '4', '7', '8']:
+                            yyyy = f'20{yy}'
+                        else:
+                            # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                            yy_int = int(yy)
+                            yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                        birth_date = f'{yyyy}년{mm}월{dd}일'
                 except ValueError:
                     pass
         
@@ -497,19 +508,29 @@ def user_list(request):
             favorites = UserFavorite.objects.filter(user=selected_user)
             favorite_hospitals = [fav.hos.name for fav in favorites if hasattr(fav, 'hos')]
             
-            # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+            # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
             if selected_user.resident_reg_no:
                 reg_no = selected_user.resident_reg_no.replace('-', '')  # 하이픈 제거
-                if len(reg_no) >= 6:
+                if len(reg_no) >= 7:
                     yy = reg_no[0:2]
                     mm = reg_no[2:4]
                     dd = reg_no[4:6]
+                    gender_code = reg_no[6] if len(reg_no) > 6 else None
                     
                     try:
                         month_int = int(mm)
                         day_int = int(dd)
                         if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                            birth_date = f'{yy}.{mm}.{dd}'
+                            # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                            if gender_code in ['1', '2', '5', '6']:
+                                yyyy = f'19{yy}'
+                            elif gender_code in ['3', '4', '7', '8']:
+                                yyyy = f'20{yy}'
+                            else:
+                                # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                                yy_int = int(yy)
+                                yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                            birth_date = f'{yyyy}년{mm}월{dd}일'
                     except ValueError:
                         pass
             
@@ -936,6 +957,8 @@ def approval_pending(request):
     selected_doctor_id = get_request_param(request, 'doctor_id', '')
     selected_doctor = None
     
+    # URL에 doctor_id 파라미터가 있을 때만 의사 선택
+    # 기본 상태에서는 아무것도 선택하지 않음 (상세정보 숨김)
     if selected_doctor_id:
         try:
             selected_doctor = Doctors.objects.select_related(
@@ -943,8 +966,6 @@ def approval_pending(request):
             ).get(doctor_id=selected_doctor_id, verified=False)
         except Doctors.DoesNotExist:
             pass
-    elif pending_doctors.exists():
-        selected_doctor = pending_doctors.first()
     
     # 페이지네이션
     page_obj, total_count = paginate_queryset(request, pending_doctors, per_page=5)
@@ -1030,6 +1051,49 @@ def qna_list(request):
     user_role = request.session.get('role', '')
     if user_role != 'ADMIN':
         return redirect('/')
+    
+    # ========= 30일 이전 데이터 자동 삭제 =========
+    # 목적: 오늘 날짜 기준으로 30일 이전 문의 데이터를 자동으로 삭제
+    #   - 데이터 관리: 오래된 문의 데이터를 자동으로 정리하여 데이터베이스 용량 관리
+    #   - 개인정보 보호: 오래된 문의 데이터를 자동으로 삭제하여 개인정보 보호
+    #   - 성능 최적화: 오래된 데이터를 삭제하여 쿼리 성능 향상
+    # 
+    # timezone.now(): 현재 시간 (시간대를 고려한 현재 시간)
+    #   - Django의 timezone.now()는 settings.py의 TIME_ZONE 설정을 고려
+    #   - 반환값: datetime 객체 (예: 2024-12-12 16:30:00+09:00)
+    #   - 목적: 현재 시간을 기준으로 30일 전 날짜를 계산
+    # 
+    # timedelta(days=30): 30일의 시간 간격
+    #   - days=30: 30일
+    #   - 반환값: timedelta 객체
+    #   - 목적: 현재 시간에서 30일을 빼기 위함
+    # 
+    # timezone.now() - timedelta(days=30): 30일 전 날짜/시간 계산
+    #   - 반환값: datetime 객체 (30일 전 날짜/시간)
+    #   - 예: 오늘이 2024-12-12이면 2024-11-12 반환
+    #   - 목적: 이 날짜 이전의 문의 데이터를 삭제하기 위함
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    
+    # Qna.objects.filter(...): 조건에 맞는 문의들을 필터링
+    #   - created_at__lt=thirty_days_ago: created_at 필드가 thirty_days_ago보다 이전인 문의
+    #     → created_at__lt: Django ORM의 필드 조회 메서드 (less than)
+    #     → SQL의 WHERE created_at < '2024-11-12'와 동일한 역할
+    #     → 예: 2024-11-10에 생성된 문의는 삭제됨
+    #     → 예: 2024-11-15에 생성된 문의는 삭제되지 않음
+    #   - .delete(): 필터링된 문의들을 데이터베이스에서 삭제
+    #     → SQL의 DELETE 문과 동일한 역할
+    #     → 반환값: (삭제된 객체 수, {모델명: 삭제된 객체 수}) 튜플
+    #     → 예: (5, {'qna.Qna': 5}) - 5개의 문의가 삭제됨
+    #   - 목적: 30일 이전의 문의 데이터를 자동으로 삭제
+    #   - 결과: 30일 이전의 문의 데이터가 데이터베이스에서 제거됨
+    #   - 주의: 삭제된 데이터는 복구할 수 없으므로 신중하게 처리됨
+    deleted_count, _ = Qna.objects.filter(created_at__lt=thirty_days_ago).delete()
+    
+    # 삭제된 문의가 있는 경우 로그 출력 (선택사항)
+    #   - 디버깅 목적으로 삭제된 문의 개수를 확인할 수 있음
+    #   - 프로덕션 환경에서는 로깅 시스템으로 대체 가능
+    if deleted_count > 0:
+        print(f'[qna_list] 30일 이전 문의 데이터 {deleted_count}개 자동 삭제 완료')
     
     # 삭제 처리 (POST 요청)
     if request.method == 'POST':
