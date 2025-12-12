@@ -1346,11 +1346,9 @@ def api_search_patient(request):
 
     try:
         # 병원과 연결된 환자 필터링
-        patients = Users.objects.filter(role="patient").filter(
+        patients = Users.objects.filter(
             Q(reservations__slot__doctor__hos_id=hos_id) |
-            Q(medicalrecord__hos_id=hos_id) |
-            Q(laborders__medical_record__hos_id=hos_id) |
-            Q(treatmentprocedures__medical_record__hos_id=hos_id)
+            Q(medicalrecord__hos_id=hos_id)
         ).distinct()
 
         # 검색 키워드 필터
