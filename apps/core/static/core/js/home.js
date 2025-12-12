@@ -162,9 +162,9 @@ async function sendMessage() {
 
       btn.addEventListener("click", () => {
         const params = new URLSearchParams({
-          department_id: dept.dep_code,
+          dept_id: dept.dep_code,
         });
-        window.location.href = `/reservations/?${params.toString()}`;
+        window.location.href = `/reservations/main/?${params.toString()}`;
       });
 
       botTextEl.appendChild(document.createElement("br"));
