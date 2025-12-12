@@ -357,7 +357,7 @@ def account_withdraw(request):
 
         # 2) 탈퇴 처리 (withdrawal 필드 타입에 맞게 값 설정)
         user.withdrawal = '1'   
-        user.username = f"{user.username}_deleted_{user.id}"
+        user.username = f"{user.username}_deleted_{user.user_id}"
         user.save()
 
         # 3) 세션/로그인 정보 제거

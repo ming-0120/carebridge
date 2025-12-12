@@ -51,6 +51,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 position: pos,
                 map: map,
             });
+
+            // ① 이 마커가 어떤 병원인지 저장
+            const hospitalForModal = makeHospitalForModal(h);
+            marker.hospital = hospitalForModal;
+
+            // ② 마커 클릭 시 모달 오픈
+            kakao.maps.event.addListener(marker, "click", function () {
+                openHospitalModal(marker.hospital);
+            });
+
             markers.push(marker);
         });
 
@@ -93,23 +103,39 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         }
     }
-
+    // =======================
+    // 공통: 모달에 넣을 병원 데이터 만들기
+    // =======================
+    function makeHospitalForModal(h) {
+        return {
+            id: h.id,
+            name: h.name,
+            dept: h.dept,
+            dept_code: h.dept_code,
+            city: h.city,
+            phone: h.tel,
+            hours: h.opening,
+            address: h.address,
+            rating: h.rating,
+            sggu: h.sggu,
+        };
+    }
     // =======================
     // 4. 카드 렌더링 + 모달 오픈
     // =======================
     function renderCards(list) {
         const container = document.getElementById("hospitalCards");
         container.innerHTML = "";
-
+        
         list.forEach((h) => {
             const card = document.createElement("div");
             card.className = "hospital-card";
-
+        
             // 정수 평점 처리 (없으면 0으로)
             const ratingRaw = Number(h.rating ?? 0);
             const rating = Math.max(0, Math.min(5, Math.round(ratingRaw)));
             const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-
+        
             card.innerHTML = `
                 <div class="hospital-name" id="${h.id}">${h.name}</div>
                 <div class="rating">
@@ -123,26 +149,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div>거리: ${h.distance.toFixed(2)} km</div>
                 </div>
             `;
-
+        
             // 병원 이름 클릭 시 모달 오픈
             const nameEl = card.querySelector(".hospital-name");
             nameEl.addEventListener("click", () => {
-                const hospitalForModal = {
-                    id: h.id,
-                    name: h.name,
-                    dept: h.dept,
-                    dept_code: h.dept_code,
-                    city: h.city,
-                    phone: h.tel,
-                    hours: h.opening,
-                    address: h.address,
-                    rating: h.rating,
-                    sggu: h.sggu,
-                };
-
+                const hospitalForModal = makeHospitalForModal(h);
                 openHospitalModal(hospitalForModal);
             });
-
+        
             container.appendChild(card);
         });
     }

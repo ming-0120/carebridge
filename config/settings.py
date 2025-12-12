@@ -39,9 +39,10 @@ KAKAO_MAP_JS_KEY = os.getenv("KAKAO_MAP_JS_KEY")
 
 ALLOWED_HOSTS = [
     "52.79.116.240",
-    "52.79.116.240:8000",
     "localhost",
     "127.0.0.1",
+    "dn-carebridge.com",
+    "www.dn-carebridge.com",
 ]
 
 
