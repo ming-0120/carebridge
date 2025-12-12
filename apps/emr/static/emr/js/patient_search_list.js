@@ -1,4 +1,6 @@
-function selectPatient(rowElement) {
+let selectedPatientId = null;
+
+async function selectPatient(rowElement) {
 
     document.querySelectorAll('#patientTable tbody tr').forEach(row => {
         row.classList.remove('selected');
@@ -11,25 +13,53 @@ function selectPatient(rowElement) {
     const gender = cells[2].textContent;
     const dob = cells[3].textContent;
     const patientId = rowElement.getAttribute('data-patient-id');
+    selectedPatientId = patientId;
 
     document.getElementById('pName').textContent = name;
     document.getElementById('pGender').textContent = gender;
     document.getElementById('pDOB').textContent = dob;
 
-    if (patientId === 'P0000001') {
-        document.getElementById('rConsult').textContent = '2025-03-14 / consult_note / 완료';
-        document.getElementById('rPrescription').textContent = 'Amoxicillin / 2025-03-13 / 투여완료';
-        document.getElementById('rLab').textContent = 'CBC / 2025-03-12 / 일반검사';
-        document.getElementById('rTreatment').textContent = 'Dressing / 2025-03-10 / 완료';
+    // -------------------------
+    // 🔥 백엔드 API 호출
+    // -------------------------
+    const response = await fetch(`/mstaff/api/patient/${patientId}/recent-records/`);
+    const data = await response.json();
+
+    // 최근 진료
+    if (data.consult) {
+        document.getElementById('rConsult').textContent =
+            `${data.consult.record_datetime} / ${data.consult.record_type}`;
     } else {
         document.getElementById('rConsult').textContent = '최근 진료 기록 없음';
+    }
+
+    // 최근 처방
+    if (data.prescription) {
+        document.getElementById('rPrescription').textContent =
+            `${data.prescription.order_name} / ${data.prescription.order__order_datetime}`;
+    } else {
         document.getElementById('rPrescription').textContent = '최근 처방 기록 없음';
+    }
+
+    // 최근 검사
+    if (data.lab) {
+        document.getElementById('rLab').textContent =
+            `${data.lab.lab_nm} / ${data.lab.order_datetime} / ${data.lab.status}`;
+    } else {
         document.getElementById('rLab').textContent = '최근 검사 기록 없음';
+    }
+
+    // 최근 치료
+    if (data.treatment) {
+        document.getElementById('rTreatment').textContent =
+            `${data.treatment.procedure_name} / ${data.treatment.execution_datetime} / ${data.treatment.status}`;
+    } else {
         document.getElementById('rTreatment').textContent = '최근 치료 기록 없음';
     }
 
     document.getElementById('selectedPatientDetails').style.display = 'block';
 }
+
 
 
 async function performSearch() {
@@ -65,5 +95,14 @@ async function performSearch() {
         `;
         tbody.appendChild(tr);
     });
+}
+
+function goToRecordPage() {
+    if (!selectedPatientId) {
+        alert("환자를 먼저 선택하세요.");
+        return;
+    }
+
+    window.location.href = `/mstaff/record_inquiry/?patient_id=${selectedPatientId}`;
 }
 

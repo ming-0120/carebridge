@@ -20,6 +20,12 @@ from django.db.models import Count
 from django.db.models import DateField
 from django.db.models.functions import Cast
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db.models import Max
+from django.utils.timezone import make_aware
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.forms.models import model_to_dict
+import socket
 
 
 KST = tz("Asia/Seoul")
@@ -66,6 +72,72 @@ def get_common_header_context(request):
         "department": department,
         "doctor_name": doctor_name,
     }
+
+@require_GET
+def api_patient_summary(request):
+    patient_id = request.GET.get("patient_id")
+
+    if not patient_id:
+        return JsonResponse({"error": "patient_id required"}, status=400)
+
+    # 환자 기본 정보
+    try:
+        patient = Users.objects.get(user_id=patient_id)
+    except Users.DoesNotExist:
+        return JsonResponse({"error": "not found"}, status=404)
+
+    # 생년월일
+    birth_date = extract_birth_date(patient.resident_reg_no)
+
+    # -----------------------------------------
+    # 1) 최근 방문 기록 1건
+    # -----------------------------------------
+    recent_record = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .select_related("doctor", "doctor__user", "doctor__dep")
+        .order_by("-record_datetime")
+        .first()
+    )
+
+    recent_visit = None
+    recent_dept = None
+    recent_doctor = None
+
+    if recent_record:
+        recent_visit = recent_record.record_datetime.strftime("%Y-%m-%d %H:%M")
+
+        if recent_record.doctor and recent_record.doctor.dep:
+            recent_dept = recent_record.doctor.dep.dep_name
+
+        if recent_record.doctor and recent_record.doctor.user:
+            recent_doctor = recent_record.doctor.user.name
+
+    # -----------------------------------------
+    # 2) 최근 진료 1건
+    # -----------------------------------------
+    recent_consult = None
+    if recent_record:
+        recent_consult = {
+            "record_type": recent_record.record_type,
+            "record_datetime": recent_record.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "subjective": recent_record.subjective,
+            "objective": recent_record.objective,
+            "assessment": recent_record.assessment,
+            "plan": recent_record.plan,
+        }
+
+    return JsonResponse({
+        "patient": {
+            "name": patient.name,
+            "gender": patient.gender,
+            "birth_date": birth_date,
+            "recent_visit": recent_visit,
+        },
+        "recent_dept": recent_dept or "없음",
+        "recent_doctor": recent_doctor or "없음",
+        "recent_consult": recent_consult,
+    })
 
 @require_GET
 def api_reserved_hours(request):
@@ -421,6 +493,8 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
+        hos_id = request.session.get('user_id', '137')
+
         try:
             user = Users.objects.get(user_id=user_id)
             medical_record = MedicalRecord.objects.get(medical_record_id=int(record_id))
@@ -441,13 +515,6 @@ def lab_record_creation(request):
                 order.requisition_note = special_notes
 
                 order.save()
-                
-            elif current_status == 'Sampled':
-                order.status_datetime = datetime.now()
-                order.status = 'Completed'
-                order.requisition_note = special_notes
-
-                order.save()
 
                 for file in uploaded_files:
                     labUpload = LabUpload(uploadedFile=file, original_name=file.name, lab_order=order)
@@ -457,8 +524,6 @@ def lab_record_creation(request):
                     files = list(LabUpload.objects.filter(lab_order__pk=order.lab_order_id))
                 except:
                     print('error')
-
-
 
         except:
             print('error')
@@ -479,6 +544,22 @@ def lab_record_creation(request):
         python_medical_record_data[0]['fields']['medical_record_id'] = python_medical_record_data[0]['pk']
         python_order_data[0]['fields']['lab_order_id'] = python_order_data[0]['pk']
 
+        if is_redis_alive():
+            try:
+                channel_layer = get_channel_layer()
+
+                group_name = f'hospital_group_{hos_id}'
+
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": "lab"
+                    }
+                )
+            except:
+                print('error')
+
         return JsonResponse({
             'user': python_user_data[0]['fields'],
             'medical_record': python_medical_record_data[0]['fields'],
@@ -488,6 +569,101 @@ def lab_record_creation(request):
 
 def medical_record_inquiry(request):
     ctx = get_common_header_context(request)
+
+    patient_id = request.GET.get("patient_id")
+    if not patient_id:
+        return render(request, "emr/medical_record_inquiry.html", ctx)
+
+    patient = Users.objects.get(user_id=patient_id)
+    birth = extract_birth_date(patient.resident_reg_no)
+    age = calculate_age_from_rrn(patient.resident_reg_no)
+
+    recent_record = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .order_by("-record_datetime")
+        .first()
+    )
+    recent_visit_date = (
+        recent_record.record_datetime.strftime("%Y.%m.%d")
+        if recent_record else "기록 없음"
+    )
+
+    visits = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .select_related("doctor", "doctor__user")
+        .order_by("-record_datetime")
+    )
+
+    visit_list = []
+
+    for v in visits:
+        visit_date = v.record_datetime.date()
+        doctor_name = v.doctor.user.name if v.doctor and v.doctor.user else ""
+
+        # LabOrders → 리스트
+        lab_list = []
+        try:
+            lab_obj = v.laborders
+            if lab_obj:
+                lab_list.append({
+                    "lab_nm": lab_obj.lab_nm,
+                    "status": lab_obj.status,
+                    "status_datetime": lab_obj.status_datetime,
+                    "specimen_cd": lab_obj.specimen_cd,
+                    "requisition_note": getattr(lab_obj, "requisition_note", "")
+                })
+        except:
+            pass
+
+        # TreatmentProcedures → 리스트
+        treat_list = []
+        try:
+            treat_obj = v.treatmentprocedures
+            if treat_obj:
+                treat_list.append({
+                    "procedure_name": treat_obj.procedure_name,
+                    "execution_datetime": treat_obj.execution_datetime,
+                    "status": treat_obj.status,
+                    "result_notes": treat_obj.result_notes,
+                })
+        except:
+            pass
+
+        # MedicineOrders → 리스트
+        med_data = []
+        try:
+            med_order = v.medicineorders
+            if med_order:
+                med_data = list(med_order.medicinedata_set.all())
+        except:
+            med_data = []
+
+        visit_list.append({
+            "record_id": v.medical_record_id,
+            "date": visit_date,
+            "datetime": v.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "doctor": doctor_name,
+
+            "consult": {
+                "type": v.record_type,
+                "content": v.record_content,
+            },
+
+            "lab": lab_list,
+            "prescriptions": med_data,
+            "treatment": treat_list,
+        })
+
+    ctx.update({
+        "patient": patient,
+        "birth": birth,
+        "age": age,
+        "recent_visit_date": recent_visit_date,
+        "visits": visit_list,
+    })
+
     return render(request, "emr/medical_record_inquiry.html", ctx)
 
 def patient_search_list(request):
@@ -547,6 +723,134 @@ def view_previous_medical_records(request):
 
     return render(request, "emr/view_previous_medical_records.html", ctx)
 
+def get_previous_medical_records(request, user_id):
+
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT 
+                mr.medical_record_id,
+                mr.record_type,
+                mr.record_datetime,
+                mr.subjective,
+                mr.objective,
+                mr.assessment,
+                mr.plan,
+
+                tp.procedure_name,
+                tp.execution_datetime,
+                tp.completion_datetime,
+                tp.status AS tp_status,
+                tp.result_notes,
+
+                lb.lab_nm,
+                lb.specimen_cd,
+                lb.status AS lab_status,
+                lb.status_datetime,
+
+                md.order_code,
+                md.order_name,
+                md.dose,
+                md.frequency,
+
+                mo.order_datetime,
+                mo.start_datetime,
+                mo.stop_datetime,
+                mo.notes,
+
+                u.name AS doctor_name
+
+            FROM medical_record mr
+            LEFT JOIN treatment_procedures tp 
+                ON mr.medical_record_id = tp.medical_record_id
+            LEFT JOIN lab_orders lb 
+                ON mr.medical_record_id = lb.medical_record_id
+            LEFT JOIN medicine_orders mo 
+                ON mr.medical_record_id = mo.medical_record_id
+            LEFT JOIN medicine_data md
+                ON mo.order_id = md.order_id
+            LEFT JOIN doctors d
+                ON mr.doctor_id = d.doctor_id
+            LEFT JOIN users u
+                ON d.user_id = u.user_id
+            WHERE mr.user_id = %s
+            ORDER BY mr.record_datetime DESC
+
+        """, [user_id])
+
+        rows = cursor.fetchall()
+        columns = [col[0] for col in cursor.description]  # ← 컬럼명 자동 획득
+
+    records = {}
+
+    def to_kst(dt):
+        if dt is None:
+            return None
+        aware_utc = make_aware(dt, tz("UTC"))
+        return aware_utc.astimezone(KST)
+
+    for row in rows:
+        row_data = dict(zip(columns, row))   # ← ★ 핵심 수정
+
+        # 시간 변환
+        row_data["record_datetime"] = to_kst(row_data["record_datetime"])
+        row_data["execution_datetime"] = to_kst(row_data.get("execution_datetime"))
+        row_data["completion_datetime"] = to_kst(row_data.get("completion_datetime"))
+        row_data["status_datetime"] = to_kst(row_data.get("status_datetime"))
+        row_data["order_datetime"] = to_kst(row_data.get("order_datetime"))
+        row_data["start_datetime"] = to_kst(row_data.get("start_datetime"))
+        row_data["stop_datetime"] = to_kst(row_data.get("stop_datetime"))
+
+        mr_id = row_data["medical_record_id"]
+
+        if mr_id not in records:
+            records[mr_id] = {
+                "medical_record_id": mr_id,
+                "record_type": row_data["record_type"],
+                "record_datetime": row_data["record_datetime"],
+                "subjective": row_data["subjective"],
+                "objective": row_data["objective"],
+                "assessment": row_data["assessment"],
+                "plan": row_data["plan"],
+                "doctor_name": row_data["doctor_name"],   # 추가
+                "treatment": [],
+                "lab": [],
+                "prescriptions": []
+            }
+
+        # 치료기록
+        if row_data["procedure_name"]:
+            records[mr_id]["treatment"].append({
+                "procedure_name": row_data["procedure_name"],
+                "execution_datetime": row_data["execution_datetime"],
+                "completion_datetime": row_data["completion_datetime"],
+                "status": row_data["tp_status"],
+                "result_notes": row_data["result_notes"]
+            })
+
+        # 검사
+        if row_data["lab_nm"]:
+            records[mr_id]["lab"].append({
+                "lab_nm": row_data["lab_nm"],
+                "specimen_cd": row_data["specimen_cd"],
+                "status": row_data["lab_status"],
+                "status_datetime": row_data["status_datetime"]
+            })
+
+        # 처방
+        if row_data["order_code"]:
+            records[mr_id]["prescriptions"].append({
+                "order_code": row_data["order_code"],
+                "order_name": row_data["order_name"],
+                "dose": row_data["dose"],
+                "frequency": row_data["frequency"],
+                "order_datetime": row_data["order_datetime"],
+                "start_datetime": row_data["start_datetime"],
+                "end_datetime": row_data["stop_datetime"],
+                "notes": row_data["notes"],
+                "status": row_data.get("tp_status")  # 또는 lab_status처럼 원하는 상태값 매핑
+            })
+
+    return JsonResponse({"records": list(records.values())})
 
 # ---------------------------------------------------------
 # 치료/처치 기록 검증
@@ -582,6 +886,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
+        hos_id = request.session.get('user_id', '137')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -608,6 +913,22 @@ def treatment_record_verification(request):
             'medical_record': medical_record,
             'order': order,
         }
+
+        if is_redis_alive():
+            try:
+                channel_layer = get_channel_layer()
+
+                group_name = f'hospital_group_{hos_id}'
+
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": "treatment"
+                    }
+                )
+            except:
+                print('error')
 
         if (order.status == 'Completed'):
             return redirect('/mstaff/hospital_dashboard/')
@@ -848,14 +1169,29 @@ def api_create_medical_record(request):
         if local_hour < 9 or local_hour > 17:
             return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
 
-
+        # ------------------------------
+        # 예약 시간 충돌 검사 (의사 기준)
+        # ------------------------------
         exists = Reservations.objects.filter(
             slot__doctor_id=doctor_id,
             reserved_at=reserved_at
         ).exists()
 
         if exists:
-            return JsonResponse({"error": "이미 예약된 시간입니다"}, status=400)
+            return JsonResponse({"error": "이미 해당 의사에게 예약된 시간입니다"}, status=400)
+
+
+        # ------------------------------
+        # 예약 시간 충돌 검사 (환자 기준)  ← ★ 새로 추가
+        # ------------------------------
+        patient_conflict = Reservations.objects.filter(
+            user_id=patient_id,
+            reserved_at=reserved_at
+        ).exists()
+
+        if patient_conflict:
+            return JsonResponse({"error": "해당 시간에 이미 환자의 다른 예약이 존재합니다"}, status=400)
+
 
     if reserved_at:
         slot_id = get_or_create_slot_id(int(doctor_id), reserved_at, reserved_end)
@@ -869,32 +1205,25 @@ def api_create_medical_record(request):
             slot_id=slot_id
         )
 
-        # -----------------------------------------------------
-        # ★ 오늘 날짜 예약이면 오늘 날짜 medical_record 자동 생성
-        # -----------------------------------------------------
-        today = localdate()
+    if is_redis_alive():
+        try:
+            target_hos_id = 137
 
-        # reserved_at은 aware datetime → 날짜만 비교
-        if reserved_at.date() == today:
-            exists_today_record = MedicalRecord.objects.filter(
-                user_id=patient_id,
-                record_datetime__date=today
-            ).exists()
+            # Redis 채널 레이어 가져오기
+            channel_layer = get_channel_layer()
+            # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
+            group_name = f'hospital_group_{target_hos_id}'
 
-            if not exists_today_record:
-                MedicalRecord.objects.create(
-                    record_type="consult",
-                    ptnt_div_cd="N",
-                    record_datetime=timezone.now(),
-                    doctor_id=doctor_id,
-                    hos_id=hos_id,
-                    user_id=patient_id,
-                    assessment="",
-                    subjective="",
-                    objective="",
-                    plan="",
-                    record_content=""
+            if order_type:
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": order_type
+                    }
                 )
+        except:
+            print('error')
 
     return JsonResponse({
         "result": "ok",
@@ -910,6 +1239,7 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
     end_time = reserved_end.time()
 
     with connection.cursor() as cursor:
+        # 의사 + 날짜 + 시간대 → 슬롯 고유
         cursor.execute(
             """
             SELECT slot_id
@@ -927,17 +1257,19 @@ def get_or_create_slot_id(doctor_id, reserved_at, reserved_end):
             return row[0]
 
         now = timezone.now()
+
+        # ★ 의사마다 독립적인 슬롯 생성
         cursor.execute(
             """
             INSERT INTO time_slots
-                (slot_date, start_time, end_time, status, capacity, created_at, doctor_id)
+                (doctor_id, slot_date, start_time, end_time, status, capacity, created_at)
             VALUES
                 (%s, %s, %s, %s, %s, %s, %s)
             """,
-            [slot_date, start_time, end_time, "reserved", 1, now, doctor_id],
+            [doctor_id, slot_date, start_time, end_time, "reserved", 1, now],
         )
-        return cursor.lastrowid
 
+        return cursor.lastrowid
 
 
 # ---------------------------------------------------------
@@ -980,40 +1312,145 @@ def treatment_data_search(request):
 # 환자 검색
 # ---------------------------------------------------------
 def patient_search_list_view(request):
-    patients = Users.objects.filter(role='patient').values(
+    user_id = request.session.get('user_id')
+
+    try:
+        doctor = Doctors.objects.get(user_id=user_id)
+        hos_id = doctor.hos_id
+    except:
+        return render(request, "emr/patient_search_list.html", {"patients": []})
+
+    patients = Users.objects.filter(role='patient').filter(
+        Q(reservations__slot__doctor__hos_id=hos_id) |
+        Q(medicalrecord__hos_id=hos_id) |
+        Q(laborders__medical_record__hos_id=hos_id) |
+        Q(treatmentprocedures__medical_record__hos_id=hos_id)
+    ).distinct().values(
         'user_id', 'name', 'gender', 'birth_date'
     )
 
     return render(request, "emr/patient_search_list.html", {"patients": patients})
 
-
 def api_search_patient(request):
     keyword = request.GET.get("keyword", "").strip()
-
     if keyword == "":
         return JsonResponse({"results": []})
 
-    rows = Users.objects.filter(
-        Q(name__icontains=keyword) |
-        Q(resident_reg_no__startswith=keyword),
-        role='patient'
-    ).values('user_id', 'name', 'gender', 'resident_reg_no')
+    # 병원 ID 가져오기
+    user_id = request.session.get("user_id")
+    try:
+        doctor = Doctors.objects.get(user_id=user_id)
+        hos_id = doctor.hos_id
+    except Doctors.DoesNotExist:
+        return JsonResponse({"results": []})
 
-    results = []
-    for r in rows:
-        rrn = r["resident_reg_no"]
-        dob = None
-        if rrn and len(rrn) >= 8:
-            dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+    try:
+        # 병원과 연결된 환자 필터링
+        patients = Users.objects.filter(
+            Q(reservations__slot__doctor__hos_id=hos_id) |
+            Q(medicalrecord__hos_id=hos_id)
+        ).distinct()
 
-        results.append({
-            "user_id": r["user_id"],
-            "name": r["name"],
-            "gender": r["gender"],
-            "birth_date": dob,
-        })
+        # 검색 키워드 필터
+        patients = patients.filter(
+            Q(name__icontains=keyword) |
+            Q(resident_reg_no__startswith=keyword)
+        )
 
-    return JsonResponse({"results": results})
+        results = []
+        for p in patients:
+            rrn = p.resident_reg_no or ""
+            dob = None
+            if len(rrn) >= 8:
+                dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+
+            results.append({
+                "user_id": p.user_id,
+                "name": p.name,
+                "gender": p.gender,
+                "birth_date": dob,
+            })
+
+        return JsonResponse({"results": results})
+
+    except Exception as e:
+        # 여기서 500 대신 JSON 에러 반환
+        return JsonResponse({"error": str(e)}, status=500)
+
+def api_patient_recent_records(request, patient_id):
+
+    # 최근 진료
+    recent_consult = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .order_by('-record_datetime')
+        .values(
+            'medical_record_id',
+            'record_datetime',
+            'record_type',
+            'subjective',
+            'objective',
+            'assessment',
+            'plan'
+        )
+        .first()
+    )
+
+    # 최근 처방
+    recent_prescription = (
+        MedicineData.objects
+        .filter(order__medical_record__user_id=patient_id)
+        .order_by('-order__order_datetime')
+        .values(
+            'order_name',
+            'order_code',
+            'dose',
+            'frequency',
+            'order__order_datetime'
+        )
+        .first()
+    )
+
+    # 최근 검사
+    recent_lab = (
+        LabOrders.objects
+        .filter(medical_record__user_id=patient_id)
+        .order_by('-order_datetime')
+        .values(
+            'lab_nm',
+            'specimen_cd',
+            'status',
+            'order_datetime',
+            'status_datetime'
+        )
+        .first()
+    )
+
+    # 최근 치료
+    recent_treatment = (
+        TreatmentProcedures.objects
+        .filter(medical_record__user_id=patient_id)
+        .order_by('-execution_datetime')
+        .values(
+            'procedure_name',
+            'procedure_code',
+            'execution_datetime',
+            'completion_datetime',
+            'status',
+            'result_notes'
+        )
+        .first()
+    )
+
+    return JsonResponse({
+        "consult": recent_consult,
+        "prescription": recent_prescription,
+        "lab": recent_lab,
+        "treatment": recent_treatment
+    })
+
+
+
 
 @csrf_exempt
 def set_doctor_memo(request):
@@ -1079,6 +1516,98 @@ def get_reservation_medical_record(request):
     return JsonResponse({
         'users': user_data_list,
     })
+
+def get_lab_record(request):
+    lab_order = []
+    lab_pending_count = 0
+    lab_sampled_count = 0
+    lab_is_urgent_count = 0
+    try:
+        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        for record in medical_records:
+            try:
+                lab = LabOrders.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    order_datetime__contains=str(date.today())
+                )
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                lab_order.append({
+                    'lab': model_to_dict(lab),
+                    'user': model_to_dict(user),
+                    'doctor': model_to_dict(doctor),
+                    'doctor_info': model_to_dict(doctor_info),
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if lab.status == 'Pending':
+                    lab_pending_count += 1
+                if lab.status == 'Sampled':
+                    lab_sampled_count += 1
+                if lab.is_urgent == True:
+                    lab_is_urgent_count += 1
+            except:
+                print('LabOrders error')
+    except:
+        print('Hospital error')
+
+    context = {
+       'lab_order': lab_order,
+       'lab_pending_count': lab_pending_count,
+       'lab_sampled_count': lab_sampled_count,
+       'lab_is_urgent_count': lab_is_urgent_count,
+    }
+
+    return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
+
+def get_treatment_record(request):
+    treatment_order = []
+    treatment_pending_count = 0
+    treatment_inprogress_count = 0
+    try:
+        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        for record in medical_records:
+            try:
+                treatment = TreatmentProcedures.objects.exclude(
+                    status__in=['Completed']
+                ).get(
+                    medical_record__pk=record.medical_record_id,
+                    execution_datetime__contains=str(date.today()),
+                )
+
+                user = Users.objects.get(user_id=record.user.user_id)
+                doctor = Doctors.objects.get(doctor_id=record.doctor.doctor_id)
+                doctor_info = Users.objects.get(user_id=doctor.user.user_id)
+
+                treatment_order.append({
+                    'treatment': model_to_dict(treatment),
+                    'user': model_to_dict(user),
+                    'doctor': model_to_dict(doctor),
+                    'doctor_info': model_to_dict(doctor_info),
+                    'user_age': calculate_age_from_rrn(user.resident_reg_no),
+                    'record_id': record.medical_record_id,
+                })
+                if treatment.status == 'Pending':
+                    treatment_pending_count += 1
+                if treatment.status == 'In progress':
+                    treatment_inprogress_count += 1
+            except:
+                print('TreatmentProcedures error')    
+    except:
+        print('Hospital error')
+
+    context = {
+       'treatment_order': treatment_order,
+       'treatment_pending_count': treatment_pending_count,
+       'treatment_inprogress_count': treatment_inprogress_count
+    }
+
+    return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
+    
 
 
 # ---------------------------------------------------------
@@ -1149,3 +1678,22 @@ def extract_birth_date(reg_num):
     birth_date = f"{full_year}-{mm}-{dd}"
     
     return birth_date
+
+def is_redis_alive():
+    try:
+        # settings.py에 설정된 Redis 정보를 가져오거나, 직접 IP/Port 입력
+        # 보통 settings.CHANNEL_LAYERS['default']['CONFIG']['hosts'][0] 에 있습니다.
+        # 편의상 직접 입력하거나 설정에서 파싱하세요. 예: ('127.0.0.1', 6379)
+        host = '127.0.0.1' 
+        port = 6379
+        
+        # 소켓 생성
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.1)  # 중요: 0.1초만 기다리고 끊음 (지연 방지)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        
+        # result가 0이면 연결 성공
+        return result == 0
+    except Exception:
+        return False

@@ -33,9 +33,18 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def main_view(request):
     user_id = request.session.get("user_id")
-    if not user_id:
-        login_url = reverse("login")
-        return redirect(f"{login_url}?next={request.get_full_path()}")
+    get_dept_code = request.GET.get("dept_id")
+    active_dept = None
+
+    if get_dept_code:
+        try:
+            dept_obj = Department.objects.get(dep_code=get_dept_code)
+            active_dept = dept_obj.dep_name
+        except Department.DoesNotExist:
+            active_dept = None
+        if not user_id:
+            login_url = reverse("login")
+            return redirect(f"{login_url}?next={request.get_full_path()}")
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
 
@@ -89,6 +98,7 @@ def main_view(request):
         "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder),
         "user_lat": user_lat,
         "user_lon": user_lon,
+        "active_dept": active_dept,
     }
     return render(request, "reservations/main.html", context)
 

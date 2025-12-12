@@ -71,8 +71,9 @@ h2 {
 /* Visit Box Grid */
 .visit-box-grid {
     display: grid;
-    grid-template-columns: repeat(4,1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 15px;
+    align-items: start;  /* 핵심 수정 사항: 높이 강제 확장 방지 */
 }
 
 .visit-box-wrapper {

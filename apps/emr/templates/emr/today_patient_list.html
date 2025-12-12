@@ -4,69 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>오늘의 환자 리스트 (4페이지)</title>
-
-    {% load static %}
+    <title>예약 환자 리스트</title>
     <link rel="stylesheet" href="{% static 'emr/css/today_patient_list.css' %}">
 </head>
 <body>
 
-    {% include "core/_header.html" %}
+{% include "core/_header.html" %}
 
-    <div class="container">
-        <h2>오늘의 환자 리스트</h2>
-        
-        <div class="card">
-            <div class="search-area">
-                <input type="text" id="searchQuery" placeholder="검색입력창 (이름 또는 생년월일 입력하세요)">
-                <button onclick="searchPatients()">검색</button>
-            </div>
-        </div>
-        
-        <div class="card">
-            <h3>오늘의 진료 환자 (2025-11-28)</h3>
-            
-            <div class="patient-list-container">
-                <table class="patient-list-table">
-                    <thead>
-                        <tr>
-                            <th>성명</th>
-                            <th>성별</th>
-                            <th>생년월일</th>
-                            <th>방문일자</th>
-                        </tr>
-                    </thead>
-                    <tbody id="patientListBody"></tbody>
-                </table>
-            </div>
-            
-            <div class="detail-action-container">
+<div class="container">
+    <h2>예약 환자 리스트</h2>
+    <p id="targetInfo"></p>
 
-                <div class="selected-patient-info" id="selectedPatientInfo" style="display: none;">
-                    <h4>선택된 환자 요약 정보 (6)</h4>
-
-                    <div class="info-row" id="summaryPatientInfo"></div>
-
-                    <div class="summary-block">
-                        <div class="info-row"><strong>진료과:</strong> <span id="summaryDepartment"></span></div>
-                        <div class="info-row"><strong>담당의:</strong> <span id="summaryDoctor"></span></div>
-                    </div>
-
-                    <div class="summary-block">
-                        <div class="info-row"><strong>최근 진료:</strong> <span id="summaryRecentDiagnosis"></span></div>
-                        <div class="info-row" id="summaryOrderExists"></div>
-                    </div>
-                </div>
-                
-                <div class="action-buttons" id="actionButtons" style="display: none;">
-                    <button class="btn-create" onclick="goToCreateRecord()">진료기록작성</button>
-                    <button class="btn-history" onclick="goToPreviousRecords()">이전진료기록</button>
-                </div>
-
-            </div>
+    <div class="card">
+        <div class="patient-list-container">
+            <table class="patient-list-table">
+                <thead>
+                    <tr>
+                        <th>성명</th>
+                        <th>성별</th>
+                        <th>생년월일</th>
+                        <th>예약시간</th>
+                    </tr>
+                </thead>
+                <tbody id="patientListBody"></tbody>
+            </table>
         </div>
     </div>
+</div>
 
-    <script src="{% static 'emr/js/today_patient_list.js' %}"></script>
+<script src="{% static 'emr/js/today_patient_list.js' %}"></script>
+
+<div class="card" id="summaryPanel">
+    <!-- 환자 클릭 시 내용 채워짐 -->
+</div>
+
 </body>
 </html>

@@ -118,7 +118,8 @@
           {% endif %}
         </div>
 
-        <div class="favorite">★</div>
+        <div class="favorite {% if hos.is_favorite %}on{% endif %}" 
+             data-er-id="{{ hos.er_id }}">★</div>
       </div>
     {% endwith %}
   {% empty %}
@@ -137,7 +138,7 @@
   window.selectedSido = '{{ selected_sido|default:"" }}';
   window.selectedSigungu = '{{ selected_sigungu|default:"" }}';
   window.selectedEtype = '{{ selected_etype|default:"" }}';
-  window.selectedFilters = JSON.parse('{{ selected_filters|safe|default:"{}" }}');
+  window.selectedFilters = JSON.parse('{{ selected_filters|safe }}');
 
   // -------------------------
   // CSRF 토큰 가져오기 함수
@@ -188,7 +189,82 @@
     });
   }
 
-  
+  // -------------------------
+  // 응급실 즐겨찾기 토글 함수
+  // -------------------------
+  function toggleErFavorite(event, erId) {
+    // 이벤트 전파 중지 (행 클릭 이벤트 방지)
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // AJAX 요청으로 즐겨찾기 토글
+    fetch('{% url "toggle_er_favorite" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: `er_id=${erId}`
+    })
+    .then(response => {
+      if (response.status === 401) {
+        // 비로그인 상태
+        const confirmLogin = confirm('로그인 후 이용하실 수 있습니다.');
+        if (confirmLogin) {
+          // 로그인 페이지로 이동 (현재 URL을 next 파라미터로 전달)
+          const currentUrl = encodeURIComponent(window.location.href);
+          window.location.href = `{% url 'login' %}?next=${currentUrl}`;
+        }
+        // 취소 시 아무것도 하지 않음 (현재 페이지 유지)
+        return null;
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data && data.ok) {
+        // 즐겨찾기 상태 업데이트
+        const favoriteElement = event.target.closest('.favorite') || event.target;
+        if (data.is_favorite) {
+          favoriteElement.classList.add('on');
+        } else {
+          favoriteElement.classList.remove('on');
+        }
+        
+        // 상세 모달이 열려있고 같은 병원이면 동기화
+        const detailModal = document.getElementById('detail-modal');
+        const detailFavorite = document.getElementById('detail-favorite');
+        if (detailModal && !detailModal.classList.contains('hidden') && detailFavorite) {
+          const detailErId = detailFavorite.getAttribute('data-er-id');
+          if (detailErId && parseInt(detailErId, 10) === erId) {
+            if (data.is_favorite) {
+              detailFavorite.classList.add('on');
+            } else {
+              detailFavorite.classList.remove('on');
+            }
+          }
+        }
+      }
+    })
+    .catch(err => {
+      console.error('즐겨찾기 토글 실패:', err);
+    });
+  }
+
+  // -------------------------
+  // 즐겨찾기 버튼 클릭 이벤트 리스너 (이벤트 위임 사용)
+  // -------------------------
+  // 이벤트 위임 방식: 동적으로 추가되는 요소에도 작동
+  document.addEventListener('click', function(event) {
+    // 클릭된 요소가 .favorite 클래스를 가진 요소인지 확인
+    const favoriteElement = event.target.closest('.favorite');
+    if (favoriteElement) {
+      const erId = favoriteElement.getAttribute('data-er-id');
+      if (erId) {
+        toggleErFavorite(event, parseInt(erId, 10));
+      }
+    }
+  });
+
   // -------------------------
   // sessionStorage에서 위치 정보 읽어서 서버에 전달 (URL에는 추가하지 않음)
   // -------------------------
@@ -216,6 +292,7 @@
             const currentTableBox = document.querySelector('.table-box');
             if (currentTableBox) {
               currentTableBox.innerHTML = newTableBox.innerHTML;
+              // 이벤트 위임 방식이므로 별도 이벤트 재연결 불필요
             }
           }
         })

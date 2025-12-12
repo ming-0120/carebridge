@@ -7,6 +7,7 @@
     <title>병원내 의료진 대시보드 (11페이지 수정본)</title>
 
     <link rel="stylesheet" href="{% static 'emr/css/hospital_staff_dashboard.css' %}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
 </head>
 <body>
 
@@ -19,17 +20,17 @@
             <div class="card status-box">
                 <h3>치료 대기</h3>
                 <div class="status-counts">
-                    <div class="count-item pending">대기 <strong>{{ treatment_pending_count }}명</strong></div>
-                    <div class="count-item inprogress">진행중 <strong>{{ treatment_inprogress_count }}명</strong></div>
+                    <div class="count-item pending">대기 <strong id="treatmentPending">{{ treatment_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong id="treatmentInProgress">{{ treatment_inprogress_count }}명</strong></div>
                 </div>
             </div>
             
             <div class="card status-box">
                 <h3>검사 대기</h3>
                 <div class="status-counts">
-                    <div class="count-item pending">대기 <strong>{{ lab_pending_count }}명</strong></div>
-                    <div class="count-item inprogress">진행중 <strong>{{ lab_sampled_count }}명</strong></div>
-                    <div class="count-item emergency">응급 <strong>{{ lab_is_urgent_count }}명</strong></div>
+                    <div class="count-item pending">대기 <strong id="labPending">{{ lab_pending_count }}명</strong></div>
+                    <div class="count-item inprogress">진행중 <strong id="labSampled">{{ lab_sampled_count }}명</strong></div>
+                    <div class="count-item emergency">응급 <strong id="labEmergency">{{ lab_is_urgent_count }}명</strong></div>
                 </div>
             </div>
             
@@ -39,7 +40,7 @@
             
             <div class="card list-panel">
                 <h3>치료 대기중인 환자</h3>
-                <table class="patient-table">
+                <table class="patient-table" id="treatmentTable">
                     <thead>
                         <tr>
                             <th>이름</th>
@@ -95,7 +96,7 @@
             
             <div class="card list-panel">
                 <h3>검사 대기중인 환자</h3>
-                <table class="patient-table">
+                <table class="patient-table" id="labTable">
                     <thead>
                         <tr>
                             <th>이름</th>

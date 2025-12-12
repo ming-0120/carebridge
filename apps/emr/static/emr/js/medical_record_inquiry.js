@@ -3,16 +3,11 @@ function toggleAccordionBox(header, contentId) {
     const content = document.getElementById(contentId);
     const isExpanded = header.getAttribute("aria-expanded") === "true";
 
-    document.querySelectorAll(".visit-box-header[aria-expanded='true']").forEach(h => {
-        if (h !== header) {
-            h.setAttribute("aria-expanded", "false");
-            h.nextElementSibling.style.display = "none";
-        }
-    });
-
+    // Level-3 초기화
     document.querySelectorAll(".level-3-detail").forEach(d => d.classList.remove("selected"));
     document.getElementById("detailView").style.display = "none";
 
+    // 현재 박스만 토글
     if (isExpanded) {
         header.setAttribute("aria-expanded", "false");
         content.style.display = "none";
@@ -22,11 +17,22 @@ function toggleAccordionBox(header, contentId) {
     }
 }
 
+
 /* Level 2 Toggle */
 function toggleAccordion(row) {
+    const container = row.closest(".visit-box-wrapper");  // 같은 박스 범위 한정
     const content = row.nextElementSibling;
     const isExpanded = row.getAttribute("aria-expanded") === "true";
 
+    // 같은 박스 안의 다른 level-2 내용 닫기
+    container.querySelectorAll(".level-2-item[aria-expanded='true']").forEach(item => {
+        if (item !== row) {
+            item.setAttribute("aria-expanded", "false");
+            item.nextElementSibling.style.display = "none";
+        }
+    });
+
+    // 현재 대상 토글 처리
     if (isExpanded) {
         row.setAttribute("aria-expanded", "false");
         content.style.display = "none";
@@ -35,6 +41,7 @@ function toggleAccordion(row) {
         content.style.display = "block";
     }
 }
+
 
 /* Show Level 3 detail → update detail panel */
 function showDetail(el) {

@@ -4,9 +4,12 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from collections import defaultdict
 from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
 from apps.db.models.review import AiReview
+from apps.db.models.favorite import UserFavorite
+from apps.db.models.users import Users
 from django.conf import settings
 
 
@@ -451,6 +454,22 @@ def emergency_main(request):
     # 표준화 + 중복 제거
     sido_list = sorted({ normalize_sido_name(s) for s in raw_sido_list })
 
+    # 즐겨찾기 상태 확인 (로그인 사용자만)
+    user_id = request.session.get("user_id")
+    favorite_er_ids = set()
+    if user_id:
+        favorite_er_ids = set(
+            UserFavorite.objects.filter(
+                user_id=user_id,
+                er__isnull=False,
+                hos__isnull=True
+            ).values_list('er_id', flat=True)
+        )
+    
+    # hospital_data에 즐겨찾기 상태 추가
+    for hos in hospital_data:
+        hos.is_favorite = hos.er_id in favorite_er_ids
+
     # selected_filters를 JSON으로 직렬화 (템플릿에서 사용)
     selected_filters_json = json.dumps(selected_filters, ensure_ascii=False)
 
@@ -572,11 +591,23 @@ def hospital_detail_json(request, er_id: int):
         tags.append("분만실")
 
 
+    # 즐겨찾기 상태 확인 (로그인 사용자만)
+    is_favorite = False
+    user_id = request.session.get("user_id")
+    if user_id:
+        is_favorite = UserFavorite.objects.filter(
+            user_id=user_id,
+            er=er_info,
+            hos__isnull=True
+        ).exists()
+
     data = {
         "er_name": er_info.er_name,
         "er_address": er_info.er_address,
         "er_lat": er_info.er_lat,
         "er_lng": er_info.er_lng,
+        "er_id": er_info.er_id,  # 추가: 모달에서 즐겨찾기 토글 시 사용
+        "is_favorite": is_favorite,  # 추가: 즐겨찾기 상태
         "tags": tags,
         "status": status_data,
         "message": er_message.message if er_message and er_message.message else None,
@@ -631,4 +662,40 @@ def update_preferences(request):
 
     request.session.save()
     return JsonResponse({"status": "ok"})
+
+@require_POST
+def toggle_er_favorite(request):
+    """응급실 즐겨찾기 토글 (AJAX)"""
+    # 1) 로그인 사용자 확인 (세션 기반)
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"ok": False, "error": "login_required"}, status=401)
+
+    user = get_object_or_404(Users, pk=user_id)
+
+    # 2) 응급실 ID 파라미터 확인
+    er_id = request.POST.get("er_id")
+    if not er_id:
+        return JsonResponse({"ok": False, "error": "no_er_id"}, status=400)
+
+    er = get_object_or_404(ErInfo, pk=er_id)
+
+    # 3) 이미 즐겨찾기 되어 있으면 삭제, 없으면 생성
+    qs = UserFavorite.objects.filter(user=user, er=er, hos__isnull=True)
+    # hos__isnull=True 로 "일반 병원이 아닌 응급실 즐겨찾기" 로 한정
+
+    if qs.exists():
+        qs.delete()
+        is_favorite = False
+    else:
+        UserFavorite.objects.create(
+            user=user,
+            er=er,
+            hos=None,     # 응급실 즐겨찾기이므로 hos는 비워둠
+            memo="",      # 필요 없으면 빈 문자열
+        )
+        is_favorite = True
+
+    # 4) JSON 응답
+    return JsonResponse({"ok": True, "is_favorite": is_favorite})
 
