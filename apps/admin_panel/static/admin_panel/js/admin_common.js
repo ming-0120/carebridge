@@ -931,8 +931,8 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
       }
       
       // 페이지네이션 업데이트
-      const paginationContainer = document.querySelector('.pagination');
-      const newPaginationContainer = tempDiv.querySelector('.pagination');
+      const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+      const newPaginationContainer = tempDiv.querySelector('.pagination, nav[aria-label="Page navigation"]');
       if (paginationContainer && newPaginationContainer) {
         paginationContainer.innerHTML = newPaginationContainer.innerHTML;
       } else if (paginationContainer && !newPaginationContainer) {
@@ -996,9 +996,24 @@ function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
       // 클릭 이벤트 핸들러
       row._clickHandler = function(e) {
         const target = e.target;
-        // 체크박스, 버튼, 링크(a 태그) 클릭이면 무시
-        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.tagName === 'A' || target.closest('input, button, a')) {
+        
+        // 체크박스나 버튼은 제외
+        if (target.tagName === 'INPUT' || target.tagName === 'BUTTON') {
           return;
+        }
+
+        // ⭐️ 페이징 버튼 클릭은 row 클릭 이벤트 무시
+        // 승인대기 페이지는 pagination-link 클래스를 사용하므로 추가 확인
+        // target이 페이징 링크이거나 페이징 컨테이너 내부에 있으면 즉시 return
+        if (target.closest('.pagination') || 
+            target.closest('nav[aria-label="Page navigation"]') ||
+            target.classList.contains('pagination-link') || 
+            target.classList.contains('page-link') ||
+            target.closest('.pagination-link') ||
+            target.closest('.page-link') ||
+            target.tagName === 'A' && (target.classList.contains('pagination-link') || target.classList.contains('page-link'))) {
+          console.log('테이블 행 클릭 이벤트: 페이징 버튼 클릭 감지, 무시함', target);
+          return; // stopImmediatePropagation 호출 전에 return
         }
 
         // 이벤트 기본 동작 차단
@@ -1013,6 +1028,8 @@ function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
       };
 
       // capture 단계에서 이벤트 리스너 등록 (다른 리스너보다 먼저 실행)
+      // 하지만 페이징 링크 클릭 이벤트도 capture 단계에서 실행되므로,
+      // 페이징 링크 클릭 이벤트가 먼저 실행되도록 하기 위해 once 옵션 사용하지 않음
       row.addEventListener('click', row._clickHandler, { capture: true });
     }
   });
@@ -1087,6 +1104,14 @@ function getPaginationUrl(page, searchParams = {}) {
   //     → url.searchParams: URL의 쿼리 파라미터를 관리하는 URLSearchParams 객체
   //   - 목적: 현재 URL의 파라미터를 읽고 수정하기 위함
   const url = new URL(window.location.href);
+  
+  // ========= 페이지네이션에 불필요한 파라미터 제거 (핵심 수정) =========
+  // 목록을 조회할 때는 상세 정보 ID 파라미터(user_id, doctor_id, hospital_id)가 불필요합니다.
+  // 이 파라미터가 포함되면 서버에서 목록 뷰가 아닌 다른 상세 정보 로직을 타거나
+  // 잘못된 필터링/리다이렉션이 발생할 수 있습니다.
+  url.searchParams.delete('user_id');
+  url.searchParams.delete('doctor_id'); // <--- 이 라인을 추가하여 doctor_id 제거
+  url.searchParams.delete('hospital_id');
   
   // ========= 페이지 번호 설정 =========
   // url.searchParams.set('page', page): 페이지 번호 파라미터 설정
@@ -1378,7 +1403,7 @@ function validateSearchForm(formElement) {
  * 
  * @param {Event} e - 페이지네이션 링크 클릭 이벤트 객체
  *   - e.preventDefault(): 기본 동작(페이지 이동) 차단
- *   - 예: <a href="/admin_panel/users/?page=2" class="page-link">2</a> 클릭 시
+ *   - 예: <a href="/admin_panel/users/?page=2" class="pagination-link">2</a> 클릭 시
  * 
  * @param {string} url - 이동할 페이지의 URL
  *   - 예: 'http://localhost:8000/admin_panel/users/?page=2&search_type=name&search_keyword=김'
@@ -1391,59 +1416,20 @@ function validateSearchForm(formElement) {
  * });
  */
 function handlePaginationAjax(e, url) {
-  // ========= 기본 동작 차단 =========
-  // e.preventDefault(): 링크의 기본 동작(페이지 이동) 차단
-  //   - 목적: 전체 페이지 새로고침 없이 AJAX로 처리하기 위함
-  //   - 기본 동작: <a> 태그 클릭 시 href로 페이지 이동
-  //   - 차단 후: AJAX로 필요한 부분만 업데이트
-  //   - 사용자 경험(UX) 개선: 빠른 페이지 이동, 스크롤 위치 유지
   e.preventDefault();
   
-  // ========= 현재 스크롤 위치 저장 =========
-  // 목적: 페이지네이션 후에도 사용자가 보고 있던 스크롤 위치를 유지
-  //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 같은 위치에서 계속 볼 수 있음
-  //   - 예: 목록 중간 부분을 보고 있다가 다음 페이지로 이동해도 같은 위치 유지
-  // 
-  // window.pageYOffset || document.documentElement.scrollTop: 크로스 브라우저 호환 스크롤 위치
-  //   - window.pageYOffset: 표준 속성 (IE9+)
-  //     → 현재 스크롤된 픽셀 수 (세로 스크롤)
-  //     → 예: 500 (페이지 상단에서 500px 아래)
-  //   - document.documentElement.scrollTop: 대체 속성 (구형 브라우저)
-  //     → <html> 요소의 스크롤 위치
-  //   - || 연산자: 첫 번째 값이 falsy(0, null, undefined 등)이면 두 번째 값 사용
-  //   - 목적: 브라우저 호환성 확보 (모든 브라우저에서 동작)
-  //   - 반환값: 스크롤 위치 (숫자, 픽셀 단위)
-  //     → 예: 500 (페이지 상단에서 500px 아래)
-  //     → 예: 0 (페이지 상단)
+  // 현재 스크롤 위치 저장
   const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
   
-  // ========= DOM 요소 조회 (업데이트할 컨테이너) =========
-  // 목적: 페이지네이션 후 업데이트할 DOM 요소를 미리 찾아두기
-  //   - 성능 최적화: 나중에 여러 번 찾을 필요 없이 한 번만 찾기
-  //   - 안전성: 요소가 없으면 업데이트하지 않음 (에러 방지)
-  // 
-  // document.querySelector('.table-container'): 테이블 목록 컨테이너 찾기
-  //   - '.table-container': CSS 선택자
-  //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-  //   - 예: <div class="table-container"><table>...</table></div>
-  //   - 목적: 테이블 목록 부분만 업데이트하기 위함
-  //   - 주의: 로딩 표시는 현재 구현되지 않았지만, 향후 확장 가능성을 위해 주석에 표시
+  // DOM 요소 조회
   const tableContainer = document.querySelector('.table-container');
+  const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
   
-  // document.querySelector('.pagination'): 페이지네이션 컨테이너 찾기
-  //   - '.pagination': CSS 선택자
-  //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-  //   - 예: <div class="pagination"><a href="?page=1">1</a><a href="?page=2">2</a>...</div>
-  //   - 목적: 페이지네이션 링크 부분만 업데이트하기 위함
-  const paginationContainer = document.querySelector('.pagination');
-  
-  // ========= URL 파싱 및 FormData 생성 =========
-  // 목적: URL에서 파라미터를 추출하여 POST 요청용 FormData 생성
+  // URL 파싱 및 FormData 생성
   const urlObj = new URL(url, window.location.origin);
-  
-  // 현재 URL의 정렬/검색 파라미터를 가져와서
-  // 새로 클릭한 페이지 URL에 없으면 채워 넣기
   const currentUrl = new URL(window.location.href);
+  // ========= 페이지네이션에 필요한 파라미터만 유지 =========
+  // doctor_id, user_id, hospital_id는 목록 조회에 불필요하므로 제외
   ['sort', 'order', 'search_type', 'search_keyword'].forEach(key => {
     const currentValue = currentUrl.searchParams.get(key);
     if (currentValue && !urlObj.searchParams.has(key)) {
@@ -1452,8 +1438,6 @@ function handlePaginationAjax(e, url) {
   });
   
   const formData = new FormData();
-  
-  // URL 파라미터를 FormData에 추가
   urlObj.searchParams.forEach((value, key) => {
     formData.append(key, value);
   });
@@ -1466,693 +1450,166 @@ function handlePaginationAjax(e, url) {
     formData.append('csrfmiddlewaretoken', csrfToken);
   }
   
-  // ========= AJAX 요청 =========
-  // 목적: 서버에 요청하여 새로운 페이지의 HTML 받아오기
-  //   - 전체 페이지 새로고침 없이 필요한 데이터만 받아오기
-  //   - 사용자 경험(UX) 개선: 빠른 페이지 이동
-  // 
-  // fetch(url.pathname, {...}): Fetch API를 사용한 HTTP 요청
-  //   - url.pathname: URL의 경로 부분만 사용 (쿼리 파라미터 제외)
-  //     → 예: 'http://localhost:8000/admin_panel/users/' → '/admin_panel/users/'
-  //   - 두 번째 인자: 요청 옵션 객체
-  //     → method: HTTP 메서드 ('POST')
-  //     → body: 요청 본문 (FormData)
-  //     → headers: HTTP 헤더 객체
-  //   - 반환값: Promise 객체 (비동기 처리)
-  //   - 동작: 서버에 요청을 보내고 응답을 기다림
+  // AJAX 요청
+  console.log('AJAX 요청 시작:', urlObj.pathname, 'FormData:', Object.fromEntries(formData));
   fetch(urlObj.pathname, {
-    // method: 'POST': HTTP POST 메서드 사용
-    //   - POST: 서버에 데이터를 전송하는 요청
-    //   - 목적: URL 파라미터를 숨기기 위해 POST 사용
     method: 'POST',
-    
-    // body: 요청 본문 데이터
-    //   - FormData: 폼 데이터를 전송하기 위한 객체
     body: formData,
-    
-    // headers: HTTP 요청 헤더 설정
-    //   - 목적: 서버에 AJAX 요청임을 알리기 위함
     headers: {
-      // 'X-Requested-With': 'XMLHttpRequest': AJAX 요청임을 나타내는 헤더
-      //   - 'X-Requested-With': 커스텀 HTTP 헤더 이름
-      //   - 'XMLHttpRequest': 값 (일반적으로 사용되는 값)
-      //   - 목적: 서버에서 일반 페이지 요청과 AJAX 요청을 구분하기 위함
-      //   - Django 뷰에서 request.headers.get('X-Requested-With') == 'XMLHttpRequest'로 확인 가능
-      //   - 결과: 서버가 JSON 또는 HTML 일부만 반환할 수 있음
       'X-Requested-With': 'XMLHttpRequest',
     }
   })
-  // ========= 응답 처리 (첫 번째 .then()) =========
-  // 목적: 서버 응답을 받아서 적절한 형식으로 변환
-  //   - JSON 응답과 HTML 응답을 구분하여 처리
-  //   - 에러 처리: JSON 응답은 페이지네이션이 아니므로 예외 발생
-  // 
-  // .then(response => {...}): Promise 체이닝 (응답 처리)
-  //   - response: 서버 응답 객체 (Response)
-  //   - 반환값: Promise 객체 (다음 .then()으로 전달)
   .then(response => {
-    // ========= Content-Type 확인 =========
-    // 목적: 서버 응답의 형식(JSON 또는 HTML)을 확인
-    //   - JSON 응답: 상세 정보만 반환하는 경우 (행 클릭 등)
-    //   - HTML 응답: 전체 페이지 HTML (페이지네이션)
-    // 
-    // response.headers.get('content-type'): 응답의 Content-Type 헤더 읽기
-    //   - 'content-type': HTTP 헤더 이름
-    //   - 반환값: Content-Type 값 (문자열) 또는 null (없으면)
-    //   - 예: 'text/html; charset=utf-8' (HTML 응답)
-    //   - 예: 'application/json' (JSON 응답)
-    //   - 목적: 응답 형식을 확인하여 적절히 처리
+    console.log('AJAX 응답 받음:', response.status, response.statusText, 'Content-Type:', response.headers.get('content-type'));
     const contentType = response.headers.get('content-type');
-    
-    // ========= JSON 응답 처리 =========
-    // 조건: Content-Type이 'application/json'을 포함하는 경우
-    //   - JSON 응답은 페이지네이션이 아니라 상세 정보만 반환하는 경우
-    //   - 예: 행 클릭 시 상세 정보만 AJAX로 받아오는 경우
-    //   - 목적: 페이지네이션과 상세 정보 요청을 구분
-    // 
-    // contentType && contentType.includes('application/json'): JSON 응답인지 확인
-    //   - contentType: Content-Type 헤더 값 (문자열 또는 null)
-    //   - &&: 논리 AND 연산자 (두 조건이 모두 true여야 true)
-    //   - contentType.includes('application/json'): 문자열에 'application/json'이 포함되는지 확인
-    //   - 예: contentType='application/json' → true
-    //   - 예: contentType='text/html; charset=utf-8' → false
     if (contentType && contentType.includes('application/json')) {
-      // ========= JSON 파싱 및 예외 발생 =========
-      // 목적: JSON 응답을 파싱하고 예외를 발생시켜서 페이지네이션 처리 건너뛰기
-      //   - JSON 응답은 handlePaginationAjax에서 처리하지 않음
-      //   - 다른 함수(selectItem 등)에서 처리해야 함
-      // 
-      // response.json(): 응답 본문을 JSON으로 파싱
-      //   - 반환값: Promise 객체 (파싱된 JSON 데이터)
-      //   - .then(data => {...}): 파싱 완료 후 실행
-      //     → data: 파싱된 JSON 객체
-      //   - throw new Error('JSON_RESPONSE'): 예외 발생
-      //     → 'JSON_RESPONSE': 예외 메시지 (에러 타입 식별용)
-      //     → 목적: .catch() 블록에서 이 예외를 잡아서 처리
-      //     → 결과: 페이지네이션 처리를 건너뛰고 에러 처리로 이동
       return response.json().then(data => {
-        throw new Error('JSON_RESPONSE'); // JSON 응답은 handlePaginationAjax에서 처리하지 않음
+        throw new Error('JSON_RESPONSE');
+      });
+    }
+    return response.text();
+  })
+  .then(html => {
+    console.log('HTML 응답 받음, 길이:', html.length);
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = html;
+    
+    const newTableContainer = tempDiv.querySelector('.table-container');
+    const newPagination = tempDiv.querySelector('.pagination, nav[aria-label="Page navigation"]');
+    
+    console.log('새로운 테이블 컨테이너:', newTableContainer ? '찾음' : '없음');
+    console.log('새로운 페이지네이션:', newPagination ? '찾음' : '없음');
+    
+    // 테이블 목록 업데이트
+    if (newTableContainer && tableContainer) {
+      console.log('테이블 컨테이너 업데이트 시작');
+      console.log('기존 테이블 내용 길이:', tableContainer.innerHTML.length);
+      console.log('새로운 테이블 내용 길이:', newTableContainer.innerHTML.length);
+      tableContainer.innerHTML = newTableContainer.innerHTML;
+      console.log('테이블 컨테이너 업데이트 완료');
+      window.scrollTo(0, currentScrollPosition);
+      document.documentElement.scrollTop = currentScrollPosition;
+      document.body.scrollTop = currentScrollPosition;
+    } else {
+      console.warn('테이블 컨테이너 업데이트 실패:', {
+        newTableContainer: !!newTableContainer,
+        tableContainer: !!tableContainer
       });
     }
     
-    // ========= HTML 응답 처리 =========
-    // 목적: HTML 응답을 텍스트로 변환하여 반환
-    //   - HTML 응답은 페이지네이션 요청의 정상적인 응답
-    //   - 전체 페이지 HTML을 받아서 필요한 부분만 추출
-    // 
-    // response.text(): 응답 본문을 텍스트(문자열)로 변환
-    //   - 반환값: Promise 객체 (텍스트 문자열)
-    //   - 예: '<html><body><div class="table-container">...</div></body></html>'
-    //   - 목적: HTML 문자열을 받아서 DOM 조작에 사용
-    //   - 다음 .then()으로 HTML 문자열이 전달됨
-    return response.text();
-  })
-  // ========= HTML 처리 및 DOM 업데이트 (두 번째 .then()) =========
-  // 목적: 받아온 HTML을 파싱하여 필요한 부분만 추출하고 현재 페이지 업데이트
-  //   - 임시 DOM 요소를 생성하여 HTML 파싱
-  //   - 테이블 목록과 페이지네이션 부분만 추출
-  //   - 현재 페이지의 해당 부분만 업데이트
-  //   - 스크롤 위치 유지
-  // 
-  // .then(html => {...}): HTML 문자열 처리
-  //   - html: 서버에서 받아온 HTML 문자열
-  //     → 예: '<html><body><div class="table-container"><table>...</table></div><div class="pagination">...</div></body></html>'
-  //   - 반환값: 없음 (비동기 처리 완료)
-  .then(html => {
-    // ========= 임시 DOM 요소 생성 =========
-    // 목적: HTML 문자열을 파싱하여 DOM 요소로 변환
-    //   - document.createElement()로 임시 컨테이너 생성
-    //   - innerHTML에 HTML 문자열을 할당하여 파싱
-    //   - querySelector()로 필요한 부분만 추출
-    // 
-    // document.createElement('div'): 임시 div 요소 생성
-    //   - 'div': 요소 태그 이름
-    //   - 반환값: HTMLDivElement 객체
-    //   - 목적: HTML 문자열을 파싱하기 위한 임시 컨테이너
-    //   - 주의: 이 요소는 실제 DOM에 추가하지 않음 (메모리에만 존재)
-    const tempDiv = document.createElement('div');
-    
-    // tempDiv.innerHTML = html: HTML 문자열을 할당하여 파싱
-    //   - innerHTML: 요소의 내부 HTML 내용을 설정하는 속성
-    //   - html: 서버에서 받아온 HTML 문자열
-    //   - 동작: 브라우저가 HTML 문자열을 파싱하여 DOM 트리로 변환
-    //   - 예: tempDiv.innerHTML = '<div class="table-container">...</div>'
-    //     → tempDiv 내부에 실제 DOM 요소들이 생성됨
-    //   - 목적: 파싱된 DOM 요소에서 필요한 부분만 추출하기 위함
-    tempDiv.innerHTML = html;
-    
-    // ========= 업데이트할 요소 추출 =========
-    // 목적: 파싱된 HTML에서 필요한 부분만 추출
-    //   - 테이블 목록 컨테이너와 페이지네이션 컨테이너만 추출
-    //   - 전체 HTML이 아닌 필요한 부분만 업데이트
-    // 
-    // tempDiv.querySelector('.table-container'): 테이블 목록 컨테이너 찾기
-    //   - '.table-container': CSS 선택자
-    //   - tempDiv: 임시 DOM 요소 내에서 검색
-    //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-    //   - 예: <div class="table-container"><table>...</table></div>
-    //   - 목적: 새로운 페이지의 테이블 목록 부분만 추출
-    const newTableContainer = tempDiv.querySelector('.table-container');
-    
-    // tempDiv.querySelector('.pagination'): 페이지네이션 컨테이너 찾기
-    //   - '.pagination': CSS 선택자
-    //   - tempDiv: 임시 DOM 요소 내에서 검색
-    //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-    //   - 예: <div class="pagination"><a href="?page=1">1</a><a href="?page=2">2</a>...</div>
-    //   - 목적: 새로운 페이지의 페이지네이션 링크 부분만 추출
-    const newPagination = tempDiv.querySelector('.pagination');
-    
-    // ========= 상세 정보 영역 확인 =========
-    // 목적: 페이지네이션 후에도 상세 정보 영역을 유지하기 위함
-    //   - 사용자가 행을 클릭하여 상세 정보를 보고 있는 경우
-    //   - 페이지네이션 후에도 상세 정보가 사라지지 않도록 함
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 상세 정보 유지
-    // 
-    // document.querySelector('.user-detail-section, .doctor-detail-section, ...'): 상세 정보 영역 찾기
-    //   - '.user-detail-section, .doctor-detail-section, ...': CSS 선택자 (여러 클래스 중 하나)
-    //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-    //   - 예: <div class="user-detail-section">...</div> (사용자 목록)
-    //   - 예: <div class="doctor-detail-section">...</div> (의사 목록)
-    //   - 예: <div class="hospital-detail-section">...</div> (병원 목록)
-    //   - 예: <div class="approval-detail-section">...</div> (승인대기 목록)
-    //   - 목적: 페이지네이션 후에도 상세 정보 영역이 있는지 확인
-    const currentDetailSection = document.querySelector('.user-detail-section, .doctor-detail-section, .hospital-detail-section, .approval-detail-section');
-    
-    // document.querySelector('.container'): 메인 컨테이너 찾기
-    //   - '.container': CSS 선택자
-    //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-    //   - 예: <div class="container">...</div>
-    //   - 목적: 상세 정보 영역이 없을 때 플레이스홀더를 추가하기 위함
-    const container = document.querySelector('.container');
-    
-    // ========= 스크롤 동작 일시적 비활성화 =========
-    // 목적: DOM 업데이트 중 브라우저의 자동 스크롤 조정을 방지
-    //   - 브라우저는 DOM 변경 시 자동으로 스크롤 위치를 조정할 수 있음
-    //   - 스크롤 동작을 'auto'로 설정하여 부드러운 스크롤 효과 비활성화
-    //   - 사용자 경험(UX) 개선: 스크롤 위치가 갑자기 변경되지 않도록 함
-    // 
-    // document.documentElement.style.scrollBehavior: <html> 요소의 스크롤 동작 설정
-    //   - scrollBehavior: CSS 속성 ('auto', 'smooth', 'instant')
-    //   - 'auto': 기본 동작 (브라우저 기본)
-    //   - 'smooth': 부드러운 스크롤 (애니메이션)
-    //   - originalScrollBehavior: 원래 값 저장 (나중에 복원하기 위함)
-    //   - 목적: DOM 업데이트 중 스크롤 동작을 제어
-    const originalScrollBehavior = document.documentElement.style.scrollBehavior;
-    
-    // document.documentElement.style.scrollBehavior = 'auto': 스크롤 동작을 'auto'로 설정
-    //   - 'auto': 기본 동작 (부드러운 스크롤 효과 없음)
-    //   - 목적: DOM 업데이트 중 스크롤 위치가 갑자기 변경되지 않도록 함
-    document.documentElement.style.scrollBehavior = 'auto';
-    
-    // document.body.style.scrollBehavior = 'auto': <body> 요소의 스크롤 동작도 'auto'로 설정
-    //   - 일부 브라우저에서는 <body> 요소의 스크롤 동작도 설정해야 함
-    //   - 목적: 크로스 브라우저 호환성 확보
-    document.body.style.scrollBehavior = 'auto';
-    
-    // ========= 테이블 목록 업데이트 =========
-    // 조건: 새로운 테이블 컨테이너와 현재 테이블 컨테이너가 모두 존재하는 경우
-    //   - 안전성: 요소가 없으면 업데이트하지 않음 (에러 방지)
-    // 
-    // newTableContainer && tableContainer: 두 요소가 모두 존재하는지 확인
-    //   - newTableContainer: 파싱된 HTML에서 추출한 새로운 테이블 컨테이너
-    //   - tableContainer: 현재 페이지의 테이블 컨테이너
-    //   - &&: 논리 AND 연산자 (두 조건이 모두 true여야 true)
-    //   - 목적: 안전하게 업데이트하기 위함
-    if (newTableContainer && tableContainer) {
-      // ========= 테이블 목록 내용 교체 =========
-      // tableContainer.innerHTML = newTableContainer.innerHTML: 테이블 목록 내용 교체
-      //   - tableContainer.innerHTML: 현재 테이블 컨테이너의 내부 HTML
-      //   - newTableContainer.innerHTML: 새로운 테이블 컨테이너의 내부 HTML
-      //   - 동작: 현재 테이블 목록을 새로운 테이블 목록으로 완전히 교체
-      //   - 예: 기존 <table>...</table> → 새로운 <table>...</table>
-      //   - 목적: 페이지네이션된 새로운 목록으로 업데이트
-      //   - 주의: 이 작업은 DOM을 변경하므로 브라우저가 레이아웃을 다시 계산할 수 있음
-      tableContainer.innerHTML = newTableContainer.innerHTML;
-      
-      // ========= 스크롤 위치 강제 고정 =========
-      // 목적: 테이블 목록 업데이트 직후 스크롤 위치를 즉시 복원
-      //   - DOM 업데이트 후 브라우저가 자동으로 스크롤 위치를 조정할 수 있음
-      //   - 사용자가 보고 있던 위치를 유지하기 위해 즉시 복원
-      //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 같은 위치에서 계속 볼 수 있음
-      // 
-      // window.scrollTo(0, currentScrollPosition): window 객체의 스크롤 위치 설정
-      //   - scrollTo(x, y): 스크롤 위치를 지정된 좌표로 이동
-      //   - 0: 가로 스크롤 위치 (항상 0, 세로 스크롤만 고려)
-      //   - currentScrollPosition: 저장된 세로 스크롤 위치 (픽셀 단위)
-      //   - 예: window.scrollTo(0, 500) → 페이지 상단에서 500px 아래로 스크롤
-      //   - 목적: 스크롤 위치를 즉시 복원
-      window.scrollTo(0, currentScrollPosition);
-      
-      // document.documentElement.scrollTop = currentScrollPosition: <html> 요소의 스크롤 위치 설정
-      //   - scrollTop: 요소의 세로 스크롤 위치 (픽셀 단위)
-      //   - currentScrollPosition: 저장된 스크롤 위치
-      //   - 목적: 크로스 브라우저 호환성 확보 (일부 브라우저에서 필요)
-      document.documentElement.scrollTop = currentScrollPosition;
-      
-      // document.body.scrollTop = currentScrollPosition: <body> 요소의 스크롤 위치 설정
-      //   - scrollTop: 요소의 세로 스크롤 위치 (픽셀 단위)
-      //   - currentScrollPosition: 저장된 스크롤 위치
-      //   - 목적: 크로스 브라우저 호환성 확보 (구형 브라우저에서 필요)
-      document.body.scrollTop = currentScrollPosition;
-    }
-    
-    // ========= 페이지네이션 업데이트 =========
+    // ========== 페이지네이션 업데이트 ==========
     // 조건: 새로운 페이지네이션 컨테이너와 현재 페이지네이션 컨테이너가 모두 존재하는 경우
-    //   - 안전성: 요소가 없으면 업데이트하지 않음 (에러 방지)
-    // 
-    // newPagination && paginationContainer: 두 요소가 모두 존재하는지 확인
-    //   - newPagination: 파싱된 HTML에서 추출한 새로운 페이지네이션 컨테이너
-    //   - paginationContainer: 현재 페이지의 페이지네이션 컨테이너
-    //   - &&: 논리 AND 연산자 (두 조건이 모두 true여야 true)
-    //   - 목적: 안전하게 업데이트하기 위함
     if (newPagination && paginationContainer) {
-      // ========= 페이지네이션 내용 교체 =========
-      // paginationContainer.innerHTML = newPagination.innerHTML: 페이지네이션 내용 교체
-      //   - paginationContainer.innerHTML: 현재 페이지네이션 컨테이너의 내부 HTML
-      //   - newPagination.innerHTML: 새로운 페이지네이션 컨테이너의 내부 HTML
-      //   - 동작: 현재 페이지네이션 링크를 새로운 페이지네이션 링크로 완전히 교체
-      //   - 예: 기존 <a href="?page=1">1</a><a href="?page=2">2</a> → 새로운 <a href="?page=2">2</a><a href="?page=3">3</a>
-      //   - 목적: 페이지네이션된 새로운 링크로 업데이트
-      //   - 주의: 이 작업은 DOM을 변경하므로 새로 추가된 링크에 이벤트 리스너를 다시 연결해야 함
+      // [admin_common.js:1494] 페이지네이션 내용 교체
       paginationContainer.innerHTML = newPagination.innerHTML;
+      
+      // ************************************************
+      // !!! 핵심: DOM 업데이트 직후, 단 한 번의 호출로 이벤트 연결 보장 !!!
+      // ************************************************
+      if (typeof attachPaginationListeners === 'function') {
+        attachPaginationListeners(); // <--- 이 위치에만 남기고 다른 곳에서는 모두 제거
+        console.log('페이지네이션 업데이트 후 attachPaginationListeners 즉시 호출');
+      }
+    } else {
+      console.warn('페이지네이션 컨테이너 업데이트 실패:', {
+        newPagination: !!newPagination,
+        paginationContainer: !!paginationContainer
+      });
     }
     
-    // ========= 스크롤 동작 복원 =========
-    // 목적: DOM 업데이트 완료 후 원래 스크롤 동작 설정으로 복원
-    //   - DOM 업데이트 중에는 'auto'로 설정했던 스크롤 동작을 원래대로 되돌림
-    //   - 사용자 경험(UX) 개선: 부드러운 스크롤 효과가 다시 작동하도록 함
-    // 
-    // document.documentElement.style.scrollBehavior = originalScrollBehavior: <html> 요소의 스크롤 동작 복원
-    //   - originalScrollBehavior: DOM 업데이트 전에 저장했던 원래 스크롤 동작 값
-    //     → 예: 'smooth' (부드러운 스크롤)
-    //     → 예: '' (기본값, 브라우저 기본 동작)
-    //   - 목적: 원래 스크롤 동작으로 복원하여 사용자 경험 유지
-    //   - 주의: 원래 값이 없었으면 빈 문자열('')로 설정되어 기본 동작으로 복원됨
-    document.documentElement.style.scrollBehavior = originalScrollBehavior;
-    
-    // document.body.style.scrollBehavior = originalScrollBehavior: <body> 요소의 스크롤 동작도 복원
-    //   - originalScrollBehavior: 원래 스크롤 동작 값
-    //   - 목적: 크로스 브라우저 호환성 확보 (일부 브라우저에서 <body> 요소도 설정 필요)
-    document.body.style.scrollBehavior = originalScrollBehavior;
-    
-    // ========= DOM 업데이트 직후 스크롤 복원 (핵심 개선) =========
-    // 목적: DOM 업데이트 직후 즉시 스크롤 위치를 복원하여 브라우저의 자동 스크롤 조정 방지
-    //   - 브라우저는 DOM 변경 시 자동으로 스크롤 위치를 조정할 수 있음
-    //   - 특히 테이블 목록이나 페이지네이션이 업데이트되면 레이아웃이 변경되어 스크롤 위치가 바뀔 수 있음
-    //   - 사용자가 보고 있던 위치를 유지하기 위해 즉시 복원
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 같은 위치에서 계속 볼 수 있음
-    //   - 핵심: 여러 방법으로 스크롤 위치를 설정하여 크로스 브라우저 호환성 확보
-    // 
-    // window.scrollTo(0, currentScrollPosition): window 객체의 스크롤 위치 설정
-    //   - scrollTo(x, y): 스크롤 위치를 지정된 좌표로 이동
-    //   - 0: 가로 스크롤 위치 (항상 0, 세로 스크롤만 고려)
-    //   - currentScrollPosition: 저장된 세로 스크롤 위치 (픽셀 단위)
-    //     → 예: 500 (페이지 상단에서 500px 아래)
-    //   - 예: window.scrollTo(0, 500) → 페이지 상단에서 500px 아래로 스크롤
-    //   - 목적: 표준 방법으로 스크롤 위치를 즉시 복원
-    //   - 동작: 브라우저가 스크롤 위치를 즉시 변경 (애니메이션 없음)
-    window.scrollTo(0, currentScrollPosition);
-    
-    // document.documentElement.scrollTop = currentScrollPosition: <html> 요소의 스크롤 위치 설정
-    //   - scrollTop: 요소의 세로 스크롤 위치 (픽셀 단위)
-    //   - currentScrollPosition: 저장된 스크롤 위치
-    //   - 목적: 크로스 브라우저 호환성 확보 (일부 브라우저에서 <html> 요소의 scrollTop 사용)
-    //   - 동작: <html> 요소의 스크롤 위치를 직접 설정
-    //   - 주의: window.scrollTo()와 함께 사용하여 확실하게 스크롤 위치 설정
-    document.documentElement.scrollTop = currentScrollPosition;
-    
-    // document.body.scrollTop = currentScrollPosition: <body> 요소의 스크롤 위치 설정
-    //   - scrollTop: 요소의 세로 스크롤 위치 (픽셀 단위)
-    //   - currentScrollPosition: 저장된 스크롤 위치
-    //   - 목적: 크로스 브라우저 호환성 확보 (구형 브라우저에서 <body> 요소의 scrollTop 사용)
-    //   - 동작: <body> 요소의 스크롤 위치를 직접 설정
-    //   - 주의: 구형 브라우저(IE 등)에서는 <body> 요소의 scrollTop을 사용해야 함
-    //   - 주의: 최신 브라우저에서는 무시될 수 있지만, 호환성을 위해 설정
-    document.body.scrollTop = currentScrollPosition;
-    
-    // ========= 비동기 스크롤 복원 (추가 안전장치) =========
-    // 목적: DOM 업데이트가 완전히 완료된 후 스크롤 위치를 다시 한 번 복원
-    //   - 브라우저의 레이아웃 재계산이 완료된 후 스크롤 위치를 확실하게 복원
-    //   - requestAnimationFrame을 사용하여 브라우저 렌더링 사이클과 동기화
-    //   - 사용자 경험(UX) 개선: 스크롤 위치가 확실하게 유지됨
+    // 이벤트 리스너 재연결
+    console.log('이벤트 리스너 재연결 시작');
+    console.log('window.reattachTableRowListeners 존재:', typeof window.reattachTableRowListeners === 'function');
     requestAnimationFrame(() => {
-      // 브라우저 렌더링 완료 후 스크롤 위치 재설정
-      window.scrollTo(0, currentScrollPosition);
-      document.documentElement.scrollTop = currentScrollPosition;
-      document.body.scrollTop = currentScrollPosition;
-      
-      // 추가 안전장치: 한 번 더 확인
       setTimeout(() => {
-        const finalPos = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-        if (Math.abs(finalPos - currentScrollPosition) > 5) {
-          // 스크롤 위치가 여전히 다르면 다시 설정
-          window.scrollTo(0, currentScrollPosition);
-          document.documentElement.scrollTop = currentScrollPosition;
-          document.body.scrollTop = currentScrollPosition;
+        if (typeof window.reattachTableRowListeners === 'function') {
+          console.log('window.reattachTableRowListeners 호출');
+          window.reattachTableRowListeners();
+        } else {
+          console.log('window.reattachTableRowListeners 없음');
+          // 중복 호출 방지: attachPaginationListeners는 이미 위에서 호출됨
         }
       }, 50);
     });
     
-    // ========= 페이지네이션 후 상세 정보 영역 플레이스홀더 추가 =========
-    // 목적: 페이지네이션 후 상세 정보 영역이 없어졌다면 플레이스홀더를 추가하여 스크롤 이동 방지
-    //   - 사용자가 행을 클릭하여 상세 정보를 보고 있는 경우
-    //   - 페이지네이션 후 새로운 페이지에는 해당 행이 없어서 상세 정보 영역이 사라질 수 있음
-    //   - 상세 정보 영역이 사라지면 레이아웃이 변경되어 스크롤 위치가 바뀔 수 있음
-    //   - 플레이스홀더를 추가하여 레이아웃을 유지하고 스크롤 위치를 보존
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 스크롤 위치가 유지됨
-    // 
-    // 조건: container가 존재하고, currentDetailSection이 없는 경우
-    //   - container: 메인 컨테이너 요소 (플레이스홀더를 추가할 위치)
-    //   - !currentDetailSection: 상세 정보 영역이 없는 경우 (사라진 경우)
-    //   - &&: 논리 AND 연산자 (두 조건이 모두 true여야 true)
-    //   - 목적: 상세 정보 영역이 사라진 경우에만 플레이스홀더 추가
-    if (container && !currentDetailSection) {
-      // ========= 숨겨진 플레이스홀더 확인 =========
-      // 목적: 이미 숨겨진 플레이스홀더가 있는지 확인
-      //   - 중복으로 플레이스홀더를 추가하지 않기 위함
-      //   - placeholder-hidden 클래스: 플레이스홀더를 숨기는 CSS 클래스
-      //     → 예: .placeholder-hidden { display: none; } 또는 높이 0
-      //   - 목적: 레이아웃은 유지하되 시각적으로는 보이지 않게 함
-      // 
-      // container.querySelector('.user-detail-section.placeholder-hidden, ...'): 숨겨진 플레이스홀더 찾기
-      //   - '.user-detail-section.placeholder-hidden': CSS 선택자 (두 클래스 모두 가진 요소)
-      //     → user-detail-section 클래스와 placeholder-hidden 클래스를 모두 가진 요소
-      //   - '.doctor-detail-section.placeholder-hidden': 의사 목록용 플레이스홀더
-      //   - '.hospital-detail-section.placeholder-hidden': 병원 목록용 플레이스홀더
-      //   - 반환값: 첫 번째로 일치하는 요소 (HTMLElement 객체) 또는 null (없으면)
-      //   - 예: <div class="user-detail-section placeholder-hidden"></div>
-      //   - 목적: 이미 플레이스홀더가 있으면 추가하지 않음
-      const hiddenPlaceholder = container.querySelector('.user-detail-section.placeholder-hidden, .doctor-detail-section.placeholder-hidden, .hospital-detail-section.placeholder-hidden');
-      
-      // ========= 플레이스홀더 추가 =========
-      // 조건: 숨겨진 플레이스홀더가 없는 경우
-      //   - !hiddenPlaceholder: hiddenPlaceholder가 null인 경우 (플레이스홀더가 없음)
-      //   - 목적: 중복으로 플레이스홀더를 추가하지 않기 위함
-      if (!hiddenPlaceholder) {
-        // ========= 플레이스홀더 요소 생성 =========
-        // document.createElement('div'): 플레이스홀더 div 요소 생성
-        //   - 'div': 요소 태그 이름
-        //   - 반환값: HTMLDivElement 객체
-        //   - 목적: 상세 정보 영역의 공간을 차지할 플레이스홀더 생성
-        const placeholder = document.createElement('div');
-        
-        // placeholder.className = 'user-detail-section placeholder-hidden': 플레이스홀더에 클래스 추가
-        //   - className: 요소의 클래스 속성 (문자열)
-        //   - 'user-detail-section placeholder-hidden': 두 개의 클래스 이름 (공백으로 구분)
-        //     → user-detail-section: 상세 정보 영역 클래스 (레이아웃 유지)
-        //     → placeholder-hidden: 숨김 클래스 (시각적으로 숨김)
-        //   - 목적: 상세 정보 영역과 동일한 레이아웃을 유지하되 시각적으로는 보이지 않게 함
-        //   - 주의: 'user-detail-section'을 기본으로 사용하지만, 실제로는 어떤 목록이든 동일하게 작동
-        //     → CSS에서 .placeholder-hidden으로 숨김 처리
-        placeholder.className = 'user-detail-section placeholder-hidden';
-        
-        // container.appendChild(placeholder): 플레이스홀더를 컨테이너에 추가
-        //   - appendChild(): 부모 요소의 마지막 자식으로 요소 추가
-        //   - container: 메인 컨테이너 요소
-        //   - placeholder: 생성한 플레이스홀더 요소
-        //   - 동작: 플레이스홀더가 DOM에 추가되어 레이아웃에 영향을 줌
-        //   - 목적: 상세 정보 영역이 있던 공간을 유지하여 스크롤 위치가 변경되지 않도록 함
-        //   - 결과: 레이아웃이 유지되어 스크롤 위치가 보존됨
-        container.appendChild(placeholder);
-      }
-      // 주의: 이미 숨겨진 플레이스홀더가 있으면 추가하지 않음 (중복 방지)
-    }
-    // 주의: container가 없거나 currentDetailSection이 있으면 플레이스홀더를 추가하지 않음
-    //   - container가 없으면: 플레이스홀더를 추가할 위치가 없음
-    //   - currentDetailSection이 있으면: 상세 정보 영역이 이미 존재하므로 플레이스홀더 불필요
-    
-    // ========= 이벤트 리스너 재연결 (DOM 업데이트 직후) =========
-    // 목적: DOM 업데이트 후 새로 추가된 요소들에 이벤트 리스너를 다시 연결
-    //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
-    //   - 새로 추가된 요소들에 이벤트 리스너를 다시 연결하여 기능 유지
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 모든 기능이 정상 작동
-    // 
-    // attachPaginationListeners(): 페이지네이션 링크에 AJAX 이벤트 리스너 연결
-    //   - 목적: 새로 추가된 페이지네이션 링크에 클릭 이벤트 리스너 연결
-    //   - 동작: 모든 페이지네이션 링크를 찾아서 각각에 이벤트 리스너 추가
-    //   - 결과: 페이지네이션 링크 클릭 시 AJAX로 페이지 이동
-    //   - 주의: 이 함수는 DOM 업데이트 후 반드시 호출해야 함
-    attachPaginationListeners();
-    
-    // ========= 테이블 행 클릭 이벤트 다시 연결 =========
-    // 목적: 페이지네이션 후 새로 추가된 테이블 행에 클릭 이벤트 리스너를 다시 연결
-    //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
-    //   - 새로 추가된 행에 이벤트 리스너를 다시 연결하여 기능 유지
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 행 클릭 기능이 정상 작동
-    // 
-    // typeof window.reattachTableRowListeners === 'function': 함수 존재 여부 확인
-    //   - typeof: 변수의 타입을 확인하는 연산자
-    //   - window.reattachTableRowListeners: 테이블 행에 이벤트 리스너를 다시 연결하는 함수 (전역 함수)
-    //   - 'function': 함수 타입을 나타내는 문자열
-    //   - 목적: 함수가 정의되어 있는지 확인 (안전성)
-    //   - 이유: 각 페이지별 JS 파일에서 window 객체에 이 함수를 정의해야 함
-    // ========= DOM 업데이트 완료 후 이벤트 리스너 재연결 =========
-    // 목적: 브라우저 렌더링 사이클과 동기화하여 DOM 업데이트가 완료된 후 이벤트 리스너 재연결
-    //   - requestAnimationFrame을 사용하여 브라우저 렌더링 완료 후 실행
-    //   - 사용자 경험(UX) 개선: DOM 업데이트가 완전히 완료된 후 이벤트 리스너를 연결하여 안정성 확보
-    requestAnimationFrame(() => {
-      if (typeof window.reattachTableRowListeners === 'function') {
-        // window.reattachTableRowListeners(): 테이블 행에 이벤트 리스너 다시 연결
-        //   - 목적: 새로 추가된 테이블 행에 클릭 이벤트 리스너 연결
-        //   - 동작: 각 페이지별 JS 파일에서 정의한 방식으로 이벤트 리스너 연결
-        //   - 결과: 행 클릭 시 상세 정보 표시 기능이 정상 작동
-        window.reattachTableRowListeners();
-      }
-      // 주의: reattachTableRowListeners 함수가 없으면 실행하지 않음 (에러 방지)
-    });
-    
-    // ========= 정렬 링크 이벤트 다시 연결 =========
-    // 목적: 페이지네이션 후 새로 추가된 정렬 링크에 클릭 이벤트 리스너를 다시 연결
-    //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라짐
-    //   - 새로 추가된 정렬 링크에 이벤트 리스너를 다시 연결하여 기능 유지
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 정렬 기능이 정상 작동
-    // 
-    // attachSortListeners(): 정렬 링크에 이벤트 리스너 연결 (공통 함수)
-    //   - attachSortListeners: admin_common.js에 정의된 공통 함수
-    //   - 목적: 모든 정렬 링크에 클릭 이벤트 리스너 연결
-    //   - 동작: 모든 정렬 링크를 찾아서 각각에 이벤트 리스너 추가
-    //   - 결과: 정렬 링크 클릭 시 정렬 처리 수행
+    console.log('attachSortListeners 호출');
     attachSortListeners();
-    
-    // ========= 체크박스 이벤트 다시 연결 =========
-    // 목적: 새로 추가된 체크박스에 이벤트 리스너를 다시 연결
-    //   - 페이지네이션으로 새로운 체크박스가 추가되면 기존 이벤트 리스너가 사라짐
-    //   - 새로 추가된 체크박스에 이벤트 리스너를 다시 연결하여 기능 유지
-    //   - 사용자 경험(UX) 개선: 페이지 이동 후에도 체크박스 기능이 정상 작동
-    //   - 예: 승인대기 목록의 체크박스, 1:1 문의 목록의 체크박스 등
-    // 
-    // typeof attachCheckboxListeners === 'function': 함수 존재 여부 확인
-    //   - typeof: 변수의 타입을 확인하는 연산자
-    //   - attachCheckboxListeners: 체크박스에 이벤트 리스너를 연결하는 함수
-    //   - 'function': 함수 타입을 나타내는 문자열
-    //   - 목적: 함수가 정의되어 있는지 확인 (안전성)
-    //   - 이유: 모든 페이지에 이 함수가 정의되어 있지 않을 수 있음
-    //   - 예: 일부 페이지는 체크박스 기능이 없을 수 있음
     if (typeof attachCheckboxListeners === 'function') {
-      // attachCheckboxListeners(): 체크박스에 이벤트 리스너 연결
-      //   - 목적: 새로 추가된 체크박스에 이벤트 리스너 연결
-      //   - 동작: 모든 체크박스를 찾아서 각각에 이벤트 리스너 추가
-      //   - 결과: 체크박스 선택/해제 기능이 정상 작동
-      //   - 예: 승인대기 목록에서 여러 의사 선택, 1:1 문의 목록에서 여러 문의 선택 등
+      console.log('attachCheckboxListeners 호출');
       attachCheckboxListeners();
     }
-    // 주의: attachCheckboxListeners 함수가 없으면 실행하지 않음 (에러 방지)
     
-    // ========= 비동기 스크롤 복원 (브라우저 자동 조정 완료 후) =========
-    // 목적: 브라우저의 자동 스크롤 조정이 완료된 후 스크롤 위치를 최종적으로 복원
-    //   - 브라우저는 DOM 업데이트 후 레이아웃을 다시 계산하고 스크롤 위치를 조정할 수 있음
-    //   - 이 과정이 완료된 후에 스크롤 위치를 복원하여 확실하게 유지
-    //   - 사용자 경험(UX) 개선: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
-    // 
-    // restoreScroll(currentScrollPosition): Promise 기반 스크롤 복원 함수 호출
-    //   - restoreScroll(): 스크롤 위치를 복원하는 유틸리티 함수 (Promise 반환)
-    //   - currentScrollPosition: 저장된 스크롤 위치 (픽셀 단위)
-    //   - 반환값: Promise 객체 (비동기 처리)
-    //   - 동작:
-    //     1. DOM 업데이트가 완료될 때까지 대기 (50ms 지연)
-    //     2. 여러 방법으로 스크롤 위치 설정 (window.scrollTo, scrollTop 등)
-    //     3. 복원 성공 여부 확인
-    //     4. 실패 시 requestAnimationFrame으로 재시도
-    //   - 목적: 브라우저의 자동 조정을 고려한 안정적인 스크롤 복원
-    //   - .then(() => {...}): 복원 완료 후 실행
-    //     → 복원 완료 후 추가 안전장치를 실행할 수 있음 (현재는 비어있음)
-    restoreScroll(currentScrollPosition).then(() => {
-      // 복원 완료 후 추가 안전장치 (선택 사항)
-      //   - 현재는 비어있지만, 향후 추가 로직을 넣을 수 있음
-      //   - 예: 스크롤 위치 확인, 추가 복원 시도 등
-    });
-    
-    // ========= URL 업데이트 (히스토리 관리) =========
-    // 목적: 브라우저의 URL과 히스토리를 업데이트하여 페이지 새로고침 없이 URL 변경
-    //   - AJAX로 페이지를 이동했지만 URL은 변경되지 않았으므로 수동으로 업데이트
-    //   - 사용자 경험(UX) 개선: URL이 현재 페이지를 반영하여 북마크, 공유 등이 가능
-    //   - 브라우저 히스토리 관리: 뒤로 가기/앞으로 가기 버튼이 정상 작동
-    // 
-    // window.history.pushState({}, '', url): 브라우저 히스토리에 새 항목 추가
-    //   - pushState(): History API의 메서드 (브라우저 히스토리에 항목 추가)
-    //   - 첫 번째 인자 {}: 상태 객체 (현재는 빈 객체, 필요시 데이터 저장 가능)
-    //     → 예: {page: 2, search: '김철수'} 등
-    //   - 두 번째 인자 '': 제목 (현재는 빈 문자열, 대부분의 브라우저에서 무시됨)
-    //   - 세 번째 인자 url: 새로운 URL (문자열)
-    //     → 예: 'http://localhost:8000/admin_panel/users/?page=2&search_type=name&search_keyword=김'
-    //   - 동작:
-    //     1. 브라우저의 URL을 변경 (페이지 새로고침 없음)
-    //     2. 브라우저 히스토리에 새 항목 추가
-    //     3. 뒤로 가기 버튼을 사용할 수 있게 됨
-    //   - 목적: URL이 현재 페이지를 반영하도록 업데이트
-    //   - 결과: 사용자가 URL을 복사하거나 북마크할 수 있음
-    //   - 주의: 페이지 새로고침은 발생하지 않음 (AJAX 처리)
+    // URL 업데이트
+    console.log('URL 업데이트:', url);
     window.history.pushState({}, '', url);
     
-    // ========= 스크롤 위치 강제 유지 (여러 번 복원하여 확실하게) =========
-    // 목적: 여러 시점에서 스크롤 위치를 복원하여 브라우저의 자동 조정을 확실하게 방지
-    //   - 브라우저는 DOM 업데이트, 레이아웃 계산, 렌더링 등 여러 단계에서 스크롤 위치를 조정할 수 있음
-    //   - 각 단계에서 스크롤 위치를 복원하여 확실하게 유지
-    //   - 사용자 경험(UX) 개선: 어떤 상황에서도 스크롤 위치가 유지됨
-    //   - 핵심: 여러 번 복원하여 확실하게 보장
-    // 
-    // 즉시 복원: DOM 업데이트 직후 즉시 복원
-    //   - window.scrollTo(0, currentScrollPosition): 스크롤 위치를 즉시 복원
-    //   - 목적: DOM 업데이트 직후 브라우저가 자동으로 조정하기 전에 복원
-    //   - 동작: 동기적으로 실행되어 즉시 스크롤 위치 설정
-    window.scrollTo(0, currentScrollPosition);
+    // ========= AJAX 업데이트 후 페이지별 이벤트 리스너 재연결 =========
+    console.log('페이지별 이벤트 리스너 재연결 시작');
+    console.log('selectDoctor 존재:', typeof selectDoctor === 'function');
+    console.log('attachCheckboxListeners 존재:', typeof attachCheckboxListeners === 'function');
+    console.log('attachButtonListeners 존재:', typeof attachButtonListeners === 'function');
     
-    // ========= DOM 업데이트 후 복원 =========
-    // 목적: 브라우저가 DOM 업데이트와 레이아웃 계산을 완료한 후 스크롤 위치 복원
-    //   - requestAnimationFrame(): 브라우저의 다음 리페인트 전에 실행되는 콜백
-    //   - 브라우저는 매 프레임마다 DOM 변경사항을 렌더링함 (일반적으로 60fps)
-    //   - 목적: 브라우저가 레이아웃을 다시 계산한 후 스크롤 위치 복원
-    //   - 사용자 경험(UX) 개선: 레이아웃 변경 후에도 스크롤 위치 유지
-    // 
-    // requestAnimationFrame(() => {...}): 다음 리페인트 전에 실행
-    //   - requestAnimationFrame(): 브라우저의 애니메이션 프레임 요청
-    //   - 반환값: 요청 ID (취소 시 사용)
-    //   - 동작: 브라우저가 다음 화면을 그리기 전에 콜백 함수 실행
-    //   - 목적: DOM 업데이트와 레이아웃 계산이 완료된 후 스크롤 위치 복원
-    //   - 예: 60fps인 경우 약 16.67ms 후 실행
-    //   - 주의: 브라우저가 활성화되어 있을 때만 실행됨 (백그라운드에서는 일시 중지)
-    requestAnimationFrame(() => {
-      // window.scrollTo(0, currentScrollPosition): 스크롤 위치 복원
-      //   - 목적: 레이아웃 계산 완료 후 스크롤 위치 복원
-      window.scrollTo(0, currentScrollPosition);
-    });
-    
-    // ========= 레이아웃 변경 후 복원 =========
-    // 목적: 레이아웃 변경이 완전히 완료된 후 스크롤 위치 복원
-    //   - setTimeout(..., 0): 현재 실행 중인 코드가 완료된 후 실행
-    //   - 목적: 모든 동기 작업이 완료된 후 비동기로 스크롤 위치 복원
-    //   - 사용자 경험(UX) 개선: 레이아웃 변경 후에도 스크롤 위치 유지
-    // 
-    // setTimeout(() => {...}, 0): 다음 이벤트 루프에서 실행
-    //   - setTimeout(): 지정된 시간 후에 함수를 실행하는 타이머
-    //   - 0: 지연 시간 (밀리초) - 즉시 실행이 아니라 다음 이벤트 루프에서 실행
-    //   - 동작: 현재 실행 중인 코드가 모두 완료된 후 콜백 함수 실행
-    //   - 목적: 모든 동기 작업(DOM 업데이트, 레이아웃 계산 등)이 완료된 후 실행
-    //   - 예: 약 0-4ms 후 실행 (브라우저에 따라 다름)
-    //   - 주의: 정확한 시간이 아니라 "가능한 빨리" 실행됨
-    setTimeout(() => {
-      // window.scrollTo(0, currentScrollPosition): 스크롤 위치 복원
-      //   - 목적: 레이아웃 변경 완료 후 스크롤 위치 복원
-      window.scrollTo(0, currentScrollPosition);
-    }, 0);
-    
-    // ========= 추가 안전장치 (100ms 후) =========
-    // 목적: 모든 작업이 완료된 후 최종적으로 스크롤 위치를 확인하고 필요시 복원
-    //   - 브라우저의 자동 조정이 완료된 후 스크롤 위치를 확인
-    //   - 스크롤 위치가 변경되었다면 다시 복원
-    //   - 사용자 경험(UX) 개선: 어떤 상황에서도 스크롤 위치가 유지됨
-    //   - 핵심: 최종 안전장치로 확실하게 보장
-    // 
-    // setTimeout(() => {...}, 100): 100ms 후 실행
-    //   - 100: 지연 시간 (밀리초)
-    //   - 목적: 모든 DOM 업데이트, 레이아웃 계산, 렌더링이 완료된 후 실행
-    //   - 동작: 브라우저의 모든 자동 조정이 완료된 후 스크롤 위치 확인
-    setTimeout(() => {
-      // ========= 현재 스크롤 위치 확인 =========
-      // window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop: 현재 스크롤 위치
-      //   - window.pageYOffset: 표준 속성 (IE9+)
-      //   - document.documentElement.scrollTop: <html> 요소의 스크롤 위치
-      //   - document.body.scrollTop: <body> 요소의 스크롤 위치 (구형 브라우저)
-      //   - || 연산자: 첫 번째 truthy 값을 반환
-      //   - 목적: 크로스 브라우저 호환성 확보
-      //   - 반환값: 현재 스크롤 위치 (픽셀 단위)
-      const newScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop;
-      
-      // ========= 스크롤 위치 차이 확인 및 복원 =========
-      // Math.abs(newScrollPosition - currentScrollPosition) > 10: 스크롤 위치 차이가 10px 이상인지 확인
-      //   - Math.abs(): 절댓값 계산
-      //   - newScrollPosition: 현재 스크롤 위치
-      //   - currentScrollPosition: 저장된 스크롤 위치
-      //   - 10: 허용 오차 (픽셀 단위)
-      //   - 목적: 작은 차이는 무시하고 큰 차이만 복원
-      //   - 이유: 브라우저의 렌더링 오차로 인한 작은 차이는 허용
-      //   - 예: newScrollPosition=500, currentScrollPosition=505 → 차이=5px → 복원 안 함
-      //   - 예: newScrollPosition=500, currentScrollPosition=520 → 차이=20px → 복원함
-      if (Math.abs(newScrollPosition - currentScrollPosition) > 10) {
-        // window.scrollTo(0, currentScrollPosition): 스크롤 위치 복원
-        //   - 목적: 스크롤 위치가 변경되었다면 다시 복원
-        //   - 조건: 차이가 10px 이상인 경우에만 복원
-        window.scrollTo(0, currentScrollPosition);
-      }
-      // 주의: 차이가 10px 이하면 복원하지 않음 (작은 오차는 허용)
-    }, 100);
-  })
-  // ========= 에러 처리 (.catch()) =========
-  // 목적: AJAX 요청 중 발생한 에러를 처리하여 사용자 경험 유지
-  //   - 네트워크 오류, 서버 오류 등으로 AJAX 요청이 실패할 수 있음
-  //   - 에러 발생 시 일반 페이지 이동으로 폴백하여 기능 유지
-  //   - 사용자 경험(UX) 개선: 에러 발생 시에도 페이지 이동이 가능
-  // 
-  // .catch(error => {...}): Promise 체이닝의 에러 처리
-  //   - catch(): Promise가 거부(reject)되었을 때 실행되는 핸들러
-  //   - error: 에러 객체 (Error 객체 또는 기타 값)
-  //   - 반환값: 없음 (에러 처리 완료)
-  .catch(error => {
-    // ========= JSON 응답 예외 처리 =========
-    // 목적: JSON 응답은 페이지네이션이 아니므로 무시
-    //   - JSON 응답은 상세 정보만 반환하는 경우 (행 클릭 등)
-    //   - handlePaginationAjax에서 JSON 응답을 처리하지 않음
-    //   - 다른 함수(selectItem 등)에서 처리해야 함
-    //   - 목적: JSON 응답을 에러로 처리하지 않음
-    // 
-    // error.message === 'JSON_RESPONSE': 에러 메시지가 'JSON_RESPONSE'인지 확인
-    //   - error.message: 에러 객체의 메시지 속성
-    //   - 'JSON_RESPONSE': 첫 번째 .then()에서 throw한 예외 메시지
-    //   - 목적: JSON 응답 예외를 일반 에러와 구분
-    //   - 결과: JSON 응답은 에러로 처리하지 않고 무시
-    if (error.message === 'JSON_RESPONSE') {
-      // return: 함수 종료 (에러 처리 건너뛰기)
-      //   - 목적: JSON 응답은 정상적인 응답이므로 에러 처리하지 않음
-      //   - 결과: 에러 로그를 출력하지 않고 함수 종료
-      return;
+    // 1. 정렬 리스너 재연결 (모든 목록 페이지 공통)
+    if (typeof attachSortListeners === 'function') {
+      attachSortListeners();
     }
     
-    // ========= 일반 에러 처리 =========
-    // console.error('페이지네이션 오류:', error): 에러 로그 출력
-    //   - console.error(): 콘솔에 에러 메시지 출력
-    //   - '페이지네이션 오류:': 에러 메시지
-    //   - error: 에러 객체 (상세 정보 포함)
-    //   - 목적: 개발자가 에러를 확인할 수 있도록 로그 출력
-    //   - 주의: 프로덕션 환경에서는 사용자에게는 보이지 않음
-    console.error('페이지네이션 오류:', error);
+    // 2. 의사 승인 대기 페이지 로직 (approval_pending.js)
+    //    - 승인 대기 페이지 고유 함수(selectDoctor, attachCheckboxListeners, attachButtonListeners)를 확인하여 재연결
+    if (typeof selectDoctor === 'function' && 
+        typeof attachCheckboxListeners === 'function' && 
+        typeof attachButtonListeners === 'function') {
+      
+      console.log('승인 대기 페이지 로직 실행');
+      
+      // 테이블 행 클릭 이벤트 리스너 재연결
+      // (선택자: tr[data-doctor-id], 속성 이름: data-doctor-id, 핸들러: selectDoctor)
+      // approval_pending.js의 DOMContentLoaded에서 사용된 선택자를 사용합니다.
+      const approvalRows = document.querySelectorAll('tr[data-doctor-id]');
+      console.log('승인 대기 페이지 행 개수:', approvalRows.length);
+      if (approvalRows.length > 0) {
+        attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
+        console.log('테이블 행 클릭 이벤트 리스너 재연결 완료');
+      }
+      
+      // 체크박스 이벤트 리스너 재연결
+      attachCheckboxListeners();
+      console.log('체크박스 이벤트 리스너 재연결 완료');
+      
+      // 버튼 이벤트 리스너 재연결 (승인/거절 버튼)
+      attachButtonListeners();
+      console.log('버튼 이벤트 리스너 재연결 완료');
+    } else {
+      console.log('승인 대기 페이지 조건 불일치:', {
+        selectDoctor: typeof selectDoctor === 'function',
+        attachCheckboxListeners: typeof attachCheckboxListeners === 'function',
+        attachButtonListeners: typeof attachButtonListeners === 'function'
+      });
+    }
     
-    // ========= 일반 페이지 이동으로 폴백 =========
-    // 목적: AJAX 요청이 실패했을 때 일반 페이지 이동으로 폴백하여 기능 유지
-    //   - AJAX로 페이지 이동이 실패했지만 사용자는 여전히 페이지를 이동할 수 있어야 함
-    //   - 사용자 경험(UX) 개선: 에러 발생 시에도 페이지 이동이 가능
-    //   - 결과: 전체 페이지가 새로고침되어 이동 (AJAX가 아닌 일반 이동)
-    // 
-    // window.location.href = url: 브라우저의 현재 URL을 변경하여 페이지 이동
-    //   - window.location.href: 브라우저의 현재 URL (읽기/쓰기 가능)
-    //   - url: 이동할 페이지의 URL (문자열)
-    //     → 예: 'http://localhost:8000/admin_panel/users/?page=2&search_type=name&search_keyword=김'
-    //   - 동작: 브라우저가 해당 URL로 전체 페이지를 새로고침하여 이동
-    //     → 서버에서 전체 HTML 페이지를 받아와서 렌더링
-    //     → 스크롤 위치는 페이지 상단으로 이동
-    //     → 페이지 상태는 초기화됨
-    //   - 목적: AJAX 실패 시 일반 페이지 이동으로 폴백
-    //   - 결과: 페이지가 정상적으로 이동됨 (스크롤 위치는 초기화됨)
-    //   - 주의: AJAX가 아닌 일반 페이지 이동이므로 전체 페이지가 새로고침됨
+    // 3. 의사 목록 페이지 로직 (doctor_list.js)
+    // doctor_list.js에서 selectDoctor 함수가 정의되어 있으면 재연결합니다.
+    if (typeof selectDoctor === 'function' && 
+        document.querySelector('.doctor-row[data-doctor-id]') &&
+        !(typeof attachCheckboxListeners === 'function' && typeof attachButtonListeners === 'function')) {
+      // 의사 목록 페이지에서 테이블 행 클릭 이벤트 리스너를 다시 연결합니다.
+      // doctor_list.js의 DOMContentLoaded에서 사용하는 선택자: '.doctor-row[data-doctor-id]'
+      attachTableRowListeners('.doctor-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
+    }
+    // ... (이 외의 다른 페이지(예: user_list, hospital_list)에 대한 재연결 로직이 있다면 여기에 추가)
+    
+    // ========= 최종 스크롤 복원 (DOM 안정화 후) =========
+    // 스크롤 위치 복원
+    window.scrollTo(0, currentScrollPosition);
+    requestAnimationFrame(() => {
+      window.scrollTo(0, currentScrollPosition);
+    });
+  })
+  .catch(error => {
+    if (error.message === 'JSON_RESPONSE') {
+      return;
+    }
+    console.error('페이지네이션 오류:', error);
     window.location.href = url;
   });
 }
@@ -2181,73 +1638,99 @@ function handlePaginationAjax(e, url) {
  * // 결과: 모든 페이지네이션 링크에 AJAX 이벤트 리스너가 연결됨
  */
 function attachPaginationListeners() {
+  console.log('attachPaginationListeners 호출됨'); // 디버깅 로그 추가
+  
   // ========= 페이지네이션 링크 조회 =========
-  // 목적: 페이지에 있는 모든 페이지네이션 링크를 찾기
-  //   - DOM에서 페이지네이션 링크를 모두 찾아서 이벤트 리스너 연결
-  //   - 성능 최적화: 한 번에 모든 링크를 찾아서 처리
-  // 
-  // document.querySelectorAll('.pagination a.page-link'): 모든 페이지네이션 링크 찾기
-  //   - '.pagination a.page-link': CSS 선택자
-  //     → .pagination: 페이지네이션 컨테이너
-  //     → a: 링크 요소
-  //     → .page-link: 페이지 링크 클래스
-  //   - 반환값: NodeList 객체 (유사 배열, 모든 일치하는 요소)
-  //   - 예: <div class="pagination">
-  //          <a href="?page=1" class="page-link">1</a>
-  //          <a href="?page=2" class="page-link">2</a>
-  //          ...
-  //        </div>
-  //   - 목적: 모든 페이지네이션 링크를 찾아서 이벤트 리스너 연결
-  const paginationLinks = document.querySelectorAll('.pagination a.page-link');
+  // 기존: document.querySelectorAll('.pagination a.page-link[href], .pagination a[href]');
+  // **핵심 수정: page-link와 pagination-link 두 클래스를 모두 찾도록 통합합니다.**
+  console.log('페이지네이션 링크 찾기 시도: 통합 선택자'); // 디버깅 로그 추가
+  const paginationLinks = document.querySelectorAll(
+    '.pagination a.page-link[href], ' + // 기존 HTML 링크 (.page-link)
+    '.pagination a.pagination-link[href], ' + // 로그에서 확인된 링크 (.pagination-link)
+    '.pagination a[href], ' + // 안전을 위해 모든 href 속성을 가진 <a> 태그를 포함
+    'nav[aria-label="Page navigation"] a.page-link[href], ' + // nav 내부 .page-link
+    'nav[aria-label="Page navigation"] a.pagination-link[href], ' + // nav 내부 .pagination-link
+    'nav[aria-label="Page navigation"] a[href]' // nav 내부 모든 href 속성을 가진 <a> 태그
+  );
+  
+  console.log('찾은 링크 개수:', paginationLinks.length); // 디버깅 로그 추가
+  
+  // 찾은 링크가 0개인 경우 에러 로그를 출력합니다.
+  if (paginationLinks.length === 0) {
+    console.error('CRITICAL ERROR: attachPaginationListeners가 페이지 링크를 찾지 못했습니다.');
+    // 현재 DOM 구조를 확인하기 위해 pagination 컨테이너의 내용을 로그로 출력
+    const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+    if (paginationContainer) {
+      console.error('Pagination Container Inner HTML:', paginationContainer.innerHTML.trim());
+    } else {
+      console.error('Pagination Container를 찾을 수 없습니다.');
+    }
+    // 디버깅: 실제로 어떤 요소들이 있는지 확인
+    const allPagination = document.querySelectorAll('.pagination, nav[aria-label="Page navigation"]');
+    const allLinks = document.querySelectorAll('.pagination a, nav[aria-label="Page navigation"] a');
+    console.log('pagination 컨테이너 개수:', allPagination.length);
+    console.log('pagination 내부 링크 개수:', allLinks.length);
+    if (allLinks.length > 0) {
+      console.log('첫 번째 링크:', allLinks[0]);
+      console.log('첫 번째 링크 클래스:', allLinks[0].className);
+      console.log('첫 번째 링크 data-page:', allLinks[0].dataset.page);
+    }
+    return;
+  }
   
   // ========= 각 링크에 이벤트 리스너 연결 =========
-  // 목적: 각 페이지네이션 링크에 AJAX 클릭 이벤트 리스너 연결
-  //   - forEach(): 배열의 각 요소에 대해 함수 실행
-  //   - paginationLinks: 모든 페이지네이션 링크 (NodeList)
-  //   - link: 현재 처리 중인 링크 요소
-  //   - 동작: 각 링크에 대해 이벤트 리스너 연결
   paginationLinks.forEach(link => {
-    // ========= 기존 이벤트 리스너 제거 =========
-    // 목적: 기존 이벤트 리스너를 제거하여 중복 연결 방지
-    //   - DOM 업데이트 후 이벤트 리스너를 다시 연결할 때 중복 방지
-    //   - 안전성: 기존 리스너가 있으면 제거 후 새로 추가
-    // 
-    // link.removeEventListener('click', link._ajaxHandler): 기존 클릭 이벤트 리스너 제거
-    //   - removeEventListener(): 이벤트 리스너 제거
-    //   - 'click': 이벤트 타입
-    //   - link._ajaxHandler: 제거할 이벤트 핸들러 함수
-    //     → _ajaxHandler: 링크 요소에 저장된 이벤트 핸들러 (이전에 추가한 것)
-    //     → _ 접두사: 내부 사용을 나타냄 (private 속성 관례)
-    //   - 목적: 기존 리스너가 있으면 제거 (없으면 에러 없이 무시됨)
-    //   - 주의: 같은 함수 참조를 사용해야 제거됨 (그래서 _ajaxHandler에 저장)
-    link.removeEventListener('click', link._ajaxHandler);
+    // 기존 이벤트 리스너 제거
+    if (link._ajaxHandler) {
+      link.removeEventListener('click', link._ajaxHandler, { capture: true });
+      link._ajaxHandler = null;
+    }
     
-    // ========= 새로운 이벤트 핸들러 생성 및 저장 =========
-    // 목적: AJAX 페이지네이션을 처리하는 이벤트 핸들러 생성 및 저장
-    //   - link._ajaxHandler: 링크 요소에 이벤트 핸들러를 저장
-    //   - 목적: 나중에 removeEventListener로 제거할 수 있도록 함수 참조 저장
-    // 
-    // link._ajaxHandler = function(e) {...}: 이벤트 핸들러 함수 생성 및 저장
-    //   - _ajaxHandler: 링크 요소의 커스텀 속성 (이벤트 핸들러 저장)
-    //   - function(e) {...}: 이벤트 핸들러 함수
-    //     → e: 이벤트 객체 (Event)
-    //   - handlePaginationAjax(e, link.href): AJAX 페이지네이션 처리 함수 호출
-    //     → e: 이벤트 객체 (preventDefault 등에 사용)
-    //     → link.href: 링크의 href 속성 (이동할 URL)
-    //       → 예: 'http://localhost:8000/admin_panel/users/?page=2'
-    //   - 목적: 링크 클릭 시 AJAX로 페이지 이동 처리
+    // 링크가 AJAX 핸들러를 가졌는지 확인하는 디버깅 코드 추가
+    if (!link._ajaxHandler) {
+      // 처음 이벤트 연결 시에만 로그 출력
+      console.log('이벤트 리스너 새로 연결:', link.href);
+    }
+    
+    // 새로운 이벤트 핸들러 생성 및 저장
     link._ajaxHandler = function(e) {
+      console.log('페이지네이션 클릭 핸들러 작동:', link.href); // 클릭 시 작동 확인 로그
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      console.log('페이징 링크 클릭됨:', link, 'page:', link.dataset.page, 'href:', link.href);
+      
+      // data-page 속성이 있으면 data 속성으로 URL 생성, 없으면 기존 href 사용
+      const page = link.dataset.page;
+      if (page) {
+        const url = new URL(window.location.href);
+        // ========= 페이지네이션에 불필요한 파라미터 제거 (핵심 수정) =========
+        // 목록을 조회할 때는 상세 정보 ID 파라미터가 불필요합니다.
+        url.searchParams.delete('user_id');
+        url.searchParams.delete('doctor_id'); // doctor_id 제거
+        url.searchParams.delete('hospital_id');
+        
+        url.searchParams.set('page', String(page));
+        if (link.dataset.sort) url.searchParams.set('sort', link.dataset.sort);
+        if (link.dataset.order) url.searchParams.set('order', link.dataset.order);
+        if (link.dataset.searchType) url.searchParams.set('search_type', link.dataset.searchType);
+        if (link.dataset.searchKeyword) url.searchParams.set('search_keyword', link.dataset.searchKeyword);
+        // doctor_id는 목록 조회에 불필요하므로 제거됨
+        console.log('페이징 URL 생성:', url.toString());
+        handlePaginationAjax(e, url.toString());
+      } else if (link.href && link.href !== '#' && !link.href.endsWith('#')) {
+        console.log('기존 href 사용:', link.href);
       handlePaginationAjax(e, link.href);
+      } else {
+        console.warn('페이징 링크에 유효한 page 속성 또는 href가 없습니다:', link);
+      }
+      
+      return false;
     };
     
-    // ========= 이벤트 리스너 추가 =========
-    // 목적: 링크에 클릭 이벤트 리스너 추가
-    //   - addEventListener(): 이벤트 리스너 추가
-    //   - 'click': 이벤트 타입 (마우스 클릭)
-    //   - link._ajaxHandler: 이벤트 핸들러 함수 (위에서 생성한 것)
-    //   - 동작: 링크 클릭 시 handlePaginationAjax 함수가 호출됨
-    //   - 결과: 페이지 새로고침 없이 AJAX로 페이지 이동
-    link.addEventListener('click', link._ajaxHandler);
+    // 이벤트 리스너 추가
+    link.addEventListener('click', link._ajaxHandler, { capture: true, passive: false });
   });
 }
 
@@ -2421,8 +1904,8 @@ document.addEventListener('DOMContentLoaded', function() {
           }
           
           // 페이지네이션 업데이트
-          const paginationContainer = document.querySelector('.pagination');
-          const newPaginationContainer = tempDiv.querySelector('.pagination');
+          const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+          const newPaginationContainer = tempDiv.querySelector('.pagination, nav[aria-label="Page navigation"]');
           if (paginationContainer && newPaginationContainer) {
             paginationContainer.innerHTML = newPaginationContainer.innerHTML;
           } else if (paginationContainer && !newPaginationContainer) {

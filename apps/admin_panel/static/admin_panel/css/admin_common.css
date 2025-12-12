@@ -902,7 +902,8 @@ body {
     - box-sizing: border-box - 패딩과 테두리를 너비에 포함
     - 사용처: 페이지네이션의 각 페이지 번호 링크
 */
-.page-link {
+.page-link,
+.pagination-link {
   padding: 8px 12px;
   text-decoration: none;
   color: #666;
@@ -928,7 +929,8 @@ body {
     - :not(.disabled):not(.active) - 비활성화 및 활성화 링크는 제외
     - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
 */
-.page-link:hover:not(.disabled):not(.active) {
+.page-link:hover:not(.disabled):not(.active),
+.pagination-link:hover:not(.disabled):not(.active) {
   background-color: #F8FAFF;
   border-color: #1B3C73;
   color: #1B3C73;
@@ -944,7 +946,8 @@ body {
     - font-weight: 600 - 굵은 글씨
     - 사용처: 현재 페이지의 링크 (a.page-link.active 또는 span.page-link.active)
 */
-.page-link.active {
+.page-link.active,
+.pagination-link.active {
   background-color: #1B3C73;
   color: #fff;
   border-color: #1B3C73;
@@ -961,7 +964,8 @@ body {
     - border-color: #e1e4ec - 연한 회색 테두리
     - 사용처: 비활성화된 페이지 링크 (span.page-link.disabled)
 */
-.page-link.disabled {
+.page-link.disabled,
+.pagination-link.disabled {
   color: #ccc;
   cursor: not-allowed;
   background-color: #f5f5f5;
@@ -1396,7 +1400,8 @@ body {
     flex-wrap: wrap;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 6px 10px;
     font-size: 13px;
     min-width: 36px;
@@ -1525,7 +1530,8 @@ body {
     gap: 4px;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 6px 10px;
     font-size: 13px;
     min-width: 36px;
@@ -1593,7 +1599,8 @@ body {
     padding: 6px 4px;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 5px 8px;
     font-size: 12px;
     min-width: 32px;

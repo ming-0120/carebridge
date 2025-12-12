@@ -43,6 +43,8 @@
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>의사 승인 대기 - CareBridge 관리자</title>
+  <!-- Favicon 설정 -->
+  <link rel="icon" type="image/png" href="{% static 'core/img/logo_2.png' %}">
   
   <!-- 
     CSS 파일 로드
@@ -595,149 +597,31 @@
           - 마지막 페이지로 이동: » 버튼
       -->
       <div class="pagination">
-        <!-- 
-          이전 페이지 버튼 영역
-          
-          목적: 첫 페이지로 이동 및 이전 페이지로 이동 버튼 표시
-            - page_obj.has_previous: 이전 페이지가 있는지 확인
-            - 이전 페이지가 있으면 링크 버튼 표시
-            - 이전 페이지가 없으면 비활성화된 버튼 표시
-        -->
         {% if page_obj.has_previous %}
-          <!-- 
-            첫 페이지로 이동 링크
-            
-            목적: 첫 페이지(1페이지)로 이동
-              - href: ?page=1 + 정렬 파라미터 + 선택된 의사 ID 파라미터
-              - CSS 클래스: page-link (페이지 링크 스타일)
-              - 텍스트: « (첫 페이지 기호)
-          -->
-          <a href="?page=1&sort={{ sort_field }}&order={{ sort_order }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">«</a>
-          
-          <!-- 
-            이전 페이지로 이동 링크
-            
-            목적: 현재 페이지의 이전 페이지로 이동
-              - href: ?page={{ page_obj.previous_page_number }} + 정렬 파라미터 + 선택된 의사 ID 파라미터
-              - page_obj.previous_page_number: 이전 페이지 번호
-              - CSS 클래스: page-link (페이지 링크 스타일)
-              - 텍스트: < (이전 페이지 기호)
-          -->
-          <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_field }}&order={{ sort_order }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link"><</a>
+          <a href="#" class="pagination-link" data-page="1" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">«</a>
+          <a href="#" class="pagination-link" data-page="{{ page_obj.previous_page_number }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}"><</a>
         {% else %}
-          <!-- 
-            비활성화된 첫 페이지 버튼
-            
-            목적: 첫 페이지에 있을 때 비활성화된 버튼 표시
-              - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
-              - 텍스트: « (첫 페이지 기호)
-          -->
           <span class="page-link disabled">«</span>
-          
-          <!-- 
-            비활성화된 이전 페이지 버튼
-            
-            목적: 첫 페이지에 있을 때 비활성화된 버튼 표시
-              - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
-              - 텍스트: < (이전 페이지 기호)
-          -->
           <span class="page-link disabled"><</span>
         {% endif %}
 
-        <!-- 
-          페이지 번호 표시 영역
-          
-          목적: 페이지 번호를 표시하고 현재 페이지를 하이라이트
-            - page_obj.paginator.num_pages: 전체 페이지 수
-            - page_obj.paginator.page_range: 페이지 번호 범위 (1부터 전체 페이지 수까지)
-            - 현재 페이지 ±3 범위의 페이지 번호만 표시 (너무 많은 페이지 번호 표시 방지)
-        -->
         {% if page_obj.paginator.num_pages > 0 %}
-          <!-- 
-            페이지 번호 반복문
-            
-            목적: 페이지 번호를 순회하며 링크 또는 현재 페이지 표시
-              - num: 현재 순회 중인 페이지 번호
-          -->
           {% for num in page_obj.paginator.page_range %}
-            <!-- 
-              현재 페이지 표시
-              
-              목적: 현재 페이지를 하이라이트하여 표시
-                - page_obj.number == num: 현재 페이지 번호와 일치하는지 확인
-                - CSS 클래스: page-link active (현재 페이지 스타일)
-            -->
             {% if page_obj.number == num %}
               <span class="page-link active">{{ num }}</span>
-            <!-- 
-              인접 페이지 번호 링크
-              
-              목적: 현재 페이지 ±3 범위의 페이지 번호를 링크로 표시
-                - num > page_obj.number|add:'-3': 현재 페이지 - 3보다 큰지 확인
-                - num < page_obj.number|add:'3': 현재 페이지 + 3보다 작은지 확인
-                - 예: 현재 페이지가 5이면 2, 3, 4, 5, 6, 7, 8만 표시
-            -->
             {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-              <a href="?page={{ num }}&sort={{ sort_field }}&order={{ sort_order }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">{{ num }}</a>
+              <a href="#" class="pagination-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">{{ num }}</a>
             {% endif %}
           {% endfor %}
         {% else %}
-          <!-- 
-            페이지가 없을 때 기본 페이지 번호 표시
-            
-            목적: 페이지가 없을 때 기본적으로 1페이지 표시
-              - CSS 클래스: page-link active (현재 페이지 스타일)
-          -->
           <span class="page-link active">1</span>
         {% endif %}
 
-        <!-- 
-          다음 페이지 버튼 영역
-          
-          목적: 다음 페이지로 이동 및 마지막 페이지로 이동 버튼 표시
-            - page_obj.has_next: 다음 페이지가 있는지 확인
-            - 다음 페이지가 있으면 링크 버튼 표시
-            - 다음 페이지가 없으면 비활성화된 버튼 표시
-        -->
         {% if page_obj.has_next %}
-          <!-- 
-            다음 페이지로 이동 링크
-            
-            목적: 현재 페이지의 다음 페이지로 이동
-              - href: ?page={{ page_obj.next_page_number }} + 정렬 파라미터 + 선택된 의사 ID 파라미터
-              - page_obj.next_page_number: 다음 페이지 번호
-              - CSS 클래스: page-link (페이지 링크 스타일)
-              - 텍스트: > (다음 페이지 기호)
-          -->
-          <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_field }}&order={{ sort_order }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">></a>
-          
-          <!-- 
-            마지막 페이지로 이동 링크
-            
-            목적: 마지막 페이지로 이동
-              - href: ?page={{ page_obj.paginator.num_pages }} + 정렬 파라미터 + 선택된 의사 ID 파라미터
-              - page_obj.paginator.num_pages: 전체 페이지 수 (마지막 페이지 번호)
-              - CSS 클래스: page-link (페이지 링크 스타일)
-              - 텍스트: » (마지막 페이지 기호)
-          -->
-          <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_field }}&order={{ sort_order }}{% if selected_doctor_id %}&doctor_id={{ selected_doctor_id }}{% endif %}" class="page-link">»</a>
+          <a href="#" class="pagination-link" data-page="{{ page_obj.next_page_number }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">></a>
+          <a href="#" class="pagination-link" data-page="{{ page_obj.paginator.num_pages }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">»</a>
         {% else %}
-          <!-- 
-            비활성화된 다음 페이지 버튼
-            
-            목적: 마지막 페이지에 있을 때 비활성화된 버튼 표시
-              - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
-              - 텍스트: > (다음 페이지 기호)
-          -->
           <span class="page-link disabled">></span>
-          
-          <!-- 
-            비활성화된 마지막 페이지 버튼
-            
-            목적: 마지막 페이지에 있을 때 비활성화된 버튼 표시
-              - CSS 클래스: page-link disabled (비활성화된 페이지 링크 스타일)
-              - 텍스트: » (마지막 페이지 기호)
-          -->
           <span class="page-link disabled">»</span>
         {% endif %}
       </div>
