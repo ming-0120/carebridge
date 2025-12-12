@@ -209,3 +209,8 @@ function toMedicalRecord(patient_id) {
 function toTodayPatient(doctor_id, today) {
     window.location.href = `/mstaff/today_list/?doctor_id=${doctor_id}&date=${today}`;
 }
+
+function toPatientSearch() {
+    const query = $('#searchText').val();
+    window.location.href = `/mstaff/patient_search/?searchQuery=${query}`;
+}
