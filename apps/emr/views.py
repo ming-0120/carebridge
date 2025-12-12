@@ -73,6 +73,72 @@ def get_common_header_context(request):
     }
 
 @require_GET
+def api_patient_summary(request):
+    patient_id = request.GET.get("patient_id")
+
+    if not patient_id:
+        return JsonResponse({"error": "patient_id required"}, status=400)
+
+    # 환자 기본 정보
+    try:
+        patient = Users.objects.get(user_id=patient_id)
+    except Users.DoesNotExist:
+        return JsonResponse({"error": "not found"}, status=404)
+
+    # 생년월일
+    birth_date = extract_birth_date(patient.resident_reg_no)
+
+    # -----------------------------------------
+    # 1) 최근 방문 기록 1건
+    # -----------------------------------------
+    recent_record = (
+        MedicalRecord.objects
+        .filter(user_id=patient_id)
+        .select_related("doctor", "doctor__user", "doctor__dep")
+        .order_by("-record_datetime")
+        .first()
+    )
+
+    recent_visit = None
+    recent_dept = None
+    recent_doctor = None
+
+    if recent_record:
+        recent_visit = recent_record.record_datetime.strftime("%Y-%m-%d %H:%M")
+
+        if recent_record.doctor and recent_record.doctor.dep:
+            recent_dept = recent_record.doctor.dep.dep_name
+
+        if recent_record.doctor and recent_record.doctor.user:
+            recent_doctor = recent_record.doctor.user.name
+
+    # -----------------------------------------
+    # 2) 최근 진료 1건
+    # -----------------------------------------
+    recent_consult = None
+    if recent_record:
+        recent_consult = {
+            "record_type": recent_record.record_type,
+            "record_datetime": recent_record.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "subjective": recent_record.subjective,
+            "objective": recent_record.objective,
+            "assessment": recent_record.assessment,
+            "plan": recent_record.plan,
+        }
+
+    return JsonResponse({
+        "patient": {
+            "name": patient.name,
+            "gender": patient.gender,
+            "birth_date": birth_date,
+            "recent_visit": recent_visit,
+        },
+        "recent_dept": recent_dept or "없음",
+        "recent_doctor": recent_doctor or "없음",
+        "recent_consult": recent_consult,
+    })
+
+@require_GET
 def api_reserved_hours(request):
     doctor_id = request.GET.get("doctor_id")
     date_str = request.GET.get("date")
@@ -1223,40 +1289,72 @@ def treatment_data_search(request):
 # 환자 검색
 # ---------------------------------------------------------
 def patient_search_list_view(request):
-    patients = Users.objects.filter(role='patient').values(
+    user_id = request.session.get('user_id')
+
+    try:
+        doctor = Doctors.objects.get(user_id=user_id)
+        hos_id = doctor.hos_id
+    except:
+        return render(request, "emr/patient_search_list.html", {"patients": []})
+
+    patients = Users.objects.filter(role='patient').filter(
+        Q(reservations__slot__doctor__hos_id=hos_id) |
+        Q(medicalrecord__hos_id=hos_id) |
+        Q(laborders__medical_record__hos_id=hos_id) |
+        Q(treatmentprocedures__medical_record__hos_id=hos_id)
+    ).distinct().values(
         'user_id', 'name', 'gender', 'birth_date'
     )
 
     return render(request, "emr/patient_search_list.html", {"patients": patients})
 
-
 def api_search_patient(request):
     keyword = request.GET.get("keyword", "").strip()
-
     if keyword == "":
         return JsonResponse({"results": []})
 
-    rows = Users.objects.filter(
-        Q(name__icontains=keyword) |
-        Q(resident_reg_no__startswith=keyword),
-        role='patient'
-    ).values('user_id', 'name', 'gender', 'resident_reg_no')
+    # 병원 ID 가져오기
+    user_id = request.session.get("user_id")
+    try:
+        doctor = Doctors.objects.get(user_id=user_id)
+        hos_id = doctor.hos_id
+    except Doctors.DoesNotExist:
+        return JsonResponse({"results": []})
 
-    results = []
-    for r in rows:
-        rrn = r["resident_reg_no"]
-        dob = None
-        if rrn and len(rrn) >= 8:
-            dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+    try:
+        # 병원과 연결된 환자 필터링
+        patients = Users.objects.filter(role="patient").filter(
+            Q(reservations__slot__doctor__hos_id=hos_id) |
+            Q(medicalrecord__hos_id=hos_id) |
+            Q(laborders__medical_record__hos_id=hos_id) |
+            Q(treatmentprocedures__medical_record__hos_id=hos_id)
+        ).distinct()
 
-        results.append({
-            "user_id": r["user_id"],
-            "name": r["name"],
-            "gender": r["gender"],
-            "birth_date": dob,
-        })
+        # 검색 키워드 필터
+        patients = patients.filter(
+            Q(name__icontains=keyword) |
+            Q(resident_reg_no__startswith=keyword)
+        )
 
-    return JsonResponse({"results": results})
+        results = []
+        for p in patients:
+            rrn = p.resident_reg_no or ""
+            dob = None
+            if len(rrn) >= 8:
+                dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
+
+            results.append({
+                "user_id": p.user_id,
+                "name": p.name,
+                "gender": p.gender,
+                "birth_date": dob,
+            })
+
+        return JsonResponse({"results": results})
+
+    except Exception as e:
+        # 여기서 500 대신 JSON 에러 반환
+        return JsonResponse({"error": str(e)}, status=500)
 
 def api_patient_recent_records(request, patient_id):
 

@@ -79,16 +79,14 @@ window.onload = function() {
                         selectedDate.style.backgroundColor = '#ffffff';
                         selectedDate = undefined;
                     }
-                    
 
                     if (document.getElementsByClassName('fc-day-today')[0]) {
                         document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)';
                     }
-                    d = new Date();
-                    const year = d.getFullYear();
-                    // getMonth()는 0부터 시작하므로 +1을 해주고, padStart로 두 자릿수를 맞춥니다.
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
+                    const date = new Date();
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
                     const today = `${year}-${month}-${day}`;
 
                     const url = `/mstaff/get_reservation_medical_record/?date=${today}&doctor_id=${doctor_id}`;
@@ -112,8 +110,7 @@ window.onload = function() {
                         }
                         $('#patinetList').html(result.join('\n'));
                     }
-
-                    toTodayPatient();
+                    toTodayPatient(doctor_id, today);
                 }
             }
         },
@@ -209,6 +206,6 @@ function toMedicalRecord(patient_id) {
     window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
 }
 
-function toTodayPatient() {
-    window.location.href = `/mstaff/today_list/`
+function toTodayPatient(doctor_id, today) {
+    window.location.href = `/mstaff/today_list/?doctor_id=${doctor_id}&date=${today}`;
 }

@@ -5,6 +5,7 @@ from . import views
 from .views import api_today_patients
 from .views import get_previous_medical_records
 from apps.emr import views
+from apps.emr.views import api_patient_summary
 
 urlpatterns = [
     path('doctor_dashboard/', views.doctor_screen_dashboard, name='doctor_dashboard'),
@@ -30,6 +31,7 @@ urlpatterns = [
     path('api/previous-records/<int:user_id>/', get_previous_medical_records),
     path('api/patient/<str:patient_id>/recent-records/', views.api_patient_recent_records, name="api_patient_recent_records"),
     path("mstaff/api/previous-records/<int:user_id>/", get_previous_medical_records),
+    path("api/patient/summary/", api_patient_summary, name="api_patient_summary"),
     path('get_lab_record/', views.get_lab_record, name="get_lab_record"),
     path('get_treatment_record/', views.get_treatment_record, name="get_treatment_record"),
 ]
