@@ -25,6 +25,7 @@ from django.utils.timezone import make_aware
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.forms.models import model_to_dict
+import socket
 
 
 KST = tz("Asia/Seoul")
@@ -426,7 +427,7 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
-        hos_id = request.session.get('user_id', '')
+        hos_id = request.session.get('user_id', '137')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -477,17 +478,21 @@ def lab_record_creation(request):
         python_medical_record_data[0]['fields']['medical_record_id'] = python_medical_record_data[0]['pk']
         python_order_data[0]['fields']['lab_order_id'] = python_order_data[0]['pk']
 
-        channel_layer = get_channel_layer()
+        if is_redis_alive():
+            try:
+                channel_layer = get_channel_layer()
 
-        group_name = f'hospital_group_{hos_id}'
+                group_name = f'hospital_group_{hos_id}'
 
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                "type": "chart_update_event", 
-                "message": "lab"
-            }
-        )
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": "lab"
+                    }
+                )
+            except:
+                print('error')
 
         return JsonResponse({
             'user': python_user_data[0]['fields'],
@@ -815,7 +820,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
-        hos_id = request.session.get('user_id', '')
+        hos_id = request.session.get('user_id', '137')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -843,17 +848,21 @@ def treatment_record_verification(request):
             'order': order,
         }
 
-        channel_layer = get_channel_layer()
+        if is_redis_alive():
+            try:
+                channel_layer = get_channel_layer()
 
-        group_name = f'hospital_group_{hos_id}'
+                group_name = f'hospital_group_{hos_id}'
 
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                "type": "chart_update_event", 
-                "message": "treatment"
-            }
-        )
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": "treatment"
+                    }
+                )
+            except:
+                print('error')
 
         if (order.status == 'Completed'):
             return redirect('/mstaff/hospital_dashboard/')
@@ -1130,22 +1139,25 @@ def api_create_medical_record(request):
             slot_id=slot_id
         )
 
-    target_hos_id = 137
+    if is_redis_alive():
+        try:
+            target_hos_id = 137
 
-    # Redis 채널 레이어 가져오기
-    channel_layer = get_channel_layer()
+            # Redis 채널 레이어 가져오기
+            channel_layer = get_channel_layer()
+            # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
+            group_name = f'hospital_group_{target_hos_id}'
 
-    # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
-    group_name = f'hospital_group_{target_hos_id}'
-
-    if order_type:
-        async_to_sync(channel_layer.group_send)(
-            group_name,
-            {
-                "type": "chart_update_event", 
-                "message": order_type
-            }
-        )
+            if order_type:
+                async_to_sync(channel_layer.group_send)(
+                    group_name,
+                    {
+                        "type": "chart_update_event", 
+                        "message": order_type
+                    }
+                )
+        except:
+            print('error')
 
     return JsonResponse({
         "result": "ok",
@@ -1570,3 +1582,22 @@ def extract_birth_date(reg_num):
     birth_date = f"{full_year}-{mm}-{dd}"
     
     return birth_date
+
+def is_redis_alive():
+    try:
+        # settings.py에 설정된 Redis 정보를 가져오거나, 직접 IP/Port 입력
+        # 보통 settings.CHANNEL_LAYERS['default']['CONFIG']['hosts'][0] 에 있습니다.
+        # 편의상 직접 입력하거나 설정에서 파싱하세요. 예: ('127.0.0.1', 6379)
+        host = '127.0.0.1' 
+        port = 6379
+        
+        # 소켓 생성
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.1)  # 중요: 0.1초만 기다리고 끊음 (지연 방지)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        
+        # result가 0이면 연결 성공
+        return result == 0
+    except Exception:
+        return False
