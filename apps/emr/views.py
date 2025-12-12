@@ -477,10 +477,8 @@ def lab_record_creation(request):
         python_medical_record_data[0]['fields']['medical_record_id'] = python_medical_record_data[0]['pk']
         python_order_data[0]['fields']['lab_order_id'] = python_order_data[0]['pk']
 
-        # Redis 채널 레이어 가져오기
         channel_layer = get_channel_layer()
 
-        # async_to_sync를 쓰는 이유는 views가 동기(Sync) 함수이기 때문입니다.
         group_name = f'hospital_group_{hos_id}'
 
         async_to_sync(channel_layer.group_send)(
@@ -817,6 +815,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
+        hos_id = request.session.get('user_id', '')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -843,6 +842,18 @@ def treatment_record_verification(request):
             'medical_record': medical_record,
             'order': order,
         }
+
+        channel_layer = get_channel_layer()
+
+        group_name = f'hospital_group_{hos_id}'
+
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "chart_update_event", 
+                "message": "treatment"
+            }
+        )
 
         if (order.status == 'Completed'):
             return redirect('/mstaff/hospital_dashboard/')
