@@ -345,13 +345,13 @@
                         <label>
                             <input type="checkbox" name="terms_service" required> 이용약관 동의 <span class="required">(필수)</span>
                         </label>
-                        <button type="button" class="terms-link">약관보기 ></button>
+                        <button type="button" class="terms-link" id="terms_link_a">약관보기 ></button>
                     </li>
                     <li>
                         <label>
                             <input type="checkbox" name="terms_privacy" required> 개인정보 수집·이용 동의 <span class="required">(필수)</span>
                         </label>
-                        <button type="button" class="terms-link">약관보기 ></button>
+                        <button type="button" class="terms-link" id="terms_link_b">약관보기 ></button>
                     </li>
                     <li>
                         <label>
@@ -404,7 +404,15 @@
     </div>
   </div>
 </div>
-
+<!-- 약관 모달 -->
+<div id="termsModal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button type="button" class="modal-close">&times;</button>
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody" class="modal-body"></div>
+  </div>
+</div>
 {% if messages %}
 <script>
     {% for message in messages %}
@@ -412,12 +420,10 @@
     {% endfor %}
 </script>
 {% endif %}
-
 <script>
     const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
 </script>
 <script src="{% static 'accounts/js/register.js' %}"></script>
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-
 </body>
 </html>

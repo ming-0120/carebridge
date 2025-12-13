@@ -11,6 +11,8 @@
                 <a href="{% url 'doctor_dashboard' %}">
             {% elif role == 'ADMIN' %}
                 <a href="{% url 'admin_dashboard' %}">
+            {% elif role == 'HOSPITAL' %}
+                <a href="{% url 'hospital_dashboard' %}">
             {% else %}
                 <a href="{% url 'home' %}">
             {% endif %}
@@ -42,7 +44,7 @@
             {% if request.session.role == 'PATIENT' %}
               <a href="{% url 'reservation_list' %}">마이페이지</a>
             {% elif request.session.role == 'DOCTOR' %}
-              <a href="{% url 'profile_edit' %}">마이페이지</a>
+              <a href="{% url 'profile_edit' %}">마이페이지</a>            
             |
             {% endif %}
             <form action="{% url 'logout' %}" method="post" style="display:inline;">

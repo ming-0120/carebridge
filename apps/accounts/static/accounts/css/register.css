@@ -480,3 +480,46 @@ body {
     max-height: 80vh;
   }
 }
+.modal.hidden {
+  display: none;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* 모달 박스 */
+.modal-content {
+  position: relative;
+  max-width: 600px;
+  max-height: 80vh;
+  margin: 10vh auto;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column; /* 제목 + 내용 세로 배치 */
+}
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+}
+/* 제목 아래 내용만 스크롤 */
+.modal-body {
+  margin-top: 15px;
+  white-space: pre-line;
+
+  overflow-y: auto;
+  max-height: calc(80vh - 100px); /* 제목+닫기 버튼 높이 고려 */
+}

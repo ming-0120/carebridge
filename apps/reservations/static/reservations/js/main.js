@@ -198,9 +198,16 @@ document.addEventListener("DOMContentLoaded", function () {
             form.submit();
         };
 
-        // 즐겨찾기용 병원 id 바인딩
         if (favoriteBtn) {
-            favoriteBtn.dataset.hospitalId = hospital.id;
+          favoriteBtn.dataset.hospitalId = hospital.id;
+
+          // ✅ 1) 기본은 초기화 (이걸 안 해서 다른 병원도 즐겨찾기처럼 보임)
+          favoriteBtn.classList.remove("active");
+
+          // ✅ 2) hospital 객체에 is_favorite가 있으면 그 상태로 반영
+          if (typeof hospital.is_favorite !== "undefined") {
+            favoriteBtn.classList.toggle("active", !!hospital.is_favorite);
+          }
         }
 
         modal.classList.remove("hidden");
@@ -282,12 +289,24 @@ document.addEventListener("DOMContentLoaded", function () {
         return res.json();
     })
     .then((data) => {
-        if (!data || !data.ok) return;
-        if (data.is_favorite) {
-            favoriteBtn.classList.add("active");
-        } else {
-            favoriteBtn.classList.remove("active");
-        }
+      if (!data || !data.ok) return;
+        
+      const isFav = !!data.is_favorite;
+        
+      // ✅ 모달 버튼 UI 반영
+      favoriteBtn.classList.toggle("active", isFav);
+        
+      // ✅ (선택) hospitalData에 상태 저장: 다음에 모달 열 때도 맞게 보이게
+      const hospitalId = favoriteBtn.dataset.hospitalId;
+        
+      Object.keys(hospitalData).forEach((dept) => {
+        const list = hospitalData[dept] || [];
+        list.forEach((h) => {
+          if (String(h.id) === String(hospitalId)) {
+            h.is_favorite = isFav;
+          }
+        });
+      });
     })
     .catch((err) => {
         console.error("favorite toggle error", err);
