@@ -35,7 +35,7 @@ KAKAO_REDIRECT_URI = env(
     'KAKAO_REDIRECT_URI',
     default=''  # 비어 있으면 나중에 build_absolute_uri로 대체
 )
-KAKAO_MAP_JS_KEY = os.getenv("KAKAO_MAP_JS_KEY")
+KAKAO_MAP_JS_KEY = os.getenv("KAKAO_REST_API_KEY")
 
 ALLOWED_HOSTS = [
     "52.79.116.240",

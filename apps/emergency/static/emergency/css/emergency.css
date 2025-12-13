@@ -716,3 +716,120 @@ header h1 {
     transform: translateX(120px);
 }
 */
+
+/* ===== 정렬 기준 표시 및 툴팁 ===== */
+.sort-control-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tooltip-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px solid #bfc6d4;
+  cursor: pointer;
+  transition: 0.2s ease;
+  user-select: none;
+  position: relative;
+  flex-shrink: 0;
+  /* 버튼과 동일한 높이: padding(9px*2) + font-size(14px*1.2) + border(2px) ≈ 36px */
+}
+
+.tooltip-icon::before {
+  content: 'i';
+  color: #5f6673;
+  font-size: 18px;
+  font-weight: 600;
+  font-style: italic;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  line-height: 1;
+  display: block;
+}
+
+.tooltip-icon:hover {
+  border-color: #2d83ff;
+  background: #f0f7ff;
+}
+
+.tooltip-icon:hover::before {
+  color: #2d83ff;
+}
+
+.tooltip-content {
+  position: absolute;
+  top: 28px;
+  left: 0;
+  width: 320px;
+  background: #f5f7fb;
+  border: 1px solid #d4dae2;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tooltip-wrapper:hover .tooltip-content {
+  display: block;
+  opacity: 1;
+}
+
+.tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2430;
+}
+
+.tooltip-copy-btn {
+  background: none;
+  border: none;
+  color: #2d83ff;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tooltip-copy-btn:hover {
+  background: #e8f4ff;
+}
+
+.tooltip-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: #1f2430;
+}
+
+.sort-criteria-display {
+  margin: 12px 0 24px 0;
+  font-size: 14px;
+  color: #5f6673;
+  padding-left: 8px;
+}
+
+.sort-criteria-display #sort-criteria-text {
+  font-weight: 600;
+  color: #1f2430;
+}

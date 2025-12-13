@@ -17,8 +17,23 @@
   {% endif %}
   <button class="btn" onclick="openFilterModal()">필터</button>
 
-  <!-- 거리순 정렬 버튼 -->
-  <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
+  <!-- 거리순 정렬 버튼 + 툴팁 -->
+  <div class="sort-control-wrapper">
+    <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
+    <div class="tooltip-wrapper">
+      <span class="tooltip-icon"></span>
+      <div class="tooltip-content">
+        <div class="tooltip-header">
+        </div>
+        <div class="tooltip-text" id="tooltip-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 현재 정렬 기준 표시 -->
+<div class="sort-criteria-display" id="sort-criteria-display">
+  현재 정렬 기준: <span id="sort-criteria-text"></span>
 </div>
 
 <!-- 선택된 필터 태그 -->
@@ -144,6 +159,71 @@
   window.selectedSigungu = '{{ selected_sigungu|default:"" }}';
   window.selectedEtype = '{{ selected_etype|default:"" }}';
   window.selectedFilters = JSON.parse('{{ selected_filters|safe }}');
+  window.selectedSort = '{{ selected_sort|default:"score" }}';
+
+  // -------------------------
+  // 정렬 기준 및 툴팁 텍스트 업데이트 함수
+  // -------------------------
+  function updateSortCriteria() {
+    const sortCriteriaText = document.getElementById('sort-criteria-text');
+    const tooltipText = document.getElementById('tooltip-text');
+    
+    if (!sortCriteriaText || !tooltipText) return;
+    
+    // 지역 선택 여부 확인 (시/도가 선택되고 "전체"가 아닐 때)
+    const hasRegion = window.selectedSido && window.selectedSido !== '' && window.selectedSido !== '전체';
+    const hasFilter = window.selectedEtype || 
+                     (window.selectedFilters && Object.keys(window.selectedFilters).length > 0);
+    const isDistanceSort = window.selectedSort === 'distance';
+    
+    // 정렬 기준 텍스트 설정 (우선순위: 지역 선택 > 필터 > 거리순 > 기본)
+    if (hasRegion) {
+      sortCriteriaText.textContent = '선택한 지역 기준';
+    } else if (hasFilter) {
+      sortCriteriaText.textContent = '필터 조건 반영 후 가용 병상·거리 기반';
+    } else if (isDistanceSort) {
+      sortCriteriaText.textContent = '사용자 위치 기준 거리순';
+    } else {
+      sortCriteriaText.textContent = '가용 병상·거리 기반';
+    }
+    
+    // 툴팁 텍스트 설정 (우선순위: 지역 선택 > 필터 > 거리순 > 기본)
+    if (hasRegion) {
+      tooltipText.innerHTML = '선택한 지역에 해당하는 응급실만 목록에 표시됩니다.<br>거리나 병상 정보를 기준으로 정렬하지 않으며,<br>응급실 이름 순으로 정렬됩니다.';
+    } else if (hasFilter) {
+      tooltipText.innerHTML = '선택한 필터 조건을 충족하는 응급실만 표시한 후,<br>가용 병상과 거리를 기준으로 정렬됩니다.<br>필터 조건에 따라 일부 응급실은<br>목록에서 제외될 수 있습니다.';
+    } else if (isDistanceSort) {
+      tooltipText.innerHTML = '사용자의 현재 위치를 기준으로<br>각 응급실까지의 직선 거리를 계산하여 정렬합니다.<br>가장 가까운 응급실이 목록 상단에 표시됩니다.';
+    } else {
+      tooltipText.innerHTML = '현재 가용 병상 수와,<br>사용자 위치 기준 거리를 함께 반영하여 정렬됩니다.<br>병상 여유가 많고, 상대적으로 가까운 응급실이<br>목록 상단에 표시됩니다.';
+    }
+  }
+  
+  // -------------------------
+  // 툴팁 텍스트 복사 함수
+  // -------------------------
+  function copyTooltipText(event) {
+    event.stopPropagation();
+    const tooltipText = document.getElementById('tooltip-text');
+    if (tooltipText) {
+      const textToCopy = tooltipText.textContent || tooltipText.innerText;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '복사됨!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 1000);
+      }).catch(err => {
+        console.error('복사 실패:', err);
+      });
+    }
+  }
+  
+  // 페이지 로드 시 정렬 기준 업데이트
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSortCriteria();
+  });
 
   // -------------------------
   // CSRF 토큰 가져오기 함수
