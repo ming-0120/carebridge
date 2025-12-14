@@ -1,7 +1,8 @@
 import json
+from django.conf import settings
 import requests  # pip install requests
 
-GEMINI_API_KEY = "AIzaSyCkoBx6EvRQ3tkMBBSc2NozxKQn88iHWUg"
+GEMINI_API_KEY = settings.GEMINI_API_KEY
 MODEL_NAME = "gemini-2.5-flash"
 API_ENDPOINT = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
 
