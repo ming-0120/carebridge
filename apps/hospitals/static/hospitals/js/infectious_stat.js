@@ -119,47 +119,113 @@ function renderGenderChart(rows, disease) {
     summary.textContent = `${disease}의 성별별 발생 건수 (총 ${total}건)`;
   }
 }
-
 // ================================================================
-// 5) 연령 차트 (막대)
+// 5) 연령 차트 (막대) — 10년 단위(20대,30대,40대…)
 // ================================================================
 function renderAgeChart(rows, disease) {
   const canvas = document.getElementById("ageChart");
   if (!canvas) return;
 
-  const filtered = (rows || []).filter((r) => r.groupName !== "계");
-  const labels = filtered.map((r) => r.groupName);
-  const data = filtered.map((r) => r.count);
+  const ageSection = document.getElementById("ageSection");
+  const summary = document.getElementById("ageSummary");
 
+  // =========================
+  // 1) 연령 데이터 10년 단위로 그룹핑
+  // =========================
+  const bucket = {}; // { "20대": 합계, "30대": 합계, ... }
+
+  (rows || []).forEach((r) => {
+    if (!r || r.groupName === "계") return;
+
+    const cnt = Number(r.count || 0);
+    if (cnt <= 0) return;
+
+    // groupName에서 숫자 추출 (예: "23", "23세", "23세 이상")
+    const match = String(r.groupName).match(/\d+/);
+    if (!match) return;
+
+    const age = Number(match[0]);
+    if (!Number.isFinite(age)) return;
+
+    // 10년 단위 계산
+    const decade = Math.floor(age / 10) * 10;
+
+    // 필요 시 20대 이상만 보여주고 싶으면 아래 줄 유지
+    if (decade < 20) return;
+
+    const label = `${decade}대`;
+    bucket[label] = (bucket[label] || 0) + cnt;
+  });
+
+  // =========================
+  // 2) 라벨 정렬 (20대 → 30대 → 40대 …)
+  // =========================
+  const labels = Object.keys(bucket).sort((a, b) => {
+    const na = Number(a.replace("대", ""));
+    const nb = Number(b.replace("대", ""));
+    return na - nb;
+  });
+
+  const data = labels.map((l) => bucket[l]);
+
+  // =========================
+  // 3) 기존 차트 제거
+  // =========================
   if (ageChartInstance) {
     ageChartInstance.destroy();
     ageChartInstance = null;
   }
 
-  const summary = document.getElementById("ageSummary");
-
+  // =========================
+  // 4) 데이터 없으면 섹션 숨김
+  // =========================
   if (labels.length === 0) {
-    if (summary) summary.textContent = `${disease}의 연령대별 데이터가 없습니다.`;
+    if (ageSection) ageSection.style.display = "none";
     return;
   }
 
+  // 데이터 있으면 다시 표시
+  if (ageSection) ageSection.style.display = "block";
+
+  // =========================
+  // 5) 차트 생성
+  // =========================
   ageChartInstance = new Chart(canvas, {
     type: "bar",
     data: {
       labels,
-      datasets: [{ label: "건수", data, borderWidth: 1 }],
+      datasets: [
+        {
+          label: "건수",
+          data,
+          borderWidth: 1,
+        },
+      ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: false },
+      },
       scales: {
-        y: { beginAtZero: true },
-        x: { ticks: { autoSkip: false, maxRotation: 45, minRotation: 0 } },
+        y: {
+          beginAtZero: true,
+        },
+        x: {
+          ticks: {
+            autoSkip: false,
+            maxRotation: 45,
+            minRotation: 0,
+          },
+        },
       },
     },
   });
 
+  // =========================
+  // 6) 요약 문구
+  // =========================
   const total = data.reduce((a, b) => a + b, 0);
   if (summary) {
     summary.textContent = `${disease}의 연령대별 발생 건수 (총 ${total}건)`;

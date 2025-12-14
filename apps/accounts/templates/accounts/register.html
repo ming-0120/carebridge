@@ -190,11 +190,10 @@
                                placeholder="도메인 입력">
                         <select id="email_domain_select"
                                 class="join-select email-domain-select">
-                            <option value="">선택</option>
+                            <option value="custom">직접입력</option>
                             <option value="naver.com">naver.com</option>
                             <option value="daum.net">daum.net</option>
                             <option value="gmail.com">gmail.com</option>
-                            <option value="custom">직접입력</option>
                         </select>
                     </div>
 
@@ -219,7 +218,7 @@
                     </div>
                 </div>
             </div>
-
+            {% if role != 'DOCTOR' %}
             <!-- 주소 -->
             <div class="join-row">
                 <label class="join-label">집 주소<span class="required">*</span></label>
@@ -241,7 +240,7 @@
                     <input type="hidden" id="address_full" name="address">
                 </div>
             </div>
-
+            {% endif %}
             <!-- 의사 전용 (카카오면 role=patient 이므로 자동으로 사라짐) -->
             {% if role == "DOCTOR" and not from_kakao %}
 

@@ -95,6 +95,7 @@ def login_view(request, default_role="PATIENT", template_name="accounts/login.ht
 
     # 일반 환자, 그 외 역할은 next_url 로
     return redirect(next_url)
+
 @require_http_methods(["GET", "POST"])
 def register_view(request):
     # ---------- 공통: 카카오 임시 정보 ----------
@@ -173,7 +174,7 @@ def register_view(request):
         "gender": gender,
         "resident_reg_no": resident_reg_no,
         "phone": phone,
-        "email": email,  # ✅ 입력값 유지
+        "email": email,
         "mail_confirm": mail_confirm,
         "zipcode": zipcode,
         "addr1": addr1,

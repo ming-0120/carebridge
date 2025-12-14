@@ -223,6 +223,7 @@ def doctor_reservations_api(request):
     doctor_id = request.GET.get("doctor_id")
     start = request.GET.get("start")  # ISO 날짜 문자열 (YYYY-MM-DD)
     end = request.GET.get("end")
+    
 
     if not doctor_id or not start or not end:
         return JsonResponse([], safe=False)

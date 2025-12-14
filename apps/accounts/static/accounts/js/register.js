@@ -414,8 +414,6 @@ if (termsAll && termItems.length > 0) {
       });
   });
 }
-// === submit 이벤트는 한 번만 등록 ===
-// === submit 이벤트는 한 번만 등록 ===
 if (form) {
   form.addEventListener('submit', function (e) {
 

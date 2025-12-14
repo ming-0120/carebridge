@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-
+import os
+import uuid
+from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -83,7 +85,6 @@ def my_qna_list(request):
     order_map = {
         "date_asc": "created_at",
         "date_desc": "-created_at",
-        # 답변완료 먼저 보고 싶으면 answered 내림차순
         "answer": "-answered_at",
     }
     order_by = order_map.get(sort, "-created_at")
@@ -100,7 +101,7 @@ def my_qna_list(request):
     # 템플릿에서 보기 좋게 flag/라벨을 계산
     rows = []
     for q in qs:
-        has_answer = bool(q.answer)
+        has_answer = bool(q.reply)
         rows.append(
             {
                 "obj": q,
@@ -204,15 +205,15 @@ def profile_edit(request):
         if email:
             user.email = email
 
-        # 의사: profile_image 는 Doctors 모델에 저장한다고 가정
-        if is_doctor:
-            if doctor and "profil_url" in request.FILES:
-                doctor.profil_url = request.FILES["profil_url"]
+        # ✅ 의사 프로필 업로드 저장 (필드명 통일: doctor_profile)
+        if is_doctor and doctor:
+            profile_file = request.FILES.get("profile_image")
+            if profile_file:
+                ext = os.path.splitext(profile_file.name)[1]
+                filename = f"doctor_profiles/{uuid.uuid4().hex}{ext}"
+                saved_path = default_storage.save(filename, profile_file)
+                doctor.profil_url = saved_path  # 문자열 저장
                 doctor.save()
-
-        user.save()
-        messages.success(request, "회원 정보가 수정되었습니다.")
-        return redirect("profile_edit")
 
     # --------------------------
     # GET: 이메일 분리
