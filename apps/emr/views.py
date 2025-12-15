@@ -373,6 +373,11 @@ def doctor_screen_dashboard(request):
 # 병원 직원 대시보드
 # ---------------------------------------------------------
 def hospital_staff_dashboard(request):
+
+    user_role = request.session.get('role', '')
+    if user_role != 'HOSPITAL':
+        return redirect('/')
+
     lab_order = []
     treatment_order = []
     lab_pending_count = 0
@@ -380,8 +385,9 @@ def hospital_staff_dashboard(request):
     lab_is_urgent_count = 0
     treatment_pending_count = 0
     treatment_inprogress_count = 0
+    hos_id = request.session.get('hospital_id', None)
     try:
-        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        medical_records = Hospital.objects.get(hos_id=hos_id).medicalrecord_set.all()
         for record in medical_records:
             try:
                 lab = LabOrders.objects.exclude(
@@ -446,7 +452,8 @@ def hospital_staff_dashboard(request):
        'lab_sampled_count': lab_sampled_count,
        'lab_is_urgent_count': lab_is_urgent_count,
        'treatment_pending_count': treatment_pending_count,
-       'treatment_inprogress_count': treatment_inprogress_count
+       'treatment_inprogress_count': treatment_inprogress_count,
+       'hos_id': hos_id,
     }
 
     return render(request, 'emr/hospital_staff_dashboard.html', context)
@@ -519,6 +526,12 @@ def lab_record_creation(request):
         user_id = request.GET['user_id']
         record_id = request.GET['medical_record_id']
         files = []
+        hos_id = request.GET['hos_id']
+        session_hos_id = request.session.get('hospital_id', None)
+        user_role = request.session.get('role', '')
+
+        if (hos_id != session_hos_id or user_role != 'HOSPITAL'):
+            redirect('/')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -562,7 +575,7 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
-        hos_id = request.session.get('user_id', '137')
+        hos_id = request.session.get('user_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1090,6 +1103,12 @@ def treatment_record_verification(request):
         order_id = request.GET['order_id']
         user_id = request.GET['user_id']
         record_id = request.GET['medical_record_id']
+        hos_id = request.GET['hos_id']
+        session_hos_id = request.session.get('hospital_id', None)
+        user_role = request.session.get('role', '')
+
+        if (hos_id != session_hos_id or user_role != 'HOSPITAL'):
+            redirect('/')
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1126,7 +1145,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
-        hos_id = request.session.get('user_id', '137')
+        hos_id = request.session.get('user_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1447,7 +1466,7 @@ def api_create_medical_record(request):
 
     if is_redis_alive():
         try:
-            target_hos_id = 137
+            target_hos_id = hos_id
 
             # Redis 채널 레이어 가져오기
             channel_layer = get_channel_layer()
@@ -1858,8 +1877,14 @@ def get_lab_record(request):
     lab_pending_count = 0
     lab_sampled_count = 0
     lab_is_urgent_count = 0
+    hos_id = request.GET.get('hos_id', 'N')
+    session_hos_id = request.session.get('hospital_id', None)
+    user_role = request.session.get('role', '')
+
+    if (hos_id != session_hos_id or user_role != 'HOSPITAL'):
+        redirect('/')
     try:
-        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        medical_records = Hospital.objects.get(hos_id=session_hos_id).medicalrecord_set.all()
         for record in medical_records:
             try:
                 lab = LabOrders.objects.exclude(
@@ -1900,12 +1925,18 @@ def get_lab_record(request):
 
     return JsonResponse(context, safe=False, encoder=DjangoJSONEncoder)
 
-def get_treatment_record(request):
+def get_treatment_record(request):    
     treatment_order = []
     treatment_pending_count = 0
     treatment_inprogress_count = 0
+    hos_id = request.GET.get('hos_id', 'N')
+    session_hos_id = request.session.get('hospital_id', None)
+    user_role = request.session.get('role', '')
+
+    if (hos_id != session_hos_id or user_role != 'HOSPITAL'):
+        redirect('/')
     try:
-        medical_records = Hospital.objects.get(hos_id=137).medicalrecord_set.all()
+        medical_records = Hospital.objects.get(hos_id=hos_id).medicalrecord_set.all()
         for record in medical_records:
             try:
                 treatment = TreatmentProcedures.objects.exclude(
