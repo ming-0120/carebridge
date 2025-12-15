@@ -1,14 +1,14 @@
 :root {
-    --color-bg: #f3f5f9;
+    --color-bg: #ffffff;            /* 전체 배경을 흰색으로 통일 */
     --color-card: #ffffff;
     --color-primary: #3f6ae3;
     --color-primary-soft: #eef2ff;
-    --color-border: #e0e4ec;
+    --color-border: #e5e7eb;        /* 미세 테두리 색상 */
     --color-text-main: #1f2933;
     --color-text-sub: #6b7280;
-    --radius-lg: 18px;
+    --radius-lg: 16px;
     --radius-md: 10px;
-    --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.12);
+    --shadow-soft: 0 14px 32px rgba(15, 23, 42, 0.10);
 }
 
 *,
@@ -20,7 +20,7 @@
 body {
     margin: 0;
     font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
-    background: radial-gradient(circle at top, #e0ebff 0, #f3f5f9 45%, #f3f5f9 100%);
+    background: var(--color-bg); /* 흰 배경으로 여백 통일 */
     color: var(--color-text-main);
 }
 
@@ -38,7 +38,8 @@ body {
     width: 100%;
     max-width: 440px;
     background: var(--color-card);
-    border-radius: var(--radius-lg);
+    border: 1px solid var(--color-border); /* 미세 테두리 */
+    border-radius: var(--radius-lg);       /* 과하지 않은 라운드 */
     box-shadow: var(--shadow-soft);
     padding: 32px 32px 28px;
 }

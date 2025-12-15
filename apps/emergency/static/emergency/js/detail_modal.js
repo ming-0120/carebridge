@@ -61,36 +61,43 @@ function openHospitalDetail(erId) {
             banner.classList.add("hidden");
           }
 
-          // 병상 상태 표시
+          // 병상 상태 표시 (서버 계산 결과 우선 사용)
+          const statusUI = data.status_ui || {};
           fillStatusRow(
             "er",
             data.status?.er_general_available,
-            data.status?.er_general_total
+            data.status?.er_general_total,
+            statusUI.er_general
           );
           fillStatusRow(
             "child",
             data.status?.er_child_available,
-            data.status?.er_child_total
+            data.status?.er_child_total,
+            statusUI.er_child
           );
           fillStatusRow(
             "birth",
             data.status?.birth_available,
-            data.status?.birth_total
+            data.status?.birth_total,
+            statusUI.birth
           );
           fillStatusRow(
             "negative",
             data.status?.negative_pressure_available,
-            data.status?.negative_pressure_total
+            data.status?.negative_pressure_total,
+            statusUI.negative_pressure
           );
           fillStatusRow(
             "isolation",
             data.status?.isolation_general_available,
-            data.status?.isolation_general_total
+            data.status?.isolation_general_total,
+            statusUI.isolation_general
           );
           fillStatusRow(
             "cohort",
             data.status?.isolation_cohort_available,
-            data.status?.isolation_cohort_total
+            data.status?.isolation_cohort_total,
+            statusUI.isolation_cohort
           );
 
           // 지도 미리보기
@@ -104,7 +111,7 @@ function openHospitalDetail(erId) {
 // ======================================
 // 병상 상태 UI 렌더링 (메인 페이지와 동일한 로직)
 // ======================================
-function fillStatusRow(key, available, total) {
+function fillStatusRow(key, available, total, uiData) {
   const circleContainer = document.getElementById(`status-circle-${key}`);
 
   circleContainer.innerHTML = "";
@@ -124,7 +131,17 @@ function fillStatusRow(key, available, total) {
   let congestionLabel = "-";
   let colorClass = "none";
 
-  if (available !== null && available !== undefined) {
+  // 1) 서버에서 계산해 준 값이 있으면 그대로 사용 (메인과 1:1 일치)
+  if (
+    uiData &&
+    uiData.label !== undefined &&
+    uiData.color_class !== undefined
+  ) {
+    congestionLabel = uiData.label;
+    colorClass = uiData.color_class;
+  } else {
+
+  if (!uiData && available !== null && available !== undefined) {
     // 분만실 특수 처리
     if (typeName === "birth") {
       if (available >= 1) {
@@ -176,20 +193,43 @@ function fillStatusRow(key, available, total) {
       }
     }
   }
+  }
 
   // 원형 그래프 렌더링
-  if (total !== null && total !== undefined && total > 0 && available !== null && available !== undefined) {
-    // 정상 케이스: available과 total이 모두 있고, total > 0
-    const safeAvailable = Math.max(0, available);
-    const pct = total > 0 ? (safeAvailable / total) * 100 : 0;
-    const pctClamped = Math.max(0, Math.min(100, pct));
-    
-    const circumference = 2 * Math.PI * 20;
-    // stroke-dashoffset 계산: available이 많을수록 offset이 작아져서 더 많이 채워짐
-    const dashOffset = circumference * (1 - pctClamped / 100);
+  const resolvedDashOffset = uiData ? uiData.dash_offset : null;
+  const resolvedBgStroke = uiData ? (uiData.bg_stroke || "#e0e0e0") : null;
+  const displayAvailable = (available !== null && available !== undefined)
+    ? available
+    : (uiData && uiData.available !== undefined ? uiData.available : "-");
+  const displayTotal = (total !== null && total !== undefined)
+    ? total
+    : (uiData && uiData.total !== undefined ? uiData.total : "-");
 
-    // 배경 원의 stroke 색상 결정 (available == 0이고 red일 때만 빨간색)
-    const bgStrokeColor = (safeAvailable === 0 && colorClass === "red") ? "#E53935" : "#e0e0e0";
+  if (
+    (uiData && resolvedDashOffset !== null && resolvedDashOffset !== undefined) ||
+    (!uiData &&
+      total !== null &&
+      total !== undefined &&
+      total > 0 &&
+      available !== null &&
+      available !== undefined)
+  ) {
+    // 정상 케이스: 서버 계산 우선, 없으면 기존 JS 계산
+    const safeAvailable = (available !== null && available !== undefined)
+      ? Math.max(0, available)
+      : (uiData && uiData.available !== undefined ? Math.max(0, uiData.available) : 0);
+    const dashOffset = uiData
+      ? Number(resolvedDashOffset)
+      : (function () {
+          const pct = total > 0 ? (safeAvailable / total) * 100 : 0;
+          const pctClamped = Math.max(0, Math.min(100, pct));
+          const circumference = 2 * Math.PI * 20;
+          return circumference * (1 - pctClamped / 100);
+        })();
+
+    const bgStrokeColor = uiData
+      ? resolvedBgStroke
+      : (safeAvailable === 0 && colorClass === "red") ? "#E53935" : "#e0e0e0";
 
     circleContainer.innerHTML = `
       <div class="status-circle ${colorClass}">
@@ -216,7 +256,7 @@ function fillStatusRow(key, available, total) {
         </svg>
         <span class="label">${congestionLabel}</span>
       </div>
-      <div class="status-value">${available}/${total}</div>
+      <div class="status-value">${displayAvailable}/${displayTotal}</div>
     `;
   } else if (available !== null && available !== undefined && available >= 0) {
     // available만 있고 total이 None이거나 0인 경우: "-" 표시
