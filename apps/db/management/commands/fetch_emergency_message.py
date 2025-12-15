@@ -12,7 +12,6 @@ from apps.db.models.emergency import ErInfo, ErMessage
 
 API_KEY = settings.OPENAPI_SERVICE_KEY
 
-
 # ---------------------------------------------------------
 # 공통 요청 함수
 # ---------------------------------------------------------

@@ -248,7 +248,6 @@ function renderDiseaseInfo(selectedValue) {
   }
 
   const infoList = Array.isArray(window.DISEASE_INFO) ? window.DISEASE_INFO : [];
-
   const disease = infoList.find(
     (d) => d && (d.disease_code === selectedValue || d.disease_name === selectedValue)
   );
@@ -261,13 +260,60 @@ function renderDiseaseInfo(selectedValue) {
 
   titleEl.textContent = `${disease.disease_name || selectedValue} AI 요약`;
 
-  const summary = disease.ai_summary || "";
-  if (window.marked && typeof window.marked.parse === "function") {
-    contentEl.innerHTML = window.marked.parse(summary);
+  const s = disease.ai_summary;
+
+  let mdText = "";
+
+  // 1) ai_summary가 객체(JSON)인 경우 (현재 너 케이스)
+  if (s && typeof s === "object") {
+    const mo = s.medical_overview || {};
+    const ss = s.stats_summary || {};
+
+    const joinLines = (arr) =>
+      Array.isArray(arr) ? arr.filter(Boolean).map((x) => `- ${x}`).join("\n") : "";
+
+    const joinTop = (arr) =>
+      Array.isArray(arr)
+        ? arr
+            .map((x) => {
+              const label = x?.label ?? "";
+              const cases = x?.cases ?? "";
+              const pct = x?.share_pct ?? "";
+              return `- ${label} (${cases}건, ${pct}%)`;
+            })
+            .join("\n")
+        : "";
+
+    mdText =
+      `## 의료 정보\n\n` +
+      `### 정의\n${mo.definition ?? ""}\n\n` +
+      `### 전파/감염\n${joinLines(mo.how_it_spreads)}\n\n` +
+      `### 대표 증상\n${joinLines(mo.common_symptoms)}\n\n` +
+      `### 예방\n${joinLines(mo.prevention)}\n\n` +
+      `### 병원 가야 할 때\n${joinLines(mo.when_to_see_doctor)}\n\n` +
+      `## 통계 요약\n\n` +
+      `### 기준 시점/기간\n${ss.period_note ?? ""}\n\n` +
+      `### 성별 TOP\n${joinTop(ss.gender_top3)}\n\n` +
+      `### 연령 TOP\n${joinTop(ss.age_top3)}\n\n` +
+      `### 지역 TOP\n${joinTop(ss.region_top3)}\n\n` +
+      `### 쉬운 설명\n${ss.plain_explanation ?? ""}\n\n` +
+      `### 데이터 한계\n${joinLines(ss.data_limits)}`;
+  }
+  // 2) 혹시 문자열로 내려오는 경우
+  else if (typeof s === "string") {
+    mdText = s;
   } else {
-    contentEl.textContent = summary;
+    mdText = "AI 요약이 없습니다.";
+  }
+
+  // marked에는 문자열만
+  if (window.marked && typeof window.marked.parse === "function") {
+    contentEl.innerHTML = window.marked.parse(mdText);
+  } else {
+    contentEl.textContent = mdText;
   }
 }
+
 
 // ================================================================
 // 7) 필터 적용 (단일 진입점)

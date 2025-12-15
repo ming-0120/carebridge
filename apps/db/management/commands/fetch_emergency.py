@@ -4,7 +4,6 @@ import requests
 import xmltodict
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import transaction

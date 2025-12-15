@@ -32,7 +32,7 @@
       </div>
 
       <!-- 로그인 폼 -->
-      <form method="POST" action="{% url 'login' %}" class="auth-form">
+      <form method="POST" action="{% url 'accounts:login' %}" class="auth-form">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
 
@@ -63,9 +63,15 @@
                  placeholder="비밀번호를 입력하세요" required>
         </div>
 
+        <!-- ✅ 여기 추가 -->
+        <div class="login-help">
+          <a href="{% url 'accounts:find_id' %}" class="login-help__link">ID 찾기</a>
+          <span class="login-help__sep">|</span>
+          <a href="{% url 'accounts:find_password' %}" class="login-help__link">비밀번호 찾기</a>
+        </div>
         <div class="auth-actions">
           <button type="submit" class="btn btn--primary">로그인</button>
-          <a href="{% url 'register' %}" id="registerLink" class="btn btn--ghost">회원가입</a>
+          <a href="{% url 'accounts:register' %}" id="registerLink" class="btn btn--ghost">회원가입</a>
         </div>
       </form>
 
