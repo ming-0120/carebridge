@@ -44,7 +44,13 @@ ALLOWED_HOSTS = [
     "dn-carebridge.com",
     "www.dn-carebridge.com",
 ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://dn-carebridge.com",
+    "https://www.dn-carebridge.com",
+]
 
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
 
 
 # Application definition
