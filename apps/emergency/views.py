@@ -11,6 +11,7 @@ from apps.db.models.review import AiReview
 from apps.db.models.favorite import UserFavorite
 from apps.db.models.users import Users
 from django.conf import settings
+from .templatetags import status_filters
 
 
 import math
@@ -551,8 +552,35 @@ def hospital_detail_json(request, er_id: int):
     except AiReview.DoesNotExist:
         pass
 
-    # 상태 데이터 준비
+    # 상태 데이터 준비 + 메인 템플릿 계산 결과를 함께 전달
     status_data = {}
+    status_ui = {}
+
+    def build_status_ui(available, total, type_name: str):
+        """
+        메인 템플릿(status_filters)과 동일한 계산을 서버에서 수행한다.
+        그래프 표시 여부, 라벨/색상, stroke 값 등을 한 번 계산해 내려준다.
+        """
+        label = status_filters.congestion_text(available, total, type_name)
+        color_class = status_filters.congestion_color_class(available, total, type_name)
+
+        dash_offset = None
+        bg_stroke = "#e0e0e0"
+        if total is not None and total > 0 and available is not None:
+            dash_offset = status_filters.circle_dashoffset(available, total)
+            # available 0 & red일 때만 배경을 빨강으로 처리 (메인과 동일)
+            if available == 0 and color_class == "red":
+                bg_stroke = "#E53935"
+
+        return {
+            "label": label,
+            "color_class": color_class,
+            "dash_offset": dash_offset,  # None이면 그래프 미표시
+            "bg_stroke": bg_stroke,
+            "available": available,
+            "total": total,
+        }
+
     if latest_status:
         status_data = {
             "er_general_available": latest_status.er_general_available,
@@ -567,6 +595,39 @@ def hospital_detail_json(request, er_id: int):
             "isolation_general_total": latest_status.isolation_general_total,
             "isolation_cohort_available": latest_status.isolation_cohort_available,
             "isolation_cohort_total": latest_status.isolation_cohort_total,
+        }
+
+        status_ui = {
+            "er_general": build_status_ui(
+                latest_status.er_general_available,
+                latest_status.er_general_total,
+                "er_general",
+            ),
+            "er_child": build_status_ui(
+                latest_status.er_child_available,
+                latest_status.er_child_total,
+                "er_child",
+            ),
+            "birth": build_status_ui(
+                latest_status.birth_available,
+                latest_status.birth_total,
+                "birth",
+            ),
+            "negative_pressure": build_status_ui(
+                latest_status.negative_pressure_available,
+                latest_status.negative_pressure_total,
+                "negative_pressure",
+            ),
+            "isolation_general": build_status_ui(
+                latest_status.isolation_general_available,
+                latest_status.isolation_general_total,
+                "isolation_general",
+            ),
+            "isolation_cohort": build_status_ui(
+                latest_status.isolation_cohort_available,
+                latest_status.isolation_cohort_total,
+                "isolation_cohort",
+            ),
         }
 
     # 장비 정보
@@ -610,6 +671,7 @@ def hospital_detail_json(request, er_id: int):
         "is_favorite": is_favorite,  # 추가: 즐겨찾기 상태
         "tags": tags,
         "status": status_data,
+        "status_ui": status_ui,  # 메인과 동일한 계산 결과
         "message": er_message.message if er_message and er_message.message else None,
         "ai_review": {
             "summary": ai_review.summary if ai_review and ai_review.summary else None,

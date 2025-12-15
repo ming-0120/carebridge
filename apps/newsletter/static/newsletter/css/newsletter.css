@@ -1,21 +1,21 @@
     body {
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       margin: 0;
-      padding: 0;              /* ← 여기서 패딩 제거 */
-      background: #f5f7fb;
+      padding: 0;
+      background: #ffffff; /* 흰 배경 */
       color: #111827;
     }
     
     /* 이 페이지 전체 레이아웃 */
     .newsletter-page {
       display: flex;
-      justify-content: center; /* 가운데 정렬 */
-      padding: 40px 24px;      /* 기존 body 패딩을 여기로 이동 */
+      justify-content: center;
+      padding: 40px 24px;
     }
     
     /* 기존 코드 그대로 사용 */
     .newsletter-wrapper {
-      max-width: 720px;
+      max-width: 1320px; /* 헤더와 동일한 너비로 변경 */
       width: 100%;
       margin: 0 auto;
     }
@@ -30,6 +30,7 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+      width: 100%; /* 전체 너비 사용 */
     }
     
     .news-card-link {
@@ -37,13 +38,15 @@
       color: inherit;
     }
     
+    /* 흰 카드 + 미세 테두리로 구분 */
     .news-card {
       display: flex;
       gap: 16px;
       padding: 16px;
-      border: 1px solid #e5e5e5;
+      border: 1px solid #e0e0e0; /* 미세한 테두리 */
       border-radius: 8px;
-      background: #fff;
+      background: #ffffff; /* 흰색 카드 */
+      align-items: center; /* 이미지와 텍스트를 위아래 기준 가운데 정렬 */
     }
     .news-thumb {
       width: 140px;
@@ -51,7 +54,7 @@
       overflow: hidden;
       flex-shrink: 0;
       border-radius: 6px;
-      background: #f5f5f5;
+      background: #fafafa; /* 매우 연한 회색 (이미지 영역) */
     }
     
     .news-thumb img {
@@ -63,10 +66,12 @@
     .news-content {
       flex: 1;
     }
+    /* 호버 시에도 미니멀 유지 (배경색 변화 최소화) */
     .news-card:hover {
       transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12);
-      background: #f1f7ff;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 더 미세한 그림자 */
+      border-color: #d0d0d0; /* 호버 시 테두리만 약간 진하게 */
+      background: #ffffff; /* 배경색 유지 */
     }
 
     .news-card-header {

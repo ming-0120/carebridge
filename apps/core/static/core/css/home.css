@@ -754,7 +754,7 @@
 /* === 서비스 카드 섹션 (1번 사진처럼 - 연한 회색 배경, 가로 1행, 중앙 정렬) === */
 .service-cards-section {
   width: 100%;
-  background: #FFFFFF;
+  background: #ffffff;
   padding: 60px 0;
 }
 
@@ -763,22 +763,21 @@
   margin: 0 auto;
   padding: 0 40px;
   display: flex;
-  justify-content: center;
+  flex-direction: column;      /* 기본: 세로 1열 (모바일 기본) */
   align-items: stretch;
   gap: 20px;
-  flex-wrap: wrap;
   box-sizing: border-box;
 }
 
 .service-cards-container > .info-card-link,
 .service-cards-container > .info-card {
-  flex: 0 0 calc(33.333% - 14px);
-  min-width: 280px;
-  max-width: calc(33.333% - 14px);
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 100%;
   box-sizing: border-box;
 }
 
-/* === 카드 스타일 (1번 사진처럼 - 검정색 제목, 회색 설명) === */
+/* === 카드 스타일 (검정 제목, 회색 설명) === */
 .service-cards-container .info-card {
   background: #fff;
   border-radius: 8px;
@@ -795,6 +794,29 @@
 .service-cards-container .info-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+/* 태블릿: 세로 1열 유지, 패딩만 보정 (768~1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .service-cards-container {
+    padding: 0 32px;
+  }
+}
+
+/* PC: 가로 1열(3등분) (≥1024px) */
+@media (min-width: 1024px) {
+  .service-cards-container {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+    gap: 20px;
+  }
+
+  .service-cards-container > .info-card-link,
+  .service-cards-container > .info-card {
+    flex: 0 0 calc(33.333% - 14px);
+    max-width: calc(33.333% - 14px);
+  }
 }
 
 /* 카드 제목 (검정색) */
