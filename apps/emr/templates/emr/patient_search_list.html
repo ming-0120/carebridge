@@ -1,23 +1,21 @@
-{% load static %}
+﻿{% load static %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>환자 조회 리스트</title>
-
-    {% load static %}
     <link rel="stylesheet" href="{% static 'emr/css/patient_search_list.css' %}">
 </head>
 <body>
 
-    {% include "core/_header.html" %} 
+    {% include "core/_header.html" %}
 
     <div class="container">
         <h2>환자 조회 리스트</h2>
         
         <div class="card search-area">
-            <input type="text" id="keyword" placeholder="검색입력창 (이름 또는 생년월일 입력하세요)">
+            <input type="text" id="keyword" placeholder="검색어를 입력하세요 (이름 또는 생년월일)">
             <button onclick="performSearch()">검색</button>
         </div>
 
@@ -25,51 +23,85 @@
             <table class="patient-table" id="patientTable">
                 <thead>
                     <tr>
+                        <th>No</th>
+                        <th>성명</th>
                         <th>담당의</th>
-                        <th>환자명</th>
                         <th>성별</th>
                         <th>생년월일</th>
                         <th>최근 방문일자</th>
                     </tr>
                 </thead>
-                    <tbody>
+                <tbody>
                     {% for p in patients %}
-                    <tr data-patient-id="{{ p.user_id }}" onclick="selectPatient(this)">
-                        <td>정약용</td> <!-- 담당의는 미정이므로 임시 고정 -->
+                    <tr data-patient-id="{{ p.user_id }}"
+                        data-gender="{{ p.gender }}"
+                        data-birth="{{ p.birth_date }}"
+                        data-recent="{{ p.recent_visit|default_if_none:'' }}">
+                        <td>{{ forloop.counter }}</td>
                         <td>{{ p.name }}</td>
+                        <td>-</td>
                         <td>{{ p.gender }}</td>
                         <td>{{ p.birth_date }}</td>
-                        <td>최근 방문일자 없음</td>
+                        <td>{{ p.recent_visit|default:"-" }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        {% if page_obj %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}" class="page-link">이전</a>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if num == page_obj.number %}
+                    <span class="page-link current">{{ num }}</span>
+                {% else %}
+                    <a href="?page={{ num }}" class="page-link">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="page-link">다음</a>
+            {% endif %}
+        </div>
+        {% endif %}
         
         <div class="card" id="selectedPatientDetails">
-            
             <input type="hidden" id="selectedPatientId">
 
             <div class="patient-info-summary">
-                환자정보 : <span id="pName"></span> | <span id="pGender"></span> | <span id="pDOB"></span>
+                <div class="info-field"><strong>환자명</strong><span id="pName">-</span></div>
+                <div class="info-field"><strong>성별</strong><span id="pGender">-</span></div>
+                <div class="info-field"><strong>생년월일</strong><span id="pDOB">-</span></div>
+                <div class="info-field"><strong>최근 방문</strong><span id="pRecentVisit">-</span></div>
+                <div class="info-field"><strong>진료과</strong><span id="pDept">-</span></div>
+                <div class="info-field"><strong>담당의</strong><span id="pDoctor">-</span></div>
             </div>
 
             <div class="recent-records-grid">
-                <div class="record-item">
+                <div class="record-item consult-detail">
                     <strong>최근 진료</strong>
-                    <p id="rConsult">2025-03-14 / consult_note / 완료</p>
+                    <div class="record-detail"><span class="label">일시</span><span id="consultDate">-</span></div>
+                    <div class="record-detail"><span class="label">유형</span><span id="consultType">-</span></div>
+                    <div class="record-detail"><span class="label">S</span><span id="consultSubjective">-</span></div>
+                    <div class="record-detail"><span class="label">O</span><span id="consultObjective">-</span></div>
+                    <div class="record-detail"><span class="label">A</span><span id="consultAssessment">-</span></div>
+                    <div class="record-detail"><span class="label">P</span><span id="consultPlan">-</span></div>
                 </div>
                 <div class="record-item">
                     <strong>최근 처방</strong>
-                    <p id="rPrescription">Amoxicillin / 2025-03-13 / 투여완료</p>
+                    <p id="rPrescription">-</p>
                 </div>
                 <div class="record-item">
                     <strong>최근 검사</strong>
-                    <p id="rLab">CBC / 2025-03-12 / 일반검사</p>
+                    <p id="rLab">-</p>
                 </div>
                 <div class="record-item">
                     <strong>최근 치료</strong>
-                    <p id="rTreatment">Dressing / 2025-03-10 / 완료</p>
+                    <p id="rTreatment">-</p>
                 </div>
             </div>
 

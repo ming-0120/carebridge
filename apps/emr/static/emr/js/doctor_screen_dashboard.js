@@ -212,5 +212,6 @@ function toTodayPatient(doctor_id, today) {
 
 function toPatientSearch() {
     const query = $('#searchText').val();
-    window.location.href = `/mstaff/patient_search/?searchQuery=${query}`;
+    // 기본 환자 목록 (페이지네이션) 화면으로 이동
+    window.location.href = `/mstaff/patient_search_list/`;
 }

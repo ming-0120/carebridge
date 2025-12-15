@@ -25,6 +25,7 @@ from django.utils.timezone import make_aware
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from django.forms.models import model_to_dict
+from django.core.paginator import Paginator
 import socket
 
 
@@ -105,7 +106,7 @@ def api_patient_summary(request):
     recent_doctor = None
 
     if recent_record:
-        recent_visit = recent_record.record_datetime.strftime("%Y-%m-%d %H:%M")
+        recent_visit = recent_record.record_datetime.strftime("%Y년 %m월 %d일 %H시 %M분")
 
         if recent_record.doctor and recent_record.doctor.dep:
             recent_dept = recent_record.doctor.dep.dep_name
@@ -120,7 +121,7 @@ def api_patient_summary(request):
     if recent_record:
         recent_consult = {
             "record_type": recent_record.record_type,
-            "record_datetime": recent_record.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "record_datetime": recent_record.record_datetime.strftime("%Y년 %m월 %d일 %H시 %M분"),
             "subjective": recent_record.subjective,
             "objective": recent_record.objective,
             "assessment": recent_record.assessment,
@@ -134,8 +135,8 @@ def api_patient_summary(request):
             "birth_date": birth_date,
             "recent_visit": recent_visit,
         },
-        "recent_dept": recent_dept or "없음",
-        "recent_doctor": recent_doctor or "없음",
+        "recent_dept": recent_dept or "-",
+        "recent_doctor": recent_doctor or "-",
         "recent_consult": recent_consult,
     })
 
@@ -590,6 +591,22 @@ def medical_record_inquiry(request):
     patient = Users.objects.get(user_id=patient_id)
     birth = extract_birth_date(patient.resident_reg_no)
     age = calculate_age_from_rrn(patient.resident_reg_no)
+    gender_display = (
+        "남" if patient.gender == "M"
+        else "여" if patient.gender in ("F", "W")
+        else (patient.gender or "-")
+    )
+
+    rrn_raw = patient.resident_reg_no or ""
+    rrn_digits = "".join(ch for ch in str(rrn_raw) if ch.isdigit())
+    if len(rrn_digits) >= 13:
+        resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:13]}"
+    elif len(rrn_digits) > 6:
+        resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:]}"
+    elif rrn_digits:
+        resident_reg_no_display = rrn_digits
+    else:
+        resident_reg_no_display = "-"
 
     recent_record = (
         MedicalRecord.objects
@@ -598,7 +615,7 @@ def medical_record_inquiry(request):
         .first()
     )
     recent_visit_date = (
-        recent_record.record_datetime.strftime("%Y.%m.%d")
+        recent_record.record_datetime.strftime("%Y년 %m월 %d일")
         if recent_record else "기록 없음"
     )
 
@@ -619,13 +636,25 @@ def medical_record_inquiry(request):
         lab_list = []
         try:
             lab_obj = v.laborders
+            attachments = []
             if lab_obj:
+                try:
+                    uploads = LabUpload.objects.filter(lab_order=lab_obj)
+                    attachments = [
+                        {"name": upload.original_name, "url": upload.uploadedFile.url}
+                        for upload in uploads
+                    ]
+                except Exception:
+                    attachments = []
+
                 lab_list.append({
                     "lab_nm": lab_obj.lab_nm,
                     "status": lab_obj.status,
                     "status_datetime": lab_obj.status_datetime,
                     "specimen_cd": lab_obj.specimen_cd,
-                    "requisition_note": getattr(lab_obj, "requisition_note", "")
+                    "requisition_note": getattr(lab_obj, "requisition_note", ""),
+                    "attachments": attachments,
+                    "attachments_json": json.dumps(attachments, ensure_ascii=False)
                 })
         except:
             pass
@@ -669,12 +698,20 @@ def medical_record_inquiry(request):
             "treatment": treat_list,
         })
 
+    # 4열 컬럼 레이아웃을 위해 방문 기록을 열 단위로 분배
+    visit_columns = [[], [], [], []]
+    for idx, v in enumerate(visit_list):
+        visit_columns[idx % 4].append(v)
+
     ctx.update({
         "patient": patient,
         "birth": birth,
         "age": age,
+        "gender_display": gender_display,
+        "resident_reg_no_display": resident_reg_no_display,
         "recent_visit_date": recent_visit_date,
         "visits": visit_list,
+        "visit_columns": visit_columns,
     })
 
     return render(request, "emr/medical_record_inquiry.html", ctx)
@@ -694,7 +731,7 @@ def patient_search_list(request):
 
     try:
         # 병원과 연결된 환자 필터링
-        patients = Users.objects.filter(
+        patients = Users.objects.filter(role__in=["PATIENT", "USER"]).filter(
             Q(reservations__slot__doctor__hos_id=hos_id) |
             Q(medicalrecord__hos_id=hos_id)
         ).distinct()
@@ -712,11 +749,24 @@ def patient_search_list(request):
             if len(rrn) >= 8:
                 dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
 
+            recent_dt = (
+                MedicalRecord.objects
+                .filter(user_id=p.user_id, hos_id=hos_id)
+                .order_by("-record_datetime")
+                .values_list("record_datetime", flat=True)
+                .first()
+            )
+            if recent_dt:
+                recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+            else:
+                recent_str = None
+
             results.append({
                 "user_id": p.user_id,
                 "name": p.name,
                 "gender": p.gender,
                 "birth_date": dob,
+                "recent_visit": recent_str,
             })
         return render(request, "emr/patient_search_list.html", {"patients": results})
     except Exception as e:
@@ -788,6 +838,8 @@ def get_previous_medical_records(request, user_id):
                 mr.assessment,
                 mr.plan,
 
+                tp.procedure_code,
+                tp.treatment_site,
                 tp.procedure_name,
                 tp.execution_datetime,
                 tp.completion_datetime,
@@ -795,9 +847,14 @@ def get_previous_medical_records(request, user_id):
                 tp.result_notes,
 
                 lb.lab_nm,
+                lb.lab_cd,
+                lb.lab_order_id,
                 lb.specimen_cd,
                 lb.status AS lab_status,
                 lb.status_datetime,
+                lb.order_datetime AS lab_order_datetime,
+                lb.is_urgent,
+                lb.requisition_note,
 
                 md.order_code,
                 md.order_name,
@@ -848,6 +905,7 @@ def get_previous_medical_records(request, user_id):
         row_data["execution_datetime"] = to_kst(row_data.get("execution_datetime"))
         row_data["completion_datetime"] = to_kst(row_data.get("completion_datetime"))
         row_data["status_datetime"] = to_kst(row_data.get("status_datetime"))
+        row_data["lab_order_datetime"] = to_kst(row_data.get("lab_order_datetime"))
         row_data["order_datetime"] = to_kst(row_data.get("order_datetime"))
         row_data["start_datetime"] = to_kst(row_data.get("start_datetime"))
         row_data["stop_datetime"] = to_kst(row_data.get("stop_datetime"))
@@ -872,20 +930,37 @@ def get_previous_medical_records(request, user_id):
         # 치료기록
         if row_data["procedure_name"]:
             records[mr_id]["treatment"].append({
+                "procedure_code": row_data["procedure_code"],
                 "procedure_name": row_data["procedure_name"],
                 "execution_datetime": row_data["execution_datetime"],
                 "completion_datetime": row_data["completion_datetime"],
                 "status": row_data["tp_status"],
+                "treatment_site": row_data["treatment_site"],
                 "result_notes": row_data["result_notes"]
             })
 
         # 검사
         if row_data["lab_nm"]:
+            try:
+                uploads = LabUpload.objects.filter(lab_order_id=row_data["lab_order_id"])
+                attachments = [
+                    {"name": upload.original_name, "url": upload.uploadedFile.url}
+                    for upload in uploads
+                ]
+            except Exception:
+                attachments = []
+
             records[mr_id]["lab"].append({
                 "lab_nm": row_data["lab_nm"],
+                "lab_cd": row_data["lab_cd"],
+                "lab_order_id": row_data["lab_order_id"],
                 "specimen_cd": row_data["specimen_cd"],
                 "status": row_data["lab_status"],
-                "status_datetime": row_data["status_datetime"]
+                "status_datetime": row_data["status_datetime"],
+                "order_datetime": row_data["lab_order_datetime"],
+                "is_urgent": row_data["is_urgent"],
+                "requisition_note": row_data["requisition_note"],
+                "attachments": attachments,
             })
 
         # 처방
@@ -1378,16 +1453,50 @@ def patient_search_list_view(request):
     except:
         return render(request, "emr/patient_search_list.html", {"patients": []})
 
-    patients = Users.objects.filter(role='patient').filter(
+    # 환자 역할: 기존 데이터에 USER로 저장된 경우도 있어서 USER/PATIENT 둘 다 허용
+    patients_qs = Users.objects.filter(role__in=['PATIENT', 'USER']).filter(
         Q(reservations__slot__doctor__hos_id=hos_id) |
-        Q(medicalrecord__hos_id=hos_id) |
-        Q(laborders__medical_record__hos_id=hos_id) |
-        Q(treatmentprocedures__medical_record__hos_id=hos_id)
-    ).distinct().values(
-        'user_id', 'name', 'gender', 'birth_date'
-    )
+        Q(medicalrecord__hos_id=hos_id)
+    ).distinct()
 
-    return render(request, "emr/patient_search_list.html", {"patients": patients})
+    results = []
+    for p in patients_qs:
+        rrn = p.resident_reg_no or ""
+
+        recent_dt = (
+            MedicalRecord.objects
+            .filter(user_id=p.user_id, hos_id=hos_id)
+            .order_by("-record_datetime")
+            .values_list("record_datetime", flat=True)
+            .first()
+        )
+        if recent_dt:
+            recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+        else:
+            recent_str = None
+
+        results.append({
+            "user_id": p.user_id,
+            "name": p.name,
+            "gender": p.gender,
+            # 템플릿/JS에서 주민번호를 받아 생년월일로 변환하므로 그대로 전달
+            "birth_date": rrn,
+            "recent_visit": recent_str,
+        })
+
+    page_number = request.GET.get("page")
+    paginator = Paginator(results, 10)
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "emr/patient_search_list.html",
+        {
+            "patients": page_obj,
+            "page_obj": page_obj,
+            "paginator": paginator,
+        },
+    )
 
 def api_search_patient(request):
     keyword = request.GET.get("keyword", "").strip()
@@ -1404,7 +1513,7 @@ def api_search_patient(request):
 
     try:
         # 병원과 연결된 환자 필터링
-        patients = Users.objects.filter(
+        patients = Users.objects.filter(role__in=["PATIENT", "USER"]).filter(
             Q(reservations__slot__doctor__hos_id=hos_id) |
             Q(medicalrecord__hos_id=hos_id)
         ).distinct()
@@ -1422,11 +1531,24 @@ def api_search_patient(request):
             if len(rrn) >= 8:
                 dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
 
+            recent_dt = (
+                MedicalRecord.objects
+                .filter(user_id=p.user_id, hos_id=hos_id)
+                .order_by("-record_datetime")
+                .values_list("record_datetime", flat=True)
+                .first()
+            )
+            if recent_dt:
+                recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+            else:
+                recent_str = None
+
             results.append({
                 "user_id": p.user_id,
                 "name": p.name,
                 "gender": p.gender,
                 "birth_date": dob,
+                "recent_visit": recent_str,
             })
 
         return JsonResponse({"results": results})

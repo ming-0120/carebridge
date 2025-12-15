@@ -60,4 +60,127 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   }
+  
+  // ========= 병원추가 모달 관련 함수 =========
+  
+  /**
+   * 모달 열기 함수
+   * 
+   * 목적: 병원추가 모달을 표시
+   */
+  function openAddHospitalModal() {
+    const modal = document.getElementById('addHospitalModal');
+    if (modal) {
+      modal.classList.add('show');
+      // 모달이 열릴 때 body 스크롤 방지
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  
+  /**
+   * 모달 닫기 함수
+   * 
+   * 목적: 병원추가 모달을 숨김
+   */
+  function closeAddHospitalModal() {
+    const modal = document.getElementById('addHospitalModal');
+    if (modal) {
+      modal.classList.remove('show');
+      // 모달이 닫힐 때 body 스크롤 복원
+      document.body.style.overflow = '';
+      // 폼 초기화
+      const form = document.getElementById('addHospitalForm');
+      if (form) {
+        form.reset();
+      }
+    }
+  }
+  
+  // 병원추가 버튼 클릭 이벤트
+  const openAddHospitalBtn = document.getElementById('openAddHospitalModal');
+  if (openAddHospitalBtn) {
+    openAddHospitalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openAddHospitalModal();
+    });
+  }
+  
+  // 모달 닫기 버튼 클릭 이벤트
+  const closeAddHospitalBtn = document.getElementById('closeAddHospitalModal');
+  if (closeAddHospitalBtn) {
+    closeAddHospitalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeAddHospitalModal();
+    });
+  }
+  
+  // 취소 버튼 클릭 이벤트
+  const cancelAddHospitalBtn = document.getElementById('cancelAddHospital');
+  if (cancelAddHospitalBtn) {
+    cancelAddHospitalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeAddHospitalModal();
+    });
+  }
+  
+  // 모달 배경 클릭 시 닫기
+  const modal = document.getElementById('addHospitalModal');
+  if (modal) {
+    modal.addEventListener('click', function(e) {
+      // 모달 배경(modal)을 클릭했을 때만 닫기
+      if (e.target === modal) {
+        closeAddHospitalModal();
+      }
+    });
+  }
+  
+  // ESC 키로 모달 닫기
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('addHospitalModal');
+      if (modal && modal.classList.contains('show')) {
+        closeAddHospitalModal();
+      }
+    }
+  });
+  
+  // 폼 제출 이벤트 (AJAX 처리)
+  const addHospitalForm = document.getElementById('addHospitalForm');
+  if (addHospitalForm) {
+    addHospitalForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 폼 데이터 수집
+      const formData = new FormData(addHospitalForm);
+      
+      // AJAX 요청
+      fetch(addHospitalForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+      .then(response => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error('Network response was not ok');
+      })
+      .then(data => {
+        if (data.success) {
+          // 성공 시 모달 닫기 및 페이지 새로고침
+          closeAddHospitalModal();
+          window.location.reload();
+        } else {
+          // 실패 시 에러 메시지 표시
+          alert(data.message || '병원 추가에 실패했습니다.');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('병원 추가 중 오류가 발생했습니다.');
+      });
+    });
+  }
 });

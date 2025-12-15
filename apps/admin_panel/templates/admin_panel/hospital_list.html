@@ -216,6 +216,20 @@
         <button type="submit" class="search-btn">
           <span class="search-icon">🔍</span>
         </button>
+        
+        <!-- 
+          병원추가 버튼
+          
+          목적: 병원 추가 모달을 여는 버튼
+            - type="button": 폼 제출 방지
+            - CSS 클래스: add-hospital-btn (병원추가 버튼 스타일)
+            - 아이콘: ➕ (추가 아이콘)
+            - data-modal-target: 모달 ID 지정
+        -->
+        <button type="button" class="add-hospital-btn" id="openAddHospitalModal">
+          <span class="add-icon">➕</span>
+          <span class="add-text">병원추가</span>
+        </button>
       </form>
     </div>
 
@@ -835,6 +849,65 @@
     -->
     <div class="user-detail-section placeholder-hidden"></div>
     {% endif %}
+  </div>
+
+  {% comment %}
+    병원추가 모달
+    
+    목적: 새로운 병원을 추가하기 위한 모달 창
+      - CSS 클래스: modal (모달 스타일)
+      - id: addHospitalModal (모달 식별자)
+      - 내용: 병원 정보 입력 폼
+  {% endcomment %}
+  <div id="addHospitalModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">병원 추가</h2>
+        <button type="button" class="modal-close" id="closeAddHospitalModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addHospitalForm" method="post" action="{% url 'hospital_list' %}">
+          {% csrf_token %}
+          <div class="form-group">
+            <label for="hospital_name" class="form-label">병원명 <span class="required">*</span></label>
+            <input type="text" id="hospital_name" name="hospital_name" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label for="hospital_hpid" class="form-label">병원ID (hpid) <span class="required">*</span></label>
+            <input type="text" id="hospital_hpid" name="hospital_hpid" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label for="hospital_hos_name" class="form-label">병원 계정ID <span class="required">*</span></label>
+            <input type="text" id="hospital_hos_name" name="hospital_hos_name" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label for="hospital_hos_password" class="form-label">병원 비밀번호 <span class="required">*</span></label>
+            <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label for="hospital_address" class="form-label">주소</label>
+            <input type="text" id="hospital_address" name="hospital_address" class="form-input">
+          </div>
+          <div class="form-group">
+            <label for="hospital_tel" class="form-label">전화번호</label>
+            <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678">
+          </div>
+          <div class="form-group">
+            <label for="hospital_category_name" class="form-label">상세소개</label>
+            <textarea id="hospital_category_name" name="hospital_category_name" class="form-textarea" rows="3"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="hospital_estb_date" class="form-label">개원일</label>
+            <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01">
+          </div>
+          <input type="hidden" name="action" value="add_hospital">
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" id="cancelAddHospital">취소</button>
+            <button type="submit" class="btn-submit">추가</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 
   <!-- 
