@@ -207,8 +207,6 @@ OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # 환경변수에서 읽기
 GOOGLE_API_KEY = os.getenv("GOOGLE_MAP_API_KEY", "")
-<<<<<<< HEAD
-=======
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
@@ -217,4 +215,3 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = 'sarah500288@gmail.com'
 EMAIL_HOST_PASSWORD = 'hnyqlluxksyutefn'
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
->>>>>>> develop
