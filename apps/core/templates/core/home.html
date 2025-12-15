@@ -41,7 +41,7 @@
   </section>     
   <section class="card-row">
 
-  <a href="#emergency" class="info-card-link">
+  <a href="{% url 'emergency_main' %}" class="info-card-link">
     <div class="info-card card-emergency">
       <div>
         <h3>응급실 조회</h3>
@@ -49,7 +49,6 @@
       </div>
       <div class="card-btn-area">
         <span class="card-btn">응급실 조회</span>
-        <span class="card-btn">지도 보기</span>
       </div>
     </div>
   </a>
@@ -72,7 +71,6 @@
     </div>
     <div class="card-btn-area">
       <a href="{% url 'qna:qna_list' %}" class="card-btn">문의하기</a>
-      <span class="card-btn">자주 묻는 질문</span>
     </div>
   </div>
 </section>
