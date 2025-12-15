@@ -1,3 +1,5 @@
+const hos_id = document.getElementById('hos_id');
+
 function goToRecord(type, order_id, user_id, medical_record_id) {
 
     // if (status === 'COMPLETED') {
@@ -6,44 +8,46 @@ function goToRecord(type, order_id, user_id, medical_record_id) {
     // }
 
     if (type === 'Treatment') {
-        window.location.href = `/mstaff/treatment_verify/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}`
+        window.location.href = `/mstaff/treatment_verify/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}&hos_id=${hos_id}`
     } else if (type === 'Lab') {
-        window.location.href = `/mstaff/lab_record/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}`
+        window.location.href = `/mstaff/lab_record/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}&hos_id=${hos_id}`
     }
 }
 
 
-const socket = new WebSocket(
-    'ws://' + window.location.host + '/ws/hospital_dashboard/' + 137 + '/'
-);
+if (hos_id) {
+    const socket = new WebSocket(
+        'ws://' + window.location.host + '/ws/hospital_dashboard/' + hos_id + '/'
+    );
 
-// 3. 연결 성공 시 로그
-socket.onopen = function(e) {
-    console.log('웹소켓 서버에 연결되었습니다.');
-};
+    // 3. 연결 성공 시 로그
+    socket.onopen = function(e) {
+        console.log('웹소켓 서버에 연결되었습니다.');
+    };
 
-// [핵심] 4. 서버(Consumer)로부터 메시지가 왔을 때 실행
-socket.onmessage = function(e) {
-    const data = JSON.parse(e.data);
-    
-    // type이 UPDATE_REQUIRED면 화면 갱신 로직 수행
-    if (data.type === 'UPDATE_REQUIRED') {
-        if (data.message == 'lab') {
-            getLabRecord();
-        } else if (data.message == 'treatment') {
-            getTreatmentRecord();
+    // [핵심] 4. 서버(Consumer)로부터 메시지가 왔을 때 실행
+    socket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        // type이 UPDATE_REQUIRED면 화면 갱신 로직 수행
+        if (data.type === 'UPDATE_REQUIRED') {
+            if (data.message == 'lab') {
+                getLabRecord();
+            } else if (data.message == 'treatment') {
+                getTreatmentRecord();
+            }
         }
-    }
-};
+    };
 
-// 5. 연결 끊김 처리
-socket.onclose = function(e) {
-    console.error('웹소켓 연결이 끊어졌습니다.');
-};
+    // 5. 연결 끊김 처리
+    socket.onclose = function(e) {
+        console.error('웹소켓 연결이 끊어졌습니다.');
+    };
+}
 
 
 async function getLabRecord() {
-    response = await fetch('/mstaff/get_lab_record/');
+    response = await fetch(`/mstaff/get_lab_record/?hos_id=${hos_id}`);
     const datas = await response.json();
     const result = [];
 
@@ -84,7 +88,7 @@ async function getLabRecord() {
 }
 
 async function getTreatmentRecord() {
-    response = await fetch('/mstaff/get_treatment_record/');
+    response = await fetch(`/mstaff/get_treatment_record/?hos_id=${hos_id}`);
     const datas = await response.json();
     const result = [];
 
