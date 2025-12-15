@@ -866,40 +866,60 @@
         <button type="button" class="modal-close" id="closeAddHospitalModal">&times;</button>
       </div>
       <div class="modal-body">
+        <!-- 에러 메시지 표시 영역 -->
+        <div id="modalErrorMessage" class="error-message" style="display: none;"></div>
+        
         <form id="addHospitalForm" method="post" action="{% url 'hospital_list' %}">
           {% csrf_token %}
-          <div class="form-group">
-            <label for="hospital_name" class="form-label">병원명 <span class="required">*</span></label>
-            <input type="text" id="hospital_name" name="hospital_name" class="form-input" required>
+          
+          <!-- 필수 정보 섹션 -->
+          <div class="form-section">
+            <h3 class="form-section-title">필수 정보</h3>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_name" class="form-label">병원명 <span class="required">*</span></label>
+                <input type="text" id="hospital_name" name="hospital_name" class="form-input" required placeholder="병원명을 입력하세요">
+              </div>
+              <div class="form-group form-col-half">
+                <label for="hospital_hpid" class="form-label">병원ID (hpid) <span class="required">*</span></label>
+                <input type="text" id="hospital_hpid" name="hospital_hpid" class="form-input" required placeholder="병원ID를 입력하세요">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_hos_name" class="form-label">병원 계정ID <span class="required">*</span></label>
+                <input type="text" id="hospital_hos_name" name="hospital_hos_name" class="form-input" required placeholder="계정ID를 입력하세요">
+              </div>
+              <div class="form-group form-col-half">
+                <label for="hospital_hos_password" class="form-label">병원 비밀번호 <span class="required">*</span></label>
+                <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required placeholder="비밀번호를 입력하세요">
+              </div>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="hospital_hpid" class="form-label">병원ID (hpid) <span class="required">*</span></label>
-            <input type="text" id="hospital_hpid" name="hospital_hpid" class="form-input" required>
+          
+          <!-- 추가 정보 섹션 -->
+          <div class="form-section">
+            <h3 class="form-section-title">추가 정보</h3>
+            <div class="form-group">
+              <label for="hospital_address" class="form-label">주소</label>
+              <input type="text" id="hospital_address" name="hospital_address" class="form-input" placeholder="주소를 입력하세요">
+            </div>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_tel" class="form-label">전화번호</label>
+                <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678">
+              </div>
+              <div class="form-group form-col-half">
+                <label for="hospital_estb_date" class="form-label">개원일</label>
+                <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="hospital_category_name" class="form-label">상세소개</label>
+              <textarea id="hospital_category_name" name="hospital_category_name" class="form-textarea" rows="4" placeholder="병원 상세소개를 입력하세요"></textarea>
+            </div>
           </div>
-          <div class="form-group">
-            <label for="hospital_hos_name" class="form-label">병원 계정ID <span class="required">*</span></label>
-            <input type="text" id="hospital_hos_name" name="hospital_hos_name" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label for="hospital_hos_password" class="form-label">병원 비밀번호 <span class="required">*</span></label>
-            <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required>
-          </div>
-          <div class="form-group">
-            <label for="hospital_address" class="form-label">주소</label>
-            <input type="text" id="hospital_address" name="hospital_address" class="form-input">
-          </div>
-          <div class="form-group">
-            <label for="hospital_tel" class="form-label">전화번호</label>
-            <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678">
-          </div>
-          <div class="form-group">
-            <label for="hospital_category_name" class="form-label">상세소개</label>
-            <textarea id="hospital_category_name" name="hospital_category_name" class="form-textarea" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label for="hospital_estb_date" class="form-label">개원일</label>
-            <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01">
-          </div>
+          
           <input type="hidden" name="action" value="add_hospital">
           <div class="modal-footer">
             <button type="button" class="btn-cancel" id="cancelAddHospital">취소</button>

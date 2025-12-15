@@ -64,6 +64,46 @@ document.addEventListener('DOMContentLoaded', function() {
   // ========= 병원추가 모달 관련 함수 =========
   
   /**
+   * 에러 메시지 표시 함수
+   * 
+   * 목적: 모달 내부에 에러 메시지를 표시
+   */
+  function showErrorMessage(message) {
+    const errorDiv = document.getElementById('modalErrorMessage');
+    if (errorDiv) {
+      errorDiv.textContent = message;
+      errorDiv.style.display = 'flex';
+      // 스크롤을 에러 메시지로 이동
+      errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+  
+  /**
+   * 에러 메시지 숨기기 함수
+   * 
+   * 목적: 모달 내부의 에러 메시지를 숨김
+   */
+  function hideErrorMessage() {
+    const errorDiv = document.getElementById('modalErrorMessage');
+    if (errorDiv) {
+      errorDiv.style.display = 'none';
+      errorDiv.textContent = '';
+    }
+  }
+  
+  /**
+   * 입력 필드 에러 상태 제거 함수
+   * 
+   * 목적: 모든 입력 필드의 에러 상태를 제거
+   */
+  function clearFieldErrors() {
+    const inputs = document.querySelectorAll('#addHospitalForm .form-input, #addHospitalForm .form-textarea');
+    inputs.forEach(input => {
+      input.classList.remove('error');
+    });
+  }
+  
+  /**
    * 모달 열기 함수
    * 
    * 목적: 병원추가 모달을 표시
@@ -92,6 +132,16 @@ document.addEventListener('DOMContentLoaded', function() {
       const form = document.getElementById('addHospitalForm');
       if (form) {
         form.reset();
+        // 에러 메시지 숨기기
+        hideErrorMessage();
+        // 필드 에러 상태 제거
+        clearFieldErrors();
+        // 제출 버튼 활성화
+        const submitBtn = form.querySelector('.btn-submit');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = '추가';
+        }
       }
     }
   }
@@ -101,6 +151,9 @@ document.addEventListener('DOMContentLoaded', function() {
   if (openAddHospitalBtn) {
     openAddHospitalBtn.addEventListener('click', function(e) {
       e.preventDefault();
+      // 에러 메시지 및 필드 에러 상태 초기화
+      hideErrorMessage();
+      clearFieldErrors();
       openAddHospitalModal();
     });
   }
@@ -150,8 +203,34 @@ document.addEventListener('DOMContentLoaded', function() {
     addHospitalForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
+      // 에러 메시지 및 필드 에러 상태 초기화
+      hideErrorMessage();
+      clearFieldErrors();
+      
+      // 폼 유효성 검사
+      const hospitalName = document.getElementById('hospital_name').value.trim();
+      const hospitalHpid = document.getElementById('hospital_hpid').value.trim();
+      const hospitalHosName = document.getElementById('hospital_hos_name').value.trim();
+      const hospitalHosPassword = document.getElementById('hospital_hos_password').value.trim();
+      
+      if (!hospitalName || !hospitalHpid || !hospitalHosName || !hospitalHosPassword) {
+        showErrorMessage('필수 항목을 모두 입력해주세요.');
+        // 필수 필드에 에러 상태 추가
+        if (!hospitalName) document.getElementById('hospital_name').classList.add('error');
+        if (!hospitalHpid) document.getElementById('hospital_hpid').classList.add('error');
+        if (!hospitalHosName) document.getElementById('hospital_hos_name').classList.add('error');
+        if (!hospitalHosPassword) document.getElementById('hospital_hos_password').classList.add('error');
+        return;
+      }
+      
       // 폼 데이터 수집
       const formData = new FormData(addHospitalForm);
+      
+      // 제출 버튼 비활성화 (중복 제출 방지)
+      const submitBtn = addHospitalForm.querySelector('.btn-submit');
+      const originalBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = '처리 중...';
       
       // AJAX 요청
       fetch(addHospitalForm.action, {
@@ -174,12 +253,18 @@ document.addEventListener('DOMContentLoaded', function() {
           window.location.reload();
         } else {
           // 실패 시 에러 메시지 표시
-          alert(data.message || '병원 추가에 실패했습니다.');
+          showErrorMessage(data.message || '병원 추가에 실패했습니다.');
+          // 제출 버튼 활성화
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('병원 추가 중 오류가 발생했습니다.');
+        showErrorMessage('병원 추가 중 오류가 발생했습니다. 다시 시도해주세요.');
+        // 제출 버튼 활성화
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
       });
     });
   }

@@ -1086,7 +1086,22 @@ def approval_pending(request):
             if action == 'approve':
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).update(verified=True)
             elif action == 'reject':
-                Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).delete()
+                # 거절 시 Doctors와 관련 Users 모두 삭제
+                # Doctors 객체들을 먼저 가져와서 관련 Users ID 수집
+                doctors_to_delete = Doctors.objects.filter(
+                    doctor_id__in=doctor_ids, 
+                    verified=False
+                ).select_related('user')
+                
+                # 관련 Users ID 수집
+                user_ids = [doctor.user.user_id for doctor in doctors_to_delete]
+                
+                # Doctors 삭제 (CASCADE로 자동 삭제되지 않으므로 수동 삭제)
+                doctors_to_delete.delete()
+                
+                # 관련 Users 삭제
+                if user_ids:
+                    Users.objects.filter(user_id__in=user_ids).delete()
             
             # 승인/거절 처리 후 리다이렉트 (AJAX 요청이 아닌 경우에만)
             # 페이지네이션 AJAX 요청은 리다이렉트하지 않음

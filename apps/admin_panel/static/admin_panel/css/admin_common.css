@@ -776,6 +776,7 @@ body {
     - left: 0, top: 0, width: 100%, height: 100% - 전체 화면 덮기
     - background-color: rgba(0, 0, 0, 0.5) - 반투명 검은색 배경
     - 사용처: 모든 모달 창의 배경
+    - 애니메이션: 페이드 인 효과
 */
 .modal {
   display: none;
@@ -785,9 +786,11 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0);
   align-items: center;
   justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
 }
 
 /* 
@@ -795,9 +798,13 @@ body {
   
   목적: 모달이 열려있을 때 표시
     - display: flex - 플렉스 레이아웃으로 표시
+    - opacity: 1 - 완전히 불투명하게 표시
+    - background-color: rgba(0, 0, 0, 0.5) - 반투명 검은색 배경
 */
 .modal.show {
   display: flex;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.5);
 }
 
 /* 
@@ -807,23 +814,39 @@ body {
     - background-color: #fff - 흰색 배경
     - border-radius: 12px - 둥근 모서리
     - padding: 0 - 내부 패딩 제거 (헤더/바디/푸터에서 개별 처리)
-    - max-width: 600px - 최대 너비 제한
+    - max-width: 700px - 최대 너비 제한 (더 넓게)
     - width: 90% - 화면 너비의 90%
     - max-height: 90vh - 최대 높이 제한 (뷰포트 높이의 90%)
     - overflow-y: auto - 세로 스크롤 허용
     - box-shadow: 그림자 효과
+    - 애니메이션: 스케일 및 페이드 인 효과
     - 사용처: 모든 모달 창의 내용 영역
 */
 .modal-content {
   background-color: #fff;
   border-radius: 12px;
   padding: 0;
-  max-width: 600px;
+  max-width: 700px;
   width: 90%;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   position: relative;
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 
+  모달 내용 표시 상태
+  
+  목적: 모달이 열려있을 때 내용 영역 애니메이션
+    - transform: scale(1) - 원래 크기로 확대
+    - opacity: 1 - 완전히 불투명하게 표시
+*/
+.modal.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
 }
 
 /* 
@@ -913,6 +936,60 @@ body {
 }
 
 /* 
+  폼 섹션
+  
+  목적: 폼 필드 그룹을 구분하는 섹션 스타일
+    - margin-bottom: 24px - 하단 마진
+    - padding-bottom: 24px - 하단 패딩
+    - border-bottom: 1px solid #e1e4ec - 하단 테두리 (마지막 섹션 제외)
+    - 사용처: 모달 내부의 폼 섹션
+*/
+.form-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e1e4ec;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* 
+  폼 섹션 제목
+  
+  목적: 폼 섹션의 제목 스타일
+    - font-size: 16px - 중간 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상
+    - margin-bottom: 16px - 하단 마진
+    - 사용처: 폼 섹션 제목
+*/
+.form-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #1B3C73;
+}
+
+/* 
+  폼 행
+  
+  목적: 폼 필드를 가로로 배치하는 행 스타일
+    - display: flex - 플렉스 레이아웃
+    - gap: 16px - 요소 간 간격
+    - 사용처: 모달 내부의 폼 행
+*/
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+/* 
   폼 그룹
   
   목적: 폼 입력 필드 그룹 스타일
@@ -921,6 +998,22 @@ body {
 */
 .form-group {
   margin-bottom: 20px;
+  flex: 1;
+}
+
+/* 
+  폼 그룹 (반 너비)
+  
+  목적: 폼 행 내부의 반 너비 그룹 스타일
+    - margin-bottom: 0 - 하단 마진 제거 (행에서 관리)
+    - 사용처: 폼 행 내부의 그룹
+*/
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-col-half {
+  flex: 1;
 }
 
 /* 
@@ -1122,6 +1215,56 @@ body {
 */
 .btn-submit:hover {
   background-color: #004C97;
+}
+
+/* 
+  에러 메시지
+  
+  목적: 모달 내부의 에러 메시지 표시 스타일
+    - padding: 12px 16px - 내부 여백
+    - background-color: #FEE - 연한 빨간색 배경
+    - border: 1px solid #EF4444 - 빨간색 테두리
+    - border-radius: 8px - 둥근 모서리
+    - color: #DC2626 - 진한 빨간색 텍스트
+    - font-size: 14px - 작은 글씨 크기
+    - margin-bottom: 20px - 하단 마진
+    - 사용처: 모달 내부의 에러 메시지
+*/
+.error-message {
+  padding: 12px 16px;
+  background-color: #FEE;
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  color: #DC2626;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message::before {
+  content: "⚠";
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* 
+  폼 입력 필드 에러 상태
+  
+  목적: 에러가 있는 입력 필드 스타일
+    - border-color: #EF4444 - 빨간색 테두리
+    - 사용처: 에러가 있는 입력 필드
+*/
+.form-input.error,
+.form-textarea.error {
+  border-color: #EF4444;
+}
+
+.form-input.error:focus,
+.form-textarea.error:focus {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 /* 
@@ -1939,6 +2082,25 @@ body {
     justify-content: center;
   }
   
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+  
+  .form-section-title {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  
   .modal-content {
     width: 95%;
     max-height: 95vh;
@@ -2083,6 +2245,25 @@ body {
     border-radius: 8px;
     justify-content: center;
     font-size: 13px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
+  
+  .form-section-title {
+    font-size: 14px;
+    margin-bottom: 10px;
   }
   
   .modal-content {
