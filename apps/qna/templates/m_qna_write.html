@@ -198,10 +198,16 @@
 
         <div class="form-group form-content-group">
           <label for="privacy">공개 설정</label>
-          <select id="privacy" name="privacy" class="form-select">
-            <option value="PUBLIC" {% if privacy == 'PUBLIC' or not privacy %}selected{% endif %}>공개</option>
-            <option value="PRIVATE" {% if privacy == 'PRIVATE' %}selected{% endif %}>비공개</option>
-          </select>
+          <div class="privacy-options">
+            <label class="privacy-option">
+              <input type="radio" name="privacy" value="PUBLIC" id="privacy-public" {% if privacy == 'PUBLIC' or not privacy %}checked{% endif %}>
+              <span>공개</span>
+            </label>
+            <label class="privacy-option">
+              <input type="radio" name="privacy" value="PRIVATE" id="privacy-private" {% if privacy == 'PRIVATE' %}checked{% endif %}>
+              <span>비공개</span>
+            </label>
+          </div>
         </div>
 
         <div class="form-actions form-actions-group">
