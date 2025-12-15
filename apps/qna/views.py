@@ -26,12 +26,11 @@ def qna_list(request):
     """
     # 로그인 확인
     if not request.session.get('user_id'):
-        return redirect('login')
-    
+        return redirect('accounts:login')
     try:
         user = Users.objects.get(user_id=request.session.get('user_id'), withdrawal='0')
     except Users.DoesNotExist:
-        return redirect('login')
+        return redirect('accounts:login')
     
     # 검색 파라미터 (POST 방식)
     search_keyword = request.POST.get('search', '').strip()
@@ -142,12 +141,12 @@ def qna_write(request):
     """
     # 로그인 확인
     if not request.session.get('user_id'):
-        return redirect('login')
+        redirect('accounts:login')
     
     try:
         user = Users.objects.get(user_id=request.session.get('user_id'), withdrawal='0')
     except Users.DoesNotExist:
-        return redirect('login')
+        redirect('accounts:login')
     
     if request.method == 'POST':
         # POST 데이터에서 필드 값 가져오기
