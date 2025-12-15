@@ -116,7 +116,6 @@ def generate_dummy_email(username, role='PATIENT', index=0):
 def get_request_param(request, param_name, default=''):
     """
     GET 또는 POST 요청에서 파라미터 값을 가져오는 공통 함수
-    POST 우선, 없으면 GET 사용
     
     Args:
         request: HTTP 요청 객체
@@ -126,12 +125,18 @@ def get_request_param(request, param_name, default=''):
     Returns:
         파라미터 값 또는 기본값
     """
-    return request.POST.get(param_name) or request.GET.get(param_name, default)
+    # GET 요청에서 먼저 확인, 없으면 POST 요청에서 확인
+    return request.GET.get(param_name) or request.POST.get(param_name, default)
 
 def paginate_queryset(request, queryset, per_page=5):
     """쿼리셋을 페이지네이션 처리하는 공통 함수"""
     paginator = Paginator(queryset, per_page)
     page_number = get_request_param(request, 'page', 1)
+    # page_number를 정수로 변환 (문자열로 전달될 수 있음)
+    try:
+        page_number = int(page_number) if page_number else 1
+    except (ValueError, TypeError):
+        page_number = 1
     page_obj = paginator.get_page(page_number)
     total_count = queryset.count()
     return page_obj, total_count
@@ -435,20 +440,30 @@ def user_list(request):
         else:
             number = start_index + idx
         
-        # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+        # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
         birth_date = None
         if user.resident_reg_no:
             reg_no = user.resident_reg_no.replace('-', '')  # 하이픈 제거
-            if len(reg_no) >= 6:
+            if len(reg_no) >= 7:
                 yy = reg_no[0:2]
                 mm = reg_no[2:4]
                 dd = reg_no[4:6]
+                gender_code = reg_no[6] if len(reg_no) > 6 else None
                 
                 try:
                     month_int = int(mm)
                     day_int = int(dd)
                     if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                        birth_date = f'{yy}.{mm}.{dd}'
+                        # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                        if gender_code in ['1', '2', '5', '6']:
+                            yyyy = f'19{yy}'
+                        elif gender_code in ['3', '4', '7', '8']:
+                            yyyy = f'20{yy}'
+                        else:
+                            # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                            yy_int = int(yy)
+                            yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                        birth_date = f'{yyyy}년{mm}월{dd}일'
                 except ValueError:
                     pass
         
@@ -493,19 +508,29 @@ def user_list(request):
             favorites = UserFavorite.objects.filter(user=selected_user)
             favorite_hospitals = [fav.hos.name for fav in favorites if hasattr(fav, 'hos')]
             
-            # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+            # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
             if selected_user.resident_reg_no:
                 reg_no = selected_user.resident_reg_no.replace('-', '')  # 하이픈 제거
-                if len(reg_no) >= 6:
+                if len(reg_no) >= 7:
                     yy = reg_no[0:2]
                     mm = reg_no[2:4]
                     dd = reg_no[4:6]
+                    gender_code = reg_no[6] if len(reg_no) > 6 else None
                     
                     try:
                         month_int = int(mm)
                         day_int = int(dd)
                         if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                            birth_date = f'{yy}.{mm}.{dd}'
+                            # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                            if gender_code in ['1', '2', '5', '6']:
+                                yyyy = f'19{yy}'
+                            elif gender_code in ['3', '4', '7', '8']:
+                                yyyy = f'20{yy}'
+                            else:
+                                # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                                yy_int = int(yy)
+                                yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                            birth_date = f'{yyyy}년{mm}월{dd}일'
                     except ValueError:
                         pass
             
@@ -684,7 +709,76 @@ def doctor_list(request):
 
 
 def hospital_list(request):
-    """병원 목록 조회, 검색, 정렬, 페이지네이션"""
+    """병원 목록 조회, 검색, 정렬, 페이지네이션, 병원 추가"""
+    # POST 요청 처리 (병원 추가)
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        # AJAX 요청인 경우 JSON 응답
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if action == 'add_hospital':
+            # 병원 추가 처리
+            try:
+                hospital_name = request.POST.get('hospital_name', '').strip()
+                hospital_hpid = request.POST.get('hospital_hpid', '').strip()
+                hospital_hos_name = request.POST.get('hospital_hos_name', '').strip()
+                hospital_hos_password = request.POST.get('hospital_hos_password', '').strip()
+                hospital_address = request.POST.get('hospital_address', '').strip()
+                hospital_tel = request.POST.get('hospital_tel', '').strip()
+                hospital_category_name = request.POST.get('hospital_category_name', '').strip()
+                hospital_estb_date = request.POST.get('hospital_estb_date', '').strip()
+                
+                # 필수 필드 검증
+                if not hospital_name or not hospital_hpid or not hospital_hos_name or not hospital_hos_password:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '필수 항목을 모두 입력해주세요.'})
+                    else:
+                        # 일반 POST 요청인 경우 리다이렉트
+                        return redirect('hospital_list')
+                
+                # hpid 중복 확인
+                if Hospital.objects.filter(hpid=hospital_hpid).exists():
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원ID(hpid)입니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # hos_name 중복 확인
+                if Hospital.objects.filter(hos_name=hospital_hos_name).exists():
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원 계정ID입니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # 병원 생성
+                new_hospital = Hospital.objects.create(
+                    name=hospital_name,
+                    hpid=hospital_hpid,
+                    hos_name=hospital_hos_name,
+                    hos_password=hospital_hos_password,
+                    address=hospital_address if hospital_address else None,
+                    tel=hospital_tel if hospital_tel else None,
+                    category_name=hospital_category_name if hospital_category_name else None,
+                    estb_date=hospital_estb_date if hospital_estb_date else None,
+                )
+                
+                if is_ajax:
+                    return JsonResponse({'success': True, 'message': '병원이 성공적으로 추가되었습니다.'})
+                else:
+                    return redirect('hospital_list')
+                    
+            except Exception as e:
+                import traceback
+                error_detail = traceback.format_exc()
+                if is_ajax:
+                    return JsonResponse({'success': False, 'message': f'병원 추가 중 오류가 발생했습니다: {str(e)}'})
+                else:
+                    return redirect('hospital_list')
+        else:
+            # 검색 요청인 경우 (기존 로직)
+            pass
+    
     # 파라미터 추출
     search_type = get_request_param(request, 'search_type', '')
     search_keyword = get_request_param(request, 'search_keyword', '')
@@ -932,6 +1026,8 @@ def approval_pending(request):
     selected_doctor_id = get_request_param(request, 'doctor_id', '')
     selected_doctor = None
     
+    # URL에 doctor_id 파라미터가 있을 때만 의사 선택
+    # 기본 상태에서는 아무것도 선택하지 않음 (상세정보 숨김)
     if selected_doctor_id:
         try:
             selected_doctor = Doctors.objects.select_related(
@@ -939,11 +1035,14 @@ def approval_pending(request):
             ).get(doctor_id=selected_doctor_id, verified=False)
         except Doctors.DoesNotExist:
             pass
-    elif pending_doctors.exists():
-        selected_doctor = pending_doctors.first()
     
     # 페이지네이션
     page_obj, total_count = paginate_queryset(request, pending_doctors, per_page=5)
+    
+    # 디버깅: 페이지 번호 확인
+    page_number_from_request = get_request_param(request, 'page', 1)
+    print(f'[approval_pending] 요청된 page 파라미터: {page_number_from_request}, 타입: {type(page_number_from_request)}')
+    print(f'[approval_pending] 실제 page_obj.number: {page_obj.number}, 전체 페이지 수: {page_obj.paginator.num_pages}')
     
     # 면허번호 검증 및 번호 계산
     doctors_with_validation = []
@@ -987,9 +1086,27 @@ def approval_pending(request):
             if action == 'approve':
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).update(verified=True)
             elif action == 'reject':
-                Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).delete()
-        
-        return redirect('approval_pending')
+                # 거절 시 Doctors와 관련 Users 모두 삭제
+                # Doctors 객체들을 먼저 가져와서 관련 Users ID 수집
+                doctors_to_delete = Doctors.objects.filter(
+                    doctor_id__in=doctor_ids, 
+                    verified=False
+                ).select_related('user')
+                
+                # 관련 Users ID 수집
+                user_ids = [doctor.user.user_id for doctor in doctors_to_delete]
+                
+                # Doctors 삭제 (CASCADE로 자동 삭제되지 않으므로 수동 삭제)
+                doctors_to_delete.delete()
+                
+                # 관련 Users 삭제
+                if user_ids:
+                    Users.objects.filter(user_id__in=user_ids).delete()
+            
+            # 승인/거절 처리 후 리다이렉트 (AJAX 요청이 아닌 경우에만)
+            # 페이지네이션 AJAX 요청은 리다이렉트하지 않음
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect('approval_pending')
     
     # 컨텍스트 데이터
     context = {
@@ -997,6 +1114,7 @@ def approval_pending(request):
         'pending_doctors': page_obj,
         'doctors_with_validation': doctors_with_validation,
         'selected_doctor': selected_doctor,
+        'selected_doctor_id': selected_doctor_id if selected_doctor_id else '',
         'total_pending_count': pending_doctors.count(),
         'sort_field': sort_field,
         'sort_order': sort_order,
@@ -1013,6 +1131,54 @@ def approval_pending(request):
 
 def qna_list(request):
     """1:1 문의 목록 조회, 삭제 처리, 정렬, 페이지네이션"""
+    # 관리자 권한 체크
+    user_role = request.session.get('role', '')
+    if user_role != 'ADMIN':
+        return redirect('/')
+    
+    # ========= 30일 이전 데이터 자동 삭제 =========
+    # 목적: 오늘 날짜 기준으로 30일 이전 문의 데이터를 자동으로 삭제
+    #   - 데이터 관리: 오래된 문의 데이터를 자동으로 정리하여 데이터베이스 용량 관리
+    #   - 개인정보 보호: 오래된 문의 데이터를 자동으로 삭제하여 개인정보 보호
+    #   - 성능 최적화: 오래된 데이터를 삭제하여 쿼리 성능 향상
+    # 
+    # timezone.now(): 현재 시간 (시간대를 고려한 현재 시간)
+    #   - Django의 timezone.now()는 settings.py의 TIME_ZONE 설정을 고려
+    #   - 반환값: datetime 객체 (예: 2024-12-12 16:30:00+09:00)
+    #   - 목적: 현재 시간을 기준으로 30일 전 날짜를 계산
+    # 
+    # timedelta(days=30): 30일의 시간 간격
+    #   - days=30: 30일
+    #   - 반환값: timedelta 객체
+    #   - 목적: 현재 시간에서 30일을 빼기 위함
+    # 
+    # timezone.now() - timedelta(days=30): 30일 전 날짜/시간 계산
+    #   - 반환값: datetime 객체 (30일 전 날짜/시간)
+    #   - 예: 오늘이 2024-12-12이면 2024-11-12 반환
+    #   - 목적: 이 날짜 이전의 문의 데이터를 삭제하기 위함
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    
+    # Qna.objects.filter(...): 조건에 맞는 문의들을 필터링
+    #   - created_at__lt=thirty_days_ago: created_at 필드가 thirty_days_ago보다 이전인 문의
+    #     → created_at__lt: Django ORM의 필드 조회 메서드 (less than)
+    #     → SQL의 WHERE created_at < '2024-11-12'와 동일한 역할
+    #     → 예: 2024-11-10에 생성된 문의는 삭제됨
+    #     → 예: 2024-11-15에 생성된 문의는 삭제되지 않음
+    #   - .delete(): 필터링된 문의들을 데이터베이스에서 삭제
+    #     → SQL의 DELETE 문과 동일한 역할
+    #     → 반환값: (삭제된 객체 수, {모델명: 삭제된 객체 수}) 튜플
+    #     → 예: (5, {'qna.Qna': 5}) - 5개의 문의가 삭제됨
+    #   - 목적: 30일 이전의 문의 데이터를 자동으로 삭제
+    #   - 결과: 30일 이전의 문의 데이터가 데이터베이스에서 제거됨
+    #   - 주의: 삭제된 데이터는 복구할 수 없으므로 신중하게 처리됨
+    deleted_count, _ = Qna.objects.filter(created_at__lt=thirty_days_ago).delete()
+    
+    # 삭제된 문의가 있는 경우 로그 출력 (선택사항)
+    #   - 디버깅 목적으로 삭제된 문의 개수를 확인할 수 있음
+    #   - 프로덕션 환경에서는 로깅 시스템으로 대체 가능
+    if deleted_count > 0:
+        print(f'[qna_list] 30일 이전 문의 데이터 {deleted_count}개 자동 삭제 완료')
+    
     # 삭제 처리 (POST 요청)
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -1023,7 +1189,7 @@ def qna_list(request):
             if qna_ids:
                 # 대기 상태(reply가 없는 상태)의 문의는 삭제하지 않음
                 Qna.objects.filter(qna_id__in=qna_ids, reply__isnull=False).delete()
-            return redirect('qna_list')
+            return redirect('/admin_panel/qna_list/')
     
     # 파라미터 추출
     sort_field = get_request_param(request, 'sort', '')
@@ -1111,6 +1277,11 @@ def qna_detail(request, qna_id):
     - 문의 상세 정보 조회
     - 답변 저장 처리 (POST 요청)
     """
+    # 관리자 권한 체크
+    user_role = request.session.get('role', '')
+    if user_role != 'ADMIN':
+        return redirect('/')
+    
     # ========= 문의 조회 (사용자 정보 미리 로드) =========
     # get_object_or_404(): 객체를 조회하고, 없으면 404 에러 페이지를 반환하는 Django 함수
     #   - Qna.objects.select_related('user'): Qna 모델의 모든 객체에 접근하고 관련 객체(user)를 미리 로드
@@ -1168,24 +1339,24 @@ def qna_detail(request, qna_id):
                 qna.save()
                 
                 # ========= 답변 저장 후 문의 목록 페이지로 리다이렉트 =========
-                # redirect('qna_list'): 답변 저장이 완료된 후 문의 목록 페이지로 리다이렉트
-                #   - 'qna_list': URL 패턴 이름 (apps/admin_panel/urls.py에서 정의)
+                # redirect('/admin_panel/qna_list/'): 답변 저장이 완료된 후 문의 목록 페이지로 리다이렉트
+                #   - '/admin_panel/qna_list/': 관리자 패널의 QnA 목록 페이지 절대 경로
                 #   - 리다이렉트 이유: POST 요청 후 GET 요청으로 전환하여 페이지 새로고침
                 #     (브라우저의 뒤로가기 버튼으로 POST 요청이 다시 실행되는 것을 방지)
                 #   - 반환값: HttpResponseRedirect 객체 (HTTP 302 응답)
                 # 결과: 답변 저장 후 문의 목록 페이지가 새로고침되어 변경사항이 반영됨
                 #   - 문의 목록에서 해당 문의의 상태가 "답변 완료"로 표시됨
-                return redirect('qna_list')
+                return redirect('/admin_panel/qna_list/')
         elif action == 'cancel':
             # ========= 답변 취소 처리 =========
             # 관리자가 답변 작성을 취소하고 목록으로 돌아가는 경우
             # 답변을 저장하지 않고 문의 목록 페이지로 리다이렉트
-            # redirect('qna_list'): 문의 목록 페이지로 리다이렉트
-            #   - 'qna_list': URL 패턴 이름 (apps/admin_panel/urls.py에서 정의)
+            # redirect('/admin_panel/qna_list/'): 문의 목록 페이지로 리다이렉트
+            #   - '/admin_panel/qna_list/': 관리자 패널의 QnA 목록 페이지 절대 경로
             #   - 반환값: HttpResponseRedirect 객체 (HTTP 302 응답)
             # 결과: 답변 작성 페이지에서 문의 목록 페이지로 이동
             #   - 답변 내용은 저장되지 않음
-            return redirect('qna_list')
+            return redirect('/admin_panel/qna_list/')
     
     # ========= 템플릿에 전달할 컨텍스트 데이터 구성 =========
     # context: Django 템플릿에 전달할 변수들을 담은 딕셔너리

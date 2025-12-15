@@ -10,7 +10,8 @@
 <body>
   {% include "core/_header.html" %}
 <main class="page">
-  <section class="hero-row">
+  <!-- 배너 섹션 -->
+  <section class="hero-banner-section">
     <div class="hero-left">
       <img src="{% static 'core/img/medical1.png' %}" alt="감염병 대시보드 화면 예시">
       
@@ -23,59 +24,103 @@
         <div class="hero-dot"></div>
       </div>
     </div>
-    <aside class="news-panel" id="newsletter">
-      <h2 class="newsletter-title">
-          <a href="{% url 'newsletter_list' %}">메디컬 뉴스레터</a>
-      </h2>
-    
-      {% for item in newsletters %}
-        <a href="{{ item.url }}" target="_blank" rel="noopener" class="news-card-link">
-          <div class="news-card">
-            <div class="news-tag">{{ item.category }}</div>
-            <div class="news-title">{{ item.title }}</div>
-            <div class="news-date">{{ item.created_at|date:"Y.m.d" }}</div>
+  </section>
+
+  <!-- 서비스 카드 섹션  -->
+  <section class="service-cards-section">
+    <div class="service-cards-container">
+      <a href="{% url 'emergency_main' %}" class="info-card-link">
+        <div class="info-card card-emergency">
+          <div>
+            <h3>응급실 조회</h3>
+            <p>실시간 응급실 혼잡도와<br>진료 가능 여부를 확인합니다.</p>
           </div>
-        </a>
-      {% endfor %}
-    </aside>
-  </section>     
-  <section class="card-row">
+          <div class="card-btn-area">
+            <span class="card-btn">응급실 조회</span>
+          </div>
+        </div>
+      </a>
 
-  <a href="#emergency" class="info-card-link">
-    <div class="info-card card-emergency">
-      <div>
-        <h3>응급실 조회</h3>
-        <p>실시간 응급실 혼잡도와<br>진료 가능 여부를 확인합니다.</p>
-      </div>
-      <div class="card-btn-area">
-        <span class="card-btn">응급실 조회</span>
-        <span class="card-btn">지도 보기</span>
-      </div>
-    </div>
-  </a>
+      <a href="{% url 'reservation_main' %}" class="info-card-link">
+        <div class="info-card card-reservation">
+          <div>
+            <h3>병원 예약</h3>
+            <p>진료과와 의료진, 시간대를 선택해<br>간편하게 예약합니다.</p>
+          </div>
+          <div class="card-btn-area">
+            <span class="card-btn">예약하기</span>        
+          </div>
+        </div>
+      </a>
 
-  <a href="{% url 'reservation_main' %}" class="info-card-link">
-    <div class="info-card card-reservation">
-      <div>
-        <h3>병원 예약</h3>
-        <p>진료과와 의료진, 시간대를 선택해<br>간편하게 예약합니다.</p>
+      <div class="info-card card-qna">
+        <div>
+          <h3>QnA</h3>
+          <p>진료 및 서비스 이용에 대한<br>궁금증을 남겨보세요.</p>
+        </div>
+        <div class="card-btn-area">
+          <a href="{% url 'qna:qna_list' %}" class="card-btn">문의하기</a>
+        </div>
       </div>
-      <div class="card-btn-area">
-        <span class="card-btn">예약하기</span>        
+    </div>
+  </section>
+
+  <!-- SERVICE INTRO -->
+  <section class="service-intro-section">
+    <div class="section-header">
+      <h2>CareBridge 주요 서비스</h2>
+      <p>응급 상황부터 일상 진료, 의료 정보까지 필요한 의료 서비스를 한 곳에서 제공합니다.</p>
+    </div>
+
+    <!-- 1번 사진처럼 각 서비스를 개별 섹션으로 분리 -->
+    <section class="service-item service-item-1">
+      <div class="service-container">
+        <div class="service-image">
+          <img src="{% static 'core/img/service_emergency.png' %}" alt="실시간 응급실 조회">
+        </div>
+        <div class="service-text">
+          <h3>실시간 응급실 조회</h3>
+          <p>현재 위치 기준으로 가용 병상 수, 거리, 응급실 상태를 종합해 <br>가장 적합한 응급실을 안내합니다.</p>
+        </div>
       </div>
-    </div>
-  </a>
-  <div class="info-card card-qna">
-    <div>
-      <h3>QnA</h3>
-      <p>진료 및 서비스 이용에 대한<br>궁금증을 남겨보세요.</p>
-    </div>
-    <div class="card-btn-area">
-      <a href="{% url 'qna:qna_list' %}" class="card-btn">문의하기</a>
-      <span class="card-btn">자주 묻는 질문</span>
-    </div>
-  </div>
-</section>
+    </section>
+
+    <section class="service-item service-item-2">
+      <div class="service-container">
+        <div class="service-image">
+          <img src="{% static 'core/img/service_reservation.png' %}" alt="병원 예약">
+        </div>
+        <div class="service-text">
+          <h3>병원 예약</h3>
+          <p>진료과와 병원을 선택해 대기 없이 간편하게 진료 예약을 진행할 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="service-item service-item-3">
+      <div class="service-container">
+        <div class="service-image">
+          <img src="{% static 'core/img/service_statistics.png' %}" alt="감염병 통계">
+        </div>
+        <div class="service-text">
+          <h3>감염병 통계</h3>
+          <p>공공 데이터를 기반으로 감염병 발생 현황을 연령·성별별 그래프로 한눈에 <br>확인할 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="service-item service-item-4">
+      <div class="service-container">
+        <div class="service-image">
+          <img src="{% static 'core/img/service_news.png' %}" alt="메디컬 뉴스레터">
+        </div>
+        <div class="service-text">
+          <h3>메디컬 뉴스레터</h3>
+          <p>의료 정책, 연구, 치료 트렌드 등 최신 의료 뉴스를 메디컬 뉴스레터 페이지에서 <br>확인할 수 있습니다.</p>
+        </div>
+      </div>
+    </section>
+  </section>
 </main>
 
 <button type="button" class="chatbot-btn">
@@ -90,7 +135,7 @@
 
   <div class="chatbot-body">
     <div class="chatbot-messages" id="chatbotMessages">
-      <!-- 초기 봇 메시지 -->
+      {% comment %} 초기 봇 메시지 {% endcomment %}
       <div class="chat-bubble bot">
         <span class="chat-step">1</span>
         <div class="chat-text">
@@ -112,7 +157,24 @@
 </div>
 
 <footer class="footer">
-  © CareBridge All Rights Reserved.
+  <div class="footer-container">
+    <div class="footer-left">
+      <img src="{% static 'core/img/footer.png' %}" alt="CareBridge 로고" class="footer-logo">
+      <div class="footer-brand">
+      </div>
+    </div>
+    <div class="footer-info">
+      <p class="footer-info-line">
+        CareBridge 대표자명 : 디버깅내과 | 주소 : 서울특별시 강남구 현익빌딩 | 대표전화 : 02-000-0000
+      </p>
+      <p class="footer-info-line">
+        E-mail: devdebugging@carebridge.com
+      </p>
+    </div>
+    <div class="footer-copyright">
+      COPYRIGHT © CareBridge ALL RIGHTS RESERVED.
+    </div>
+  </div>
 </footer>
 <script src="{% static 'core/js/home.js' %}"></script>
 </body>

@@ -190,11 +190,10 @@
                                placeholder="도메인 입력">
                         <select id="email_domain_select"
                                 class="join-select email-domain-select">
-                            <option value="">선택</option>
+                            <option value="custom">직접입력</option>
                             <option value="naver.com">naver.com</option>
                             <option value="daum.net">daum.net</option>
                             <option value="gmail.com">gmail.com</option>
-                            <option value="custom">직접입력</option>
                         </select>
                     </div>
 
@@ -205,7 +204,7 @@
 
             <!-- 광고 메일 수신 -->
             <div class="join-row">
-                <span class="join-label">광고/소식 메일</span>
+                <label class="join-label">광고/소식 메일<span class="required">*</span></label>
                 <div class="join-field">
                     <div class="radio-inline">
                         <label>
@@ -219,7 +218,7 @@
                     </div>
                 </div>
             </div>
-
+            {% if role != 'DOCTOR' %}
             <!-- 주소 -->
             <div class="join-row">
                 <label class="join-label">집 주소<span class="required">*</span></label>
@@ -241,7 +240,7 @@
                     <input type="hidden" id="address_full" name="address">
                 </div>
             </div>
-
+            {% endif %}
             <!-- 의사 전용 (카카오면 role=patient 이므로 자동으로 사라짐) -->
             {% if role == "DOCTOR" and not from_kakao %}
 
@@ -345,13 +344,13 @@
                         <label>
                             <input type="checkbox" name="terms_service" required> 이용약관 동의 <span class="required">(필수)</span>
                         </label>
-                        <button type="button" class="terms-link">약관보기 ></button>
+                        <button type="button" class="terms-link" id="terms_link_a">약관보기 ></button>
                     </li>
                     <li>
                         <label>
                             <input type="checkbox" name="terms_privacy" required> 개인정보 수집·이용 동의 <span class="required">(필수)</span>
                         </label>
-                        <button type="button" class="terms-link">약관보기 ></button>
+                        <button type="button" class="terms-link" id="terms_link_b">약관보기 ></button>
                     </li>
                     <li>
                         <label>
@@ -404,7 +403,15 @@
     </div>
   </div>
 </div>
-
+<!-- 약관 모달 -->
+<div id="termsModal" class="modal hidden">
+  <div class="modal-overlay"></div>
+  <div class="modal-content">
+    <button type="button" class="modal-close">&times;</button>
+    <h3 id="modalTitle"></h3>
+    <div id="modalBody" class="modal-body"></div>
+  </div>
+</div>
 {% if messages %}
 <script>
     {% for message in messages %}
@@ -412,12 +419,10 @@
     {% endfor %}
 </script>
 {% endif %}
-
 <script>
     const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
 </script>
 <script src="{% static 'accounts/js/register.js' %}"></script>
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
-
 </body>
 </html>

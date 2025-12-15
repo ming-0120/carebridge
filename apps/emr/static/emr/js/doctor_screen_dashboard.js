@@ -44,7 +44,7 @@ window.onload = function() {
                 `)
                 for (d of datas.users) {
                     result.push(`
-                        <div class="patient-list-item" onclick="">
+                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
                             <h4>성명: ${d.user.name}</h4>
                             <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                             <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -75,17 +75,18 @@ window.onload = function() {
                 click: async function() {
                     calendar.today(); 
 
-                    selectedDate.style.backgroundColor = '#ffffff';
-                    selectedDate = undefined;
+                    if (selectedDate) {
+                        selectedDate.style.backgroundColor = '#ffffff';
+                        selectedDate = undefined;
+                    }
 
                     if (document.getElementsByClassName('fc-day-today')[0]) {
                         document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)';
                     }
-                    d = new Date();
-                    const year = d.getFullYear();
-                    // getMonth()는 0부터 시작하므로 +1을 해주고, padStart로 두 자릿수를 맞춥니다.
-                    const month = String(d.getMonth() + 1).padStart(2, '0');
-                    const day = String(d.getDate()).padStart(2, '0');
+                    const date = new Date();
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
                     const today = `${year}-${month}-${day}`;
 
                     const url = `/mstaff/get_reservation_medical_record/?date=${today}&doctor_id=${doctor_id}`;
@@ -100,7 +101,7 @@ window.onload = function() {
                         `)
                         for (d of datas.users) {
                             result.push(`
-                                <div class="patient-list-item" onclick="">
+                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
                                     <h4>성명: ${d.user.name}</h4>
                                     <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                                     <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -109,6 +110,7 @@ window.onload = function() {
                         }
                         $('#patinetList').html(result.join('\n'));
                     }
+                    toTodayPatient(doctor_id, today);
                 }
             }
         },
@@ -198,4 +200,19 @@ function rrnToBirthdate(regNum) {
     const birthDate = `${fullYear}-${mm}-${dd}`;
     
     return birthDate;
+}
+
+function toMedicalRecord(patient_id) {
+    window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
+}
+
+function toTodayPatient(doctor_id, today) {
+    window.location.href = `/mstaff/today_list/?doctor_id=${doctor_id}&date=${today}`;
+}
+
+function toPatientSearch() {
+    const query = $('#searchText').val();
+    const keyword = (query || "").trim();
+    const qs = keyword ? `?keyword=${encodeURIComponent(keyword)}` : "";
+    window.location.href = `/mstaff/patient_search_list/${qs}`;
 }

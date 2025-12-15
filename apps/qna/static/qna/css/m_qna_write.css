@@ -132,6 +132,34 @@
 }
 
 /*
+  ========= 공개 설정 라디오 버튼 =========
+
+  목적: 공개/비공개 선택 라디오 버튼 스타일
+*/
+
+.privacy-options {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  align-items: center;
+}
+
+.privacy-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.privacy-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/*
   ========= 폼 액션 버튼 =========
 
   목적: 폼 제출 및 취소 버튼 스타일
@@ -176,6 +204,256 @@
 }
 
 /*
+  ========= 작성자 정보 섹션 =========
+
+  목적: 작성자 정보를 표시하는 섹션 스타일
+*/
+
+#writer-info-group,
+.form-content-group,
+.form-actions-group {
+  display: none; /* 초기 상태: 숨김 */
+}
+
+.writer-info-section {
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.writer-info-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+.writer-info-item:last-child {
+  border-bottom: none;
+}
+
+.writer-info-label {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.writer-info-value {
+  flex: 1;
+  font-size: 14px;
+  color: #222;
+  max-width: 400px;
+}
+
+.writer-text {
+  display: inline-block;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #222;
+  background-color: #F5F5F5;
+  border: none;
+  border-radius: 6px;
+  min-width: 60px;
+  text-align: left;
+}
+
+.writer-phone-group .writer-text {
+  min-width: 50px;
+  max-width: 80px;
+}
+
+.writer-email-group .writer-text {
+  min-width: 80px;
+  max-width: 150px;
+}
+
+.writer-input {
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+  width: 100%;
+  max-width: 300px;
+  box-sizing: border-box;
+}
+
+#writer-birth {
+  max-width: 200px;
+}
+
+.writer-input:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+.writer-select {
+  padding: 8px 12px;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  font-size: 14px;
+  background-color: #fff;
+  cursor: pointer;
+  min-width: 80px;
+  max-width: 120px;
+}
+
+.writer-select:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+.writer-select:disabled {
+  background-color: #F5F5F5;
+  color: #666;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.writer-phone-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phone-separator {
+  color: #666;
+  font-size: 14px;
+}
+
+.phone-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 80px;
+}
+
+.writer-email-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.email-separator {
+  color: #666;
+  font-size: 14px;
+}
+
+.email-input {
+  flex: 1;
+  min-width: 0;
+  max-width: 150px;
+}
+
+.email-input-custom {
+  flex: 1;
+  min-width: 0;
+  max-width: 150px;
+}
+
+/*
+  ========= 개인정보 수집·이용 동의 섹션 =========
+
+  목적: 개인정보 수집·이용 동의 섹션 스타일
+*/
+
+.terms-section {
+  margin-top: 24px;
+}
+
+.terms-header {
+  margin-bottom: 16px;
+}
+
+.terms-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1B3C73;
+  margin: 0;
+}
+
+.terms-options {
+  display: flex;
+  flex-direction: row;
+  gap: 24px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.terms-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+  cursor: pointer;
+}
+
+.terms-option input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.terms-box {
+  background-color: #fff;
+  border: 1px solid #E0E0E0;
+  border-radius: 6px;
+  padding: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+}
+
+.terms-box h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin: 16px 0 8px 0;
+}
+
+.terms-box h3:first-child {
+  margin-top: 0;
+}
+
+.terms-box h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 12px 0 6px 0;
+  padding-left: 8px;
+}
+
+.terms-box p {
+  margin: 8px 0;
+  padding-left: 16px;
+}
+
+.terms-box ul {
+  margin: 8px 0;
+  padding-left: 32px;
+}
+
+.terms-box li {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.terms-box ul ul {
+  margin: 4px 0;
+  padding-left: 24px;
+}
+
+.terms-box strong {
+  color: #DC2626;
+  font-weight: 600;
+}
+
+/*
   ========= 반응형 디자인 =========
 
   목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
@@ -209,6 +487,72 @@
   .btn-cancel {
     width: 100%;
     text-align: center;
+  }
+
+  .terms-title {
+    font-size: 16px;
+  }
+
+  .terms-box {
+    max-height: 250px;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .terms-option {
+    font-size: 13px;
+  }
+
+  .writer-info-section {
+    padding: 12px;
+  }
+
+  .writer-info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 0;
+  }
+
+  .writer-info-label {
+    width: 100%;
+    font-size: 13px;
+  }
+
+  .writer-info-value {
+    width: 100%;
+    max-width: 100%;
+    font-size: 13px;
+  }
+
+  .writer-input {
+    max-width: 100%;
+  }
+
+  .writer-select {
+    max-width: 100%;
+  }
+
+  .writer-phone-group,
+  .writer-email-group {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .phone-input,
+  .email-input,
+  .email-input-custom {
+    width: 100%;
+    max-width: 100%;
+    margin-top: 4px;
+  }
+
+  .privacy-options {
+    gap: 16px;
+  }
+
+  .privacy-option {
+    font-size: 13px;
   }
 }
 

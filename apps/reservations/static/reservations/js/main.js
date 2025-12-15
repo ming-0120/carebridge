@@ -51,6 +51,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 position: pos,
                 map: map,
             });
+
+            // ① 이 마커가 어떤 병원인지 저장
+            const hospitalForModal = makeHospitalForModal(h);
+            marker.hospital = hospitalForModal;
+
+            // ② 마커 클릭 시 모달 오픈
+            kakao.maps.event.addListener(marker, "click", function () {
+                openHospitalModal(marker.hospital);
+            });
+
             markers.push(marker);
         });
 
@@ -68,42 +78,64 @@ document.addEventListener("DOMContentLoaded", function () {
     function initMap() {
         const container = document.getElementById("map");
         const options = {
-            center: new kakao.maps.LatLng(userLat, userLon),
+            center: new kakao.maps.LatLng(userLat || 37.4979, userLon || 127.0276),
             level: 4,
         };
         map = new kakao.maps.Map(container, options);
 
-        // 기본 진료과: 내과 (없으면 첫 번째 키)
-        const defaultDept = hospitalData["내과"]
-            ? "내과"
-            : Object.keys(hospitalData)[0];
+        // 1순위: 서버에서 내려준 ACTIVE_DEPT (예: "정형외과")
+        // 2순위: hospitalData에 "내과"가 있으면 "내과"
+        // 3순위: hospitalData의 첫 번째 키
+        let defaultDept = (typeof ACTIVE_DEPT !== "undefined" && ACTIVE_DEPT)
+            ? ACTIVE_DEPT
+            : (hospitalData["내과"] ? "내과" : Object.keys(hospitalData)[0]);    
 
         if (defaultDept) {
             updateView(defaultDept);
-            // 사이드바 버튼 active 도 같이 맞추기
+
             const btns = document.querySelectorAll(".dept-btn");
             btns.forEach((b) => {
-                if (b.dataset.dept === defaultDept) b.classList.add("active");
+                if (b.dataset.dept === defaultDept) {
+                    b.classList.add("active");
+                } else {
+                    b.classList.remove("active");
+                }
             });
         }
     }
-
+    // =======================
+    // 공통: 모달에 넣을 병원 데이터 만들기
+    // =======================
+    function makeHospitalForModal(h) {
+        return {
+            id: h.id,
+            name: h.name,
+            dept: h.dept,
+            dept_code: h.dept_code,
+            city: h.city,
+            phone: h.tel,
+            hours: h.opening,
+            address: h.address,
+            rating: h.rating,
+            sggu: h.sggu,
+        };
+    }
     // =======================
     // 4. 카드 렌더링 + 모달 오픈
     // =======================
     function renderCards(list) {
         const container = document.getElementById("hospitalCards");
         container.innerHTML = "";
-
+        
         list.forEach((h) => {
             const card = document.createElement("div");
             card.className = "hospital-card";
-
+        
             // 정수 평점 처리 (없으면 0으로)
             const ratingRaw = Number(h.rating ?? 0);
             const rating = Math.max(0, Math.min(5, Math.round(ratingRaw)));
             const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-
+        
             card.innerHTML = `
                 <div class="hospital-name" id="${h.id}">${h.name}</div>
                 <div class="rating">
@@ -117,26 +149,14 @@ document.addEventListener("DOMContentLoaded", function () {
                     <div>거리: ${h.distance.toFixed(2)} km</div>
                 </div>
             `;
-
+        
             // 병원 이름 클릭 시 모달 오픈
             const nameEl = card.querySelector(".hospital-name");
             nameEl.addEventListener("click", () => {
-                const hospitalForModal = {
-                    id: h.id,
-                    name: h.name,
-                    dept: h.dept,
-                    dept_code: h.dept_code,
-                    city: h.city,
-                    phone: h.tel,
-                    hours: h.opening,
-                    address: h.address,
-                    rating: h.rating,
-                    sggu: h.sggu,
-                };
-
+                const hospitalForModal = makeHospitalForModal(h);
                 openHospitalModal(hospitalForModal);
             });
-
+        
             container.appendChild(card);
         });
     }
@@ -178,9 +198,16 @@ document.addEventListener("DOMContentLoaded", function () {
             form.submit();
         };
 
-        // 즐겨찾기용 병원 id 바인딩
         if (favoriteBtn) {
-            favoriteBtn.dataset.hospitalId = hospital.id;
+          favoriteBtn.dataset.hospitalId = hospital.id;
+
+          // ✅ 1) 기본은 초기화 (이걸 안 해서 다른 병원도 즐겨찾기처럼 보임)
+          favoriteBtn.classList.remove("active");
+
+          // ✅ 2) hospital 객체에 is_favorite가 있으면 그 상태로 반영
+          if (typeof hospital.is_favorite !== "undefined") {
+            favoriteBtn.classList.toggle("active", !!hospital.is_favorite);
+          }
         }
 
         modal.classList.remove("hidden");
@@ -262,12 +289,24 @@ document.addEventListener("DOMContentLoaded", function () {
         return res.json();
     })
     .then((data) => {
-        if (!data || !data.ok) return;
-        if (data.is_favorite) {
-            favoriteBtn.classList.add("active");
-        } else {
-            favoriteBtn.classList.remove("active");
-        }
+      if (!data || !data.ok) return;
+        
+      const isFav = !!data.is_favorite;
+        
+      // ✅ 모달 버튼 UI 반영
+      favoriteBtn.classList.toggle("active", isFav);
+        
+      // ✅ (선택) hospitalData에 상태 저장: 다음에 모달 열 때도 맞게 보이게
+      const hospitalId = favoriteBtn.dataset.hospitalId;
+        
+      Object.keys(hospitalData).forEach((dept) => {
+        const list = hospitalData[dept] || [];
+        list.forEach((h) => {
+          if (String(h.id) === String(hospitalId)) {
+            h.is_favorite = isFav;
+          }
+        });
+      });
     })
     .catch((err) => {
         console.error("favorite toggle error", err);

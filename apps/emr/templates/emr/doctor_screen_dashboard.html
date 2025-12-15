@@ -41,10 +41,14 @@
         <div class="card doctor-profile">
             <h3>나의 정보</h3>
             <div class="profile-content">
-                {% if doctor.profil_url != None %}
-                    <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                {% if doctor.profil_url %}
+                    {% if doctor.profil_url|slice:":4" == "http" %}
+                        <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% else %}
+                        <img src="/media/{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% endif %}
                 {% else %}
-                    <img src="{% static 'accounts/img/default_profile.png' %}" alt="의사 이미지">
+                    <img src="{% static 'core/img/default_profile.png' %}" alt="의사 이미지">
                 {% endif %}
                 <p>성명: <strong>{{ doctor.user.name }}</strong></p>
                 <p>나이: <strong>{{ doctor.user.resident_reg_no | calculate_age_from_rrn }}세</strong></p>
@@ -56,8 +60,8 @@
 
             <h3>🔍 환자 검색</h3>
                 <div class="search-container">
-                    <input type="text" placeholder="홍길" value="홍길">
-                    <button onclick="alert('환자 조회 리스트 화면으로 이동')">검색</button>
+                    <input type="text" id="searchText">
+                    <button onclick="toPatientSearch();">검색</button>
                 </div>
             <p class="search-desc">현재 재직 중인 병원 내 환자만 조회 가능합니다.</p>
         </div>
@@ -72,7 +76,7 @@
         <div class="card patient-list" id="patinetList">
             <h3>예약 환자 ({{ users | length }}명)</h3>
             {% for user in users %}
-                <div class="patient-list-item" onclick="">
+                <div class="patient-list-item" onclick="toMedicalRecord('{{user.user.user_id}}')">
                     <h4>성명: {{ user.user.name }}</h4>
                     <p>생년월일: {{ user.user.resident_reg_no | rrn_to_birthdate }} | 성별: {% if user.user.gender == 'F' %}여{% else %}남{% endif %}</p>
                     <p>예약시간: {{ user.slot.slot_date | date:"Y-m-d" }} {{ user.slot.start_time | time:"H:i:s" }}</p>

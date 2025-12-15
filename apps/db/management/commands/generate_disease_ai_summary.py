@@ -1,3 +1,4 @@
+import json
 from django.core.management.base import BaseCommand
 from django.db.models import Sum
 from django.utils import timezone
@@ -31,9 +32,9 @@ class Command(BaseCommand):
             
             stats_qs = (
                 InfectiousStat.objects
-                .filter(disease_code_id=disease.disease_code)
+                .filter(disease_code=disease)  # ✅ 수정
                 .values("stat_date", "dim_type", "dim_label")
-                .annotate(cases=Sum("ptnt_val"))
+                .annotate(cases=Sum("result_val"))
                 .order_by("stat_date", "dim_type", "dim_label")
             )
             
@@ -54,13 +55,21 @@ class Command(BaseCommand):
                 continue
 
 
-            # AI 생성
-            summary = generate_disease_ai_summary(
-                disease_name=disease.disease_name,
-                stats_rows=stats_rows,
-            )
+            try:
+                # AI 생성
+                summary = generate_disease_ai_summary(
+                    disease_name=disease.disease_name,
+                    stats_rows=stats_rows,
+                )
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(
+                f"[{disease.disease_code}] AI 요약 실패: {e}"
+                ))
+                continue
+
 
             # 저장
-            disease.ai_summary = summary
+            disease.ai_summary = json.dumps(summary, ensure_ascii=False)
             disease.ai_updated_at = timezone.now()
             disease.save(update_fields=["ai_summary", "ai_updated_at"])
+            

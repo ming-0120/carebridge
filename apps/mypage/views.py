@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta
-
+import os
+import uuid
+from django.core.files.storage import default_storage
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -7,6 +9,20 @@ from apps.db.models import Reservations, Qna, Users
 from apps.db.models.doctor import Doctors
 from apps.db.models.favorite import UserFavorite
 from django.contrib.auth.hashers import check_password
+from django.views.decorators.http import require_POST
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse
+from django.db.models import Q
+from django.utils import timezone
+from datetime import datetime
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST  # 추가
+from collections import defaultdict
+from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
+from apps.db.models.review import AiReview
+from apps.db.models.favorite import UserFavorite  # 추가
+from apps.db.models.users import Users  # 추가
+from django.conf import settings
 
 def reservation_list(request):
     user_id = request.session.get("user_id")
@@ -69,7 +85,6 @@ def my_qna_list(request):
     order_map = {
         "date_asc": "created_at",
         "date_desc": "-created_at",
-        # 답변완료 먼저 보고 싶으면 answered 내림차순
         "answer": "-answered_at",
     }
     order_by = order_map.get(sort, "-created_at")
@@ -86,7 +101,7 @@ def my_qna_list(request):
     # 템플릿에서 보기 좋게 flag/라벨을 계산
     rows = []
     for q in qs:
-        has_answer = bool(q.answer)
+        has_answer = bool(q.reply)
         rows.append(
             {
                 "obj": q,
@@ -190,14 +205,20 @@ def profile_edit(request):
         if email:
             user.email = email
 
-        # 의사: profile_image 는 Doctors 모델에 저장한다고 가정
-        if is_doctor:
-            if doctor and "profil_url" in request.FILES:
-                doctor.profil_url = request.FILES["profil_url"]
+        # ✅ 의사 프로필 업로드 저장 (필드명 통일: doctor_profile)
+        if is_doctor and doctor:
+            profile_file = request.FILES.get("profile_image")
+            if profile_file:
+                ext = os.path.splitext(profile_file.name)[1]
+                filename = f"doctor_profiles/{uuid.uuid4().hex}{ext}"
+                saved_path = default_storage.save(filename, profile_file)
+                doctor.profil_url = saved_path  # 문자열 저장
                 doctor.save()
 
         user.save()
-        messages.success(request, "회원 정보가 수정되었습니다.")
+
+        if is_doctor:
+            return redirect("/mstaff/doctor_dashboard/")
         return redirect("profile_edit")
 
     # --------------------------
@@ -247,16 +268,34 @@ def favorite_hospitals(request):
     if not user_id:
         return redirect("login")
 
-    # user 객체 안 쓰고 user_id로 바로 필터
-    favorites = (
+    # 일반 병원 즐겨찾기 (hos가 있는 경우)
+    hospital_favorites = (
         UserFavorite.objects
         .filter(user_id=user_id, hos__isnull=False)
+        .select_related('hos')
         .order_by("created_at")
     )
-
+    
+    # 응급실 즐겨찾기 (er가 있는 경우)
+    er_favorites = (
+        UserFavorite.objects
+        .filter(user_id=user_id, er__isnull=False)
+        .select_related('er')
+        .order_by("created_at")
+    )
+    
+    # 두 리스트를 합치기 (created_at 기준 정렬)
+    from itertools import chain
+    from operator import attrgetter
+    
+    all_favorites = sorted(
+        chain(hospital_favorites, er_favorites),
+        key=attrgetter('created_at'),
+        reverse=True
+    )
 
     context = {
-        "favorites": favorites,
+        "favorites": all_favorites,
     }
     return render(request, "mypage/favorite_hospitals.html", context)
 
@@ -325,7 +364,7 @@ def account_withdraw(request):
 
         # 2) 탈퇴 처리 (withdrawal 필드 타입에 맞게 값 설정)
         user.withdrawal = '1'   
-        user.username = f"{user.username}_deleted_{user.id}"
+        user.username = f"{user.username}_deleted_{user.user_id}"
         user.save()
 
         # 3) 세션/로그인 정보 제거
@@ -337,3 +376,39 @@ def account_withdraw(request):
         "user": user,
         "is_kakao_user": is_kakao_user,
     })
+
+@require_POST
+def toggle_er_favorite(request):
+    """응급실 즐겨찾기 토글 (AJAX)"""
+    # 1) 로그인 사용자 확인 (세션 기반)
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"ok": False, "error": "login_required"}, status=401)
+
+    user = get_object_or_404(Users, pk=user_id)
+
+    # 2) 응급실 ID 파라미터 확인
+    er_id = request.POST.get("er_id")
+    if not er_id:
+        return JsonResponse({"ok": False, "error": "no_er_id"}, status=400)
+
+    er = get_object_or_404(ErInfo, pk=er_id)
+
+    # 3) 이미 즐겨찾기 되어 있으면 삭제, 없으면 생성
+    qs = UserFavorite.objects.filter(user=user, er=er, hos__isnull=True)
+    # hos__isnull=True 로 "일반 병원이 아닌 응급실 즐겨찾기" 로 한정
+
+    if qs.exists():
+        qs.delete()
+        is_favorite = False
+    else:
+        UserFavorite.objects.create(
+            user=user,
+            er=er,
+            hos=None,     # 응급실 즐겨찾기이므로 hos는 비워둠
+            memo="",      # 필요 없으면 빈 문자열
+        )
+        is_favorite = True
+
+    # 4) JSON 응답
+    return JsonResponse({"ok": True, "is_favorite": is_favorite})

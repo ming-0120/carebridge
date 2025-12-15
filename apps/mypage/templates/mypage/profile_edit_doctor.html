@@ -21,31 +21,25 @@
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
-
-            <!-- 1. 프로필 사진 영역 -->
-            <div class="form-row profile-row">
-                <label>프로필</label>
-                <div class="doctor-profile-box">
-                    {% if doctor.profil_url %}
-                        <img src="{{ doctor.profil_url }}" alt="프로필">
-                    {% else %}
-                        <!-- 기본 아이콘(이미지 없음) -->
-                         <img src="{% static 'core/img/default_profile.png' %}" alt="default" style="width:150px;">
-                    {% endif %}
-
-                    <!-- 업로드 버튼 -->
-                    <label class="btn upload-btn">
-                        프로필 사진 등록
-                        <input type="file" name="profil_url" accept="image/*" hidden>
-                    </label>
-
-                    <!-- 안내 문구 -->
-                    <p class="profile-guide">
-                        의사 마이페이지에서는 프로필 사진만 직접 변경할 수 있습니다.<br>
-                        병원 조직도 및 진료과 정보는 병원 관리자만 수정 가능합니다.
-                    </p>
-                </div>
-            </div>
+               {% if doctor.profil_url %}
+                  <img id="profilePreview"
+                       src="/media/{{ doctor.profil_url }}"
+                       data-default-src="{% static 'core/img/default_profile.png' %}"
+                       alt="프로필"
+                       style="width:150px;">
+                {% else %}
+                  <img id="profilePreview"
+                       src="{% static 'core/img/default_profile.png' %}"
+                       data-default-src="{% static 'core/img/default_profile.png' %}"
+                       alt="default"
+                       style="width:150px;">
+                {% endif %}
+                        
+                <input id="profileImageInput" type="file" name="profile_image" accept="image/*">
+                        
+                <button type="button" id="resetProfileImage" class="btn btn-secondary" style="margin-top:8px;">
+                  기본 이미지로
+                </button>
 
             <!-- 2. 성명 -->
             <div class="form-row">
@@ -100,7 +94,6 @@
 
         </form>
     </section>
-
 </div>
 <script src="{% static 'mypage/js/profile_edit.js' %}"></script>
 {% endblock %}

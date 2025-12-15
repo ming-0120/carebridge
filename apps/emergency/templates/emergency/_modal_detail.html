@@ -9,8 +9,10 @@
     <!-- Header: 병원명 + 주소 + 즐겨찾기 -->
     <div class="detail-header">
       <div class="detail-header-top">
-        <h1 id="detail-title" class="detail-title"></h1>
-        <div id="detail-favorite" class="detail-favorite">★</div>f
+        <div class="detail-title-wrapper">
+          <h1 id="detail-title" class="detail-title"></h1>
+          <div id="detail-favorite" class="detail-favorite" data-er-id="">★</div>
+        </div>
       </div>
       <p id="detail-address" class="detail-address"></p>
       <div id="detail-tags" class="tag-row"></div>
@@ -19,92 +21,42 @@
     <!-- Message Banner: ErMessage 표시 -->
     <div id="detail-banner" class="message-banner hidden"></div>
 
-    <!-- 병상 현황: 테이블 형태 -->
+    <!-- 병상 현황: 가로 1열 원형 그래프 -->
     <h3 class="section-title">병상 현황</h3>
-    <div class="detail-status-table">
-      <div class="status-row">
-        <div class="status-label">응급실 일반</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-er" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-er" class="status-text"></div>
-        <div id="status-count-er" class="status-count"></div>
+    <div class="detail-status-grid">
+      <div class="status-item">
+        <div class="status-item-label">응급실 일반</div>
+        <div id="status-circle-er" class="status-circle-container"></div>
       </div>
 
-      <div class="status-row">
-        <div class="status-label">응급실 소아</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-child" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-child" class="status-text"></div>
-        <div id="status-count-child" class="status-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">응급실 소아</div>
+        <div id="status-circle-child" class="status-circle-container"></div>
       </div>
 
-      <div class="status-row">
-        <div class="status-label">분만실</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-birth" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-birth" class="status-text"></div>
-        <div id="status-count-birth" class="status-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">분만실</div>
+        <div id="status-circle-birth" class="status-circle-container"></div>
       </div>
 
-      <div class="status-row">
-        <div class="status-label">음압격리</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-negative" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-negative" class="status-text"></div>
-        <div id="status-count-negative" class="status-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">음압격리</div>
+        <div id="status-circle-negative" class="status-circle-container"></div>
       </div>
 
-      <div class="status-row">
-        <div class="status-label">일반격리</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-isolation" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-isolation" class="status-text"></div>
-        <div id="status-count-isolation" class="status-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">일반격리</div>
+        <div id="status-circle-isolation" class="status-circle-container"></div>
       </div>
 
-      <div class="status-row">
-        <div class="status-label">코호트격리</div>
-        <div class="status-circle-wrapper">
-          <div id="status-circle-cohort" class="status-circle-container"></div>
-        </div>
-        <div id="status-text-cohort" class="status-text"></div>
-        <div id="status-count-cohort" class="status-count"></div>
+      <div class="status-item">
+        <div class="status-item-label">코호트격리</div>
+        <div id="status-circle-cohort" class="status-circle-container"></div>
       </div>
     </div>
 
-    <!-- 하단 2단 구성 -->
+    <!-- 하단: 위치 / 길찾기 -->
     <div class="detail-bottom">
-
-      <!-- AI 리뷰 요약 -->
-      <div class="detail-box">
-        <h3 class="detail-box-title">AI 리뷰 요약</h3>
-        <div id="detail-review-content">
-          <div id="review-sentiment" class="review-sentiment hidden">
-            <div class="sentiment-bar">
-              <div class="sentiment-positive">
-                <span>긍정</span>
-                <span id="positive-percent">0%</span>
-              </div>
-              <div class="sentiment-negative">
-                <span>부정</span>
-                <span id="negative-percent">0%</span>
-              </div>
-            </div>
-            <div class="sentiment-visual">
-              <div id="positive-bars" class="sentiment-bars positive-bars"></div>
-              <div id="negative-bars" class="sentiment-bars negative-bars"></div>
-            </div>
-          </div>
-          <div id="review-summary" class="review-summary">
-            <p id="review-summary-text">리뷰 데이터 준비중...</p>
-          </div>
-        </div>
-      </div>
 
       <!-- 위치 / 길찾기 -->
       <div class="detail-box">

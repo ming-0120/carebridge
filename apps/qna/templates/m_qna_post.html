@@ -17,55 +17,83 @@
         <h1>QnA 상세보기</h1>
         <div class="qna-header-actions">
           <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
-          <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-            {% csrf_token %}
-            <button type="submit" class="btn-delete">삭제</button>
-          </form>
+          {% if is_owner %}
+            <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+              {% csrf_token %}
+              <button type="submit" class="btn-delete">삭제</button>
+            </form>
+          {% endif %}
         </div>
       </div>
 
-      <div class="qna-post">
-        <div class="qna-post-header">
-          <h2>{{ qna.title }}</h2>
-          <div class="qna-post-meta">
-            <span class="qna-date">{{ qna.created_at|date:"Y.m.d H:i" }}</span>
-            <span class="qna-privacy">
-              {% if qna.privacy == 'PUBLIC' %}
-                공개
-              {% else %}
-                비공개
-              {% endif %}
-            </span>
+      <!-- 문의 상세 섹션 -->
+      <div class="inquiry-section">
+        <div class="inquiry-section-title">문의 상세</div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">작성자</span>
+          <span class="inquiry-detail-value">{{ qna.user.name }} ({{ qna.user.username }})</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">연락처</span>
+          <span class="inquiry-detail-value">{{ qna.user.phone|default:"-" }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">이메일</span>
+          <span class="inquiry-detail-value">{{ qna.user.email }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">제목</span>
+          <span class="inquiry-detail-value">{{ qna.title }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">내용</span>
+          <div class="inquiry-detail-value">
+            <div class="inquiry-content">{{ qna.content }}</div>
+          </div>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">작성일시</span>
+          <span class="inquiry-detail-value">{{ qna.created_at|date:"Y.m.d H:i" }}</span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">공개설정</span>
+          <span class="inquiry-detail-value">
+            {% if qna.privacy == 'PUBLIC' %}
+              공개
+            {% else %}
+              비공개
+            {% endif %}
+          </span>
+        </div>
+        
+        <div class="inquiry-detail-item">
+          <span class="inquiry-detail-label">상태</span>
+          <span class="inquiry-detail-value">
             {% if qna.reply %}
               <span class="qna-replied">답변완료</span>
             {% else %}
               <span class="qna-pending">답변대기</span>
             {% endif %}
-          </div>
-        </div>
-
-        <div class="qna-post-content">
-          <div class="qna-question">
-            <h3>문의 내용</h3>
-            <div class="qna-content-text">
-              {{ qna.content|linebreaks }}
-            </div>
-          </div>
-
-          {% if qna.reply %}
-            <div class="qna-answer">
-              <h3>답변</h3>
-              <div class="qna-content-text">
-                {{ qna.reply|linebreaks }}
-              </div>
-            </div>
-          {% else %}
-            <div class="qna-answer qna-answer-pending">
-              <p>답변 대기 중입니다.</p>
-            </div>
-          {% endif %}
+          </span>
         </div>
       </div>
+
+      <!-- 답변 섹션 -->
+      {% if qna.reply %}
+        <div class="reply-section">
+          <div class="reply-section-title">답변 내용</div>
+          <div class="reply-content">
+            {{ qna.reply|linebreaks }}
+          </div>
+        </div>
+      {% endif %}
     </div>
   </main>
 

@@ -25,14 +25,7 @@ env = environ.Env(
     DEBUG=(bool, False),
 )
 env.read_env(os.path.join(BASE_DIR, '.env'))
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = 'django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-# 기본 설정들
 DEBUG = True
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u')
 
@@ -42,14 +35,22 @@ KAKAO_REDIRECT_URI = env(
     'KAKAO_REDIRECT_URI',
     default=''  # 비어 있으면 나중에 build_absolute_uri로 대체
 )
-KAKAO_MAP_JS_KEY = os.getenv("KAKAO_MAP_JS_KEY")
+KAKAO_MAP_JS_KEY = os.getenv("KAKAO_REST_API_KEY")
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "52.79.116.240",
+    "localhost",
+    "127.0.0.1",
+    "dn-carebridge.com",
+    "www.dn-carebridge.com",
+]
+
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -69,6 +70,7 @@ INSTALLED_APPS = [
     'apps.chatbot',
     'apps.mypage',
     'apps.qna',
+    'channels'
 ]
 
 MIDDLEWARE = [
@@ -94,6 +96,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.media',
+                'apps.emergency.context_processors.kakao_keys',
             ],
         },
     },
@@ -141,6 +144,20 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+# ASGI 애플리케이션 지정
+ASGI_APPLICATION = 'config.asgi.application'
+
+# [핵심 변경] 채널 레이어 설정 (Redis 사용)
+CHANNEL_LAYERS = {
+    "default": {
+        # Redis를 백엔드로 사용하겠다고 명시
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)], # 1단계에서 띄운 Redis 서버 주소와 포트
+            # 실제 배포시에는 AWS ElastiCache 등의 주소를 넣게 됩니다.
+        },
+    },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
@@ -184,3 +201,14 @@ OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')
 
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # 환경변수에서 읽기
 GOOGLE_API_KEY = os.getenv("GOOGLE_MAP_API_KEY", "")
+<<<<<<< HEAD
+=======
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'sarah500288@gmail.com'
+EMAIL_HOST_PASSWORD = 'hnyqlluxksyutefn'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+>>>>>>> develop

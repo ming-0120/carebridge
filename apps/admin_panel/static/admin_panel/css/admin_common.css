@@ -617,7 +617,7 @@ body {
   검색어 입력 필드
   
   목적: 검색어를 입력하는 텍스트 필드 스타일
-    - flex: 1 - 남은 공간 채우기
+    - max-width: 300px - 최대 너비 제한 (길이 줄이기)
     - padding: 10px 16px - 내부 여백
     - border: 1px solid #e1e4ec - 테두리 (연한 회색)
     - border-radius: 8px - 둥근 모서리
@@ -625,7 +625,7 @@ body {
     - 사용처: 검색어 입력 필드
 */
 .search-input {
-  flex: 1;
+  max-width: 300px;
   padding: 10px 16px;
   border: 1px solid #e1e4ec;
   border-radius: 8px;
@@ -693,6 +693,578 @@ body {
 */
 .search-icon {
   font-size: 18px;
+}
+
+/* 
+  병원추가 버튼
+  
+  목적: 병원 추가 모달을 여는 버튼 스타일
+    - padding: 10px 20px - 내부 여백
+    - border-radius: 8px - 둥근 모서리
+    - border: none - 테두리 제거
+    - background-color: #10B981 - 초록색 배경
+    - color: #fff - 흰색 텍스트
+    - cursor: pointer - 포인터 커서
+    - display: flex, align-items: center, gap: 6px - 플렉스 레이아웃 (아이콘과 텍스트 간격)
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 병원 목록 페이지의 병원추가 버튼
+*/
+.add-hospital-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background-color: #10B981;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+/* 
+  병원추가 버튼 호버 효과
+  
+  목적: 병원추가 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #059669 - 더 진한 초록색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.add-hospital-btn:hover {
+  background-color: #059669;
+}
+
+/* 
+  추가 아이콘
+  
+  목적: 병원추가 버튼 내부의 아이콘 스타일
+    - font-size: 16px - 아이콘 크기
+    - 사용처: 병원추가 버튼 내부의 아이콘 (➕)
+*/
+.add-icon {
+  font-size: 16px;
+}
+
+/* 
+  추가 텍스트
+  
+  목적: 병원추가 버튼 내부의 텍스트 스타일
+    - 사용처: 병원추가 버튼 내부의 텍스트
+*/
+.add-text {
+  font-size: 14px;
+}
+
+/* 
+  ========= Modal (모달) =========
+  
+  목적: 모달 창 스타일 정의
+    - 사용자 경험(UX) 개선: 팝업 형태로 정보 입력/확인 기능 제공
+    - 반응형: 화면 크기에 따라 모달 크기 조정
+    - 인터랙션: 배경 클릭 시 닫기, ESC 키로 닫기 등
+*/
+
+/* 
+  모달 배경
+  
+  목적: 모달 창 뒤의 어두운 배경 스타일
+    - display: none - 기본적으로 숨김
+    - position: fixed - 화면에 고정
+    - z-index: 1000 - 다른 요소 위에 표시
+    - left: 0, top: 0, width: 100%, height: 100% - 전체 화면 덮기
+    - background-color: rgba(0, 0, 0, 0.5) - 반투명 검은색 배경
+    - 사용처: 모든 모달 창의 배경
+    - 애니메이션: 페이드 인 효과
+*/
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0);
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+}
+
+/* 
+  모달 표시 상태
+  
+  목적: 모달이 열려있을 때 표시
+    - display: flex - 플렉스 레이아웃으로 표시
+    - opacity: 1 - 완전히 불투명하게 표시
+    - background-color: rgba(0, 0, 0, 0.5) - 반투명 검은색 배경
+*/
+.modal.show {
+  display: flex;
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* 
+  모달 내용
+  
+  목적: 모달 창의 실제 내용 영역 스타일
+    - background-color: #fff - 흰색 배경
+    - border-radius: 12px - 둥근 모서리
+    - padding: 0 - 내부 패딩 제거 (헤더/바디/푸터에서 개별 처리)
+    - max-width: 700px - 최대 너비 제한 (더 넓게)
+    - width: 90% - 화면 너비의 90%
+    - max-height: 90vh - 최대 높이 제한 (뷰포트 높이의 90%)
+    - overflow-y: auto - 세로 스크롤 허용
+    - box-shadow: 그림자 효과
+    - 애니메이션: 스케일 및 페이드 인 효과
+    - 사용처: 모든 모달 창의 내용 영역
+*/
+.modal-content {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 700px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+  transform: scale(0.9);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+/* 
+  모달 내용 표시 상태
+  
+  목적: 모달이 열려있을 때 내용 영역 애니메이션
+    - transform: scale(1) - 원래 크기로 확대
+    - opacity: 1 - 완전히 불투명하게 표시
+*/
+.modal.show .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 
+  모달 헤더
+  
+  목적: 모달 창의 헤더 영역 스타일
+    - padding: 20px 24px - 내부 여백
+    - border-bottom: 1px solid #e1e4ec - 하단 테두리
+    - display: flex, justify-content: space-between, align-items: center - 플렉스 레이아웃 (제목과 닫기 버튼 양쪽 배치)
+    - 사용처: 모든 모달 창의 헤더
+*/
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #e1e4ec;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 
+  모달 제목
+  
+  목적: 모달 창의 제목 스타일
+    - margin: 0 - 기본 마진 제거
+    - font-size: 20px - 큰 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #222 - 진한 회색 텍스트
+    - 사용처: 모든 모달 창의 제목
+*/
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* 
+  모달 닫기 버튼
+  
+  목적: 모달 창을 닫는 버튼 스타일
+    - background: none - 배경 제거
+    - border: none - 테두리 제거
+    - font-size: 28px - 큰 글씨 크기
+    - color: #999 - 회색 텍스트
+    - cursor: pointer - 포인터 커서
+    - padding: 0 - 내부 여백 제거
+    - width: 32px, height: 32px - 정사각형 버튼
+    - display: flex, align-items: center, justify-content: center - 중앙 정렬
+    - transition: color 0.2s - 색상 변경 애니메이션
+    - 사용처: 모든 모달 창의 닫기 버튼
+*/
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+/* 
+  모달 닫기 버튼 호버 효과
+  
+  목적: 모달 닫기 버튼에 마우스를 올렸을 때 색상 변경
+    - color: #222 - 진한 회색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.modal-close:hover {
+  color: #222;
+}
+
+/* 
+  모달 바디
+  
+  목적: 모달 창의 본문 영역 스타일
+    - padding: 24px - 내부 여백
+    - 사용처: 모든 모달 창의 본문
+*/
+.modal-body {
+  padding: 24px;
+}
+
+/* 
+  폼 섹션
+  
+  목적: 폼 필드 그룹을 구분하는 섹션 스타일
+    - margin-bottom: 24px - 하단 마진
+    - padding-bottom: 24px - 하단 패딩
+    - border-bottom: 1px solid #e1e4ec - 하단 테두리 (마지막 섹션 제외)
+    - 사용처: 모달 내부의 폼 섹션
+*/
+.form-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #e1e4ec;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+/* 
+  폼 섹션 제목
+  
+  목적: 폼 섹션의 제목 스타일
+    - font-size: 16px - 중간 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #1B3C73 - 관리자 패널 메인 색상
+    - margin-bottom: 16px - 하단 마진
+    - 사용처: 폼 섹션 제목
+*/
+.form-section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1B3C73;
+  margin: 0 0 16px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #1B3C73;
+}
+
+/* 
+  폼 행
+  
+  목적: 폼 필드를 가로로 배치하는 행 스타일
+    - display: flex - 플렉스 레이아웃
+    - gap: 16px - 요소 간 간격
+    - 사용처: 모달 내부의 폼 행
+*/
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+/* 
+  폼 그룹
+  
+  목적: 폼 입력 필드 그룹 스타일
+    - margin-bottom: 20px - 하단 마진
+    - 사용처: 모달 내부의 폼 입력 필드 그룹
+*/
+.form-group {
+  margin-bottom: 20px;
+  flex: 1;
+}
+
+/* 
+  폼 그룹 (반 너비)
+  
+  목적: 폼 행 내부의 반 너비 그룹 스타일
+    - margin-bottom: 0 - 하단 마진 제거 (행에서 관리)
+    - 사용처: 폼 행 내부의 그룹
+*/
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
+.form-col-half {
+  flex: 1;
+}
+
+/* 
+  폼 라벨
+  
+  목적: 폼 입력 필드의 라벨 스타일
+    - display: block - 블록 요소
+    - margin-bottom: 8px - 하단 마진
+    - font-size: 14px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - color: #333 - 진한 회색 텍스트
+    - 사용처: 모달 내부의 폼 라벨
+*/
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 
+  필수 항목 표시
+  
+  목적: 필수 입력 필드를 표시하는 별표 스타일
+    - color: #EF4444 - 빨간색
+    - 사용처: 필수 입력 필드 라벨의 별표
+*/
+.required {
+  color: #EF4444;
+}
+
+/* 
+  폼 입력 필드
+  
+  목적: 폼 입력 필드 스타일
+    - width: 100% - 전체 너비
+    - padding: 10px 12px - 내부 여백
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 8px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-family: inherit - 폰트 상속
+    - transition: border-color 0.2s - 테두리 색상 변경 애니메이션
+    - 사용처: 모달 내부의 텍스트 입력 필드
+*/
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+/* 
+  폼 입력 필드 포커스 효과
+  
+  목적: 폼 입력 필드에 포커스가 있을 때 테두리 색상 변경
+    - outline: none - 기본 포커스 아웃라인 제거
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - 사용자 경험(UX) 개선: 포커스 상태를 시각적으로 표시
+*/
+.form-input:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+/* 
+  폼 텍스트 영역
+  
+  목적: 폼 텍스트 영역 스타일
+    - width: 100% - 전체 너비
+    - padding: 10px 12px - 내부 여백
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 8px - 둥근 모서리
+    - font-size: 14px - 글씨 크기
+    - font-family: inherit - 폰트 상속
+    - resize: vertical - 세로 방향만 크기 조정 가능
+    - transition: border-color 0.2s - 테두리 색상 변경 애니메이션
+    - 사용처: 모달 내부의 텍스트 영역
+*/
+.form-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+/* 
+  폼 텍스트 영역 포커스 효과
+  
+  목적: 폼 텍스트 영역에 포커스가 있을 때 테두리 색상 변경
+    - outline: none - 기본 포커스 아웃라인 제거
+    - border-color: #1B3C73 - 테두리 색상 (관리자 패널 메인 색상)
+    - 사용자 경험(UX) 개선: 포커스 상태를 시각적으로 표시
+*/
+.form-textarea:focus {
+  outline: none;
+  border-color: #1B3C73;
+}
+
+/* 
+  모달 푸터
+  
+  목적: 모달 창의 푸터 영역 스타일
+    - padding: 20px 24px - 내부 여백
+    - border-top: 1px solid #e1e4ec - 상단 테두리
+    - display: flex, justify-content: flex-end, gap: 10px - 플렉스 레이아웃 (오른쪽 정렬, 버튼 간격)
+    - 사용처: 모든 모달 창의 푸터
+*/
+.modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e1e4ec;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* 
+  취소 버튼
+  
+  목적: 모달 창의 취소 버튼 스타일
+    - padding: 10px 20px - 내부 여백
+    - border: 1px solid #e1e4ec - 테두리 (연한 회색)
+    - border-radius: 8px - 둥근 모서리
+    - background-color: #fff - 흰색 배경
+    - color: #555 - 회색 텍스트
+    - cursor: pointer - 포인터 커서
+    - font-size: 14px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - transition: background-color 0.2s, border-color 0.2s - 배경색 및 테두리 색상 변경 애니메이션
+    - 사용처: 모달 창의 취소 버튼
+*/
+.btn-cancel {
+  padding: 10px 20px;
+  border: 1px solid #e1e4ec;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #555;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+
+/* 
+  취소 버튼 호버 효과
+  
+  목적: 취소 버튼에 마우스를 올렸을 때 배경색 및 테두리 색상 변경
+    - background-color: #f5f5f5 - 연한 회색 배경
+    - border-color: #d1d5db - 더 진한 회색 테두리
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-cancel:hover {
+  background-color: #f5f5f5;
+  border-color: #d1d5db;
+}
+
+/* 
+  제출 버튼
+  
+  목적: 모달 창의 제출 버튼 스타일
+    - padding: 10px 20px - 내부 여백
+    - border: none - 테두리 제거
+    - border-radius: 8px - 둥근 모서리
+    - background-color: #1B3C73 - 관리자 패널 메인 색상 (진한 파란색)
+    - color: #fff - 흰색 텍스트
+    - cursor: pointer - 포인터 커서
+    - font-size: 14px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - transition: background-color 0.2s - 배경색 변경 애니메이션
+    - 사용처: 모달 창의 제출 버튼
+*/
+.btn-submit {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background-color: #1B3C73;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+/* 
+  제출 버튼 호버 효과
+  
+  목적: 제출 버튼에 마우스를 올렸을 때 배경색 변경
+    - background-color: #004C97 - 더 진한 파란색
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-submit:hover {
+  background-color: #004C97;
+}
+
+/* 
+  에러 메시지
+  
+  목적: 모달 내부의 에러 메시지 표시 스타일
+    - padding: 12px 16px - 내부 여백
+    - background-color: #FEE - 연한 빨간색 배경
+    - border: 1px solid #EF4444 - 빨간색 테두리
+    - border-radius: 8px - 둥근 모서리
+    - color: #DC2626 - 진한 빨간색 텍스트
+    - font-size: 14px - 작은 글씨 크기
+    - margin-bottom: 20px - 하단 마진
+    - 사용처: 모달 내부의 에러 메시지
+*/
+.error-message {
+  padding: 12px 16px;
+  background-color: #FEE;
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  color: #DC2626;
+  font-size: 14px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-message::before {
+  content: "⚠";
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* 
+  폼 입력 필드 에러 상태
+  
+  목적: 에러가 있는 입력 필드 스타일
+    - border-color: #EF4444 - 빨간색 테두리
+    - 사용처: 에러가 있는 입력 필드
+*/
+.form-input.error,
+.form-textarea.error {
+  border-color: #EF4444;
+}
+
+.form-input.error:focus,
+.form-textarea.error:focus {
+  border-color: #EF4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
 /* 
@@ -902,7 +1474,8 @@ body {
     - box-sizing: border-box - 패딩과 테두리를 너비에 포함
     - 사용처: 페이지네이션의 각 페이지 번호 링크
 */
-.page-link {
+.page-link,
+.pagination-link {
   padding: 8px 12px;
   text-decoration: none;
   color: #666;
@@ -928,7 +1501,8 @@ body {
     - :not(.disabled):not(.active) - 비활성화 및 활성화 링크는 제외
     - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
 */
-.page-link:hover:not(.disabled):not(.active) {
+.page-link:hover:not(.disabled):not(.active),
+.pagination-link:hover:not(.disabled):not(.active) {
   background-color: #F8FAFF;
   border-color: #1B3C73;
   color: #1B3C73;
@@ -944,7 +1518,8 @@ body {
     - font-weight: 600 - 굵은 글씨
     - 사용처: 현재 페이지의 링크 (a.page-link.active 또는 span.page-link.active)
 */
-.page-link.active {
+.page-link.active,
+.pagination-link.active {
   background-color: #1B3C73;
   color: #fff;
   border-color: #1B3C73;
@@ -961,7 +1536,8 @@ body {
     - border-color: #e1e4ec - 연한 회색 테두리
     - 사용처: 비활성화된 페이지 링크 (span.page-link.disabled)
 */
-.page-link.disabled {
+.page-link.disabled,
+.pagination-link.disabled {
   color: #ccc;
   cursor: not-allowed;
   background-color: #f5f5f5;
@@ -1396,7 +1972,8 @@ body {
     flex-wrap: wrap;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 6px 10px;
     font-size: 13px;
     min-width: 36px;
@@ -1498,6 +2075,59 @@ body {
     border-radius: 8px;
   }
   
+  .add-hospital-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    justify-content: center;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-section {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+  }
+  
+  .form-section-title {
+    font-size: 15px;
+    margin-bottom: 12px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .modal-header {
+    padding: 16px 20px;
+  }
+  
+  .modal-title {
+    font-size: 18px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    padding: 16px 20px;
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
+  }
+  
   .table-container {
     margin-bottom: 16px;
     overflow-x: auto;
@@ -1525,7 +2155,8 @@ body {
     gap: 4px;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 6px 10px;
     font-size: 13px;
     min-width: 36px;
@@ -1593,7 +2224,8 @@ body {
     padding: 6px 4px;
   }
   
-  .page-link {
+  .page-link,
+  .pagination-link {
     padding: 5px 8px;
     font-size: 12px;
     min-width: 32px;
@@ -1601,5 +2233,67 @@ body {
   
   .user-detail-section {
     padding: 12px;
+  }
+  
+  .search-input {
+    max-width: 100%;
+  }
+  
+  .add-hospital-btn {
+    width: 100%;
+    height: 44px;
+    border-radius: 8px;
+    justify-content: center;
+    font-size: 13px;
+  }
+  
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .form-row .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .form-section {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+  }
+  
+  .form-section-title {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .modal-content {
+    width: 95%;
+    max-height: 95vh;
+  }
+  
+  .modal-header {
+    padding: 12px 16px;
+  }
+  
+  .modal-title {
+    font-size: 16px;
+  }
+  
+  .modal-body {
+    padding: 16px;
+  }
+  
+  .form-group {
+    margin-bottom: 16px;
+  }
+  
+  .modal-footer {
+    padding: 12px 16px;
+    flex-direction: column;
+  }
+  
+  .btn-cancel,
+  .btn-submit {
+    width: 100%;
   }
 }

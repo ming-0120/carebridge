@@ -47,7 +47,6 @@ def symptom_chat(request):
         return JsonResponse({"error": "empty_text"}, status=400)
 
     # 1) 우리 시스템에 등록된 과 목록
-    # departments = list(Department.objects.all().values("id", "code", "name"))
     departments = list(Department.objects.all().values("dep_id", "dep_code", "dep_name"))
     if not departments:
         return JsonResponse({"error": "no_departments"}, status=500)

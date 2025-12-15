@@ -63,22 +63,47 @@ body {
 }
 
 #soapDetail {
-    white-space: pre-wrap;
     font-size: 15px;
     line-height: 1.6;
+    max-height: 520px;
+    overflow-y: auto;
 }
 
 #soapDetail strong {
     display: block;
-    margin-top: 10px;
+    margin-top: 0;
     color: #007bff;
 }
 
 .read-only-text {
     border: 1px solid #eee;
-    padding: 10px;
+    padding: 8px 10px;
     background-color: #f8f8f8;
     border-radius: 4px;
+    display: grid;
+    gap: 8px;
+}
+
+.soap-section {
+    margin: 0;
+}
+
+.soap-section strong {
+    display: block;
+    margin: 0 0 2px 0;
+    color: #007bff;
+}
+
+.soap-section-text {
+    max-height: 90px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 6px 8px;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #ffffff;
+    white-space: pre-line;
+    word-break: break-word;
 }
 
 .right-column-stack {

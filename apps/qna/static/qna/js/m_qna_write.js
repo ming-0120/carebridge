@@ -135,6 +135,72 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
+  // ========= 개인정보 동의 시 자동 입력 기능 =========
+  // 목적: 개인정보 수집 동의 라디오 버튼을 체크하면 작성자 정보 필드가 활성화되고 자동 입력됨
+  
+  const privacyConsentAgree = document.querySelector('input[name="privacy_consent"][value="agree"]');
+  const privacyConsentDisagree = document.querySelector('input[name="privacy_consent"][value="disagree"]');
+  const writerInfoGroup = document.getElementById('writer-info-group');
+  const formContentGroups = document.querySelectorAll('.form-content-group');
+  const formActionsGroup = document.querySelector('.form-actions-group');
+  
+  // 작성자 정보 섹션 및 폼 내용 숨기기
+  function hideWriterInfoSection() {
+    if (writerInfoGroup) {
+      writerInfoGroup.style.display = 'none';
+    }
+    // 제목, 내용, 공개 설정 숨기기
+    formContentGroups.forEach(group => {
+      if (group) group.style.display = 'none';
+    });
+    // 등록/취소 버튼 숨기기
+    if (formActionsGroup) {
+      formActionsGroup.style.display = 'none';
+    }
+  }
+  
+  // 작성자 정보 섹션 및 폼 내용 보이기
+  function showWriterInfoSection() {
+    if (writerInfoGroup) {
+      writerInfoGroup.style.display = 'block';
+    }
+    // 제목, 내용, 공개 설정 보이기
+    formContentGroups.forEach(group => {
+      if (group) group.style.display = 'block';
+    });
+    // 등록/취소 버튼 보이기
+    if (formActionsGroup) {
+      formActionsGroup.style.display = 'flex';
+    }
+  }
+  
+  // DB 값으로 복원 함수 (이제 텍스트로만 표시되므로 빈 함수)
+  function restoreOriginalValues() {
+    // HTML에서 이미 텍스트로 표시되므로 추가 작업 불필요
+  }
+  
+  // 초기 상태: 작성자 정보 섹션 및 폼 내용 숨김 (CSS에서 이미 숨김 처리되어 있지만 명시적으로 호출)
+  hideWriterInfoSection();
+  
+  // 개인정보 수집 동의 체크 시
+  if (privacyConsentAgree) {
+    privacyConsentAgree.addEventListener('change', function() {
+      if (this.checked) {
+        showWriterInfoSection();
+        restoreOriginalValues();
+      }
+    });
+  }
+  
+  // 개인정보 수집 동의 불가 체크 시
+  if (privacyConsentDisagree) {
+    privacyConsentDisagree.addEventListener('change', function() {
+      if (this.checked) {
+        hideWriterInfoSection();
+      }
+    });
+  }
+
   // ========= 초기화 완료 로그 =========
   // 목적: 페이지 초기화가 완료되었음을 콘솔에 로그로 출력
   //   - 디버깅: 개발자 도구의 콘솔에서 초기화 상태를 확인할 수 있음

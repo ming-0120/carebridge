@@ -1,0 +1,32 @@
+{% if page_obj.has_other_pages %}
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a href="#" class="page-link" data-page="1" data-search="{{ search_keyword|default:'' }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">«</a>
+      <a href="#" class="page-link" data-page="{{ page_obj.previous_page_number }}" data-search="{{ search_keyword|default:'' }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}"><</a>
+    {% else %}
+      <span class="page-link disabled">«</span>
+      <span class="page-link disabled"><</span>
+    {% endif %}
+
+    {% if page_obj.paginator.num_pages > 0 %}
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+          <span class="page-link active">{{ num }}</span>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          <a href="#" class="page-link" data-page="{{ num }}" data-search="{{ search_keyword|default:'' }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">{{ num }}</a>
+        {% endif %}
+      {% endfor %}
+    {% else %}
+      <span class="page-link active">1</span>
+    {% endif %}
+
+    {% if page_obj.has_next %}
+      <a href="#" class="page-link" data-page="{{ page_obj.next_page_number }}" data-search="{{ search_keyword|default:'' }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">></a>
+      <a href="#" class="page-link" data-page="{{ page_obj.paginator.num_pages }}" data-search="{{ search_keyword|default:'' }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">»</a>
+    {% else %}
+      <span class="page-link disabled">></span>
+      <span class="page-link disabled">»</span>
+    {% endif %}
+  </div>
+{% endif %}
+

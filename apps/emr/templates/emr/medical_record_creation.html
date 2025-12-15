@@ -25,14 +25,13 @@
         <input type="hidden" name="doctor_id" value="{{ doctor.doctor_id }}">
         <input type="hidden" name="hos_id" value="{{ doctor.hos_id }}">
 
-
         <div class="container">
             <h2>진료 기록 작성</h2>
             
             <div class="patient-header-info">
                 <span><strong>환자명:</strong> {{ patient.name }}</span>
-                <span><strong>성별:</strong> {{ patient.gender }}</span>
-                <span><strong>생년월일:</strong> {{ birth }}</span>
+                <span><strong>성별:</strong> {{ gender_display }}</span>
+                <span><strong>생년월일:</strong> {{ birth_display }}</span>
                 <span><strong>방문일시:</strong> {{ now }}</span>
                 <span><strong>진료과:</strong> {{ department }}</span>
                 <span><strong>담당의:</strong> {{ doctor_name }}</span>
@@ -47,12 +46,12 @@
 
                     <div class="form-group">
                         <label>진료과</label>
-                        <input type="text" value="내과 (자동입력됨)" disabled>
+                        <input type="text" value="{{ department }} (자동입력됨)" disabled>
                     </div>
 
                     <div class="form-group">
                         <label>담당의사</label>
-                        <input type="text" value="정약용 (자동입력됨)" disabled>
+                        <input type="text" value="{{ doctor_name }} (자동입력됨)" disabled>
                     </div>
 
                     <div class="form-group">
@@ -195,6 +194,11 @@
             </div>
         </div>
     </form>
+
+    <script>
+    const CURRENT_DOCTOR_ID = "{{ doctor.doctor_id }}";
+    </script>
+
 
     <!-- ================================
          약품 검색 모달 (1개만 유지)

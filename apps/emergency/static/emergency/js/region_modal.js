@@ -50,13 +50,23 @@ let selectedSigungu = window.selectedSigungu || "";
 // ===============================
 function selectSido(sido, sigunguKeyword) {
   selectedSido = sido;
-  selectedSigungu = "";
+  selectedSigungu = "전체";  // "" 대신 "전체"로 명시적 설정
 
   document.querySelectorAll(".sido-item").forEach(el => {
     el.classList.toggle("active", el.textContent.trim() === sido);
   });
 
   loadSigungu(sido, sigunguKeyword);
+  
+  // 시/군/구 UI도 "전체"로 초기화
+  setTimeout(() => {
+    document.querySelectorAll(".sigungu-item").forEach(el => {
+      el.classList.remove("active");
+      if (el.textContent.trim() === "전체") {
+        el.classList.add("active");
+      }
+    });
+  }, 100);  // loadSigungu 완료 후 실행
 }
 
 // ===============================
@@ -165,6 +175,12 @@ function filterSigungu(keyword) {
 // 적용
 // ===============================
 function applyRegionFilter() {
+  // 시/도가 변경되었는데 시/군/구가 이전 값으로 남아있으면 "전체"로 초기화
+  // (시/군/구가 선택되지 않았거나 빈 문자열이면 "전체"로 처리)
+  if (!selectedSigungu || selectedSigungu === "") {
+    selectedSigungu = "전체";
+  }
+  
   // POST 방식으로 지역 정보 전송
   fetch('/emergency/update_preferences/', {
     method: 'POST',

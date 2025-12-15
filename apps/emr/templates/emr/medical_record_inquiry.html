@@ -17,258 +17,139 @@
         <h2> 진료 기록 선택</h2>
         
         <div class="card">
-            <h3>환자 상세 정보</h3>
+            <h3>환자 정보</h3>
             <div class="patient-detail-card">
-                <div><strong>환자명:</strong> 홍길동1</div>
-                <div><strong>환자번호:</strong> P0000001</div>
-                <div><strong>성별/나이:</strong> 여 / 23세</div>
-                <div><strong>주민번호:</strong> 020120-2XXXXXX</div>
-                <div><strong>전화번호:</strong> 010-1234-5678</div>
-                <div><strong>최종 진료일:</strong> 2025.11.20</div>
+                <div><strong>환자명:</strong> {{ patient.name }}</div>
+                <div><strong>환자번호:</strong> P{{ patient.user_id|add:"0000000" }}</div>
+                <div><strong>성별/나이:</strong> {{ gender_display }} / {{ age }}세</div>
+
+                <div><strong>주민번호:</strong> {{ resident_reg_no_display }}</div>
+                <div><strong>전화번호:</strong> {{ patient.phone }}</div>
+                <div><strong>최종 진료일:</strong> {{ recent_visit_date }}</div>
             </div>
         </div>
+
 
         <div class="card previous-records-grid-container">
             <h3>방문 기록 (최근 진료일 기준)</h3>
 
             <div class="visit-box-grid">
 
-                <!-- Visit 01 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-01')">
-                        <span>[입원] 2025-09-05</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
+    {% for column in visit_columns %}
+    <div class="visit-column">
+    {% for v in column %}
+    <div class="visit-box-wrapper">
 
-                    <div class="accordion-content" id="visit-01" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [진료기록] <span class="toggle-icon">▼</span>
-                        </div>
+        <!-- 방문 헤더 -->
+        <div class="visit-box-header"
+             aria-expanded="false"
+             onclick="toggleAccordionBox(this, 'visit-{{ v.record_id }}')">
+            <span>{{ v.date }}</span>
+            <span class="toggle-icon">▼</span>
+        </div>
 
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="진료기록"
-                                data-date="2025-09-05 09:30"
-                                data-doc="홍길동(D001)"
-                                data-rec-type="consult_note"
-                                data-content="입원 시 상태 기록 (텍스트)"
-                                data-status="완료">
-                                - consult_note / 2025-09-05 09:30
-                            </div>
-                        </div>
+        <div class="accordion-content" id="visit-{{ v.record_id }}" style="display:none;">
 
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [검사 오더] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="검사"
-                                data-date="2025-09-05 13:20"
-                                data-doc="김철수(D002)"
-                                data-rec-type="CBC"
-                                data-content="기본 혈액 검사 오더 완료"
-                                data-status="완료"
-                                data-notes="결과 특이사항 없음">
-                                - CBC / 2025-09-05 13:20
-                            </div>
-                        </div>
-                    </div>
+            {# ------------------------------ #}
+            {#  진료기록                     #}
+            {# ------------------------------ #}
+            {% if v.consult %}
+            <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
+                [진료기록] <span class="toggle-icon">▼</span>
+            </div>
+            <div class="accordion-content" style="display:none;">
+                <div class="level-3-detail"
+                    onclick="showDetail(this)"
+                    data-type="진료기록"
+                    data-date="{{ v.datetime_display }}"
+                    data-doc="{{ v.doctor }}"
+                    data-rec-type="{{ v.consult.type }}"
+                    data-content="{{ v.consult.content }}"
+                    data-status="완료">
+                    - {{ v.consult.type }} / {{ v.datetime_display }}
                 </div>
+            </div>
+            {% endif %}
 
-                <!-- Visit 02 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-02')">
-                        <span>[외래] 2025-06-30</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-02" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [약물 처방] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="처방"
-                                data-date="2025-06-30 15:00"
-                                data-doc="홍길동(D001)"
-                                data-rec-type="Amoxicillin"
-                                data-content="감기로 인한 항생제 처방"
-                                data-status="투여완료">
-                                - Amoxicillin / 2025-06-30 15:00 / 투여완료
-                            </div>
-                        </div>
-                    </div>
+            {# ------------------------------ #}
+            {#  검사 오더                     #}
+            {# ------------------------------ #}
+            {% if v.lab %}
+            <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
+                [검사 오더] <span class="toggle-icon">▼</span>
+            </div>
+            <div class="accordion-content" style="display:none;">
+                {% for lab in v.lab %}
+                <div class="level-3-detail"
+                    onclick="showDetail(this)"
+                    data-type="검사"
+                    data-date="{{ lab.status_datetime_display }}"
+                    data-doc="{{ v.doctor }}"
+                    data-rec-type="{{ lab.lab_nm }}"
+                    data-content="{{ lab.specimen_cd }}"
+                    data-status="{{ lab.status }}"
+                    data-attachments="{{ lab.attachments_json|default:'[]'|escape }}">
+                    - {{ lab.lab_nm }} / {{ lab.status }} / {{ lab.status_datetime_display }}
                 </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-                <!-- Visit 03 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-03')">
-                        <span>[외래] 2025-03-29</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-03" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [치료·처치 기록] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="치료"
-                                data-date="2025-03-29 16:00"
-                                data-doc="박영희(N001)"
-                                data-rec-type="Dressing"
-                                data-content="상처 소독 및 드레싱 완료"
-                                data-status="완료">
-                                - Dressing / 2025-03-29 16:00 / 완료
-                            </div>
-                        </div>
-                    </div>
+            {# ------------------------------ #}
+            {#  약물 처방                     #}
+            {# ------------------------------ #}
+            {% if v.prescriptions %}
+            <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
+                [치료·처치 기록] <span class="toggle-icon">▼</span>
+            </div>
+            <div class="accordion-content" style="display:none;">
+                {% for p in v.prescriptions %}
+                <div class="level-3-detail"
+                    onclick="showDetail(this)"
+                    data-type="처방"
+                    data-date="{{ v.datetime_display }}"
+                    data-doc="{{ v.doctor }}"
+                    data-rec-type="{{ p.order_name }}"
+                    data-content="{{ p.dose }} / {{ p.frequency }}"
+                    data-status="처방">
+                    - {{ p.order_name }} / {{ p.dose }} / {{ p.frequency }} / {{ v.datetime_display }}
                 </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-                <!-- Visit 04 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-04')">
-                        <span>[입원] 2025-01-20</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-04" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [진료기록] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="진료기록"
-                                data-date="2025-01-20 09:00"
-                                data-doc="홍길동(D001)"
-                                data-rec-type="progress_note"
-                                data-content="경과 양호하여 퇴원 결정"
-                                data-status="완료">
-                                - progress_note / 2025-01-20 09:00
-                            </div>
-                        </div>
-                    </div>
+            {# ------------------------------ #}
+            {#  치료·처치 기록                #}
+            {# ------------------------------ #}
+            {% if v.treatment %}
+            <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
+                [약물 처방] <span class="toggle-icon">▼</span>
+            </div>
+            <div class="accordion-content" style="display:none;">
+                {% for tr in v.treatment %}
+                <div class="level-3-detail"
+                    onclick="showDetail(this)"
+                    data-type="치료"
+                    data-date="{{ tr.execution_datetime_display }}"
+                    data-doc="{{ v.doctor }}"
+                    data-rec-type="{{ tr.procedure_name }}"
+                    data-content="{{ tr.result_notes }}"
+                    data-status="{{ tr.status }}">
+                    - {{ tr.procedure_name }} / {{ tr.status }} / {{ tr.execution_datetime_display }}
                 </div>
+                {% endfor %}
+            </div>
+            {% endif %}
 
-                <!-- Visit 05 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-05')">
-                        <span>[외래] 2024-11-15</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
 
-                    <div class="accordion-content" id="visit-05" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [약물 처방] <span class="toggle-icon">▼</span>
-                        </div>
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+    {% endfor %}
 
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="처방"
-                                data-date="2024-11-15 11:30"
-                                data-doc="홍길동(D001)"
-                                data-rec-type="Ibuprofen"
-                                data-content="두통으로 인한 처방"
-                                data-status="투여완료">
-                                - Ibuprofen / 2024-11-15 11:30 / 투여완료
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Visit 06 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-06')">
-                        <span>[입원] 2024-07-01</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-06" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [치료·처치 기록] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="치료"
-                                data-date="2024-07-03 16:00"
-                                data-doc="박영희(N001)"
-                                data-rec-type="Physical_Therapy"
-                                data-content="재활치료 1회"
-                                data-status="완료">
-                                - Physical_Therapy / 2024-07-03 16:00 / 완료
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Visit 07 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-07')">
-                        <span>[외래] 2024-04-10</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-07" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [검사 오더] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="검사"
-                                data-date="2024-04-10 10:00"
-                                data-doc="김철수(D002)"
-                                data-rec-type="CRP"
-                                data-content="염증 수치 검사"
-                                data-status="완료">
-                                - CRP / 2024-04-10 10:00
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Visit 08 -->
-                <div class="visit-box-wrapper">
-                    <div class="visit-box-header" aria-expanded="false" onclick="toggleAccordionBox(this, 'visit-08')">
-                        <span>[외래] 2023-12-01</span>
-                        <span class="toggle-icon">▼</span>
-                    </div>
-
-                    <div class="accordion-content" id="visit-08" style="display: none;">
-                        <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                            [진료기록] <span class="toggle-icon">▼</span>
-                        </div>
-
-                        <div class="accordion-content" style="display: none;">
-                            <div class="level-3-detail"
-                                onclick="showDetail(this)"
-                                data-type="진료기록"
-                                data-date="2023-12-01 14:00"
-                                data-doc="홍길동(D001)"
-                                data-rec-type="consult_note"
-                                data-content="단순 상담 기록"
-                                data-status="완료">
-                                - consult_note / 2023-12-01 14:00
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div><!-- visit-box-grid -->
-        </div><!-- card -->
+            </div>
+  
 
         <div class="card" id="detailView" style="display: none;">
             <h4>선택된 이벤트 상세정보</h4>

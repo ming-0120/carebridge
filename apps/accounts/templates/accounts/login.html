@@ -2,75 +2,92 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>CareBridge 로그인</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
-</head>
-  {% include "core/_header.html" %}
+  <meta charset="UTF-8">
+  <title>CareBridge 로그인</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="{% static 'accounts/css/login.css' %}">
+
   <script>
-    const initialRole = "{{ role|default:'PATIENT' }}";  
-</script>
+    // 서버에서 내려준 role(PATIENT/DOCTOR)을 JS 초기값으로 사용
+    const initialRole = "{{ role|default:'PATIENT' }}";
+  </script>
+</head>
 <body>
+  {% include "core/_header.html" %}
 
-<div class="auth-page">
+  <div class="auth-page">
     <div class="auth-card">
-        <div class="auth-header">
-            <div class="auth-logo">CareBridge</div>
-            <p class="auth-subtitle">의료 통합 플랫폼에 로그인하세요</p>
-        </div>
-        <div class="role-toggle">
-          <input type="checkbox" id="roleSwitch">
-          <label for="roleSwitch" class="role-toggle__track">
-            <span class="role-toggle__thumb"></span>
-            <span class="role-toggle__option role-toggle__option--left">환자</span>
-            <span class="role-toggle__option role-toggle__option--right">의사</span>
-          </label>
-        </div>
-        <input type="hidden" name="role" id="roleInput" value="{{ role|default:'PATIENT' }}">
-        <!-- 로그인 폼 -->
-        <form method="POST" action="{% url 'login' %}" class="auth-form">
-            {% csrf_token %}
-            <input type="hidden" name="next" value="{{ next }}">
-            {% if messages %}
-                <ul class="auth-messages">
-                    {% for message in messages %}
-                        <li class="auth-message auth-message--error">
-                            {{ message }}
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <div class="form-group">
-                <label for="id_username">아이디</label>
-                <input id="id_username" type="text" name="username"
-                       placeholder="아이디를 입력하세요" required>
-            </div>
+      <div class="auth-header">
+        <div class="auth-logo">CareBridge</div>
+        <p class="auth-subtitle">의료 통합 플랫폼에 로그인하세요</p>
+      </div>
 
-            <div class="form-group">
-                <label for="id_password">비밀번호</label>
-                <input id="id_password" type="password" name="password"
-                       placeholder="비밀번호를 입력하세요" required>
-            </div>
-            <div class="auth-actions">
-                <button type="submit" class="btn btn--primary">로그인</button>
-                <a href="{% url 'register' %}" id="registerLink" class="btn btn--ghost">회원가입</a>
-            </div>
-        </form>
-        <div id="social_section">
-            <div class="auth-divider">
-                <span>또는</span>
-            </div>
-            <div class="social-login">
-                <a href="{% url 'kakao_login' %}" class="kakao-login-btn">
-                    <span class="kakao-login-btn__text">
-                        카카오로 로그인
-                    </span>
-                </a>
-            </div>
+      <div class="role-toggle">
+        <input type="checkbox" id="roleSwitch">
+        <label for="roleSwitch" class="role-toggle__track">
+          <span class="role-toggle__thumb"></span>
+          <span class="role-toggle__option role-toggle__option--left">환자</span>
+          <span class="role-toggle__option role-toggle__option--right">의사</span>
+        </label>
+      </div>
+
+      <!-- 로그인 폼 -->
+      <form method="POST" action="{% url 'accounts:login' %}" class="auth-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <!-- ✅ role은 반드시 form 안에 있어야 POST로 서버에 전달됨 -->
+        <input type="hidden" name="role" id="roleInput" value="{{ role|default:'PATIENT' }}">
+
+        {% if messages %}
+          <ul class="auth-messages">
+            {% for message in messages %}
+              <li class="auth-message auth-message--error">
+                {{ message }}
+              </li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        <div class="form-group">
+          <label for="id_username">아이디</label>
+          <input id="id_username" type="text" name="username"
+                 placeholder="아이디를 입력하세요"
+                 value="{{ username|default:'' }}"
+                 required>
         </div>
+
+        <div class="form-group">
+          <label for="id_password">비밀번호</label>
+          <input id="id_password" type="password" name="password"
+                 placeholder="비밀번호를 입력하세요" required>
+        </div>
+
+        <!-- ✅ 여기 추가 -->
+        <div class="login-help">
+          <a href="{% url 'accounts:find_id' %}" class="login-help__link">ID 찾기</a>
+          <span class="login-help__sep">|</span>
+          <a href="{% url 'accounts:find_password' %}" class="login-help__link">비밀번호 찾기</a>
+        </div>
+        <div class="auth-actions">
+          <button type="submit" class="btn btn--primary">로그인</button>
+          <a href="{% url 'accounts:register' %}" id="registerLink" class="btn btn--ghost">회원가입</a>
+        </div>
+      </form>
+
+      <div id="social_section">
+        <div class="auth-divider">
+          <span>또는</span>
+        </div>
+        <div class="social-login">
+          <a href="{% url 'kakao_login' %}" class="kakao-login-btn">
+            <span class="kakao-login-btn__text">카카오로 로그인</span>
+          </a>
+        </div>
+      </div>
     </div>
-</div>
-<script src="{% static 'accounts/js/login.js' %}"></script>
+  </div>
+
+  <script src="{% static 'accounts/js/login.js' %}"></script>
 </body>
 </html>

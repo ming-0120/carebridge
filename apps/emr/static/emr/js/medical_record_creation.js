@@ -5,8 +5,30 @@ let prescriptionList = [];
 let currentDrugBlock = null;
 let selectedDrug = null;
 
+// 저장 성공 시 진료기록 작성 화면에서 의사용 대시보드로 이동
+const __originalFetch = window.fetch;
+window.fetch = async function (...args) {
+    const response = await __originalFetch.apply(this, args);
+
+    try {
+        const req = args[0];
+        const url = typeof req === "string" ? req : req.url || "";
+
+        if (url.includes("/mstaff/api/medical-record/create/") && response.ok) {
+            // 기존 저장 알림(alert) 이후에 이동되도록 약간 지연
+            setTimeout(() => {
+                window.location.href = "/mstaff/doctor_dashboard/";
+            }, 0);
+        }
+    } catch (e) {
+        // URL 파싱 실패 등은 무시
+    }
+
+    return response;
+};
+
 /* --------------------------
-   예약 가능한 기본 시간 목록
+   기본 예약 시간 슬롯
 -------------------------- */
 const TIME_SLOTS = [
     "09:00",
@@ -23,53 +45,93 @@ const TIME_SLOTS = [
    시간 선택 모달 열기
 -------------------------- */
 function openTimeModal() {
-    const dateVal = document.getElementById("reservationDate").value;
+    const dateInput = document.getElementById("reservationDate");
+    const dateVal = dateInput ? dateInput.value : "";
 
     if (!dateVal) {
-        alert("예약 날짜를 먼저 선택하세요.");
+        alert("예약 날짜를 선택해주세요.");
         return;
     }
 
-    // 날짜가 있으면 예약된 시간 조회 후 그 결과로 모달 구성
+    // 과거 날짜는 예약 불가
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+    if (dateVal < todayStr) {
+        alert("과거 날짜에는 예약을 설정할 수 없습니다.");
+        return;
+    }
+
     fetchReservedHoursForModal(dateVal);
-    document.getElementById("timeSelectModal").style.visibility = "visible";
+
+    const modal = document.getElementById("timeSelectModal");
+    if (modal) {
+        modal.style.visibility = "visible";
+    }
 }
 
 /* --------------------------
-   모달용 예약 시간 조회
+   선택 날짜의 예약 시간 조회
 -------------------------- */
 async function fetchReservedHoursForModal(dateVal) {
     try {
-        const res = await fetch(`/mstaff/api/reserved-hours/?doctor_id=1&date=${dateVal}`);
+        const res = await fetch(
+            `/mstaff/api/reserved-hours/?doctor_id=${CURRENT_DOCTOR_ID}&date=${dateVal}`
+        );
+
         const data = await res.json();
-
         const reserved = new Set(data.reserved_hours || []);
-        buildTimeGrid(reserved);
 
+        buildTimeGrid(reserved, dateVal);
     } catch (err) {
         console.error("예약 시간 조회 실패:", err);
     }
 }
 
 /* --------------------------
-   시간 목록을 버튼 형태로 렌더링
+   시간 버튼 그리드 구성
+   - 이미 예약된 시간: 비활성
+   - (오늘 기준) 현재 시간 이전 슬롯: 비활성
 -------------------------- */
-function buildTimeGrid(reservedSet) {
+function buildTimeGrid(reservedSet, dateVal) {
     const grid = document.getElementById("timeGrid");
+    if (!grid) return;
+
     grid.innerHTML = "";
 
-    TIME_SLOTS.forEach(t => {
-        const hour = parseInt(t.split(":")[0]);  // 예: "09:00" → 9
+    const now = new Date();
+    const todayStr = now.toISOString().split("T")[0];
+    const isToday = dateVal === todayStr;
+    const isPastDay = dateVal < todayStr;
+
+    TIME_SLOTS.forEach((t) => {
+        const [slotHour, slotMinute] = t.split(":").map(Number);
+
+        let isPastTime = false;
+        if (isPastDay) {
+            // 과거 날짜는 모든 시간 비활성
+            isPastTime = true;
+        } else if (isToday) {
+            // 오늘인 경우 현재 시각 이전(같은 시, 분까지)은 비활성
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            if (
+                slotHour < currentHour ||
+                (slotHour === currentHour && slotMinute <= currentMinute)
+            ) {
+                isPastTime = true;
+            }
+        }
 
         const btn = document.createElement("button");
         btn.classList.add("time-btn");
+        btn.type = "button";
         btn.textContent = t;
 
-        if (reservedSet.has(hour)) {
+        if (reservedSet.has(slotHour) || isPastTime) {
             btn.classList.add("disabled");
             btn.disabled = true;
         } else {
-            btn.onclick = () => selectTime(t);
+            btn.addEventListener("click", () => selectTime(t));
         }
 
         grid.appendChild(btn);
@@ -80,26 +142,47 @@ function buildTimeGrid(reservedSet) {
    시간 선택 처리
 -------------------------- */
 function selectTime(t) {
-    // "09:00" → "09"
-    document.getElementById("reservation_hour").value = t.substring(0, 2);
+    const hourInput = document.getElementById("reservation_hour");
+    if (hourInput) {
+        hourInput.value = t.substring(0, 2);
+    }
 
-    // 모달 닫기
+    const label = document.getElementById("selectedTimeLabel");
+    if (label) {
+        label.textContent = t;
+    }
+
     closeModal("timeSelectModal");
 }
 
-
 /* --------------------------
    처방 입력칸 추가
+   - 새 블록 추가 시 직전 블록 접기
+   - 헤더 클릭으로 개별 블록 접기/펼치기
 -------------------------- */
 function addPrescriptionForm() {
     const container = document.getElementById("prescriptionContainer");
+    if (!container) return;
+
+    const existingBlocks = container.querySelectorAll(".prescription-block");
+    const index = existingBlocks.length + 1;
+
+    // 바로 이전 블록 자동 접기
+    if (existingBlocks.length > 0) {
+        const lastBlock = existingBlocks[existingBlocks.length - 1];
+        lastBlock.classList.add("collapsed");
+    }
 
     const block = document.createElement("div");
     block.classList.add("prescription-block");
 
     block.innerHTML = `
-        <div class="prescription-row">
+        <div class="prescription-header">
+            <span class="prescription-title">처방 ${index}</span>
+            <span class="prescription-summary">약품명을 선택하세요</span>
+        </div>
 
+        <div class="prescription-row">
             <div class="form-group">
                 <label>약품명</label>
                 <div class="drug-input-wrap">
@@ -109,58 +192,105 @@ function addPrescriptionForm() {
             </div>
 
             <div class="form-group">
-                <label>약품 표준코드</label>
+                <label>약품 코드</label>
                 <input type="text" class="drugCode" disabled>
             </div>
 
             <div class="form-group">
                 <label>투여 빈도</label>
-                <input type="text" class="freqInput">
+                <input type="text" class="freqInput" placeholder="예: 1일 3회">
             </div>
 
             <div class="form-group">
                 <label>투여 용량</label>
-                <input type="text" class="doseInput">
+                <input type="text" class="doseInput" placeholder="예: 1회 1정">
             </div>
 
             <div class="form-group">
                 <label>특이사항</label>
-                <input type="text" class="noteInput">
+                <input type="text" class="noteInput" placeholder="예: 경구 복용, 식후 30분">
             </div>
 
             <button type="button" class="btn-remove" onclick="removePrescriptionBlock(this)">
                 삭제
             </button>
-
         </div>
     `;
 
     container.appendChild(block);
+
+    // 헤더 클릭 시 접기/펼치기
+    const header = block.querySelector(".prescription-header");
+    if (header) {
+        header.addEventListener("click", function () {
+            block.classList.toggle("collapsed");
+        });
+    }
+
+    // 약품명 변경 시 요약 텍스트 업데이트
+    const nameInput = block.querySelector(".drugName");
+    const summary = block.querySelector(".prescription-summary");
+    if (nameInput && summary) {
+        const updateSummary = () => {
+            summary.textContent = nameInput.value || `처방 ${index}`;
+        };
+        nameInput.addEventListener("input", updateSummary);
+    }
 }
 
 /* --------------------------
    처방 입력칸 삭제
 -------------------------- */
 function removePrescriptionBlock(btn) {
-    btn.closest(".prescription-block").remove();
+    const block = btn.closest(".prescription-block");
+    if (!block) return;
+
+    const container = document.getElementById("prescriptionContainer");
+    block.remove();
+
+    renumberPrescriptionBlocks(container);
 }
 
 /* --------------------------
-   submit 전 데이터 정리
+   처방 블록 번호 및 접힘 상태 정리
+-------------------------- */
+function renumberPrescriptionBlocks(container) {
+    if (!container) {
+        container = document.getElementById("prescriptionContainer");
+    }
+    if (!container) return;
+
+    const blocks = container.querySelectorAll(".prescription-block");
+
+    blocks.forEach((block, idx) => {
+        const title = block.querySelector(".prescription-title");
+        if (title) {
+            title.textContent = `처방 ${idx + 1}`;
+        }
+    });
+
+    // 마지막 블록은 기본적으로 펼쳐두기
+    if (blocks.length > 0) {
+        const last = blocks[blocks.length - 1];
+        last.classList.remove("collapsed");
+    }
+}
+
+/* --------------------------
+   submit 직전 데이터 준비
 -------------------------- */
 async function prepareSubmit() {
-
-    /* ------------------------ 1) 처방전 리스트 수집 ------------------------ */
     const blocks = document.querySelectorAll(".prescription-block");
     prescriptionList = [];
 
-    blocks.forEach(block => {
-        const name = block.querySelector(".drugName").value;
-        const code = block.querySelector(".drugCode").value;
-        const freq = block.querySelector(".freqInput").value;
-        const dose = block.querySelector(".doseInput").value;
-        const note = block.querySelector(".noteInput").value;
+    blocks.forEach((block) => {
+        const name = block.querySelector(".drugName")?.value.trim() || "";
+        const code = block.querySelector(".drugCode")?.value.trim() || "";
+        const freq = block.querySelector(".freqInput")?.value.trim() || "";
+        const dose = block.querySelector(".doseInput")?.value.trim() || "";
+        const note = block.querySelector(".noteInput")?.value.trim() || "";
 
+        // 약품명과 코드가 모두 있어야 유효한 처방으로 간주
         if (!name || !code) return;
 
         prescriptionList.push({
@@ -172,13 +302,13 @@ async function prepareSubmit() {
         });
     });
 
-    /* ------------------------ 2) 검사/치료 오더 JSON 생성 ------------------------ */
-    const orderType = document.getElementById("orderType").value;
-    const emergencyFlag =
-        document.querySelector("input[name='emergency_flag']:checked")?.value || null;
+    // 주문(오더) 관련 정보
+    const orderType = document.getElementById("orderType")?.value || "";
+    const emergencyRadio = document.querySelector("input[name='emergency_flag']:checked");
+    const emergencyFlag = emergencyRadio ? emergencyRadio.value : null;
 
-    const globalStart = document.getElementById("globalStartDate").value;
-    const globalEnd = document.getElementById("globalEndDate").value;
+    const globalStart = document.getElementById("globalStartDate")?.value || "";
+    const globalEnd = document.getElementById("globalEndDate")?.value || "";
 
     const orderObject = {
         start_date: globalStart,
@@ -187,85 +317,140 @@ async function prepareSubmit() {
         emergency_flag: emergencyFlag
     };
 
-    /* ------------------------ 3) 숨겨진 필드 저장 ------------------------ */
-    document.getElementById("prescriptions").value = JSON.stringify(prescriptionList);
-    document.getElementById("orders").value = JSON.stringify(orderObject);
+    // hidden 필드에 JSON 문자열로 세팅
+    const prescriptionsInput = document.getElementById("prescriptions");
+    const ordersInput = document.getElementById("orders");
+    if (prescriptionsInput) prescriptionsInput.value = JSON.stringify(prescriptionList);
+    if (ordersInput) ordersInput.value = JSON.stringify(orderObject);
 
-    /* ------------------------ 4) 제출 ------------------------ */
     const form = document.getElementById("recordForm");
-    const formData = new FormData(form);
-
-    const response = await fetch("/mstaff/api/medical-record/create/", {
-        method: "POST",
-        body: formData
-    });
-
-    const data = await response.json();
-
-    if (response.status === 400 && data.error) {
-        alert(data.error);
+    if (!form) {
+        alert("폼을 찾을 수 없습니다.");
         return;
     }
 
-    alert("저장되었습니다.");
+    const formData = new FormData(form);
+
+    try {
+        const response = await fetch("/mstaff/api/medical-record/create/", {
+            method: "POST",
+            body: formData
+        });
+
+        let data = {};
+        try {
+            data = await response.json();
+        } catch (e) {
+            // JSON 응답이 아닌 경우도 대비
+        }
+
+        if (response.status === 400 && data.error) {
+            alert(data.error);
+            return;
+        }
+
+        if (!response.ok) {
+            alert("저장 중 오류가 발생했습니다.");
+            return;
+        }
+
+        alert("저장되었습니다.");
+    } catch (err) {
+        console.error("진료기록 저장 실패:", err);
+        alert("네트워크 오류로 저장에 실패했습니다.");
+    }
 }
 
 /* --------------------------
-   약품 검색 모달
+   약품 검색 모달 열기
 -------------------------- */
 function openDrugSearchModal(btn) {
     currentDrugBlock = btn.closest(".prescription-block");
     selectedDrug = null;
 
-    document.getElementById("drugSearchModal").style.visibility = "visible";
+    const modal = document.getElementById("drugSearchModal");
+    const input = document.getElementById("drugNameInput");
+    const tbody = document.querySelector("#drugResultTable tbody");
 
-    document.querySelectorAll("#drugResultTable tbody tr")
-        .forEach(r => r.classList.remove("selected"));
+    if (input) input.value = "";
+    if (tbody) tbody.innerHTML = "";
+
+    if (modal) {
+        modal.style.visibility = "visible";
+    }
+    if (input) {
+        input.focus();
+    }
 }
 
 /* --------------------------
-   약품 검색 API
+   디바운스 유틸
+-------------------------- */
+function debounce(fn, delay) {
+    let timer = null;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+}
+
+const debouncedDrugSearch = debounce(() => {
+    performSearch();
+}, 300);
+
+/* --------------------------
+   약품 검색 API 호출
 -------------------------- */
 async function performSearch() {
-    const query = document.getElementById("drugNameInput").value;
+    const input = document.getElementById("drugNameInput");
+    const query = input ? input.value.trim() : "";
+    const tbody = document.querySelector("#drugResultTable tbody");
+
+    if (!tbody) return;
 
     if (!query) {
-        alert("검색어를 입력하세요.");
+        tbody.innerHTML = "";
         return;
     }
 
-    const response = await fetch(`/mstaff/api/medicine/search/?q=${query}`);
-    const data = await response.json();
+    try {
+        const response = await fetch(
+            `/mstaff/api/medicine/search/?q=${encodeURIComponent(query)}`
+        );
+        const data = await response.json();
 
-    const tbody = document.querySelector("#drugResultTable tbody");
-    tbody.innerHTML = "";
+        tbody.innerHTML = "";
 
-    if (!data.results || data.results.length === 0) {
-        tbody.innerHTML = "<tr><td colspan='2'>검색 결과 없음</td></tr>";
-        return;
+        if (!data.results || data.results.length === 0) {
+            return;
+        }
+
+        data.results.forEach((item) => {
+            const tr = document.createElement("tr");
+            tr.dataset.code = item.code;
+            tr.dataset.name = item.name;
+
+            tr.addEventListener("click", () => selectDrug(tr));
+
+            tr.innerHTML = `
+                <td>${item.name}</td>
+                <td>${item.code}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    } catch (err) {
+        console.error("약품 검색 실패:", err);
     }
-
-    data.results.forEach(item => {
-        const tr = document.createElement("tr");
-        tr.dataset.code = item.code;
-        tr.dataset.name = item.name;
-
-        tr.onclick = () => selectDrug(tr);
-
-        tr.innerHTML = `
-            <td>${item.name}</td>
-            <td>${item.code}</td>
-        `;
-        tbody.appendChild(tr);
-    });
 }
 
 /* --------------------------
-   약품 선택
+   약품 행 선택
 -------------------------- */
 function selectDrug(row) {
-    document.querySelectorAll("#drugResultTable tbody tr")
-        .forEach(r => r.classList.remove("selected"));
+    const tbody = document.querySelector("#drugResultTable tbody");
+    if (tbody) {
+        tbody.querySelectorAll("tr").forEach((r) => r.classList.remove("selected"));
+    }
 
     row.classList.add("selected");
 
@@ -273,33 +458,71 @@ function selectDrug(row) {
         code: row.dataset.code,
         name: row.dataset.name
     };
+
+    confirmSelection();
 }
 
 /* --------------------------
-   선택 반영
+   선택 약품 반영
 -------------------------- */
 function confirmSelection() {
-    if (!selectedDrug) {
-        alert("약품을 선택하세요.");
+    if (!selectedDrug || !currentDrugBlock) {
+        alert("약품을 선택해주세요.");
         return;
     }
 
-    currentDrugBlock.querySelector(".drugName").value = selectedDrug.name;
-    currentDrugBlock.querySelector(".drugCode").value = selectedDrug.code;
+    const nameInput = currentDrugBlock.querySelector(".drugName");
+    const codeInput = currentDrugBlock.querySelector(".drugCode");
+
+    if (nameInput) nameInput.value = selectedDrug.name;
+    if (codeInput) codeInput.value = selectedDrug.code;
+
+    const summary = currentDrugBlock.querySelector(".prescription-summary");
+    if (summary) {
+        summary.textContent = selectedDrug.name || summary.textContent;
+    }
 
     closeModal("drugSearchModal");
 }
 
+/* --------------------------
+   모달 닫기
+-------------------------- */
 function closeModal(id) {
-    document.getElementById(id).style.visibility = "hidden";
+    const modal = document.getElementById(id);
+    if (modal) {
+        modal.style.visibility = "hidden";
+    }
 }
 
 /* --------------------------
-   검사 선택 시 응급 여부 표시
+   검사/처치 선택에 따른 옵션 노출
 -------------------------- */
 function toggleEmergencyOption() {
-    const orderType = document.getElementById("orderType").value;
+    const orderType = document.getElementById("orderType")?.value;
     const emergencyBox = document.getElementById("emergencyWrapper");
+
+    if (!emergencyBox) return;
 
     emergencyBox.style.display = orderType === "lab" ? "block" : "none";
 }
+
+/* --------------------------
+   DOMContentLoaded 시 초기화
+-------------------------- */
+document.addEventListener("DOMContentLoaded", function () {
+    const input = document.getElementById("drugNameInput");
+    const modal = document.getElementById("drugSearchModal");
+
+    if (input) {
+        input.addEventListener("input", debouncedDrugSearch);
+    }
+
+    if (modal) {
+        modal.addEventListener("click", function (e) {
+            if (e.target === modal) {
+                closeModal("drugSearchModal");
+            }
+        });
+    }
+});

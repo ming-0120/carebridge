@@ -33,9 +33,18 @@ def haversine(lat1, lon1, lat2, lon2):
 
 def main_view(request):
     user_id = request.session.get("user_id")
-    if not user_id:
-        login_url = reverse("login")
-        return redirect(f"{login_url}?next={request.get_full_path()}")
+    get_dept_code = request.GET.get("dept_id")
+    active_dept = None
+
+    if get_dept_code:
+        try:
+            dept_obj = Department.objects.get(dep_code=get_dept_code)
+            active_dept = dept_obj.dep_name
+        except Department.DoesNotExist:
+            active_dept = None
+        if not user_id:
+            login_url = reverse("login")
+            return redirect(f"{login_url}?next={request.get_full_path()}")
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
 
@@ -89,6 +98,7 @@ def main_view(request):
         "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder),
         "user_lat": user_lat,
         "user_lon": user_lon,
+        "active_dept": active_dept,
     }
     return render(request, "reservations/main.html", context)
 
@@ -176,7 +186,7 @@ def reserve_submit(request):
     # 로그인 확인 (세션 기반)
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("accounts:login")
+        return redirect("login")
 
     user = get_object_or_404(Users, pk=user_id)
 
@@ -213,6 +223,7 @@ def doctor_reservations_api(request):
     doctor_id = request.GET.get("doctor_id")
     start = request.GET.get("start")  # ISO 날짜 문자열 (YYYY-MM-DD)
     end = request.GET.get("end")
+    
 
     if not doctor_id or not start or not end:
         return JsonResponse([], safe=False)
@@ -283,7 +294,7 @@ def reservation_confirm(request):
     # 로그인한 사용자 (세션 기반)
     user_id = request.session.get("user_id")
     if not user_id:
-        return redirect("accounts:login")  # 실제 로그인 url name 으로 수정
+        return redirect("login")  # 실제 로그인 url name 으로 수정
 
     user = get_object_or_404(Users, pk=user_id)
 

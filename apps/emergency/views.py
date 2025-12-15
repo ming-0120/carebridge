@@ -4,10 +4,14 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from collections import defaultdict
 from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
 from apps.db.models.review import AiReview
+from apps.db.models.favorite import UserFavorite
+from apps.db.models.users import Users
 from django.conf import settings
+from .templatetags import status_filters
 
 
 import math
@@ -320,9 +324,17 @@ def emergency_main(request):
 
     # 4) 현재 선택된 시/군/구 목록
     if selected_sido:
+        # 표준화 로직 적용 (get_sigungu와 동일)
+        # DB에 "경북", "경남" 등으로 저장되어 있을 수 있으므로 여러 변형 허용
+        std_sido = normalize_sido_name(selected_sido)
         sigungu_list = (
             ErInfo.objects
-            .filter(er_sido=selected_sido)
+            .filter(er_sido__in=[
+                selected_sido,
+                std_sido,
+                selected_sido.replace("도", ""),
+                std_sido.replace("도", ""),
+            ])
             .values_list("er_sigungu", flat=True)
             .distinct()
             .order_by("er_sigungu")
@@ -443,6 +455,24 @@ def emergency_main(request):
     # 표준화 + 중복 제거
     sido_list = sorted({ normalize_sido_name(s) for s in raw_sido_list })
 
+    # 즐겨찾기 상태 확인 (로그인 사용자만)
+    user_id = request.session.get("user_id")
+    favorite_er_ids = set()
+    if user_id:
+        favorite_er_ids = set(
+            UserFavorite.objects.filter(
+                user_id=user_id,
+                er__isnull=False,
+                hos__isnull=True
+            ).values_list('er_id', flat=True)
+        )
+    
+    # hospital_data에 즐겨찾기 상태 추가
+    for hos in hospital_data:
+        hos.is_favorite = hos.er_id in favorite_er_ids
+
+    # selected_filters를 JSON으로 직렬화 (템플릿에서 사용)
+    selected_filters_json = json.dumps(selected_filters, ensure_ascii=False)
 
     context = {
         "hospitals": hospital_data,
@@ -451,9 +481,12 @@ def emergency_main(request):
         "selected_sigungu": selected_sigungu or "",
         "selected_sort": selected_sort,
         "selected_etype": selected_etype,
+        "selected_filters": selected_filters_json,  # JSON 문자열로 전달
         "sigungu_list": sigungu_list,
         "sido_list": sido_list,
         "region_dict_json": region_dict_json,
+        "KAKAO_MAP_JS_KEY": settings.KAKAO_MAP_JS_KEY,  # 카카오맵 SDK 키 추가
+        "GOOGLE_API_KEY": settings.GOOGLE_API_KEY,  # GOOGLE_MAPS_API_KEY → GOOGLE_API_KEY로 변경
     }
 
     return render(request, "emergency/main.html", context)
@@ -469,9 +502,18 @@ def get_sigungu(request):
     if not sido:
         return JsonResponse({"sigungu": []})
 
+    # emergency_main과 동일한 표준화 로직 적용
+    # DB에 "경북", "경남" 등으로 저장되어 있을 수 있으므로 여러 변형 허용
+    std_sido = normalize_sido_name(sido)
+    
     sigungus = (
         ErInfo.objects
-        .filter(er_sido=sido)
+        .filter(er_sido__in=[
+            sido,
+            std_sido,
+            sido.replace("도", ""),
+            std_sido.replace("도", ""),
+        ])
         .values_list("er_sigungu", flat=True)
         .distinct()
         .order_by("er_sigungu")
@@ -510,8 +552,35 @@ def hospital_detail_json(request, er_id: int):
     except AiReview.DoesNotExist:
         pass
 
-    # 상태 데이터 준비
+    # 상태 데이터 준비 + 메인 템플릿 계산 결과를 함께 전달
     status_data = {}
+    status_ui = {}
+
+    def build_status_ui(available, total, type_name: str):
+        """
+        메인 템플릿(status_filters)과 동일한 계산을 서버에서 수행한다.
+        그래프 표시 여부, 라벨/색상, stroke 값 등을 한 번 계산해 내려준다.
+        """
+        label = status_filters.congestion_text(available, total, type_name)
+        color_class = status_filters.congestion_color_class(available, total, type_name)
+
+        dash_offset = None
+        bg_stroke = "#e0e0e0"
+        if total is not None and total > 0 and available is not None:
+            dash_offset = status_filters.circle_dashoffset(available, total)
+            # available 0 & red일 때만 배경을 빨강으로 처리 (메인과 동일)
+            if available == 0 and color_class == "red":
+                bg_stroke = "#E53935"
+
+        return {
+            "label": label,
+            "color_class": color_class,
+            "dash_offset": dash_offset,  # None이면 그래프 미표시
+            "bg_stroke": bg_stroke,
+            "available": available,
+            "total": total,
+        }
+
     if latest_status:
         status_data = {
             "er_general_available": latest_status.er_general_available,
@@ -519,13 +588,46 @@ def hospital_detail_json(request, er_id: int):
             "er_child_available": latest_status.er_child_available,
             "er_child_total": latest_status.er_child_total,
             "birth_available": latest_status.birth_available,
-            # birth_total 제거 (Boolean만 사용)
+            "birth_total": latest_status.birth_total,  # 메인 페이지와 동일하게 전달
             "negative_pressure_available": latest_status.negative_pressure_available,
             "negative_pressure_total": latest_status.negative_pressure_total,
             "isolation_general_available": latest_status.isolation_general_available,
             "isolation_general_total": latest_status.isolation_general_total,
             "isolation_cohort_available": latest_status.isolation_cohort_available,
             "isolation_cohort_total": latest_status.isolation_cohort_total,
+        }
+
+        status_ui = {
+            "er_general": build_status_ui(
+                latest_status.er_general_available,
+                latest_status.er_general_total,
+                "er_general",
+            ),
+            "er_child": build_status_ui(
+                latest_status.er_child_available,
+                latest_status.er_child_total,
+                "er_child",
+            ),
+            "birth": build_status_ui(
+                latest_status.birth_available,
+                latest_status.birth_total,
+                "birth",
+            ),
+            "negative_pressure": build_status_ui(
+                latest_status.negative_pressure_available,
+                latest_status.negative_pressure_total,
+                "negative_pressure",
+            ),
+            "isolation_general": build_status_ui(
+                latest_status.isolation_general_available,
+                latest_status.isolation_general_total,
+                "isolation_general",
+            ),
+            "isolation_cohort": build_status_ui(
+                latest_status.isolation_cohort_available,
+                latest_status.isolation_cohort_total,
+                "isolation_cohort",
+            ),
         }
 
     # 장비 정보
@@ -550,13 +652,26 @@ def hospital_detail_json(request, er_id: int):
         tags.append("분만실")
 
 
+    # 즐겨찾기 상태 확인 (로그인 사용자만)
+    is_favorite = False
+    user_id = request.session.get("user_id")
+    if user_id:
+        is_favorite = UserFavorite.objects.filter(
+            user_id=user_id,
+            er=er_info,
+            hos__isnull=True
+        ).exists()
+
     data = {
         "er_name": er_info.er_name,
         "er_address": er_info.er_address,
         "er_lat": er_info.er_lat,
         "er_lng": er_info.er_lng,
+        "er_id": er_info.er_id,  # 추가: 모달에서 즐겨찾기 토글 시 사용
+        "is_favorite": is_favorite,  # 추가: 즐겨찾기 상태
         "tags": tags,
         "status": status_data,
+        "status_ui": status_ui,  # 메인과 동일한 계산 결과
         "message": er_message.message if er_message and er_message.message else None,
         "ai_review": {
             "summary": ai_review.summary if ai_review and ai_review.summary else None,
@@ -609,4 +724,40 @@ def update_preferences(request):
 
     request.session.save()
     return JsonResponse({"status": "ok"})
+
+@require_POST
+def toggle_er_favorite(request):
+    """응급실 즐겨찾기 토글 (AJAX)"""
+    # 1) 로그인 사용자 확인 (세션 기반)
+    user_id = request.session.get("user_id")
+    if not user_id:
+        return JsonResponse({"ok": False, "error": "login_required"}, status=401)
+
+    user = get_object_or_404(Users, pk=user_id)
+
+    # 2) 응급실 ID 파라미터 확인
+    er_id = request.POST.get("er_id")
+    if not er_id:
+        return JsonResponse({"ok": False, "error": "no_er_id"}, status=400)
+
+    er = get_object_or_404(ErInfo, pk=er_id)
+
+    # 3) 이미 즐겨찾기 되어 있으면 삭제, 없으면 생성
+    qs = UserFavorite.objects.filter(user=user, er=er, hos__isnull=True)
+    # hos__isnull=True 로 "일반 병원이 아닌 응급실 즐겨찾기" 로 한정
+
+    if qs.exists():
+        qs.delete()
+        is_favorite = False
+    else:
+        UserFavorite.objects.create(
+            user=user,
+            er=er,
+            hos=None,     # 응급실 즐겨찾기이므로 hos는 비워둠
+            memo="",      # 필요 없으면 빈 문자열
+        )
+        is_favorite = True
+
+    # 4) JSON 응답
+    return JsonResponse({"ok": True, "is_favorite": is_favorite})
 

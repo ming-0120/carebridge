@@ -23,7 +23,7 @@
         
         <div class="patient-info-header">
             <div class="info-item"><strong>성명:</strong> {{ user.name }}</div>
-            <div class="info-item"><strong>주민번호:</strong> {{ user.resident_reg_no }}</div>
+            <div class="info-item"><strong>주민번호:</strong> {{ resident_reg_no_display }}</div>
             <div class="info-item"><strong>전화번호:</strong> {{ user.phone }}</div>
             <div class="info-item"><strong>성별:</strong> {% if user.gender == 'F' %} 여 {% else %} 남 {% endif %}</div>
             <div class="info-item"><strong>주소:</strong> {{ user.address }}</div>

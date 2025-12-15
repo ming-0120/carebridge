@@ -6,15 +6,18 @@
     <title>{% block title %}CareBridge 응급실{% endblock %}</title>
     {% load static %}
 
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_JS_KEY }}&autoload=false&libraries=services"></script>
+    <script>const GOOGLE_API_KEY = "{{ GOOGLE_API_KEY }}";</script>
+
+
     <!-- CSS -->
     <link rel="stylesheet" href="{% static 'emergency/css/emergency.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/modal.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/detail.css' %}">
 
-    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_JS_KEY }}&autoload=false&libraries=services"></script>
 
 </head>
-
+{% include "core/_header.html" %}
 <body>
 <div class="page-wrap">
     {% block content %}{% endblock %}

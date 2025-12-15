@@ -5,16 +5,8 @@ const qs = (sel) => document.querySelector(sel);
 const qsa = (sel) => document.querySelectorAll(sel);
 
 // ===============================
-// 상세 모달 열기 / 닫기
+// 상세 모달 닫기 (열기는 detail_modal.js에서 처리)
 // ===============================
-function openHospitalDetail(erId) {
-  const modal = qs('#detail-modal');
-  if (!modal) return;
-
-  modal.classList.remove('hidden');
-  if (typeof loadDetailData === "function") loadDetailData(erId);
-}
-
 function closeDetailModal() {
   const modal = qs('#detail-modal');
   if (!modal) return;
@@ -151,10 +143,9 @@ const EQUIP_LABEL = {
 };
 
 // ===============================
-// Filter Tag Rendering
+// Filter Tag Rendering (POST/session 기반)
 // ===============================
 function renderFilterTags() {
-  const params = new URLSearchParams(window.location.search);
   const container = qs("#filter-tags-container");
   const box = qs("#filter-tags");
   const resetBtn = qs("#filter-tags-reset");
@@ -165,9 +156,9 @@ function renderFilterTags() {
   let hasFilter = false;
 
   // ======================================================
-  // 유형 태그 추가
+  // 유형 태그 추가 (session 기반)
   // ======================================================
-  const etype = params.get("etype");
+  const etype = window.selectedEtype || "";
   if (etype && TYPE_LABEL[etype]) {
     const tag = document.createElement("span");
     tag.className = "tag-chip";
@@ -176,16 +167,36 @@ function renderFilterTags() {
     hasFilter = true;
 
     tag.querySelector(".tag-remove").addEventListener("click", () => {
-      params.delete("etype");
-      window.location.search = params.toString();
+      // POST 방식으로 필터 제거
+      fetch('/emergency/update_preferences/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+          action: 'filter',
+          etype: "",
+          filters: window.selectedFilters || {}
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'ok') {
+          sessionStorage.setItem('emergency_button_click', 'true');
+          window.location.reload();
+        }
+      })
+      .catch(err => console.error('필터 제거 실패:', err));
     });
   }
 
   // ======================================================
-  // 장비 태그 추가
+  // 장비 태그 추가 (session 기반)
   // ======================================================
+  const currentFilters = window.selectedFilters || {};
   Object.keys(EQUIP_LABEL).forEach(key => {
-    if (params.get(key) === "1") {
+    if (currentFilters[key] === "1") {
       const tag = document.createElement("span");
       tag.className = "tag-chip";
       tag.innerHTML = `${EQUIP_LABEL[key]} <span class="tag-remove">✕</span>`;
@@ -193,8 +204,30 @@ function renderFilterTags() {
       hasFilter = true;
 
       tag.querySelector(".tag-remove").addEventListener("click", () => {
-        params.delete(key);
-        window.location.search = params.toString();
+        // 해당 장비만 제거
+        const newFilters = { ...currentFilters };
+        delete newFilters[key];
+        
+        fetch('/emergency/update_preferences/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify({
+            action: 'filter',
+            etype: window.selectedEtype || "",
+            filters: newFilters
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'ok') {
+            sessionStorage.setItem('emergency_button_click', 'true');
+            window.location.reload();
+          }
+        })
+        .catch(err => console.error('필터 제거 실패:', err));
       });
     }
   });
@@ -209,13 +242,27 @@ function renderFilterTags() {
   resetBtn.classList.remove("hidden");
 
   resetBtn.addEventListener("click", () => {
-    params.delete("etype");
-    Object.keys(EQUIP_LABEL).forEach(key => params.delete(key));
-    
-    // 버튼 클릭 플래그 설정 (새로고침 감지 방지)
-    sessionStorage.setItem('emergency_button_click', 'true');
-    
-    window.location.search = params.toString();
+    // POST 방식으로 모든 필터 초기화
+    fetch('/emergency/update_preferences/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({
+        action: 'filter',
+        etype: "",
+        filters: {}
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        sessionStorage.setItem('emergency_button_click', 'true');
+        window.location.reload();
+      }
+    })
+    .catch(err => console.error('필터 초기화 실패:', err));
   });
 }
 

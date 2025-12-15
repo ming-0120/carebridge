@@ -43,6 +43,8 @@
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>사용자 목록 - CareBridge 관리자</title>
+  <!-- Favicon 설정 -->
+  <link rel="icon" type="image/png" href="{% static 'core/img/logo_2.png' %}">
   
   <!-- 
     CSS 파일 로드
@@ -198,7 +200,7 @@
         검색 폼
         
         목적: 사용자 검색을 위한 폼
-          - method="get": GET 메서드로 검색 파라미터를 URL에 전달
+          - method="post": POST 메서드로 검색 파라미터를 전달
           - action: {% url 'user_list' %} - 사용자 목록 URL (자기 자신)
           - CSS 클래스: search-form (검색 폼 스타일)
       -->
@@ -599,18 +601,19 @@
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: « (첫 페이지 기호)
         -->
-        <a href="?page=1&sort={{ sort_field }}&order={{ sort_order }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="#" class="page-link" data-page="1" data-sort="{{ sort_field }}" data-order="{{ sort_order }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">«</a>
         
         <!-- 
           이전 페이지로 이동 링크
           
           목적: 현재 페이지의 이전 페이지로 이동
-            - href: ?page={{ page_obj.previous_page_number }} + 정렬 파라미터 + 검색 파라미터
+            - href: # (JavaScript로 처리)
+            - data-page: 이전 페이지 번호
             - page_obj.previous_page_number: 이전 페이지 번호
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: < (이전 페이지 기호)
         -->
-        <a href="?page={{ page_obj.previous_page_number }}&sort={{ sort_field }}&order={{ sort_order }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+        <a href="#" class="page-link" data-page="{{ page_obj.previous_page_number }}" data-sort="{{ sort_field }}" data-order="{{ sort_order }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}"><</a>
       {% else %}
         <!-- 
           비활성화된 첫 페이지 버튼
@@ -666,7 +669,7 @@
               - 정렬 및 검색 파라미터 유지: sort, order, search_type, search_keyword 파라미터를 URL에 포함
           -->
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}&sort={{ sort_field }}&order={{ sort_order }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+            <a href="#" class="page-link" data-page="{{ num }}" data-sort="{{ sort_field }}" data-order="{{ sort_order }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -697,18 +700,19 @@
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: > (다음 페이지 기호)
         -->
-        <a href="?page={{ page_obj.next_page_number }}&sort={{ sort_field }}&order={{ sort_order }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="#" class="page-link" data-page="{{ page_obj.next_page_number }}" data-sort="{{ sort_field }}" data-order="{{ sort_order }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">></a>
         
         <!-- 
           마지막 페이지로 이동 링크
           
           목적: 마지막 페이지로 이동
-            - href: ?page={{ page_obj.paginator.num_pages }} + 정렬 파라미터 + 검색 파라미터
+            - href: # (JavaScript로 처리)
+            - data-page: 마지막 페이지 번호
             - page_obj.paginator.num_pages: 전체 페이지 수 (마지막 페이지 번호)
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: » (마지막 페이지 기호)
         -->
-        <a href="?page={{ page_obj.paginator.num_pages }}&sort={{ sort_field }}&order={{ sort_order }}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+        <a href="#" class="page-link" data-page="{{ page_obj.paginator.num_pages }}" data-sort="{{ sort_field }}" data-order="{{ sort_order }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">»</a>
       {% else %}
         <!-- 
           비활성화된 다음 페이지 버튼

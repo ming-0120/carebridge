@@ -17,8 +17,23 @@
   {% endif %}
   <button class="btn" onclick="openFilterModal()">필터</button>
 
-  <!-- 거리순 정렬 버튼 -->
-  <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
+  <!-- 거리순 정렬 버튼 + 툴팁 -->
+  <div class="sort-control-wrapper">
+    <button class="btn" onclick="sortByDistance()">가장 가까운 응급실</button>
+    <div class="tooltip-wrapper">
+      <span class="tooltip-icon"></span>
+      <div class="tooltip-content">
+        <div class="tooltip-header">
+        </div>
+        <div class="tooltip-text" id="tooltip-text"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 현재 정렬 기준 표시 -->
+<div class="sort-criteria-display" id="sort-criteria-display">
+  현재 정렬 기준: <span id="sort-criteria-text"></span>
 </div>
 
 <!-- 선택된 필터 태그 -->
@@ -55,7 +70,12 @@
       <div class="row" data-er-id="{{ hos.er_id }}" onclick="openHospitalDetail('{{ hos.er_id }}')">
 
         <div>
-          <div class="h-name">{{ hos.er_name }}</div>
+          <div class="h-name">
+            {{ hos.er_name }}
+            {% if st and st.hvdate %}
+              <span class="update-time" data-hvdate="{{ st.hvdate|date:'Y-m-d H:i:s' }}"></span>
+            {% endif %}
+          </div>
           <div class="h-subinfo">
             {% if hos.distance_km %}
               {{ hos.distance_km|floatformat:1 }}km | 
@@ -67,58 +87,59 @@
         {# 응급실 일반 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total %}
+            {% include "emergency/_circle_cell.html" with available=st.er_general_available total=st.er_general_total type_name="er_general" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="er_general" %}
           {% endif %}
         </div>
 
         {# 응급실 소아 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total %}
+            {% include "emergency/_circle_cell.html" with available=st.er_child_available total=st.er_child_total type_name="er_child" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="er_child" %}
           {% endif %}
         </div>
 
         {# 분만실 (hv42/hvs26 → birth_available/birth_total) #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total %}
+            {% include "emergency/_circle_cell.html" with available=st.birth_available total=st.birth_total type_name="birth" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="birth" %}
           {% endif %}
         </div>
 
         {# 음압격리 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total %}
+            {% include "emergency/_circle_cell.html" with available=st.negative_pressure_available total=st.negative_pressure_total type_name="negative_pressure" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="negative_pressure" %}
           {% endif %}
         </div>
 
         {# 일반격리 #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_general_available total=st.isolation_general_total type_name="isolation_general" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="isolation_general" %}
           {% endif %}
         </div>
 
         {# 코호트격리 (hv27/hvs59 → isolation_cohort_available/total) #}
         <div>
           {% if st %}
-            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total %}
+            {% include "emergency/_circle_cell.html" with available=st.isolation_cohort_available total=st.isolation_cohort_total type_name="isolation_cohort" %}
           {% else %}
-            {% include "emergency/_circle_cell.html" with available=None total=None %}
+            {% include "emergency/_circle_cell.html" with available=None total=None type_name="isolation_cohort" %}
           {% endif %}
         </div>
 
-        <div class="favorite">★</div>
+        <div class="favorite {% if hos.is_favorite %}on{% endif %}" 
+             data-er-id="{{ hos.er_id }}">★</div>
       </div>
     {% endwith %}
   {% empty %}
@@ -138,6 +159,71 @@
   window.selectedSigungu = '{{ selected_sigungu|default:"" }}';
   window.selectedEtype = '{{ selected_etype|default:"" }}';
   window.selectedFilters = JSON.parse('{{ selected_filters|safe }}');
+  window.selectedSort = '{{ selected_sort|default:"score" }}';
+
+  // -------------------------
+  // 정렬 기준 및 툴팁 텍스트 업데이트 함수
+  // -------------------------
+  function updateSortCriteria() {
+    const sortCriteriaText = document.getElementById('sort-criteria-text');
+    const tooltipText = document.getElementById('tooltip-text');
+    
+    if (!sortCriteriaText || !tooltipText) return;
+    
+    // 지역 선택 여부 확인 (시/도가 선택되고 "전체"가 아닐 때)
+    const hasRegion = window.selectedSido && window.selectedSido !== '' && window.selectedSido !== '전체';
+    const hasFilter = window.selectedEtype || 
+                     (window.selectedFilters && Object.keys(window.selectedFilters).length > 0);
+    const isDistanceSort = window.selectedSort === 'distance';
+    
+    // 정렬 기준 텍스트 설정 (우선순위: 지역 선택 > 필터 > 거리순 > 기본)
+    if (hasRegion) {
+      sortCriteriaText.textContent = '선택한 지역 기준';
+    } else if (hasFilter) {
+      sortCriteriaText.textContent = '필터 조건 반영 후 가용 병상·거리 기반';
+    } else if (isDistanceSort) {
+      sortCriteriaText.textContent = '사용자 위치 기준 거리순';
+    } else {
+      sortCriteriaText.textContent = '가용 병상·거리 기반';
+    }
+    
+    // 툴팁 텍스트 설정 (우선순위: 지역 선택 > 필터 > 거리순 > 기본)
+    if (hasRegion) {
+      tooltipText.innerHTML = '선택한 지역에 해당하는 응급실만 목록에 표시됩니다.<br>거리나 병상 정보를 기준으로 정렬하지 않으며,<br>응급실 이름 순으로 정렬됩니다.';
+    } else if (hasFilter) {
+      tooltipText.innerHTML = '선택한 필터 조건을 충족하는 응급실만 표시한 후,<br>가용 병상과 거리를 기준으로 정렬됩니다.<br>필터 조건에 따라 일부 응급실은<br>목록에서 제외될 수 있습니다.';
+    } else if (isDistanceSort) {
+      tooltipText.innerHTML = '사용자의 현재 위치를 기준으로<br>각 응급실까지의 직선 거리를 계산하여 정렬합니다.<br>가장 가까운 응급실이 목록 상단에 표시됩니다.';
+    } else {
+      tooltipText.innerHTML = '현재 가용 병상 수와,<br>사용자 위치 기준 거리를 함께 반영하여 정렬됩니다.<br>병상 여유가 많고, 상대적으로 가까운 응급실이<br>목록 상단에 표시됩니다.';
+    }
+  }
+  
+  // -------------------------
+  // 툴팁 텍스트 복사 함수
+  // -------------------------
+  function copyTooltipText(event) {
+    event.stopPropagation();
+    const tooltipText = document.getElementById('tooltip-text');
+    if (tooltipText) {
+      const textToCopy = tooltipText.textContent || tooltipText.innerText;
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '복사됨!';
+        setTimeout(() => {
+          btn.textContent = originalText;
+        }, 1000);
+      }).catch(err => {
+        console.error('복사 실패:', err);
+      });
+    }
+  }
+  
+  // 페이지 로드 시 정렬 기준 업데이트
+  document.addEventListener('DOMContentLoaded', function() {
+    updateSortCriteria();
+  });
 
   // -------------------------
   // CSRF 토큰 가져오기 함수
@@ -188,7 +274,82 @@
     });
   }
 
-  
+  // -------------------------
+  // 응급실 즐겨찾기 토글 함수
+  // -------------------------
+  function toggleErFavorite(event, erId) {
+    // 이벤트 전파 중지 (행 클릭 이벤트 방지)
+    event.stopPropagation();
+    event.preventDefault();
+    
+    // AJAX 요청으로 즐겨찾기 토글
+    fetch('{% url "toggle_er_favorite" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: `er_id=${erId}`
+    })
+    .then(response => {
+      if (response.status === 401) {
+        // 비로그인 상태
+        const confirmLogin = confirm('로그인 후 이용하실 수 있습니다.');
+        if (confirmLogin) {
+          // 로그인 페이지로 이동 (현재 URL을 next 파라미터로 전달)
+          const currentUrl = encodeURIComponent(window.location.href);
+          window.location.href = `{% url 'login' %}?next=${currentUrl}`;
+        }
+        // 취소 시 아무것도 하지 않음 (현재 페이지 유지)
+        return null;
+      }
+      return response.json();
+    })
+    .then(data => {
+      if (data && data.ok) {
+        // 즐겨찾기 상태 업데이트
+        const favoriteElement = event.target.closest('.favorite') || event.target;
+        if (data.is_favorite) {
+          favoriteElement.classList.add('on');
+        } else {
+          favoriteElement.classList.remove('on');
+        }
+        
+        // 상세 모달이 열려있고 같은 병원이면 동기화
+        const detailModal = document.getElementById('detail-modal');
+        const detailFavorite = document.getElementById('detail-favorite');
+        if (detailModal && !detailModal.classList.contains('hidden') && detailFavorite) {
+          const detailErId = detailFavorite.getAttribute('data-er-id');
+          if (detailErId && parseInt(detailErId, 10) === erId) {
+            if (data.is_favorite) {
+              detailFavorite.classList.add('on');
+            } else {
+              detailFavorite.classList.remove('on');
+            }
+          }
+        }
+      }
+    })
+    .catch(err => {
+      console.error('즐겨찾기 토글 실패:', err);
+    });
+  }
+
+  // -------------------------
+  // 즐겨찾기 버튼 클릭 이벤트 리스너 (이벤트 위임 사용)
+  // -------------------------
+  // 이벤트 위임 방식: 동적으로 추가되는 요소에도 작동
+  document.addEventListener('click', function(event) {
+    // 클릭된 요소가 .favorite 클래스를 가진 요소인지 확인
+    const favoriteElement = event.target.closest('.favorite');
+    if (favoriteElement) {
+      const erId = favoriteElement.getAttribute('data-er-id');
+      if (erId) {
+        toggleErFavorite(event, parseInt(erId, 10));
+      }
+    }
+  });
+
   // -------------------------
   // sessionStorage에서 위치 정보 읽어서 서버에 전달 (URL에는 추가하지 않음)
   // -------------------------
@@ -216,6 +377,9 @@
             const currentTableBox = document.querySelector('.table-box');
             if (currentTableBox) {
               currentTableBox.innerHTML = newTableBox.innerHTML;
+              // 이벤트 위임 방식이므로 별도 이벤트 재연결 불필요
+              // 시간 표시 업데이트
+              updateTimeDisplay();
             }
           }
         })
@@ -223,6 +387,50 @@
       }
     }
   })();
+
+  // -------------------------
+  // 업데이트 시간 표시 함수 (ErStatus.hvdate 기준)
+  // -------------------------
+  function updateTimeDisplay() {
+    const timeElements = document.querySelectorAll('.update-time');
+    const now = new Date();
+    
+    timeElements.forEach(el => {
+      const hvdateStr = el.getAttribute('data-hvdate');
+      if (!hvdateStr) return;
+      
+      // Django 템플릿에서 전달된 날짜 문자열 파싱
+      // 형식: "2025-01-12 10:25:00"
+      const hvdate = new Date(hvdateStr.replace(' ', 'T'));
+      if (isNaN(hvdate.getTime())) return;
+      
+      const diffMs = now - hvdate;
+      const diffMins = Math.floor(diffMs / (1000 * 60));
+      
+      let displayText = '';
+      if (diffMins < 1) {
+        displayText = '방금 전 업데이트';
+      } else if (diffMins < 60) {
+        displayText = `${diffMins}분 전 업데이트`;
+      } else {
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) {
+          displayText = `${diffHours}시간 전 업데이트`;
+        } else {
+          const diffDays = Math.floor(diffHours / 24);
+          displayText = `${diffDays}일 전 업데이트`;
+        }
+      }
+      
+      el.textContent = displayText;
+    });
+  }
+  
+  // 페이지 로드 시 실행
+  updateTimeDisplay();
+  
+  // 1분마다 업데이트
+  setInterval(updateTimeDisplay, 60000);
 </script>
 
 <script src="{% static 'core/js/home.js' %}"></script>
