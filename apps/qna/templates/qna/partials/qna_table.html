@@ -1,0 +1,132 @@
+<div class="table-container">
+  <table class="qna-table">
+    <thead>
+      <tr>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="qna_id" data-current-sort="{% if sort_field|default:'created_at' == 'created_at' %}qna_id{% else %}{{ sort_field }}{% endif %}" data-current-order="{% if sort_field|default:'created_at' == 'created_at' %}{{ sort_order|default:'desc' }}{% else %}{{ sort_order|default:'desc' }}{% endif %}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            No.
+            {% if sort_field|default:'created_at' == 'created_at' %}
+              {# 문의 일자 정렬 시 No. 컬럼도 활성화 표시 (반대 방향) #}
+              {# 문의 일자 내림차순(desc) = No. 오름차순(↑), 문의 일자 오름차순(asc) = No. 내림차순(↓) #}
+              {% if sort_order|default:'desc' == 'asc' %}↓{% else %}↑{% endif %}
+            {% elif sort_field == 'qna_id' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="title" data-current-sort="{{ sort_field|default:'' }}" data-current-order="{{ sort_order|default:'' }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            문의 제목
+            {% if sort_field == 'title' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="created_at" data-current-sort="{{ sort_field|default:'' }}" data-current-order="{{ sort_order|default:'' }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            문의 일자
+            {% if sort_field == 'created_at' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="username" data-current-sort="{{ sort_field|default:'' }}" data-current-order="{{ sort_order|default:'' }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            작성자
+            {% if sort_field == 'username' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="privacy" data-current-sort="{{ sort_field|default:'' }}" data-current-order="{{ sort_order|default:'' }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            공개 설정
+            {% if sort_field == 'privacy' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+        <th>
+          <a href="#" class="sort-link" data-sort-field="status" data-current-sort="{{ sort_field|default:'' }}" data-current-order="{{ sort_order|default:'' }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+            상태
+            {% if sort_field == 'status' %}
+              {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+            {% endif %}
+          </a>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% if page_obj %}
+        {% for qna in page_obj %}
+          <tr class="qna-row" data-qna-id="{{ qna.qna_id }}" style="cursor: pointer;">
+            <td>
+              {% comment %} No. 컬럼 표시 로직:
+                - 문의 일자(created_at) 내림차순(기본 상태)일 때: No.는 오름차순(1, 2, 3...)
+                - 문의 일자(created_at) 오름차순일 때: No.는 내림차순(6, 5, 4...)
+                - qna_id 정렬일 때: 정렬 방향과 동일하게 표시
+                - 그 외: 기본적으로 오름차순
+              {% endcomment %}
+              {% if sort_field|default:'created_at' == 'created_at' %}
+                {# 문의 일자 정렬일 때: 정렬 방향과 반대로 표시 #}
+                {% if sort_order|default:'desc' == 'desc' %}
+                  {# 문의 일자 내림차순 → No.는 오름차순 #}
+                  {% if page_obj.has_previous %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                {% else %}
+                  {# 문의 일자 오름차순 → No.는 내림차순 #}
+                  {% if page_obj.has_previous %}
+                    {{ page_obj.start_index|add:page_obj|length|add:forloop.revcounter|add:-1 }}
+                  {% else %}
+                    {{ forloop.revcounter }}
+                  {% endif %}
+                {% endif %}
+              {% elif sort_field == 'qna_id' %}
+                {# qna_id 정렬일 때: 정렬 방향과 동일하게 표시 #}
+                {% if sort_order == 'asc' %}
+                  {# qna_id 오름차순 → No.도 오름차순 #}
+                  {% if page_obj.has_previous %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+                {% else %}
+                  {# qna_id 내림차순 → No.도 내림차순 #}
+                  {% if page_obj.has_previous %}
+                    {{ page_obj.start_index|add:page_obj|length|add:forloop.revcounter|add:-1 }}
+                  {% else %}
+                    {{ forloop.revcounter }}
+                  {% endif %}
+                {% endif %}
+              {% else %}
+                {# 그 외의 경우: 기본적으로 오름차순 #}
+                {% if page_obj.has_previous %}{{ page_obj.start_index|add:forloop.counter0 }}{% else %}{{ forloop.counter }}{% endif %}
+              {% endif %}
+            </td>
+            <td>{{ qna.title }}</td>
+            <td>{{ qna.created_at|date:"Y-m-d" }}</td>
+            <td>{{ qna.user.username }}</td>
+            <td>
+              {% if qna.privacy == 'PUBLIC' %}
+                공개
+              {% else %}
+                비공개
+              {% endif %}
+            </td>
+            <td>
+              {% if qna.reply %}
+                <span class="status-badge status-completed">답변 완료</span>
+              {% else %}
+                <span class="status-badge status-waiting">답변 대기</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="no-data">등록된 QnA가 없습니다.</td>
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          <td colspan="6" class="no-data">등록된 QnA가 없습니다.</td>
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+

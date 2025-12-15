@@ -10,8 +10,8 @@ urlpatterns = [
     # QnA 작성
     path('write/', views.qna_write, name='qna_write'),
     
-    # QnA 상세보기
-    path('<int:qna_id>/', views.qna_post, name='qna_post'),
+    # QnA 상세보기 (POST 방식)
+    path('detail/', views.qna_post, name='qna_post'),
     
     # QnA 삭제
     path('<int:qna_id>/delete/', views.qna_delete, name='qna_delete'),

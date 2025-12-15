@@ -709,7 +709,76 @@ def doctor_list(request):
 
 
 def hospital_list(request):
-    """병원 목록 조회, 검색, 정렬, 페이지네이션"""
+    """병원 목록 조회, 검색, 정렬, 페이지네이션, 병원 추가"""
+    # POST 요청 처리 (병원 추가)
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        # AJAX 요청인 경우 JSON 응답
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if action == 'add_hospital':
+            # 병원 추가 처리
+            try:
+                hospital_name = request.POST.get('hospital_name', '').strip()
+                hospital_hpid = request.POST.get('hospital_hpid', '').strip()
+                hospital_hos_name = request.POST.get('hospital_hos_name', '').strip()
+                hospital_hos_password = request.POST.get('hospital_hos_password', '').strip()
+                hospital_address = request.POST.get('hospital_address', '').strip()
+                hospital_tel = request.POST.get('hospital_tel', '').strip()
+                hospital_category_name = request.POST.get('hospital_category_name', '').strip()
+                hospital_estb_date = request.POST.get('hospital_estb_date', '').strip()
+                
+                # 필수 필드 검증
+                if not hospital_name or not hospital_hpid or not hospital_hos_name or not hospital_hos_password:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '필수 항목을 모두 입력해주세요.'})
+                    else:
+                        # 일반 POST 요청인 경우 리다이렉트
+                        return redirect('hospital_list')
+                
+                # hpid 중복 확인
+                if Hospital.objects.filter(hpid=hospital_hpid).exists():
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원ID(hpid)입니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # hos_name 중복 확인
+                if Hospital.objects.filter(hos_name=hospital_hos_name).exists():
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원 계정ID입니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # 병원 생성
+                new_hospital = Hospital.objects.create(
+                    name=hospital_name,
+                    hpid=hospital_hpid,
+                    hos_name=hospital_hos_name,
+                    hos_password=hospital_hos_password,
+                    address=hospital_address if hospital_address else None,
+                    tel=hospital_tel if hospital_tel else None,
+                    category_name=hospital_category_name if hospital_category_name else None,
+                    estb_date=hospital_estb_date if hospital_estb_date else None,
+                )
+                
+                if is_ajax:
+                    return JsonResponse({'success': True, 'message': '병원이 성공적으로 추가되었습니다.'})
+                else:
+                    return redirect('hospital_list')
+                    
+            except Exception as e:
+                import traceback
+                error_detail = traceback.format_exc()
+                if is_ajax:
+                    return JsonResponse({'success': False, 'message': f'병원 추가 중 오류가 발생했습니다: {str(e)}'})
+                else:
+                    return redirect('hospital_list')
+        else:
+            # 검색 요청인 경우 (기존 로직)
+            pass
+    
     # 파라미터 추출
     search_type = get_request_param(request, 'search_type', '')
     search_keyword = get_request_param(request, 'search_keyword', '')

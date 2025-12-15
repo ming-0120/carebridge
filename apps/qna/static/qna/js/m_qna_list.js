@@ -41,9 +41,33 @@ function goToQnaDetail(qnaId) {
     return;
   }
   
-  const url = `/qna/${qnaId}/`;
-  console.log('이동할 URL:', url);
-  window.location.href = url;
+  // POST 방식으로 qna_id를 전송하여 URL에 노출되지 않도록 함
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/qna/detail/';
+  
+  // CSRF 토큰 추가
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
+  if (csrfToken) {
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+  }
+  
+  // qna_id 추가
+  const qnaIdInput = document.createElement('input');
+  qnaIdInput.type = 'hidden';
+  qnaIdInput.name = 'qna_id';
+  qnaIdInput.value = qnaId;
+  form.appendChild(qnaIdInput);
+  
+  // 폼을 body에 추가하고 제출
+  document.body.appendChild(form);
+  form.submit();
 }
 
 /**
@@ -119,73 +143,433 @@ function attachTableRowListeners() {
  * // 1. 테이블 행 클릭 이벤트 리스너 연결
  */
 /**
- * 페이지네이션 POST 방식 처리
+ * 정렬 링크 클릭 처리 함수 (AJAX 방식)
  * 
- * 목적: 페이지네이션 링크를 POST 방식으로 처리
+ * 목적: 정렬 링크 클릭 시 AJAX로 정렬 파라미터를 전송하여 테이블만 업데이트
+ */
+function handleSortClick(e) {
+  e.preventDefault();
+  const sortLink = e.target.closest('.sort-link');
+  let sortField = sortLink.getAttribute('data-sort-field');
+  const currentSort = sortLink.getAttribute('data-current-sort') || '';
+  const currentOrder = sortLink.getAttribute('data-current-order') || 'desc';
+  
+  if (!sortField) return;
+  
+  // No. 컬럼 클릭 시 문의 일자로 정렬 (정렬 방향은 반대로)
+  if (sortField === 'qna_id') {
+    sortField = 'created_at';
+    // No. 내림차순(6이 맨 위) = 문의 일자 오름차순(11일이 맨 위)
+    // No. 오름차순(1이 맨 위) = 문의 일자 내림차순(15일이 맨 위)
+    let newOrder;
+    
+    // 템플릿에서 No. 컬럼의 data-current-sort는 created_at일 때 'qna_id'로 표시됨
+    // data-current-order는 문의 일자의 실제 정렬 방향을 나타냄
+    // currentSort가 'qna_id'이거나 빈 문자열이면 실제로는 'created_at'으로 정렬된 상태
+    if (currentSort === 'qna_id' || currentSort === '') {
+      // 문의 일자 정렬 상태에서 No. 클릭: 반대 방향으로 토글
+      // currentOrder는 문의 일자의 실제 정렬 방향
+      // currentOrder가 'desc'면 문의 일자는 내림차순, No.는 오름차순 → 토글하면 문의 일자는 오름차순, No.는 내림차순
+      // currentOrder가 'asc'면 문의 일자는 오름차순, No.는 내림차순 → 토글하면 문의 일자는 내림차순, No.는 오름차순
+      const actualOrder = (currentSort === 'qna_id' && currentOrder) ? currentOrder : 'desc'; // 기본 상태는 desc
+      newOrder = actualOrder === 'desc' ? 'asc' : 'desc';
+    } else {
+      // 다른 정렬 상태에서 No. 클릭: 기본적으로 문의 일자 오름차순 (No.는 6부터 시작)
+      newOrder = 'asc'; // 문의 일자 오름차순 = No. 내림차순
+    }
+    
+    // 현재 스크롤 위치 저장
+    const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+    
+    // FormData 생성
+    const formData = new FormData();
+    
+    // CSRF 토큰 추가
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                      document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                      '';
+    if (csrfToken) {
+      formData.append('csrfmiddlewaretoken', csrfToken);
+    }
+    
+    // 정렬 파라미터 추가 (문의 일자로 정렬, 방향은 반대)
+    formData.append('sort', sortField);
+    formData.append('order', newOrder);
+    
+    // 검색 키워드 유지 (있는 경우)
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput && searchInput.value) {
+      formData.append('search', searchInput.value);
+    }
+    
+    // AJAX 요청
+    fetch(window.location.pathname, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+      }
+    })
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      return response.json();
+    })
+    .then(data => {
+      // 테이블 업데이트
+      const tableContainer = document.querySelector('.table-container');
+      if (tableContainer && data.table_html) {
+        tableContainer.outerHTML = data.table_html;
+      }
+      
+      // 페이지네이션 업데이트
+      const paginationContainer = document.querySelector('.pagination');
+      if (paginationContainer && data.pagination_html) {
+        paginationContainer.outerHTML = data.pagination_html;
+      } else if (!paginationContainer && data.pagination_html) {
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer) {
+          tableContainer.insertAdjacentHTML('afterend', data.pagination_html);
+        }
+      } else if (paginationContainer && !data.pagination_html) {
+        paginationContainer.remove();
+      }
+      
+      // 스크롤 위치 복원
+      window.scrollTo(0, currentScrollPosition);
+      
+      // 이벤트 리스너 재연결
+      attachTableRowListeners();
+      attachSortListeners();
+      
+      // 페이지네이션 링크에 이벤트 리스너 연결
+      const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+      paginationLinks.forEach(link => {
+        link.addEventListener('click', handlePaginationClick);
+      });
+    })
+    .catch(error => {
+      console.error('정렬 요청 실패:', error);
+      window.location.reload();
+    });
+    
+    return; // No. 컬럼 처리 완료, 함수 종료
+  }
+  
+  // 정렬 방향 결정: 같은 필드를 클릭하면 토글, 다른 필드를 클릭하면 내림차순
+  let newOrder = 'desc';
+  if (sortField === currentSort) {
+    newOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+  }
+  
+  // 현재 스크롤 위치 저장
+  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  
+  // FormData 생성
+  const formData = new FormData();
+  
+  // CSRF 토큰 추가
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
+  if (csrfToken) {
+    formData.append('csrfmiddlewaretoken', csrfToken);
+  }
+  
+  // 정렬 파라미터 추가
+  formData.append('sort', sortField);
+  formData.append('order', newOrder);
+  
+  // 검색 키워드 유지 (있는 경우)
+  const searchInput = document.querySelector('.search-input');
+  if (searchInput && searchInput.value) {
+    formData.append('search', searchInput.value);
+  }
+  
+  // AJAX 요청
+  fetch(window.location.pathname, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // 테이블 업데이트
+    const tableContainer = document.querySelector('.table-container');
+    if (tableContainer && data.table_html) {
+      tableContainer.outerHTML = data.table_html;
+    }
+    
+    // 페이지네이션 업데이트
+    const paginationContainer = document.querySelector('.pagination');
+    if (paginationContainer && data.pagination_html) {
+      paginationContainer.outerHTML = data.pagination_html;
+    } else if (!paginationContainer && data.pagination_html) {
+      // 페이지네이션이 없었는데 생긴 경우
+      const tableContainer = document.querySelector('.table-container');
+      if (tableContainer) {
+        tableContainer.insertAdjacentHTML('afterend', data.pagination_html);
+      }
+    } else if (paginationContainer && !data.pagination_html) {
+      // 페이지네이션이 있었는데 사라진 경우
+      paginationContainer.remove();
+    }
+    
+    // 스크롤 위치 복원
+    window.scrollTo(0, currentScrollPosition);
+    
+    // 이벤트 리스너 재연결
+    attachTableRowListeners();
+    attachSortListeners();
+    
+    // 페이지네이션 링크에 이벤트 리스너 연결
+    const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+    paginationLinks.forEach(link => {
+      link.addEventListener('click', handlePaginationClick);
+    });
+  })
+  .catch(error => {
+    console.error('정렬 요청 실패:', error);
+    // 에러 발생 시 전체 페이지 새로고침
+    window.location.reload();
+  });
+}
+
+/**
+ * 정렬 링크 이벤트 연결 함수
+ * 
+ * 목적: 정렬 링크에 클릭 이벤트 리스너 연결
+ */
+function attachSortListeners() {
+  const sortLinks = document.querySelectorAll('.sort-link');
+  sortLinks.forEach(link => {
+    link.removeEventListener('click', link._sortHandler);
+    link._sortHandler = function(e) {
+      handleSortClick(e);
+    };
+    link.addEventListener('click', link._sortHandler);
+  });
+}
+
+/**
+ * 페이지네이션 AJAX 처리
+ * 
+ * 목적: 페이지네이션 링크를 AJAX로 처리하여 테이블만 업데이트
  */
 function handlePaginationClick(e) {
   e.preventDefault();
   const page = e.target.getAttribute('data-page');
   const search = e.target.getAttribute('data-search') || '';
+  const sort = e.target.getAttribute('data-sort') || '';
+  const order = e.target.getAttribute('data-order') || '';
   
   if (!page) return;
   
-  // POST 방식으로 폼 생성 및 제출
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = window.location.pathname;
+  // 현재 스크롤 위치 저장
+  const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+  
+  // FormData 생성
+  const formData = new FormData();
   
   // CSRF 토큰 추가
-  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+  const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || 
+                    document.querySelector('input[name="csrfmiddlewaretoken"]')?.value ||
+                    '';
   if (csrfToken) {
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'csrfmiddlewaretoken';
-    csrfInput.value = csrfToken.value;
-    form.appendChild(csrfInput);
+    formData.append('csrfmiddlewaretoken', csrfToken);
+  }
+  
+  // 페이지 번호 추가
+  formData.append('page', page);
+  
+  // 검색 키워드 추가
+  if (search) {
+    formData.append('search', search);
   } else {
-    // 검색 폼에서 CSRF 토큰 가져오기
-    const searchForm = document.querySelector('.search-form');
-    if (searchForm) {
-      const searchCsrf = searchForm.querySelector('[name=csrfmiddlewaretoken]');
-      if (searchCsrf) {
-        const csrfInput = document.createElement('input');
-        csrfInput.type = 'hidden';
-        csrfInput.name = 'csrfmiddlewaretoken';
-        csrfInput.value = searchCsrf.value;
-        form.appendChild(csrfInput);
+    // 검색 입력 필드에서 가져오기
+    const searchInput = document.querySelector('.search-input');
+    if (searchInput && searchInput.value) {
+      formData.append('search', searchInput.value);
+    }
+  }
+  
+  // 정렬 파라미터 추가
+  if (sort) {
+    formData.append('sort', sort);
+  } else {
+    // 현재 정렬 상태에서 가져오기
+    const currentSortLink = document.querySelector('.sort-link[data-current-sort]');
+    if (currentSortLink) {
+      const sortField = currentSortLink.getAttribute('data-current-sort');
+      const sortOrder = currentSortLink.getAttribute('data-current-order');
+      if (sortField) {
+        formData.append('sort', sortField);
+      }
+      if (sortOrder) {
+        formData.append('order', sortOrder);
       }
     }
   }
   
-  // 페이지 번호 추가
-  const pageInput = document.createElement('input');
-  pageInput.type = 'hidden';
-  pageInput.name = 'page';
-  pageInput.value = page;
-  form.appendChild(pageInput);
-  
-  // 검색 키워드 추가
-  if (search) {
-    const searchInput = document.createElement('input');
-    searchInput.type = 'hidden';
-    searchInput.name = 'search';
-    searchInput.value = search;
-    form.appendChild(searchInput);
+  if (order) {
+    formData.append('order', order);
   }
   
-  document.body.appendChild(form);
-  form.submit();
+  // AJAX 요청
+  fetch(window.location.pathname, {
+    method: 'POST',
+    body: formData,
+    headers: {
+      'X-Requested-With': 'XMLHttpRequest',
+    }
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(data => {
+    // 테이블 업데이트
+    const tableContainer = document.querySelector('.table-container');
+    if (tableContainer && data.table_html) {
+      tableContainer.outerHTML = data.table_html;
+    }
+    
+    // 페이지네이션 업데이트
+    const paginationContainer = document.querySelector('.pagination');
+    if (paginationContainer && data.pagination_html) {
+      paginationContainer.outerHTML = data.pagination_html;
+    } else if (!paginationContainer && data.pagination_html) {
+      // 페이지네이션이 없었는데 생긴 경우
+      const tableContainer = document.querySelector('.table-container');
+      if (tableContainer) {
+        tableContainer.insertAdjacentHTML('afterend', data.pagination_html);
+      }
+    } else if (paginationContainer && !data.pagination_html) {
+      // 페이지네이션이 있었는데 사라진 경우
+      paginationContainer.remove();
+    }
+    
+    // 스크롤 위치 복원
+    window.scrollTo(0, currentScrollPosition);
+    
+    // 이벤트 리스너 재연결
+    attachTableRowListeners();
+    attachSortListeners();
+    
+    // 페이지네이션 링크에 이벤트 리스너 연결
+    const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+    paginationLinks.forEach(link => {
+      link.addEventListener('click', handlePaginationClick);
+    });
+  })
+  .catch(error => {
+    console.error('페이지네이션 요청 실패:', error);
+    // 에러 발생 시 전체 페이지 새로고침
+    window.location.reload();
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners();
+  attachSortListeners();
   
   // 페이지네이션 링크에 이벤트 리스너 연결
   const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
   paginationLinks.forEach(link => {
     link.addEventListener('click', handlePaginationClick);
   });
+  
+  // 검색 폼 제출 시 AJAX 처리
+  const searchForm = document.querySelector('.search-form');
+  if (searchForm) {
+    searchForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // 현재 스크롤 위치 저장
+      const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+      
+      // FormData 생성
+      const formData = new FormData(searchForm);
+      
+      // 정렬 파라미터 유지
+      const currentSortLink = document.querySelector('.sort-link[data-current-sort]');
+      if (currentSortLink) {
+        const sortField = currentSortLink.getAttribute('data-current-sort');
+        const sortOrder = currentSortLink.getAttribute('data-current-order');
+        if (sortField) {
+          formData.append('sort', sortField);
+        }
+        if (sortOrder) {
+          formData.append('order', sortOrder);
+        }
+      }
+      
+      // AJAX 요청
+      fetch(window.location.pathname, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+        }
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 테이블 업데이트
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer && data.table_html) {
+          tableContainer.outerHTML = data.table_html;
+        }
+        
+        // 페이지네이션 업데이트
+        const paginationContainer = document.querySelector('.pagination');
+        if (paginationContainer && data.pagination_html) {
+          paginationContainer.outerHTML = data.pagination_html;
+        } else if (!paginationContainer && data.pagination_html) {
+          // 페이지네이션이 없었는데 생긴 경우
+          const tableContainer = document.querySelector('.table-container');
+          if (tableContainer) {
+            tableContainer.insertAdjacentHTML('afterend', data.pagination_html);
+          }
+        } else if (paginationContainer && !data.pagination_html) {
+          // 페이지네이션이 있었는데 사라진 경우
+          paginationContainer.remove();
+        }
+        
+        // 스크롤 위치 복원
+        window.scrollTo(0, currentScrollPosition);
+        
+        // 이벤트 리스너 재연결
+        attachTableRowListeners();
+        attachSortListeners();
+        
+        // 페이지네이션 링크에 이벤트 리스너 연결
+        const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');
+        paginationLinks.forEach(link => {
+          link.addEventListener('click', handlePaginationClick);
+        });
+      })
+      .catch(error => {
+        console.error('검색 요청 실패:', error);
+        // 에러 발생 시 전체 페이지 새로고침
+        searchForm.submit();
+      });
+    });
+  }
 });
 
 
