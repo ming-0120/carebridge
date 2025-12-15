@@ -74,6 +74,17 @@ def get_common_header_context(request):
         "doctor_name": doctor_name,
     }
 
+
+def _ensure_doctor_logged_in(request):
+    """
+    의사 로그인 세션이 없으면 로그인 페이지로 리다이렉트.
+    """
+    user_id = request.session.get("user_id")
+    role = request.session.get("role")
+    if not user_id or role != "DOCTOR":
+        return redirect(f"/accounts/login/?next={request.path}")
+    return None
+
 @require_GET
 def api_patient_summary(request):
     patient_id = request.GET.get("patient_id")
@@ -93,26 +104,53 @@ def api_patient_summary(request):
     # -----------------------------------------
     # 1) 최근 방문 기록 1건
     # -----------------------------------------
-    recent_record = (
+    hos_id = None
+    try:
+        current_user_id = request.session.get("user_id")
+        current_doctor = Doctors.objects.get(user_id=current_user_id)
+        hos_id = current_doctor.hos_id
+    except Exception:
+        hos_id = None
+
+    recent_qs = (
         MedicalRecord.objects
         .filter(user_id=patient_id)
         .select_related("doctor", "doctor__user", "doctor__dep")
         .order_by("-record_datetime")
-        .first()
     )
+    if hos_id:
+        recent_record = recent_qs.filter(hos_id=hos_id).first() or recent_qs.first()
+    else:
+        recent_record = recent_qs.first()
 
     recent_visit = None
     recent_dept = None
     recent_doctor = None
 
     if recent_record:
-        recent_visit = recent_record.record_datetime.strftime("%Y년 %m월 %d일 %H시 %M분")
+        recent_visit = timezone.localtime(recent_record.record_datetime).strftime("%Y년 %m월 %d일 %H시 %M분")
 
         if recent_record.doctor and recent_record.doctor.dep:
             recent_dept = recent_record.doctor.dep.dep_name
 
         if recent_record.doctor and recent_record.doctor.user:
             recent_doctor = recent_record.doctor.user.name
+    else:
+        try:
+            reservation = (
+                Reservations.objects
+                .filter(user_id=patient_id, slot__doctor__hos_id=hos_id)
+                .select_related("slot", "slot__doctor", "slot__doctor__user", "slot__doctor__dep")
+                .order_by("-slot__slot_date", "-slot__start_time")
+                .first()
+            )
+            if reservation and reservation.slot and reservation.slot.doctor:
+                if reservation.slot.doctor.dep:
+                    recent_dept = reservation.slot.doctor.dep.dep_name
+                if reservation.slot.doctor.user:
+                    recent_doctor = reservation.slot.doctor.user.name
+        except Exception:
+            pass
 
     # -----------------------------------------
     # 2) 최근 진료 1건
@@ -121,7 +159,7 @@ def api_patient_summary(request):
     if recent_record:
         recent_consult = {
             "record_type": recent_record.record_type,
-            "record_datetime": recent_record.record_datetime.strftime("%Y년 %m월 %d일 %H시 %M분"),
+            "record_datetime": timezone.localtime(recent_record.record_datetime).strftime("%Y년 %m월 %d일 %H시 %M분"),
             "subjective": recent_record.subjective,
             "objective": recent_record.objective,
             "assessment": recent_record.assessment,
@@ -421,6 +459,10 @@ def hospital_staff_dashboard(request):
 # 진료기록 작성 화면
 # ---------------------------------------------------------
 def medical_record_creation(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
     # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
 
@@ -432,6 +474,20 @@ def medical_record_creation(request):
     # 3) 화면용 파생 값 세팅
     #    주민번호 → 생년월일
     birth = extract_birth_date(patient.resident_reg_no)
+    if birth and isinstance(birth, str) and "-" in birth:
+        try:
+            y, m, d = birth.split("-")[:3]
+            birth_display = f"{y}년 {m}월 {d}일"
+        except Exception:
+            birth_display = birth
+    else:
+        birth_display = birth or "-"
+
+    gender_display = (
+        "남" if patient.gender == "M"
+        else "여" if patient.gender in ("F", "W")
+        else (patient.gender or "-")
+    )
     #    진료과 이름 (모델 구조에 따라 dep_name 사용)
     department = doctor.dep.dep_name if doctor.dep else ""
     #    의사 이름 (Users 테이블에 연결되어 있다고 가정)
@@ -443,6 +499,8 @@ def medical_record_creation(request):
         "patient": patient,
         "doctor": doctor,          # doctor.doctor_id, doctor.hos_id 템플릿에서 사용
         "birth": birth,
+        "birth_display": birth_display,
+        "gender_display": gender_display,
         "department": department,
         "doctor_name": doctor_name,
         "now": now_dt,
@@ -474,12 +532,22 @@ def lab_record_creation(request):
         except:
             print('error')
 
+        rrn_digits = "".join(ch for ch in str(getattr(user, "resident_reg_no", "") or "") if ch.isdigit())
+        if len(rrn_digits) >= 13:
+            resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:13]}"
+        elif len(rrn_digits) > 6:
+            resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:]}"
+        elif rrn_digits:
+            resident_reg_no_display = rrn_digits
+        else:
+            resident_reg_no_display = "-"
 
         context = {
             'user': user,
             'medical_record': medical_record,
             'order': order,
             'files': files,
+            'resident_reg_no_display': resident_reg_no_display,
         }
 
         return render(request, 'emr/lab_record_creation.html', context)
@@ -569,6 +637,10 @@ def lab_record_creation(request):
         })
 
 def medical_record_inquiry(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
     ctx = get_common_header_context(request)
 
     patient_id = request.GET.get("patient_id")
@@ -615,6 +687,15 @@ def medical_record_inquiry(request):
 
     visit_list = []
 
+    def _format_korean_datetime(dt):
+        if not dt:
+            return "-"
+        try:
+            local_dt = timezone.localtime(dt)
+        except Exception:
+            local_dt = dt
+        return local_dt.strftime("%Y년 %m월 %d일 %H시 %M분")
+
     for v in visits:
         visit_date = v.record_datetime.date()
         doctor_name = v.doctor.user.name if v.doctor and v.doctor.user else ""
@@ -638,6 +719,7 @@ def medical_record_inquiry(request):
                     "lab_nm": lab_obj.lab_nm,
                     "status": lab_obj.status,
                     "status_datetime": lab_obj.status_datetime,
+                    "status_datetime_display": _format_korean_datetime(lab_obj.status_datetime),
                     "specimen_cd": lab_obj.specimen_cd,
                     "requisition_note": getattr(lab_obj, "requisition_note", ""),
                     "attachments": attachments,
@@ -654,6 +736,7 @@ def medical_record_inquiry(request):
                 treat_list.append({
                     "procedure_name": treat_obj.procedure_name,
                     "execution_datetime": treat_obj.execution_datetime,
+                    "execution_datetime_display": _format_korean_datetime(treat_obj.execution_datetime),
                     "status": treat_obj.status,
                     "result_notes": treat_obj.result_notes,
                 })
@@ -673,6 +756,7 @@ def medical_record_inquiry(request):
             "record_id": v.medical_record_id,
             "date": visit_date,
             "datetime": v.record_datetime.strftime("%Y-%m-%d %H:%M"),
+            "datetime_display": _format_korean_datetime(v.record_datetime),
             "doctor": doctor_name,
 
             "consult": {
@@ -704,6 +788,10 @@ def medical_record_inquiry(request):
     return render(request, "emr/medical_record_inquiry.html", ctx)
 
 def patient_search_list(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
     ctx = get_common_header_context(request)
 
     keyword = request.GET.get("searchQuery", "").strip()
@@ -736,17 +824,35 @@ def patient_search_list(request):
             if len(rrn) >= 8:
                 dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
 
-            recent_dt = (
+            recent_record = (
                 MedicalRecord.objects
                 .filter(user_id=p.user_id, hos_id=hos_id)
+                .select_related("doctor", "doctor__user")
                 .order_by("-record_datetime")
-                .values_list("record_datetime", flat=True)
                 .first()
             )
-            if recent_dt:
-                recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+
+            recent_str = (
+                timezone.localtime(recent_record.record_datetime).strftime("%Y년 %m월 %d일 %H시 %M분")
+                if recent_record else None
+            )
+
+            recent_doctor = None
+            if recent_record and recent_record.doctor and recent_record.doctor.user:
+                recent_doctor = recent_record.doctor.user.name
             else:
-                recent_str = None
+                try:
+                    reservation = (
+                        Reservations.objects
+                        .filter(user_id=p.user_id, slot__doctor__hos_id=hos_id)
+                        .select_related("slot", "slot__doctor", "slot__doctor__user")
+                        .order_by("-slot__slot_date", "-slot__start_time")
+                        .first()
+                    )
+                    if reservation and reservation.slot and reservation.slot.doctor and reservation.slot.doctor.user:
+                        recent_doctor = reservation.slot.doctor.user.name
+                except Exception:
+                    recent_doctor = None
 
             results.append({
                 "user_id": p.user_id,
@@ -754,16 +860,25 @@ def patient_search_list(request):
                 "gender": p.gender,
                 "birth_date": dob,
                 "recent_visit": recent_str,
+                "recent_doctor": recent_doctor,
             })
         return render(request, "emr/patient_search_list.html", {"patients": results})
     except Exception as e:
         return render(request, "emr/patient_search_list.html", {})
 
 def today_patient_list(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
     ctx = get_common_header_context(request)
     return render(request, "emr/today_patient_list.html", ctx)
 
 def view_previous_medical_records(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
     ctx = get_common_header_context(request)
 
     patient_id = request.GET.get("patient_id")
@@ -984,10 +1099,21 @@ def treatment_record_verification(request):
         except:
             print('error')
 
+        rrn_digits = "".join(ch for ch in str(getattr(user, "resident_reg_no", "") or "") if ch.isdigit())
+        if len(rrn_digits) >= 13:
+            resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:13]}"
+        elif len(rrn_digits) > 6:
+            resident_reg_no_display = f"{rrn_digits[:6]}-{rrn_digits[6:]}"
+        elif rrn_digits:
+            resident_reg_no_display = rrn_digits
+        else:
+            resident_reg_no_display = "-"
+
         context = {
             'user': user,
             'medical_record': medical_record,
             'order': order,
+            'resident_reg_no_display': resident_reg_no_display,
         }
 
         return render(request, "emr/treatment_record_verification.html", context)
@@ -1426,6 +1552,12 @@ def treatment_data_search(request):
 # 환자 검색
 # ---------------------------------------------------------
 def patient_search_list_view(request):
+    guard = _ensure_doctor_logged_in(request)
+    if guard:
+        return guard
+
+    keyword = (request.GET.get("keyword", "") or request.GET.get("searchQuery", "")).strip()
+
     user_id = request.session.get('user_id')
 
     try:
@@ -1440,21 +1572,44 @@ def patient_search_list_view(request):
         Q(medicalrecord__hos_id=hos_id)
     ).distinct()
 
+    if keyword:
+        patients_qs = patients_qs.filter(
+            Q(name__icontains=keyword) |
+            Q(resident_reg_no__startswith=keyword)
+        )
+
     results = []
     for p in patients_qs:
         rrn = p.resident_reg_no or ""
 
-        recent_dt = (
+        recent_record = (
             MedicalRecord.objects
             .filter(user_id=p.user_id, hos_id=hos_id)
+            .select_related("doctor", "doctor__user")
             .order_by("-record_datetime")
-            .values_list("record_datetime", flat=True)
             .first()
         )
-        if recent_dt:
-            recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+        recent_str = (
+            timezone.localtime(recent_record.record_datetime).strftime("%Y년 %m월 %d일 %H시 %M분")
+            if recent_record else None
+        )
+
+        recent_doctor = None
+        if recent_record and recent_record.doctor and recent_record.doctor.user:
+            recent_doctor = recent_record.doctor.user.name
         else:
-            recent_str = None
+            try:
+                reservation = (
+                    Reservations.objects
+                    .filter(user_id=p.user_id, slot__doctor__hos_id=hos_id)
+                    .select_related("slot", "slot__doctor", "slot__doctor__user")
+                    .order_by("-slot__slot_date", "-slot__start_time")
+                    .first()
+                )
+                if reservation and reservation.slot and reservation.slot.doctor and reservation.slot.doctor.user:
+                    recent_doctor = reservation.slot.doctor.user.name
+            except Exception:
+                recent_doctor = None
 
         results.append({
             "user_id": p.user_id,
@@ -1463,6 +1618,7 @@ def patient_search_list_view(request):
             # 템플릿/JS에서 주민번호를 받아 생년월일로 변환하므로 그대로 전달
             "birth_date": rrn,
             "recent_visit": recent_str,
+            "recent_doctor": recent_doctor,
         })
 
     page_number = request.GET.get("page")
@@ -1476,6 +1632,7 @@ def patient_search_list_view(request):
             "patients": page_obj,
             "page_obj": page_obj,
             "paginator": paginator,
+            "keyword": keyword,
         },
     )
 
@@ -1512,17 +1669,34 @@ def api_search_patient(request):
             if len(rrn) >= 8:
                 dob = f"{rrn[0:4]}-{rrn[4:6]}-{rrn[6:8]}"
 
-            recent_dt = (
+            recent_record = (
                 MedicalRecord.objects
                 .filter(user_id=p.user_id, hos_id=hos_id)
+                .select_related("doctor", "doctor__user")
                 .order_by("-record_datetime")
-                .values_list("record_datetime", flat=True)
                 .first()
             )
-            if recent_dt:
-                recent_str = timezone.localtime(recent_dt).strftime("%Y년 %m월 %d일 %H시 %M분")
+            recent_str = (
+                timezone.localtime(recent_record.record_datetime).strftime("%Y년 %m월 %d일 %H시 %M분")
+                if recent_record else None
+            )
+
+            recent_doctor = None
+            if recent_record and recent_record.doctor and recent_record.doctor.user:
+                recent_doctor = recent_record.doctor.user.name
             else:
-                recent_str = None
+                try:
+                    reservation = (
+                        Reservations.objects
+                        .filter(user_id=p.user_id, slot__doctor__hos_id=hos_id)
+                        .select_related("slot", "slot__doctor", "slot__doctor__user")
+                        .order_by("-slot__slot_date", "-slot__start_time")
+                        .first()
+                    )
+                    if reservation and reservation.slot and reservation.slot.doctor and reservation.slot.doctor.user:
+                        recent_doctor = reservation.slot.doctor.user.name
+                except Exception:
+                    recent_doctor = None
 
             results.append({
                 "user_id": p.user_id,
@@ -1530,6 +1704,7 @@ def api_search_patient(request):
                 "gender": p.gender,
                 "birth_date": dob,
                 "recent_visit": recent_str,
+                "recent_doctor": recent_doctor,
             })
 
         return JsonResponse({"results": results})

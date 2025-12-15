@@ -24,7 +24,7 @@ function loadRecordList() {
         item.dataset.id = rec.medical_record_id;
 
         item.innerHTML = `
-            ${formatDate(rec.record_datetime)}
+            ${formatKoreanDateTime(rec.record_datetime)}
             <br>
             <span style="color:#555;">진료유형: ${rec.record_type}</span>
         `;
@@ -171,6 +171,17 @@ function buildDateString(dateObj) {
     const hour = String(dateObj.getHours()).padStart(2, "0");
     const minute = String(dateObj.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function formatKoreanDateTime(dt) {
+    const dateObj = toDateObject(dt);
+    if (!dateObj) return "";
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const hour = String(dateObj.getHours()).padStart(2, "0");
+    const minute = String(dateObj.getMinutes()).padStart(2, "0");
+    return `${year}년 ${month}월 ${day}일 ${hour}시 ${minute}분`;
 }
 
 function formatPrescriptionEnd(startDt, endDt) {

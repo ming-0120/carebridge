@@ -61,12 +61,12 @@
                 <div class="level-3-detail"
                     onclick="showDetail(this)"
                     data-type="진료기록"
-                    data-date="{{ v.datetime }}"
+                    data-date="{{ v.datetime_display }}"
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ v.consult.type }}"
                     data-content="{{ v.consult.content }}"
                     data-status="완료">
-                    - {{ v.consult.type }} / {{ v.datetime }}
+                    - {{ v.consult.type }} / {{ v.datetime_display }}
                 </div>
             </div>
             {% endif %}
@@ -83,13 +83,13 @@
                 <div class="level-3-detail"
                     onclick="showDetail(this)"
                     data-type="검사"
-                    data-date="{{ lab.status_datetime }}"
+                    data-date="{{ lab.status_datetime_display }}"
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ lab.lab_nm }}"
                     data-content="{{ lab.specimen_cd }}"
                     data-status="{{ lab.status }}"
                     data-attachments="{{ lab.attachments_json|default:'[]'|escape }}">
-                    - {{ lab.lab_nm }} / {{ lab.status }}
+                    - {{ lab.lab_nm }} / {{ lab.status }} / {{ lab.status_datetime_display }}
                 </div>
                 {% endfor %}
             </div>
@@ -107,12 +107,12 @@
                 <div class="level-3-detail"
                     onclick="showDetail(this)"
                     data-type="처방"
-                    data-date="{{ v.datetime }}"
+                    data-date="{{ v.datetime_display }}"
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ p.order_name }}"
                     data-content="{{ p.dose }} / {{ p.frequency }}"
                     data-status="처방">
-                    - {{ p.order_name }} / {{ p.dose }} / {{ p.frequency }}
+                    - {{ p.order_name }} / {{ p.dose }} / {{ p.frequency }} / {{ v.datetime_display }}
                 </div>
                 {% endfor %}
             </div>
@@ -130,12 +130,12 @@
                 <div class="level-3-detail"
                     onclick="showDetail(this)"
                     data-type="치료"
-                    data-date="{{ tr.execution_datetime }}"
+                    data-date="{{ tr.execution_datetime_display }}"
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ tr.procedure_name }}"
                     data-content="{{ tr.result_notes }}"
                     data-status="{{ tr.status }}">
-                    - {{ tr.procedure_name }} / {{ tr.status }}
+                    - {{ tr.procedure_name }} / {{ tr.status }} / {{ tr.execution_datetime_display }}
                 </div>
                 {% endfor %}
             </div>

@@ -215,6 +215,12 @@ def profile_edit(request):
                 doctor.profil_url = saved_path  # 문자열 저장
                 doctor.save()
 
+        user.save()
+
+        if is_doctor:
+            return redirect("/mstaff/doctor_dashboard/")
+        return redirect("profile_edit")
+
     # --------------------------
     # GET: 이메일 분리
     # --------------------------

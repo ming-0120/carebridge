@@ -15,7 +15,7 @@
         <h2>환자 조회 리스트</h2>
         
         <div class="card search-area">
-            <input type="text" id="keyword" placeholder="검색어를 입력하세요 (이름 또는 생년월일)">
+            <input type="text" id="keyword" placeholder="검색어를 입력하세요 (이름 또는 생년월일)" value="{{ keyword|default:'' }}">
             <button onclick="performSearch()">검색</button>
         </div>
 
@@ -36,10 +36,11 @@
                     <tr data-patient-id="{{ p.user_id }}"
                         data-gender="{{ p.gender }}"
                         data-birth="{{ p.birth_date }}"
+                        data-doctor="{{ p.recent_doctor|default_if_none:'' }}"
                         data-recent="{{ p.recent_visit|default_if_none:'' }}">
                         <td>{{ forloop.counter }}</td>
                         <td>{{ p.name }}</td>
-                        <td>-</td>
+                        <td>{{ p.recent_doctor|default:"-" }}</td>
                         <td>{{ p.gender }}</td>
                         <td>{{ p.birth_date }}</td>
                         <td>{{ p.recent_visit|default:"-" }}</td>
@@ -112,6 +113,6 @@
 
     </div>
 
-    <script src="{% static 'emr/js/patient_search_list.js' %}"></script>
+    <script src="{% static 'emr/js/patient_search_list.js' %}?v=2"></script>
 </body>
 </html>

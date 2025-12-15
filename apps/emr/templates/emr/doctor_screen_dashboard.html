@@ -41,8 +41,12 @@
         <div class="card doctor-profile">
             <h3>나의 정보</h3>
             <div class="profile-content">
-                {% if doctor.profil_url != None %}
-                    <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                {% if doctor.profil_url %}
+                    {% if doctor.profil_url|slice:":4" == "http" %}
+                        <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% else %}
+                        <img src="/media/{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% endif %}
                 {% else %}
                     <img src="{% static 'core/img/default_profile.png' %}" alt="의사 이미지">
                 {% endif %}

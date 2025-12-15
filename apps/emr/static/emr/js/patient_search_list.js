@@ -14,10 +14,12 @@ function applyRowFormatting(row) {
     const rawGender = row.dataset.gender || cells[3].textContent.trim();
     const rawBirth = row.dataset.birth || cells[4].textContent.trim();
     const rawRecent = row.dataset.recent || cells[5].textContent.trim();
+    const rawDoctor = row.dataset.doctor || cells[2].textContent.trim();
 
     cells[3].textContent = formatGender(rawGender);
     cells[4].textContent = formatBirth(rawBirth);
     cells[5].textContent = formatKoreanDateTime(rawRecent);
+    cells[2].textContent = rawDoctor && rawDoctor !== "-" ? rawDoctor : "-";
 }
 
 async function selectPatient(rowElement) {
@@ -81,8 +83,9 @@ function updateConsultDetails(consult) {
 async function performSearch() {
     const keyword = document.getElementById('keyword').value.trim();
 
+    // 검색어가 비어있으면 전체 목록(페이지네이션)으로 복귀
     if (!keyword) {
-        alert("검색어를 입력하세요.");
+        window.location.href = "/mstaff/patient_search_list/";
         return;
     }
 
@@ -107,11 +110,12 @@ async function performSearch() {
             tr.dataset.gender = p.gender || "";
             tr.dataset.birth = p.birth_date || "";
             tr.dataset.recent = p.recent_visit || "";
+            tr.dataset.doctor = p.recent_doctor || "";
 
             tr.innerHTML = `
                 <td>${index + 1}</td>
                 <td>${p.name || "-"}</td>
-                <td>-</td>
+                <td>${p.recent_doctor || "-"}</td>
                 <td>${p.gender || "-"}</td>
                 <td>${p.birth_date || "-"}</td>
                 <td>${p.recent_visit || "-"}</td>
