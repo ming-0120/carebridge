@@ -482,9 +482,6 @@ def find_password_view(request):
 
     matched = [u for u in candidates if normalize_rrn(u.resident_reg_no).startswith(birth_6)]
 
-    # 보안: 항상 같은 메시지
-    messages.success(request, "입력하신 정보로 계정이 확인되면 이메일로 재설정 링크를 전송했습니다.")
-
     if matched:
         user = matched[0]
 

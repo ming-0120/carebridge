@@ -298,7 +298,7 @@
         if (confirmLogin) {
           // 로그인 페이지로 이동 (현재 URL을 next 파라미터로 전달)
           const currentUrl = encodeURIComponent(window.location.href);
-          window.location.href = `{% url 'login' %}?next=${currentUrl}`;
+          window.location.href = `{% url 'accounts:login' %}?next=${currentUrl}`;
         }
         // 취소 시 아무것도 하지 않음 (현재 페이지 유지)
         return null;
