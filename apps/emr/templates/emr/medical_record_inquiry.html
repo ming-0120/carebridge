@@ -17,13 +17,13 @@
         <h2> 진료 기록 선택</h2>
         
         <div class="card">
-            <h3>환자 상세 정보</h3>
+            <h3>환자 정보</h3>
             <div class="patient-detail-card">
                 <div><strong>환자명:</strong> {{ patient.name }}</div>
                 <div><strong>환자번호:</strong> P{{ patient.user_id|add:"0000000" }}</div>
-                <div><strong>성별/나이:</strong> {{ patient.gender }} / {{ age }}세</div>
+                <div><strong>성별/나이:</strong> {{ gender_display }} / {{ age }}세</div>
 
-                <div><strong>주민번호:</strong> {{ patient.resident_reg_no }}</div>
+                <div><strong>주민번호:</strong> {{ resident_reg_no_display }}</div>
                 <div><strong>전화번호:</strong> {{ patient.phone }}</div>
                 <div><strong>최종 진료일:</strong> {{ recent_visit_date }}</div>
             </div>
@@ -35,14 +35,16 @@
 
             <div class="visit-box-grid">
 
-    {% for v in visits %}
+    {% for column in visit_columns %}
+    <div class="visit-column">
+    {% for v in column %}
     <div class="visit-box-wrapper">
 
         <!-- 방문 헤더 -->
         <div class="visit-box-header"
              aria-expanded="false"
              onclick="toggleAccordionBox(this, 'visit-{{ v.record_id }}')">
-            <span>[{{ v.visit_type }}] {{ v.date }}</span>
+            <span>{{ v.date }}</span>
             <span class="toggle-icon">▼</span>
         </div>
 
@@ -85,7 +87,8 @@
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ lab.lab_nm }}"
                     data-content="{{ lab.specimen_cd }}"
-                    data-status="{{ lab.status }}">
+                    data-status="{{ lab.status }}"
+                    data-attachments="{{ lab.attachments_json|default:'[]'|escape }}">
                     - {{ lab.lab_nm }} / {{ lab.status }}
                 </div>
                 {% endfor %}
@@ -142,8 +145,10 @@
         </div>
     </div>
     {% endfor %}
+    </div>
+    {% endfor %}
 
-</div>
+            </div>
   
 
         <div class="card" id="detailView" style="display: none;">

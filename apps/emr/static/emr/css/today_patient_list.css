@@ -69,10 +69,12 @@ h2 {
 }
 
 .patient-list-container {
-    height: 400px;
-    overflow-y: auto;
     border: 1px solid #dee2e6;
     border-radius: 4px;
+    min-height: 400px;
+    padding-bottom: 10px;
+    max-height: none;
+    overflow: visible;
 }
 
 .patient-list-table {
@@ -151,4 +153,15 @@ h2 {
 .btn-history {
     background: #6c757d;
     color: white;
+}
+
+/* 테이블 헤더/바디 정렬 완전 통일 */
+.patient-list-table th,
+.patient-list-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.patient-list-container {
+    scrollbar-gutter: stable;
 }

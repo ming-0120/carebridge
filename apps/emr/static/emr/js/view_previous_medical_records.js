@@ -48,12 +48,22 @@ function selectRecord(selectedItem, record) {
 
     document.getElementById("soapDetail").innerHTML = `
         <div class="read-only-text">
-            <pre>
-<strong>[S]</strong> ${record.subjective || ''}
-<strong>[O]</strong> ${record.objective || ''}
-<strong>[A]</strong> ${record.assessment || ''}
-<strong>[P]</strong> ${record.plan || ''}
-            </pre>
+            <div class="soap-section">
+                <strong>[S]</strong>
+                <div class="soap-section-text">${record.subjective || ''}</div>
+            </div>
+            <div class="soap-section">
+                <strong>[O]</strong>
+                <div class="soap-section-text">${record.objective || ''}</div>
+            </div>
+            <div class="soap-section">
+                <strong>[A]</strong>
+                <div class="soap-section-text">${record.assessment || ''}</div>
+            </div>
+            <div class="soap-section">
+                <strong>[P]</strong>
+                <div class="soap-section-text">${record.plan || ''}</div>
+            </div>
         </div>
     `;
 
@@ -121,9 +131,62 @@ function updateOrderSummaries(record) {
 // 4) 날짜 포맷
 // ---------------------------------------------
 function formatDate(dt) {
-    if (!dt) return "";
-    if (typeof dt !== "string") return dt;
-    return dt.replace("T", " ").slice(0, 16);
+    const dateObj = toDateObject(dt);
+    if (!dateObj) return "";
+    return buildDateString(dateObj);
+}
+
+function formatCompletionDate(dt) {
+    const dateObj = toDateObject(dt);
+    if (!dateObj) return "";
+    const adjusted = new Date(dateObj.getTime());
+    adjusted.setHours(adjusted.getHours() + 1);
+    adjusted.setMinutes(0, 0, 0);
+    return buildDateString(adjusted);
+}
+
+function toDateObject(dt) {
+    if (!dt) return null;
+    if (dt instanceof Date) return dt;
+
+    let normalized = dt.toString().trim();
+    if (normalized.includes("T")) {
+        // leave as is
+    } else if (normalized.includes(" ")) {
+        normalized = normalized.replace(" ", "T");
+    }
+
+    let parsed = new Date(normalized);
+    if (isNaN(parsed)) {
+        parsed = new Date(dt);
+    }
+
+    return isNaN(parsed) ? null : parsed;
+}
+
+function buildDateString(dateObj) {
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const day = String(dateObj.getDate()).padStart(2, "0");
+    const hour = String(dateObj.getHours()).padStart(2, "0");
+    const minute = String(dateObj.getMinutes()).padStart(2, "0");
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function formatPrescriptionEnd(startDt, endDt) {
+    const start = toDateObject(startDt);
+    if (start) {
+        const adjusted = new Date(start.getTime());
+        adjusted.setHours(adjusted.getHours() + 1);
+        adjusted.setMinutes(0, 0, 0);
+        return buildDateString(adjusted);
+    }
+    const end = toDateObject(endDt);
+    if (end) {
+        end.setMinutes(0, 0, 0);
+        return buildDateString(end);
+    }
+    return "";
 }
 
 // ---------------------------------------------
@@ -141,7 +204,7 @@ function openDetailModal(type, record) {
         document.getElementById("treat_code").innerText = t.procedure_code || "";
         document.getElementById("treat_site").innerText = t.treatment_site || "";
         document.getElementById("treat_exec").innerText = formatDate(t.execution_datetime);
-        document.getElementById("treat_done").innerText = formatDate(t.completion_datetime);
+        document.getElementById("treat_done").innerText = formatCompletionDate(t.completion_datetime);
         document.getElementById("treat_status").innerText = t.status || "";
         document.getElementById("treat_note").innerText = t.result_notes || "";
         document.getElementById("treat_doctor").innerText = record.doctor_name || "";
@@ -164,6 +227,12 @@ function openDetailModal(type, record) {
         document.getElementById("lab_note").innerText = lb.requisition_note || "";
         document.getElementById("lab_doctor").innerText = record.doctor_name || "";
 
+        const attachments = Array.isArray(lb.attachments) ? lb.attachments : [];
+        const attachmentList = document.getElementById("lab_attachments");
+        attachmentList.innerHTML = attachments.length
+            ? attachments.map(a => `<li><a href="${a.url}" target="_blank" rel="noopener">${a.name || '파일'}</a></li>`).join("")
+            : `<li style="color:#777;">첨부 없음</li>`;
+
         document.getElementById('labDetailModal').style.visibility = 'visible';
         return;
     }
@@ -179,7 +248,7 @@ function openDetailModal(type, record) {
 
         document.getElementById("drug_order_dt").innerText = formatDate(p.order_datetime);
         document.getElementById("drug_start_dt").innerText = formatDate(p.start_datetime);
-        document.getElementById("drug_end_dt").innerText = formatDate(p.end_datetime);
+        document.getElementById("drug_end_dt").innerText = formatPrescriptionEnd(p.start_datetime, p.end_datetime);
         document.getElementById("drug_status").innerText = p.status || "";
         document.getElementById("drug_note").innerText = p.notes || "";
         document.getElementById("drug_doctor").innerText = record.doctor_name || "";
