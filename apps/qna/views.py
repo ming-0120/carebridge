@@ -43,19 +43,15 @@ def qna_list(request):
     # 1. 본인이 작성한 글 (Q(user=user)) - 공개/비공개 상관없이 모두 표시
     # 2. 다른 사람이 공개로 설정한 글 (Q(privacy='PUBLIC') & ~Q(user=user)) - 공개 글만 표시
     # 3. 더미데이터 표시 (Q(title__startswith='더미 문의')) - 관리자가 생성한 테스트 데이터
-    qnas = Qna.objects.select_related('user').filter(
-        Q(user=user) | 
-        (Q(privacy='PUBLIC') & ~Q(user=user)) | 
-        Q(title__startswith='더미 문의')
-    )
     
-    # 검색 필터 적용
-    if search_keyword:
-        qnas = qnas.filter(
-            Q(title__icontains=search_keyword) | 
-            Q(content__icontains=search_keyword)
+    qnas = (
+        Qna.objects.select_related('user')
+        .filter(
+            Q(user=user) |
+            (Q(privacy='PUBLIC') & ~Q(user=user))
         )
-    
+        .filter(user__withdrawal='0')  # Active 사용자만
+    )
     # 문의 일자 최신순으로 정렬
     # - created_at 기준 내림차순 (최신 문의가 먼저 표시)
     # - 답변 유무와 관계없이 문의 작성 시간 순으로 정렬
