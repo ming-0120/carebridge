@@ -29,6 +29,23 @@
   font-weight: 700;
   color: #1B3C73;
   text-decoration: none;
+  position: relative;
+  z-index: 1; /* 탭 메뉴보다 낮은 z-index */
+  align-items: flex-start; /* 로고를 위쪽 정렬 */
+  padding-top: 0; /* 상단 패딩 제거 */
+}
+
+/* 로고 링크 클릭 영역 제한 */
+.logo a {
+  display: inline-block;
+  line-height: 0; /* 이미지 하단 여백 제거 */
+  position: relative;
+  z-index: 1;
+  width: auto; /* 이미지 크기에 맞춤 */
+  height: auto; /* 이미지 크기에 맞춤 */
+  overflow: visible; /* 잘림 방지 */
+  max-width: 150px; /* 로고 이미지 최대 너비에 맞춤 (200px → 150px) */
+  vertical-align: top; /* 위쪽 정렬 */
 }
 
 .logo small {
@@ -135,7 +152,18 @@
   }
 
   .logo {
-    flex: 1 1 auto;
+    flex: 0 0 auto; /* flex 축소 방지, 자동 크기 */
+    max-width: 150px; /* 최대 너비 제한 (200px → 150px) */
+    overflow: visible; /* 잘림 방지 (hidden → visible) */
+    align-items: flex-start; /* 위쪽 정렬 */
+    padding-top: 0; /* 상단 패딩 제거 */
+  }
+  
+  /* 모바일에서 로고 링크 클릭 영역 제한 */
+  .logo a {
+    max-width: 150px; /* 로고 이미지 최대 너비에 맞춤 (200px → 150px) */
+    overflow: visible; /* 잘림 방지 (hidden → visible) */
+    vertical-align: top; /* 위쪽 정렬 */
   }
 
   .menu-toggle {
