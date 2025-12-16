@@ -113,3 +113,8 @@
       font-size: 14px;
       color: #6b7280;
     }
+.newsletter-updated {
+  margin: 4px 0 20px;
+  font-size: 13px;
+  color: #6b7280;              /* 뉴스 날짜 톤과 동일 */
+}

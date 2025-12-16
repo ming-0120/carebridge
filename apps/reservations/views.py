@@ -31,8 +31,11 @@ def haversine(lat1, lon1, lat2, lon2):
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def main_view(request):
+def main_view(request):        
     user_id = request.session.get("user_id")
+    if not user_id:
+            login_url = reverse("accounts:login")
+            return redirect(f"{login_url}?next={request.get_full_path()}")
     get_dept_code = request.GET.get("dept_id")
     active_dept = None
 
@@ -42,9 +45,7 @@ def main_view(request):
             active_dept = dept_obj.dep_name
         except Department.DoesNotExist:
             active_dept = None
-        if not user_id:
-            login_url = reverse("login")
-            return redirect(f"{login_url}?next={request.get_full_path()}")
+        
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
 
@@ -165,8 +166,8 @@ def reservation_page(request):
         d = str(data['locdate'])[6:8]
     
         holidays.append({
-            'date': f'{y}-{m}-{d}',          # YYYY-MM-DD
-            'name': data['dateName']         # "삼일절"
+            'date': f'{y}-{m}-{d}', 
+            'name': data['dateName'] 
         })
         context = {
             "hospital": hospital,

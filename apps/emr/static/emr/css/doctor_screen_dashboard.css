@@ -53,10 +53,10 @@ body {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.card:hover {
+/* .card:hover {
   transform: translateY(-1px);
   box-shadow: 0 0 14px rgba(0, 0, 0, 0.05);
-}
+} */
 
 .card h3 {
   color: var(--cb-text);

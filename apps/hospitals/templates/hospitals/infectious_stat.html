@@ -4,13 +4,17 @@
 <head>
   <meta charset="UTF-8" />
   <title>감염병 통계 대시보드</title>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
   <link rel="stylesheet" href="{% static 'hospitals/css/infectious_stat.css' %}">
   <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
-<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 <body class="has-footer">
-{% include "core/_header.html" %}
+  {% include "core/_header.html" %}
+
   <main class="page-wrapper">
     <div class="page-inner">
 
@@ -19,9 +23,11 @@
           <h1>감염병 통계 그래프</h1>
           <p>선택한 질병에 대해 성별 / 연령대별 발생 현황을 시각화합니다.</p>
         </div>
+
         <div class="summary-row-right">
           <span>질병 선택</span>
           <select id="diseaseSelect"></select>
+
           <div style="display:none;">
             <span>기준일</span>
             <input type="date" id="dateInput" value="2024-01-01" />
@@ -29,8 +35,9 @@
           </div>
         </div>
       </div>
+
       <div class="content-row">
-        <div class="graph-column">
+        <div class="graph-column" id="chartsCol">
           <section class="card">
             <div class="card-header">
               <div>
@@ -38,29 +45,35 @@
                 <span class="card-title">성별별 질병 분포</span>
               </div>
             </div>
+          
             <div class="card-subtitle" id="genderSummary">
               선택한 질병의 성별별 건수를 보여줍니다.
             </div>
+          
             <div class="card-body">
-                <canvas id="genderChart"></canvas>
+              <canvas id="genderChart"></canvas>
             </div>
           </section>
-          <section class="card"  id="ageSection">
+        
+          <section class="card" id="ageSection">
             <div class="card-header">
               <div>
                 <span class="badge-circle">2</span>
                 <span class="card-title">연령대별 질병 분포</span>
               </div>
             </div>
+          
             <div class="card-subtitle" id="ageSummary">
               선택한 질병의 연령대별 건수를 보여줍니다.
             </div>
+          
             <div class="card-body">
               <canvas id="ageChart" height="200"></canvas>
             </div>
           </section>
         </div>
-        <div class="info-column">
+      
+        <div class="info-column" id="summaryCol">
           <section class="card">
             <div class="card-header">
               <div>
@@ -68,26 +81,34 @@
                 <div class="disease-title" id="diseaseTitle">질병명을 선택하세요</div>
               </div>
             </div>
+          
             <div class="card-body">
-              <div class="disease-paragraph" id="diseaseDefinition">
-                상단에서 질병을 선택하면 해당 질병에 대한 기본 설명이 노출됩니다.
+              <div class="ai-summary">
+                <div class="ai-summary__content" id="diseaseDefinition">
+                  상단에서 질병을 선택하면 해당 질병에 대한 기본 설명이 노출됩니다.
+                </div>
               </div>
             </div>
           </section>
         </div>
+      
       </div>
+
+    </div>
   </main>
-  
+
   {% include "core/footer.html" %}
-  
+
   <script>
-  const rawDataStr = '{{ raw_data_json|escapejs }}';
-  const disDataStr = '{{ diseases_json|escapejs }}';
-  const rawData_json = JSON.parse(rawDataStr);
-  const disDataStr_json = JSON.parse(disDataStr);
-  window.INFECTIOUS_DATA = rawData_json;
-  window.DISEASE_INFO = disDataStr_json; 
-</script>
+    const rawDataStr = '{{ raw_data_json|escapejs }}';
+    const disDataStr = '{{ diseases_json|escapejs }}';
+    const rawData_json = JSON.parse(rawDataStr);
+    const disDataStr_json = JSON.parse(disDataStr);
+
+    window.INFECTIOUS_DATA = rawData_json;
+    window.DISEASE_INFO = disDataStr_json;
+  </script>
+
   <script src="{% static 'hospitals/js/infectious_stat.js' %}"></script>
 </body>
 </html>

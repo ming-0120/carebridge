@@ -228,14 +228,12 @@ body {
     box-shadow: 0 8px 18px rgba(63, 106, 227, 0.35);
 }
 
-.btn--primary:hover {
-    box-shadow: 0 12px 26px rgba(63, 106, 227, 0.45);
-}
-
 .btn--ghost {
+    text-decoration: none;
     background: #ffffff;
     color: var(--color-text-main);
     border-color: #d3d7e3;
+    text-align: center;
 }
 
 .btn--ghost:hover {
@@ -392,4 +390,21 @@ body {
 
 .login-help__sep {
   color: #bdbdbd;
+}
+.auth-message--success{
+  background:#e6f7ee;
+  border:1px solid #34c38f;
+  color:#1f7a55;
+}
+
+.auth-message--error{
+  background:#fdecea;
+  border:1px solid #f46a6a;
+  color:#a61d24;
+}
+
+.auth-message--info{
+  background:#eef5ff;
+  border:1px solid #4d8dff;
+  color:#1f4fa3;
 }

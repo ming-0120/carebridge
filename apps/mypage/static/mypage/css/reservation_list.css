@@ -24,10 +24,6 @@
     color: #333;
 }
 
-.mypage-sidebar li a.active {
-    background: #f2f4ff;
-    font-weight: 600;
-}
 
 .mypage-content {
     flex: 1;
@@ -42,7 +38,7 @@
 }
 
 .reservation-table-wrapper {
-    max-height: 400px;     /* 스크롤 영역 */
+    max-height: 400px;
     overflow-y: auto;
     border: 1px solid #ddd;
 }

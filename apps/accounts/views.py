@@ -327,6 +327,7 @@ def register_view(request):
         del request.session["kakao_tmp"]
 
     request.session["just_registered_role"] = role
+    messages.success(request, "회원가입이 완료되었습니다. 로그인 해주세요.")
     return redirect("accounts:login")
 
 
@@ -553,7 +554,7 @@ def reset_password_view(request):
         messages.error(request, "유효하지 않은 링크입니다.")
         return redirect("accounts:find_password")
 
-    # ✅ payload에서 uid/ts 꺼내기
+    # ✅ payload에서 uid/ts 꺼내
     uid = payload.get("uid")
     ts = payload.get("ts")
     if not uid or not ts:

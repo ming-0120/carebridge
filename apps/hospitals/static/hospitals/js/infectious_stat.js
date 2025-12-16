@@ -369,3 +369,61 @@ window.addEventListener("DOMContentLoaded", () => {
 
   applyFilter();
 });
+/* =========================================================
+   좌측(그래프) 높이에 우측(요약) 높이 동기화 + ageSection 자동 숨김
+   ========================================================= */
+
+function syncSummaryHeight() {
+  const chartsCol = document.getElementById("chartsCol");
+  const summaryCol = document.getElementById("summaryCol");
+  if (!chartsCol || !summaryCol) return;
+
+  const h = chartsCol.getBoundingClientRect().height;
+  summaryCol.style.height = `${Math.max(0, Math.floor(h))}px`;
+}
+
+function toggleAgeSectionByCanvas() {
+  const ageSection = document.getElementById("ageSection");
+  const ageCanvas = document.getElementById("ageChart");
+  if (!ageSection || !ageCanvas) return;
+
+  // canvas에 실제로 그려진 게 없거나(높이 0), 섹션을 숨기고 싶을 때 대비
+  // (차트 데이터 체크는 아래 훅에서 처리)
+  if (ageSection.style.display === "none") {
+    // 이미 숨김이면 그대로
+  }
+  syncSummaryHeight();
+}
+
+/* 페이지 로드/리사이즈 */
+window.addEventListener("load", () => {
+  syncSummaryHeight();
+  toggleAgeSectionByCanvas();
+});
+window.addEventListener("resize", syncSummaryHeight);
+
+/* 좌측 컬럼 높이 변경(막대그래프 표시/숨김 포함) 자동 감지 */
+(function attachResizeObserver() {
+  const chartsColEl = document.getElementById("chartsCol");
+  if (!chartsColEl) return;
+
+  const ro = new ResizeObserver(() => syncSummaryHeight());
+  ro.observe(chartsColEl);
+})();
+
+/* =========================================================
+   ✅ 너의 차트 업데이트 함수 끝에서 이것만 호출하면 됨:
+   - 연령대 데이터가 없으면 ageSection 숨기고 우측도 줄어듦
+   ========================================================= */
+function setAgeSectionVisibleByData(ageLabels, ageValues) {
+  const ageSection = document.getElementById("ageSection");
+  if (!ageSection) return;
+
+  const hasData =
+    Array.isArray(ageLabels) && ageLabels.length > 0 &&
+    Array.isArray(ageValues) && ageValues.length > 0 &&
+    ageValues.some(v => Number(v) > 0);
+
+  ageSection.style.display = hasData ? "" : "none";
+  syncSummaryHeight();
+}
