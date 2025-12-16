@@ -13,18 +13,20 @@
   <!-- 배너 섹션 -->
   <section class="hero-banner-section">
     <div class="hero-left">
-      <img src="{% static 'core/img/medical1.png' %}" alt="감염병 대시보드 화면 예시">
-      
+      <img src="{% static 'core/img/main1.png' %}" class="hero-slide active" alt="">
+        <img src="{% static 'core/img/main2.png' %}" class="hero-slide" alt="">
+        <img src="{% static 'core/img/main3.png' %}" class="hero-slide" alt="">
+
       <button class="hero-arrow prev">&#10094;</button>
       <button class="hero-arrow next">&#10095;</button>
 
       <div class="hero-dots">
-        <div class="hero-dot active"></div>
-        <div class="hero-dot"></div>
-        <div class="hero-dot"></div>
+        <div class="hero-dot active" data-index="0"></div>
+        <div class="hero-dot" data-index="1"></div>
+        <div class="hero-dot" data-index="2"></div>
       </div>
     </div>
-  </section>
+</section>
 
   <!-- 서비스 카드 섹션  -->
   <section class="service-cards-section">

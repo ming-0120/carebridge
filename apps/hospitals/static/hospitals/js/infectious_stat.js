@@ -241,9 +241,13 @@ function renderDiseaseInfo(selectedValue) {
   const contentEl = document.getElementById("diseaseDefinition");
   if (!titleEl || !contentEl) return;
 
-  if (!selectedValue) {
+  const setEmpty = (msg) => {
     titleEl.textContent = "AI 요약";
-    contentEl.textContent = "질병을 선택하면 AI 요약이 여기에 표시됩니다.";
+    contentEl.textContent = msg;
+  };
+
+  if (!selectedValue) {
+    setEmpty("질병을 선택하면 AI 요약이 여기에 표시됩니다.");
     return;
   }
 
@@ -253,8 +257,7 @@ function renderDiseaseInfo(selectedValue) {
   );
 
   if (!disease) {
-    titleEl.textContent = "AI 요약";
-    contentEl.textContent = "해당 질병에 대한 AI 요약이 없습니다.";
+    setEmpty("해당 질병에 대한 AI 요약이 없습니다.");
     return;
   }
 
@@ -262,58 +265,71 @@ function renderDiseaseInfo(selectedValue) {
 
   const s = disease.ai_summary;
 
+  const isNonEmptyString = (v) => typeof v === "string" && v.trim().length > 0;
+  const isNonEmptyArray = (v) => Array.isArray(v) && v.filter(Boolean).length > 0;
+
+  const joinLines = (arr) =>
+    isNonEmptyArray(arr) ? arr.filter(Boolean).map((x) => `- ${x}`).join("\n") : "";
+
+  const joinTop = (arr) =>
+    isNonEmptyArray(arr)
+      ? arr
+          .map((x) => {
+            const label = x?.label ?? "";
+            const cases = x?.cases ?? "";
+            const pct = x?.share_pct ?? "";
+            // label이 비면 라인 자체 제거
+            if (!String(label).trim()) return "";
+            // 숫자는 그대로 출력(원 데이터 그대로)
+            return `- ${label} (${cases}건, ${pct}%)`;
+          })
+          .filter(Boolean)
+          .join("\n")
+      : "";
+
+  const addSection = (chunks, title, bodyMd) => {
+    if (!isNonEmptyString(bodyMd)) return;
+    chunks.push(`### ${title}\n${bodyMd}`);
+  };
+
   let mdText = "";
 
-  // 1) ai_summary가 객체(JSON)인 경우 (현재 너 케이스)
   if (s && typeof s === "object") {
     const mo = s.medical_overview || {};
     const ss = s.stats_summary || {};
 
-    const joinLines = (arr) =>
-      Array.isArray(arr) ? arr.filter(Boolean).map((x) => `- ${x}`).join("\n") : "";
+    const medicalChunks = [];
+    addSection(medicalChunks, "정의", mo.definition ?? "");
+    addSection(medicalChunks, "전파/감염", joinLines(mo.how_it_spreads));
+    addSection(medicalChunks, "대표 증상", joinLines(mo.common_symptoms));
+    addSection(medicalChunks, "예방", joinLines(mo.prevention));
+    addSection(medicalChunks, "병원 가야 할 때", joinLines(mo.when_to_see_doctor));
 
-    const joinTop = (arr) =>
-      Array.isArray(arr)
-        ? arr
-            .map((x) => {
-              const label = x?.label ?? "";
-              const cases = x?.cases ?? "";
-              const pct = x?.share_pct ?? "";
-              return `- ${label} (${cases}건, ${pct}%)`;
-            })
-            .join("\n")
-        : "";
+    const statsChunks = [];
+    addSection(statsChunks, "기준 시점/기간", ss.period_note ?? "");
+    addSection(statsChunks, "성별 TOP", joinTop(ss.gender_top3));
+    addSection(statsChunks, "연령 TOP", joinTop(ss.age_top3));
+    addSection(statsChunks, "지역 TOP", joinTop(ss.region_top3));
+    addSection(statsChunks, "쉬운 설명", ss.plain_explanation ?? "");
+    addSection(statsChunks, "데이터 한계", joinLines(ss.data_limits));
 
-    mdText =
-      `## 의료 정보\n\n` +
-      `### 정의\n${mo.definition ?? ""}\n\n` +
-      `### 전파/감염\n${joinLines(mo.how_it_spreads)}\n\n` +
-      `### 대표 증상\n${joinLines(mo.common_symptoms)}\n\n` +
-      `### 예방\n${joinLines(mo.prevention)}\n\n` +
-      `### 병원 가야 할 때\n${joinLines(mo.when_to_see_doctor)}\n\n` +
-      `## 통계 요약\n\n` +
-      `### 기준 시점/기간\n${ss.period_note ?? ""}\n\n` +
-      `### 성별 TOP\n${joinTop(ss.gender_top3)}\n\n` +
-      `### 연령 TOP\n${joinTop(ss.age_top3)}\n\n` +
-      `### 지역 TOP\n${joinTop(ss.region_top3)}\n\n` +
-      `### 쉬운 설명\n${ss.plain_explanation ?? ""}\n\n` +
-      `### 데이터 한계\n${joinLines(ss.data_limits)}`;
-  }
-  // 2) 혹시 문자열로 내려오는 경우
-  else if (typeof s === "string") {
-    mdText = s;
+    const finalChunks = [];
+    if (medicalChunks.length) finalChunks.push(`## 의료 정보\n\n${medicalChunks.join("\n\n")}`);
+    if (statsChunks.length) finalChunks.push(`## 통계 요약\n\n${statsChunks.join("\n\n")}`);
+
+    mdText = finalChunks.length ? finalChunks.join("\n\n") : "AI 요약이 없습니다.";
+  } else if (typeof s === "string") {
+    mdText = s.trim() ? s : "AI 요약이 없습니다.";
   } else {
     mdText = "AI 요약이 없습니다.";
   }
 
-  // marked에는 문자열만
   if (window.marked && typeof window.marked.parse === "function") {
     contentEl.innerHTML = window.marked.parse(mdText);
   } else {
     contentEl.textContent = mdText;
   }
 }
-
 
 // ================================================================
 // 7) 필터 적용 (단일 진입점)

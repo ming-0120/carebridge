@@ -5,7 +5,6 @@
     - 사용자 경험(UX) 개선: 관리자가 사용자 목록을 확인하고 검색, 정렬, 페이지네이션 기능을 사용할 수 있도록 함
     - 데이터 관리: 사용자 정보를 테이블로 표시하고 상세 정보 확인
     - 기능 제공: 검색, 정렬, 페이지네이션, 상세 정보 표시
-    - 더미 데이터 관리: 개발 환경에서 더미 데이터 생성/삭제 기능 제공
   
   주요 기능:
     - 사용자 목록 표시: 전체 사용자 목록을 테이블로 표시
@@ -157,44 +156,6 @@
         전체 사용자: {{ total_users_count }}명 | 검색 결과: {{ search_result_count }}명 | 검색어: "{{ search_keyword }}"
       </div>
       {% endif %}
-      
-      <!-- 
-        더미 데이터 관리 버튼 영역 (개발 환경용)
-        
-        목적: 개발 환경에서 더미 사용자 데이터를 생성하거나 삭제하는 기능 제공
-          - 더미 데이터 생성: 테스트용 더미 사용자 데이터를 생성
-          - 더미 데이터 삭제: 생성된 더미 사용자 데이터를 삭제
-          - 주의: 프로덕션 환경에서는 제거하거나 접근 제한 필요
-      -->
-      <div style="margin-bottom: 10px; display: flex; gap: 10px;">
-        <!-- 
-          더미 사용자 데이터 생성 버튼
-          
-          목적: 테스트용 더미 사용자 데이터를 생성
-            - href: {% url 'create_user_dummy' %} - 더미 데이터 생성 URL
-            - CSS 클래스: dummy-data-btn (더미 데이터 버튼 스타일)
-            - 인라인 스타일: 초록색 배경 (#10B981)
-            - 텍스트: "더미 사용자 데이터 생성"
-        -->
-        <a href="{% url 'create_user_dummy' %}" class="dummy-data-btn" style="display: inline-block; padding: 10px 20px; background-color: #10B981; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;">
-          더미 사용자 데이터 생성
-        </a>
-        
-        <!-- 
-          더미 사용자 데이터 삭제 버튼
-          
-          목적: 생성된 더미 사용자 데이터를 삭제
-            - href: {% url 'delete_user_dummy' %} - 더미 데이터 삭제 URL
-            - id="deleteUserDummyBtn": JavaScript에서 확인 메시지를 표시하기 위한 ID
-            - CSS 클래스: dummy-data-btn (더미 데이터 버튼 스타일)
-            - 인라인 스타일: 빨간색 배경 (#EF4444)
-            - 텍스트: "더미 사용자 데이터 삭제"
-            - 주의: JavaScript에서 확인 메시지를 표시하여 실수로 삭제하는 것을 방지
-        -->
-        <a href="{% url 'delete_user_dummy' %}" class="dummy-data-btn" style="display: inline-block; padding: 10px 20px; background-color: #EF4444; color: #fff; text-decoration: none; border-radius: 6px; font-weight: 600; transition: background-color 0.2s;" id="deleteUserDummyBtn">
-          더미 사용자 데이터 삭제
-        </a>
-      </div>
       
       <!-- 
         검색 폼
