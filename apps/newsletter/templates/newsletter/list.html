@@ -5,6 +5,7 @@
   <meta charset="UTF-8" />
   <title>메디컬 뉴스레터</title> 
   <link rel="stylesheet" href="{% static 'newsletter/css/newsletter.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
 <body>
   {% include "core/_header.html" %}
@@ -66,5 +67,7 @@
       {% endif %}
     </div>
   </main>
+  
+  {% include "core/footer.html" %}
 </body>
 </html>

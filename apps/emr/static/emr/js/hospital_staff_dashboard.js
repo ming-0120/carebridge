@@ -1,5 +1,3 @@
-const hos_id = document.getElementById('hos_id');
-
 function goToRecord(type, order_id, user_id, medical_record_id) {
 
     // if (status === 'COMPLETED') {
