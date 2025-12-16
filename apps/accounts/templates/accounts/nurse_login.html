@@ -18,7 +18,7 @@
             <p class="auth-subtitle">의료진 전용 로그인 페이지입니다</p>
         </div>
         <input type="hidden" name="role" id="roleInput" value="ADMIN">
-        <form method="POST" action="{% url 'nurse_login' %}" class="auth-form">
+        <form method="POST" action="{% url 'accounts:nurse_login' %}" class="auth-form">
             {% csrf_token %}
             <input type="hidden" name="next" value="{{ next }}">
 

@@ -26,7 +26,10 @@
     border-radius: 8px;
     border: 1px solid #d00;
 }
-
+.memo-empty {
+  color: #999;          /* 연한 회색 */
+  font-size: 14px;      /* 선택 사항 */
+}
 .fav-hospital-memo {
     margin-top: 8px;
 }
