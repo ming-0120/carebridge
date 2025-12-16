@@ -1,6 +1,7 @@
 let records = [];
 
 document.addEventListener("DOMContentLoaded", () => {
+    stripBracketsFromHeadings();
     const userId = PATIENT_ID;
 
     fetch(`/mstaff/api/previous-records/${userId}/`)
@@ -10,6 +11,14 @@ document.addEventListener("DOMContentLoaded", () => {
             loadRecordList();
         });
 });
+
+function stripBracketsFromHeadings() {
+    document.querySelectorAll('h3, h4').forEach((el) => {
+        const t = el.textContent;
+        if (!t) return;
+        el.textContent = t.replace(/\[/g, '').replace(/\]/g, '').trim();
+    });
+}
 
 // ---------------------------------------------
 // 1) 이전 진료기록 목록 생성

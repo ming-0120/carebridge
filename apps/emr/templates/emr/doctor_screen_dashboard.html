@@ -58,7 +58,7 @@
 
             <br><br>
 
-            <h3>🔍 환자 검색</h3>
+            <h3>환자 검색</h3>
                 <div class="search-container">
                     <input type="text" id="searchText">
                     <button onclick="toPatientSearch();">검색</button>
@@ -67,7 +67,7 @@
         </div>
 
         <div class="card calendar">
-            <h3>🗓️ 진료 예약 현황</h3>
+            <h3>진료 예약 현황</h3>
             <div style="height:100%">
                 <div id="calendar"></div>
             </div>
@@ -85,7 +85,7 @@
         </div>
 
         <div class="card memo">
-            <h3>📝 메모</h3>
+            <h3>메모</h3>
             <textarea id="doctorMemo" onblur="saveMemo()">{% if doctor.memo != None %}{{doctor.memo}}{% endif %}</textarea>
             <p style="font-size: 12px; color: #28a745; text-align: right;">(마우스 커서 이탈 시 자동 저장)</p>
         </div>
@@ -96,7 +96,7 @@
 
 
         <div class="card chart-weekly">
-            <h3>📊 7일간 환자의 진료 및 오더 통계</h3>
+            <h3>7일간 환자의 진료 및 오더 통계</h3>
             <div class="chart-container">
                 <div class="chart-placeholder">
                     <canvas id="dailyStatsChart" width="600px" height="130vh"></canvas>
@@ -105,7 +105,7 @@
         </div>
 
         <div class="card chart-daily">
-            <h3>📈 오늘 진료 환자 통계</h3>
+            <h3>오늘 진료 환자 통계</h3>
             <div class="chart-placeholder">
                     <canvas id="dailyMedicalRecordChart" height="130vh"></canvas>
             </div>

@@ -1,167 +1,177 @@
+/* CareBridge 통일 카드 스타일 */
+:root {
+  --cb-bg: #ffffff;
+  --cb-card-bg: #ffffff;
+  --cb-border: #e5e7eb; /* 미세 테두리 */
+  --cb-radius: 12px;    /* 필요 시 16px로 조정 가능 */
+  --cb-text: #111827;
+  --cb-muted: #6b7280;
+  --cb-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+  --cb-primary: #2563eb;
+}
+
 body {
-    font-family: 'Malgun Gothic','Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f4f7;
-    color: #333;
-}
-
-.header {
-    background-color: #ffffff;
-    border-bottom: 2px solid #0056b3;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #0056b3;
-    cursor: pointer;
-}
-
-.user-info {
-    font-size: 16px;
-    color: #555;
+  margin: 0;
+  background: var(--cb-bg);
+  font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  color: var(--cb-text);
 }
 
 .container {
-    max-width: 1500px;
-    margin: 20px auto;
-    padding: 20px;
-}
-
-.card {
-    background: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+  max-width: 1500px;
+  margin: 24px auto;
+  padding: 0 24px 24px;
 }
 
 h2 {
-    color: #17a2b8;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
+  margin: 0 0 16px 0;
+  color: var(--cb-text);
+  border-bottom: 1px solid var(--cb-border);
+  padding-bottom: 10px;
 }
 
-.search-area {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.search-area input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-}
-.search-area button {
-    padding: 10px 20px;
-    background: #007bff;
-    color: #fff;
-    border-radius: 4px;
-    border: none;
-    cursor: pointer;
+/* 공통 카드 */
+.cb-card,
+.card,
+#summaryPanel {
+  background: var(--cb-card-bg);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  padding: 16px;
+  box-shadow: var(--cb-shadow);
+  margin-bottom: 16px;
 }
 
+/* 목록 테이블 */
 .patient-list-container {
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    min-height: 400px;
-    padding-bottom: 10px;
-    max-height: none;
-    overflow: visible;
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  background: #ffffff;
+  overflow: auto;
+  min-height: 400px;
+  scrollbar-gutter: stable;
 }
 
 .patient-list-table {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
 }
+
 .patient-list-table th,
 .patient-list-table td {
-    padding: 12px;
-    border-bottom: 1px solid #dee2e6;
+  padding: 12px;
+  border-bottom: 1px solid var(--cb-border);
+  text-align: center;
+  vertical-align: middle;
 }
+
 .patient-list-table th {
-    background: #e9ecef;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  font-weight: 800;
 }
 
 .patient-list-table tbody tr {
-    cursor: pointer;
-}
-.patient-list-table tbody tr:hover,
-.patient-list-table tbody tr.selected {
-    background-color: #e2f3ff;
+  cursor: pointer;
 }
 
+.patient-list-table tbody tr:hover,
+.patient-list-table tbody tr.selected {
+  background-color: #eef2ff;
+  font-weight: 800;
+}
+
+/* 요약 패널 */
 .detail-action-container {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
 
 .selected-patient-info {
-    flex-grow: 1;
-    padding: 15px;
-    border-left: 5px solid #17a2b8;
-    background: #f0faff;
-    border-radius: 4px;
-    font-size: 14px;
+  flex: 1 1 auto;
+  padding: 14px 16px;
+  border-left: 4px solid var(--cb-primary);
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid var(--cb-border);
+  font-size: 14px;
 }
 
 .info-row {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
+
 .info-row strong {
-    width: 80px;
-    display: inline-block;
-    color: #0056b3;
+  width: 90px;
+  display: inline-block;
+  color: var(--cb-muted);
+  font-weight: 900;
 }
 
 .summary-block {
-    margin-top: 10px;
-    padding-top: 10px;
-    border-top: 1px dashed #ced4da;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--cb-border);
 }
 
 .action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
 }
+
 .action-buttons button {
-    padding: 12px 15px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
+  padding: 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 14px;
+  cursor: pointer;
 }
 
 .btn-create {
-    background: #28a745;
-    color: white;
+  background: #16a34a;
+  color: #ffffff;
 }
+
+.btn-create:hover {
+  background: #15803d;
+}
+
 .btn-history {
-    background: #6c757d;
-    color: white;
+  background: var(--cb-primary);
+  color: #ffffff;
 }
 
-/* 테이블 헤더/바디 정렬 완전 통일 */
-.patient-list-table th,
-.patient-list-table td {
-    text-align: center;
-    vertical-align: middle;
+.btn-history:hover {
+  background: #1d4ed8;
 }
 
-.patient-list-container {
-    scrollbar-gutter: stable;
+@media (max-width: 900px) {
+  .detail-action-container {
+    flex-direction: column;
+  }
+  .action-buttons {
+    width: 100%;
+    flex-direction: row;
+    min-width: auto;
+  }
+  .action-buttons button {
+    width: 100%;
+  }
 }
+
+@media (max-width: 640px) {
+  .container {
+    padding: 0 16px 24px;
+  }
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+

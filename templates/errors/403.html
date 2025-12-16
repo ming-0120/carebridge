@@ -1,0 +1,113 @@
+<style>
+    /* CareBridge 통일 카드 스타일 */
+    :root {
+        --cb-bg: #ffffff;
+        --cb-card-bg: #ffffff;
+        --cb-border: #e5e7eb; /* 미세 테두리 */
+        --cb-radius: 12px;    /* 필요 시 16px로 조정 가능 */
+    }
+
+    body {
+        margin: 0;
+        background: var(--cb-bg); /* 여백까지 흰색 통일 */
+        font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+        color: #111827;
+    }
+
+    /* 공통 카드 */
+    .cb-card {
+        background: var(--cb-card-bg);        /* 흰 카드 */
+        border: 1px solid var(--cb-border);   /* 미세 테두리 */
+        border-radius: var(--cb-radius);      /* 완만한 라운드 */
+        padding: 16px;                        /* 필요에 따라 조정 */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.03); /* 아주 가벼운 기본 그림자 (없애도 됨) */
+    }
+
+    /* 카드가 컨테이너 역할일 때(예: form 박스) */
+    .cb-card-wide {
+        width: 100%;
+        max-width: 640px; /* 상황에 맞게 조정 */
+        background: var(--cb-card-bg);
+        border: 1px solid var(--cb-border);
+        border-radius: var(--cb-radius);
+        padding: 40px 50px 60px; /* 예: 가입 폼 레이아웃 */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .error-shell {
+        margin: 80px auto;
+        text-align: center;
+    }
+    .error-logo {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 120px;
+        margin-bottom: 16px;
+        border-radius: 32px;
+        background: #ffffff;
+        border: 1px solid #e1e4ec;
+    }
+    .error-code {
+        font-size: 44px;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        color: #2C3E50;
+    }
+    .error-title {
+        font-size: 32px;
+        font-weight: 800;
+        margin: 8px 0 12px;
+    }
+    .error-sub {
+        font-size: 16px;
+        color: #555;
+        margin-bottom: 32px;
+    }
+    .error-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .error-btn {
+        padding: 12px 20px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: 1px solid transparent;
+        text-decoration: none;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease, color 0.18s ease;
+    }
+    .error-btn.primary {
+        background: #2C3E50;
+        color: #ffffff;
+        box-shadow: 0 12px 28px rgba(27, 60, 115, 0.28);
+    }
+    .error-btn.primary:hover {
+        background: #243443;
+        transform: translateY(-1px);
+    }
+    .error-btn.ghost {
+        background: #fff;
+        color: #222;
+        border-color: #e1e4ec;
+    }
+    .error-btn.ghost:hover {
+        background: #E9F1FF;
+        border-color: #cfd6e6;
+        transform: translateY(-1px);
+    }
+</style>
+<section class="error-shell cb-card cb-card-wide">
+    <div class="error-logo">
+        <span class="error-code">403</span>
+    </div>
+    <h2 class="error-title">접근 권한이 없어요</h2>
+    <p class="error-sub">요청하신 페이지를 볼 권한이 없습니다. 필요한 권한을 확인해 주세요.</p>
+    <div class="error-actions">
+        <a href="{% url 'home' %}" class="error-btn primary">홈으로 이동</a>
+        <button type="button" class="error-btn ghost" onclick="window.history.back()">이전 페이지</button>
+    </div>
+</section>
