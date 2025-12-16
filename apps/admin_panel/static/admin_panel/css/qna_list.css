@@ -349,9 +349,11 @@
     - cursor: pointer - 포인터 커서
     - width: 18px - 너비 18px
     - height: 18px - 높이 18px
-    - 사용처: 체크박스 입력 필드 (.checkbox-cell input[type="checkbox"])
+    - 사용처: 체크박스 입력 필드 (.checkbox-cell input[type="checkbox"], 헤더 체크박스 포함)
 */
-.checkbox-cell input[type="checkbox"] {
+.checkbox-cell input[type="checkbox"],
+.qna-table th input[type="checkbox"],
+.qna-table #selectAll {
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -536,8 +538,11 @@
     
     목적: 모바일 화면에서 체크박스 크기를 승인대기 페이지와 동일하게 설정
       - width, height: 체크박스 크기 유지 (기존 18px)
+      - 헤더 체크박스와 데이터 행 체크박스 모두 동일한 크기로 설정
   */
-  .qna-table .checkbox-cell input[type="checkbox"] {
+  .qna-table .checkbox-cell input[type="checkbox"],
+  .qna-table th input[type="checkbox"],
+  .qna-table #selectAll {
     width: 18px;
     height: 18px;
   }
@@ -608,8 +613,11 @@
     
     목적: 작은 모바일 화면에서 체크박스 크기를 승인대기 페이지와 동일하게 설정
       - width, height: 체크박스 크기 유지 (기존 18px)
+      - 헤더 체크박스와 데이터 행 체크박스 모두 동일한 크기로 설정
   */
-  .qna-table .checkbox-cell input[type="checkbox"] {
+  .qna-table .checkbox-cell input[type="checkbox"],
+  .qna-table th input[type="checkbox"],
+  .qna-table #selectAll {
     width: 18px;
     height: 18px;
   }
