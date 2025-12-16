@@ -12,6 +12,7 @@
     width: 180px;
     border: 1px solid #e5e5e5;
     background: #fafafa;
+    align-self: flex-start;  /* 사이드바가 컨텐츠 높이에 맞춰 늘어나지 않도록 */
 }
 
 .mypage-sidebar ul {
