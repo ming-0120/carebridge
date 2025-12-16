@@ -5,7 +5,6 @@
     - 사용자 경험(UX) 개선: 관리자가 문의 목록을 확인하고 관리할 수 있도록 함
     - 데이터 관리: 문의 정보를 테이블로 표시하고 상세 정보 확인
     - 기능 제공: 정렬, 페이지네이션, 체크박스 선택, 일괄 삭제
-    - 더미 데이터 관리: 개발 환경에서 더미 데이터 생성/삭제 기능 제공
   
   주요 기능:
     - 문의 목록 표시: 전체 문의 목록을 테이블로 표시
@@ -133,10 +132,10 @@
     <!-- 
       문의 관리 헤더 섹션
       
-      목적: 페이지 제목과 액션 버튼을 표시하는 헤더
-        - 사용자 경험(UX) 개선: 관리자가 페이지의 목적을 명확히 인지하고 액션을 수행할 수 있도록 함
-        - 액션 버튼: 더미 데이터 생성/삭제, 선택 항목 삭제 기능 제공
-        - CSS 클래스: qna-header (문의 헤더 스타일)
+        목적: 페이지 제목과 액션 버튼을 표시하는 헤더
+          - 사용자 경험(UX) 개선: 관리자가 페이지의 목적을 명확히 인지하고 액션을 수행할 수 있도록 함
+          - 액션 버튼: 선택 항목 삭제 기능 제공
+          - CSS 클래스: qna-header (문의 헤더 스타일)
     -->
     <div class="qna-header">
       <!-- 
@@ -151,47 +150,10 @@
       <!-- 
         액션 버튼 영역
         
-        목적: 더미 데이터 관리 및 선택 항목 삭제 버튼을 표시
-          - 더미 데이터 생성: 테스트용 더미 문의 데이터 생성
-          - 더미 데이터 삭제: 생성된 더미 문의 데이터 삭제
+        목적: 선택 항목 삭제 버튼을 표시
           - 선택 항목 삭제: 선택한 문의를 일괄 삭제
       -->
       <div>
-        <!-- 
-          더미 데이터 생성 폼 (개발 환경용)
-          
-          목적: 테스트용 더미 문의 데이터를 생성
-            - method="post": POST 메서드로 서버에 데이터 전송
-            - action: {% url 'create_qna_dummy' %} - 더미 데이터 생성 URL
-            - CSS 클래스: 
-              → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
-              → btn-create-dummy: 더미 데이터 생성 버튼 전용 스타일
-            - 텍스트: "더미 데이터 생성"
-            - 주의: 프로덕션 환경에서는 제거하거나 접근 제한 필요
-        -->
-        <form method="post" action="{% url 'create_qna_dummy' %}" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn-delete btn-create-dummy">더미 데이터 생성</button>
-        </form>
-        
-        <!-- 
-          더미 데이터 삭제 폼 (개발 환경용)
-          
-          목적: 생성된 더미 문의 데이터를 삭제
-            - method="post": POST 메서드로 서버에 데이터 전송
-            - action: {% url 'delete_qna_dummy' %} - 더미 데이터 삭제 URL
-            - id="deleteQnaDummyForm": JavaScript에서 확인 메시지를 표시하기 위한 ID
-            - CSS 클래스: 
-              → btn-delete: 삭제 버튼 스타일 (공통 스타일 재사용)
-              → btn-delete-dummy: 더미 데이터 삭제 버튼 전용 스타일
-            - 텍스트: "더미 데이터 삭제"
-            - 주의: JavaScript에서 확인 메시지를 표시하여 실수로 삭제하는 것을 방지
-        -->
-        <form method="post" action="{% url 'delete_qna_dummy' %}" id="deleteQnaDummyForm" style="display:inline;">
-          {% csrf_token %}
-          <button type="submit" class="btn-delete btn-delete-dummy" id="deleteQnaDummyBtn">더미 데이터 삭제</button>
-        </form>
-        
         <!-- 
           선택 항목 삭제 폼
           
