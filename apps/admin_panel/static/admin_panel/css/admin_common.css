@@ -181,24 +181,55 @@ body {
 */
 .header .logo {
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* 로고를 위쪽 정렬 (center → flex-start) */
+  position: relative; /* z-index를 위한 position 설정 */
+  z-index: 1; /* 탭 메뉴보다 낮은 z-index */
+  max-width: 150px; /* 로고 컨테이너 최대 너비 제한 (200px → 150px) */
+  overflow: visible; /* 잘림 방지 (hidden → visible) */
+  padding-top: 0; /* 상단 패딩 제거 */
+}
+
+/* 
+  로고 링크 클릭 영역 제한
+  
+  목적: 로고 링크의 클릭 영역을 로고 이미지 크기에 맞게 제한
+    - display: inline-block - 인라인 블록 요소로 변경하여 크기 제한
+    - width: auto, height: auto - 이미지 크기에 맞춤
+    - overflow: hidden - 클릭 영역을 이미지 크기로 제한
+    - max-width: 150px - 로고 이미지 최대 너비에 맞춤 (200px → 150px로 축소)
+    - max-height: 60px - 로고 이미지 최대 높이 제한
+    - 사용처: 로고 링크 (a 태그)
+*/
+.header .logo a {
+  display: inline-block;
+  line-height: 0; /* 이미지 하단 여백 제거 */
+  position: relative;
+  z-index: 1;
+  width: auto; /* 이미지 크기에 맞춤 */
+  height: auto; /* 이미지 크기에 맞춤 */
+  overflow: visible; /* 잘림 방지 (hidden → visible) */
+  max-width: 150px; /* 로고 이미지 최대 너비에 맞춤 (200px → 150px) */
+  vertical-align: top; /* 위쪽 정렬 */
 }
 
 /* 
   로고 이미지
   
   목적: 로고 이미지 스타일
-    - width: 200px - 로고 너비 200px
+    - width: 150px - 로고 너비 150px (200px → 150px로 축소)
     - height: auto - 높이 자동 조정 (비율 유지)
     - object-fit: contain - 이미지 비율 유지하며 컨테이너에 맞춤
-    - margin-top: 10px - 상단 마진 (시각적 정렬)
+    - margin-top: 0px - 상단 마진 제거 (위로 올리기 위해)
+    - vertical-align: top - 위쪽 정렬
     - 사용처: 헤더의 로고 이미지
+    - 주의: 실제 이미지는 인라인 스타일로 width:150px, margin-top:0px로 설정됨
 */
 .header .logo-img {
-  width: 200px;
+  width: 150px;
   height: auto;
   object-fit: contain;
-  margin-top: 10px;
+  margin-top: 0;
+  vertical-align: top;
 }
 
 /* 
@@ -350,11 +381,12 @@ body {
   box-shadow: 0 6px 18px rgba(0,0,0,0.12);
   flex: 1;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto; /* 가로 스크롤 허용 (탭 메뉴가 잘리지 않도록) */
   max-height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  position: relative; /* 탭 메뉴의 절대 위치 지정을 위해 */
 }
 
 /* 
@@ -377,7 +409,7 @@ body {
     height: auto !important;
     min-height: auto !important;
     overflow-y: visible !important;
-    overflow-x: hidden;
+    overflow-x: auto; /* 탭 메뉴가 잘리지 않도록 auto로 변경 */
     margin-bottom: 40px;
     padding-bottom: 40px;
     flex: none !important;
@@ -483,6 +515,9 @@ body {
     - gap: 0 - 탭 간 간격 없음
     - border-bottom: 2px solid #e1e4ec - 하단 테두리 (연한 회색)
     - margin-bottom: 24px - 하단 마진
+    - position: relative - z-index를 위한 position 설정
+    - z-index: 10 - 로고보다 높은 z-index로 탭 메뉴가 위에 오도록 설정
+    - pointer-events: auto - 클릭 이벤트 명시적으로 활성화
     - 사용처: 모든 관리자 페이지의 탭 메뉴 영역
 */
 .tabs {
@@ -490,6 +525,19 @@ body {
   gap: 0;
   border-bottom: 2px solid #e1e4ec;
   margin-bottom: 24px;
+  position: relative;
+  z-index: 10; /* 로고보다 높은 z-index */
+  pointer-events: auto; /* 클릭 이벤트 명시적으로 활성화 */
+  overflow-x: auto; /* 가로 스크롤 허용 (탭이 잘리지 않도록) */
+  -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
+  scrollbar-width: thin; /* 얇은 스크롤바 */
+  margin-left: -24px; /* 컨테이너 패딩 보정 */
+  margin-right: -24px; /* 컨테이너 패딩 보정 */
+  padding-left: 24px; /* 왼쪽 패딩 추가 */
+  padding-right: 24px; /* 오른쪽 패딩 추가 */
+  width: calc(100% + 48px); /* 컨테이너 패딩만큼 너비 확장 */
+  min-width: calc(100% + 48px); /* 최소 너비 보장 */
+  max-width: none; /* 최대 너비 제한 제거 */
 }
 
 /* 
@@ -506,10 +554,13 @@ body {
     - white-space: nowrap - 텍스트 줄바꿈 방지
     - flex-shrink: 0 - 축소 방지
     - min-width: fit-content - 최소 너비 내용에 맞춤
+    - position: relative - z-index를 위한 position 설정
+    - z-index: 11 - 로고보다 높은 z-index로 탭이 위에 오도록 설정
+    - pointer-events: auto - 클릭 이벤트 명시적으로 활성화
     - 사용처: 각 탭 메뉴 항목 (사용자목록, 의사목록, 병원정보, 승인대기, 1:1문의관리)
 */
 .tab {
-  padding: 12px 24px;
+  padding: 18px 24px; /* 상하 패딩 12px → 18px (1.5배) */
   text-decoration: none;
   color: #666;
   font-size: 15px;
@@ -519,6 +570,9 @@ body {
   white-space: nowrap;
   flex-shrink: 0;
   min-width: fit-content;
+  position: relative;
+  z-index: 11; /* 로고보다 높은 z-index */
+  pointer-events: auto; /* 클릭 이벤트 명시적으로 활성화 */
 }
 
 /* 
@@ -1391,6 +1445,29 @@ body {
   margin-bottom: 24px;
   flex-shrink: 0;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  width: 100%; /* 전체 너비 사용 */
+  max-width: 100%; /* 최대 너비 제한 */
+}
+
+/* 테이블 컨테이너 스크롤바 크기 2배 (웹킷 브라우저용) */
+.table-container::-webkit-scrollbar {
+  width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+  height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 /* 
@@ -1446,6 +1523,11 @@ body {
   font-weight: 600;
   color: #1B3C73;
   border-bottom: 2px solid #e1e4ec;
+  writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+  text-orientation: mixed !important; /* 텍스트 방향 정상 */
+  white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+  word-break: keep-all; /* 단어 단위로 줄바꿈 */
+  overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
 }
 
 /* 
@@ -2025,18 +2107,30 @@ body {
     margin: 15px;
     padding: 16px;
     max-height: calc(100vh - 90px);
+    overflow-x: auto; /* 탭 메뉴가 잘리지 않도록 가로 스크롤 허용 */
+    overflow-y: auto; /* 세로 스크롤 유지 */
   }
   
   .tabs {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     margin-bottom: 16px;
+    scrollbar-width: thin; /* 얇은 스크롤바 */
+    margin-left: -16px; /* 컨테이너 패딩 보정 */
+    margin-right: -16px; /* 컨테이너 패딩 보정 */
+    padding-left: 16px; /* 왼쪽 패딩 추가 */
+    padding-right: 16px; /* 오른쪽 패딩 추가 */
+    width: calc(100% + 32px); /* 컨테이너 패딩만큼 너비 확장 */
+    min-width: calc(100% + 32px); /* 최소 너비 보장 */
+    max-width: none; /* 최대 너비 제한 제거 */
   }
   
   .tab {
-    padding: 10px 16px;
+    padding: 15px 16px; /* 상하 패딩 10px → 15px (1.5배) */
     font-size: 14px;
     white-space: nowrap;
+    min-width: fit-content; /* 내용에 맞는 최소 너비 (잘림 방지) */
+    flex-shrink: 0; /* 축소 방지 */
   }
   
   .search-section {
@@ -2056,6 +2150,26 @@ body {
     -webkit-overflow-scrolling: touch;
     margin-bottom: 16px;
     max-width: 100%;
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
   
   .user-table {
@@ -2069,9 +2183,62 @@ body {
     white-space: nowrap;
   }
   
-  .user-table th:nth-child(n+7),
+  .user-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+    transform: none !important; /* 변환 제거 */
+    display: table-cell !important; /* 테이블 셀 표시 */
+    direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+    unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
+  }
+  
+  .user-table th a {
+    writing-mode: horizontal-tb !important; /* 링크 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    display: inline-block !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .user-table td {
+    writing-mode: horizontal-tb !important; /* 데이터 셀 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  /* 모바일에서 모든 컬럼 표시 (좌우 스크롤로 전체 테이블 확인 가능) */
+  /* .user-table th:nth-child(n+7),
   .user-table td:nth-child(n+7) {
     display: none;
+  } */
+  
+  .table-container {
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
   
   .pagination {
@@ -2132,6 +2299,20 @@ body {
     padding: 0 15px;
   }
   
+  .header .logo {
+    max-width: 150px; /* 로고 컨테이너 최대 너비 제한 (200px → 150px) */
+    flex: 0 0 auto; /* flex 축소 방지 */
+    overflow: visible; /* 잘림 방지 (hidden → visible) */
+    align-items: flex-start; /* 위쪽 정렬 */
+    padding-top: 0; /* 상단 패딩 제거 */
+  }
+  
+  .header .logo a {
+    max-width: 150px; /* 로고 링크 최대 너비 제한 (200px → 150px) */
+    overflow: visible; /* 잘림 방지 (hidden → visible) */
+    vertical-align: top; /* 위쪽 정렬 */
+  }
+  
   .header .logo-img {
     width: 120px;
     margin-top: 5px;
@@ -2146,19 +2327,43 @@ body {
     padding: 15px;
     border-radius: 12px;
     max-height: calc(100vh - 80px);
+    overflow-x: visible !important; /* 탭 메뉴가 컨테이너 밖으로 나가도 잘리지 않도록 */
+    overflow-y: auto; /* 세로 스크롤 유지 */
   }
   
   .tabs {
-    margin-bottom: 16px;
+    display: flex !important; /* 탭 메뉴가 보이도록 강제 */
+    visibility: visible !important; /* 탭 메뉴가 보이도록 강제 */
+    opacity: 1 !important; /* 탭 메뉴가 보이도록 강제 */
+    margin-bottom: 16px !important;
     gap: 0;
+    position: relative;
+    z-index: 10; /* 로고보다 높은 z-index 유지 */
+    pointer-events: auto; /* 클릭 이벤트 명시적으로 활성화 */
+    overflow-x: auto !important; /* 가로 스크롤 허용 (탭이 잘리지 않도록) */
+    -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
+    scrollbar-width: thin; /* 얇은 스크롤바 */
+    margin-left: -15px; /* 컨테이너 패딩 보정 */
+    margin-right: -15px; /* 컨테이너 패딩 보정 */
+    padding-left: 15px; /* 왼쪽 패딩 추가 */
+    padding-right: 15px; /* 오른쪽 패딩 추가 */
+    width: calc(100% + 30px) !important; /* 컨테이너 패딩만큼 너비 확장 */
+    min-width: calc(100% + 30px) !important; /* 최소 너비 보장 */
+    max-width: none !important; /* 최대 너비 제한 제거 */
+    height: auto !important; /* 높이 자동 설정 */
+    min-height: 50px !important; /* 최소 높이 보장 */
   }
   
   .tab {
-    padding: 10px 12px;
+    position: relative;
+    z-index: 11; /* 로고보다 높은 z-index 유지 */
+    pointer-events: auto; /* 클릭 이벤트 명시적으로 활성화 */
+    padding: 15px 12px; /* 상하 패딩 10px → 15px (1.5배) */
     font-size: 13px;
     flex: 1;
     text-align: center;
-    min-width: 0;
+    min-width: fit-content; /* 내용에 맞는 최소 너비 (잘림 방지) */
+    flex-shrink: 0; /* 축소 방지 */
   }
   
   .search-section {
@@ -2168,12 +2373,15 @@ body {
   .search-form {
     flex-direction: column;
     gap: 8px;
+    align-items: stretch; /* 좌측 정렬을 위해 stretch 사용 */
   }
   
   .search-select,
   .search-input {
     width: 100%;
     padding: 12px;
+    box-sizing: border-box; /* 패딩 포함하여 너비 계산 */
+    margin: 0; /* 기본 마진 제거 */
   }
   
   .search-btn {
@@ -2239,6 +2447,26 @@ body {
     margin-bottom: 16px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
   }
   
   .user-table {
@@ -2251,10 +2479,40 @@ body {
     padding: 8px 6px;
   }
   
-  .user-table th:nth-child(n+6),
+  .user-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+    transform: none !important; /* 변환 제거 */
+    display: table-cell !important; /* 테이블 셀 표시 */
+    direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+    unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
+  }
+  
+  .user-table th a {
+    writing-mode: horizontal-tb !important; /* 링크 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    display: inline-block !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .user-table td {
+    writing-mode: horizontal-tb !important; /* 데이터 셀 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  /* 작은 모바일에서도 모든 컬럼 표시 (좌우 스크롤로 전체 테이블 확인 가능) */
+  /* .user-table th:nth-child(n+6),
   .user-table td:nth-child(n+6) {
     display: none;
-  }
+  } */
   
   .pagination {
     margin: 16px 0;
@@ -2314,11 +2572,34 @@ body {
     margin: 5px;
     padding: 12px;
     border-radius: 8px;
+    overflow-x: visible !important; /* 탭 메뉴가 컨테이너 밖으로 나가도 잘리지 않도록 */
+    overflow-y: auto; /* 세로 스크롤 유지 */
+  }
+  
+  .tabs {
+    display: flex !important; /* 탭 메뉴가 보이도록 강제 */
+    visibility: visible !important; /* 탭 메뉴가 보이도록 강제 */
+    opacity: 1 !important; /* 탭 메뉴가 보이도록 강제 */
+    margin-bottom: 16px !important;
+    margin-left: -12px; /* 컨테이너 패딩 보정 */
+    margin-right: -12px; /* 컨테이너 패딩 보정 */
+    padding-left: 12px; /* 왼쪽 패딩 추가 */
+    padding-right: 12px; /* 오른쪽 패딩 추가 */
+    width: calc(100% + 24px) !important; /* 컨테이너 패딩만큼 너비 확장 */
+    min-width: calc(100% + 24px) !important; /* 최소 너비 보장 */
+    max-width: none !important; /* 최대 너비 제한 제거 */
+    overflow-x: auto !important; /* 가로 스크롤 허용 */
+    -webkit-overflow-scrolling: touch; /* iOS에서 부드러운 스크롤 */
+    scrollbar-width: thin; /* 얇은 스크롤바 */
+    height: auto !important; /* 높이 자동 설정 */
+    min-height: 50px !important; /* 최소 높이 보장 */
   }
   
   .tab {
-    padding: 8px 8px;
+    padding: 12px 8px; /* 상하 패딩 8px → 12px (1.5배) */
     font-size: 12px;
+    min-width: fit-content; /* 내용에 맞는 최소 너비 (잘림 방지) */
+    flex-shrink: 0; /* 축소 방지 */
   }
   
   .user-table {
@@ -2329,6 +2610,66 @@ body {
   .user-table th,
   .user-table td {
     padding: 6px 4px;
+  }
+  
+  .user-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+    transform: none !important; /* 변환 제거 */
+    display: table-cell !important; /* 테이블 셀 표시 */
+    direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+    unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
+  }
+  
+  .user-table th a {
+    writing-mode: horizontal-tb !important; /* 링크 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    display: inline-block !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .user-table td {
+    writing-mode: horizontal-tb !important; /* 데이터 셀 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .table-container {
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  .user-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
   }
   
   .page-link,

@@ -1,10 +1,19 @@
 {% load static %}
-
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}마이페이지 - CareBridge{% endblock %}</title>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="has-footer">
 {% block content %}
     {% include "core/_header.html" %}
 
     <!-- 마이페이지 공통 레이아웃 CSS -->
     <link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+    <!-- <link rel="stylesheet" href="{% static 'core/css/footer.css' %}"> -->
 
     <div class="mypage-layout">
         <!-- 왼쪽 마이페이지 메뉴 -->
@@ -18,5 +27,9 @@
         </section>
     </div>
 
+    {% include "core/footer.html" %}
+
     {% block extra_js %}{% endblock %}
 {% endblock %}
+</body>
+</html>

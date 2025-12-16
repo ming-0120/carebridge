@@ -1,111 +1,150 @@
+/* =========================
+   MyPage CSS (정리본: 중복/깨진 중괄호 제거 + 사이드바 언더라인 적용)
+   ========================= */
+
 /* 전체 레이아웃 */
 .mypage-layout {
-    max-width: 1100px;
-    margin: 40px auto;
-    display: flex;
-    gap: 32px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  max-width: 1100px;
+  margin: 40px auto;
+  display: flex;
+  gap: 32px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 /* 왼쪽 사이드 메뉴 */
 .mypage-sidebar {
-    width: 180px;
-    border: 1px solid #e5e5e5;
-    background: #fafafa;
-    align-self: flex-start;  /* 사이드바가 컨텐츠 높이에 맞춰 늘어나지 않도록 */
+  width: 180px;
+  border: 1px solid #e5e5e5;
+  background: #fff;           /* ✅ 흰색 유지 */
+  align-self: flex-start;
 }
 
 .mypage-sidebar ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
+/* 링크 기본 */
 .mypage-sidebar li a {
-    display: block;
-    padding: 12px 16px;
-    border-bottom: 1px solid #eee;
-    text-decoration: none;
-    color: #333;
-    font-size: 14px;
+  display: block;
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  text-decoration: none;
+  color: #333;
+  font-size: 14px;
+
+  background: #fff;           /* ✅ 배경 항상 흰색 */
+  position: relative;         /* underline용 */
+  font-weight: 400;
 }
 
+/* ✅ 언더라인(기본 숨김) */
+.mypage-sidebar li a::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 8px;
+  height: 1px;                                /* ✅ 과하지 않게 */
+  background-color: rgba(27, 60, 115, 0.6);   /* ✅ 은은한 남색 */
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.05s linear;         /* ✅ 거의 즉시 */
+}
+
+/* hover: 밑줄만 */
+.mypage-sidebar li a:hover {
+  color: rgba(27, 60, 115, 0.85);
+}
+.mypage-sidebar li a:hover::after {
+  transform: scaleX(1);
+}
+
+/* ✅ 선택(active): 밑줄 유지 + 배경 흰색 */
 .mypage-sidebar li a.active {
-    background: #f3f6ff;
-    font-weight: 600;
+  background: #fff;
+  color: rgba(27, 60, 115, 0.95);
+  font-weight: 600;
+}
+.mypage-sidebar li a.active::after {
+  transform: scaleX(1);
 }
 
 /* 오른쪽 콘텐츠 영역 */
 .mypage-content {
-    flex: 1;
-    background: #ffffff;
-    border: 1px solid #e5e5e5;
-    padding: 32px 40px 40px;
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e5e5e5;
+  padding: 32px 40px 40px;
 }
 
 .mypage-content h2 {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 24px;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 24px;
 }
 
-/* 폼 공통 스타일 (회원가입 폼과 유사하게) */
+/* 폼 공통 스타일 */
 .mypage-content form {
-    max-width: 600px;
+  max-width: 600px;
 }
-.notice{
-        background: #f3f7ff;
-    border-radius: 12px;
-    padding: 16px 20px;
-    margin-bottom: 24px;
-    font-size: 14px;
+
+.notice {
+  background: #f3f7ff;
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: 14px;
 }
+
 /* 한 줄 */
 .form-row {
-    display: flex;
-    align-items: center;
-    padding: 10px 0;
-    border-bottom: 1px solid #f1f1f1;
-    font-size: 14px;
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f1f1;
+  font-size: 14px;
 }
 
 /* 라벨 (왼쪽) */
 .form-row > label {
-    width: 120px;
-    font-weight: 600;
-    color: #333;
+  width: 120px;
+  font-weight: 600;
+  color: #333;
 }
 
 /* 값 / 입력영역 (오른쪽) */
 .form-value,
 .form-inline,
 .form-address {
-    flex: 1;
+  flex: 1;
 }
 
-/* 단순 텍스트만 있는 줄 */
+/* 단순 텍스트 */
 .form-value {
-    padding: 4px 0;
-    color: #555;
+  padding: 4px 0;
+  color: #555;
 }
 
 /* 인풋 한 줄 */
 .form-inline {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
+
 /* 주소 영역 */
 .form-address {
-    flex: 1;
+  flex: 1;
 }
 
 /* 주소 각 줄 */
 .form-address .addr-row {
-    display: flex;          /* 한 줄에 배치 */
-    align-items: center;
-    gap: 8px;               /* 우편번호–버튼 간 간격 */
-    margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 /* 인풋 공통 */
@@ -113,181 +152,182 @@
 .input-email,
 .input-zip,
 .form-address input[type="text"] {
-    height: 44px;
-    border: 1px solid #d1d5db;
-    border-radius: 3px;
-    padding: 0 10px;
-    font-size: 14px;
-    box-sizing: border-box;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  padding: 0 10px;
+  font-size: 14px;
+  box-sizing: border-box;
 }
 
 /* 우편번호 칸 */
 .input-zip {
-    width: 180px;           /* 회원가입 폼과 비슷한 너비 */
+  width: 180px;
 }
 
-/* 기본주소 / 상세주소는 한 줄을 다 차지하게 */
+/* 기본주소 / 상세주소 */
 .form-address .addr-row:not(:first-child) .input-text {
-    flex: 1;
-    width: 100%;
+  flex: 1;
+  width: 100%;
 }
+
 /* 이메일 도메인 셀렉트 */
 .select-email {
-    height: 44px;
-    border: 1px solid #d1d5db;
-    border-radius: 3px;
-    padding: 0 8px;
-    font-size: 14px;
-    background-color: #fff;
+  height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 3px;
+  padding: 0 8px;
+  font-size: 14px;
+  background-color: #fff;
 }
 
-/* 이메일 @ 사이 간격 */
+/* 이메일 @ 사이 */
 .form-inline span {
-    font-size: 14px;
-    color: #555;
+  font-size: 14px;
+  color: #555;
 }
 
 /* 버튼 공통 */
 .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0 14px;
-    height: 44px;
-    border-radius: 3px;
-    font-size: 14px;
-    border: 1px solid #4f7df9;
-    background-color: #4f7df9;
-    color: #fff;
-    cursor: pointer;
-    text-decoration: none;
-    box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  height: 44px;
+  border-radius: 3px;
+  font-size: 14px;
+  border: 1px solid #4f7df9;
+  background-color: #4f7df9;
+  color: #fff;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
 }
 
 .btn:hover {
-    opacity: 0.9;
+  opacity: 0.9;
 }
 
-/* 우편번호 버튼은 회원가입처럼 옆에 붙는 느낌 */
+/* 우편번호 버튼 간격 */
 .input-zip + .btn {
-    margin-left: 6px;
+  margin-left: 6px;
 }
 
 /* 수정 / 취소 버튼 영역 */
 .form-buttons {
-    margin-top: 24px;
-    text-align: center;
+  margin-top: 24px;
+  text-align: center;
 }
 
 .btn-primary {
-    min-width: 120px;
+  min-width: 120px;
 }
 
 .btn-secondary {
-    min-width: 120px;
-    margin-left: 8px;
-    border-color: #9ca3af;
-    background-color: #9ca3af;
+  min-width: 120px;
+  margin-left: 8px;
+  border-color: #9ca3af;
+  background-color: #9ca3af;
 }
 
 /* 메시지 */
 .django-messages {
-    list-style: none;
-    margin: 0 0 16px;
-    padding: 0;
-    font-size: 13px;
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  font-size: 13px;
 }
 
 .django-messages li {
-    margin-bottom: 4px;
+  margin-bottom: 4px;
 }
 
 .django-messages li.error {
-    color: #b91c1c;
+  color: #b91c1c;
 }
 
 .django-messages li.success {
-    color: #15803d;
+  color: #15803d;
 }
-/* 이메일 줄: 연락처 input 폭 안으로 정렬 */
+
+/* 이메일 줄 정렬 */
 .form-row.email-row .form-inline {
-    width: 100%;
-    max-width: 420px;   /* 연락처 input 실제 폭에 맞춰 조절 (숫자는 필요에 따라 400~450 사이에서 맞추면 됨) */
+  width: 100%;
+  max-width: 420px;
 }
 
-/* 이메일 앞부분 */
 .form-row.email-row .input-email:first-of-type {
-    flex: 0 0 30%;      /* 약 30% */
+  flex: 0 0 30%;
 }
 
-/* 이메일 도메인 입력칸 */
 .form-row.email-row #emailDomainInput {
-    flex: 0 0 40%;      /* 약 40% */
+  flex: 0 0 40%;
 }
 
-/* 도메인 선택 셀렉트 */
 .form-row.email-row .select-email {
-    flex: 0 0 30%;      /* 약 30% */
+  flex: 0 0 30%;
 }
-/* 반응형 - 화면 좁을 때 라벨 위로 */
+
+/* 반응형 */
 @media (max-width: 768px) {
-    .mypage-layout {
-        flex-direction: column;
-        padding: 0 16px;
-    }
+  .mypage-layout {
+    flex-direction: column;
+    padding: 0 16px;
+  }
 
-    .mypage-sidebar {
-        width: 100%;
-    }
+  .mypage-sidebar {
+    width: 100%;
+  }
 
-    .form-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
+  .form-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    .form-row > label {
-        width: 100%;
-        margin-bottom: 6px;
-    }
+  .form-row > label {
+    width: 100%;
+    margin-bottom: 6px;
+  }
 
-    .form-inline {
-        width: 100%;
-    }
+  .form-inline {
+    width: 100%;
+  }
 
-    .input-zip {
-        width: 50%;
-    }
+  .input-zip {
+    width: 50%;
+  }
 }
+
 /* 의사 프로필 페이지 */
 .doctor-profile-box {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .doctor-profile-img {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 1px solid #ccc;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ccc;
 }
 
 .doctor-profile-placeholder {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    border: 1px solid #ccc;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
 }
 
 .upload-btn {
-    display: inline-block;
-    padding: 6px 12px;
-    cursor: pointer;
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
 }
 
 .profile-guide {
-    font-size: 13px;
-    color: #666;
-    line-height: 1.4;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
 }

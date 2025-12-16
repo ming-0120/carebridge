@@ -1,230 +1,279 @@
+/* reset */
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
 body {
-    font-family: "Pretendard", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    background: #f5f5f5;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #ffffff;
+  color: #111827;
 }
+
+/* ✅ 뉴스레터와 동일 컨테이너 톤 */
 .page {
-    max-width: 1200px;
-    margin: 0 auto;
-    background: #ffffff;
-    min-height: 100vh;
+  max-width: 1320px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background: #ffffff;
 }
-/* 상단 헤더 */
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 24px;
-    background: #f0f0f0;
-    border-bottom: 1px solid #ddd;
+
+/* 제목 영역 */
+.hospital-header {
+  margin-bottom: 24px;
 }
-.logo {
-    font-weight: 700;
+
+.hospital_title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
 }
-.nav {
-    display: flex;
-    gap: 24px;
-    font-size: 14px;
-}
-.nav span {
-    cursor: pointer;
-}
-.nav span.active {
-    font-weight: 600;
-    border-bottom: 2px solid #333;
-}
-.user-info {
-    font-size: 14px;
-}
-/* 메인 레이아웃 */
+
+/* 메인 레이아웃 (사이드 + 지도) */
 .main {
-    display: flex;
-    padding: 16px 16px 0;
+  display: grid;
+  grid-template-columns: 160px 1fr;
+  gap: 16px;
+  align-items: start;
+  margin-bottom: 18px;
 }
-/* (1) 진료과 사이드바 */
+
+/* 사이드바: 뉴스 카드 톤 */
 .sidebar {
-    width: 140px;
-    border: 1px solid #ddd;
-    background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
 }
+
 .dept-btn {
-    width: 100%;
-    padding: 12px;
-    border: 0;
-    border-bottom: 1px solid #ddd;
-    background: #fff;
-    font-size: 14px;
-    text-align: center;
-    cursor: pointer;
+  width: 100%;
+  padding: 12px 12px;
+  border: 0;
+  border-bottom: 1px solid #e0e0e0;
+  background: #ffffff;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
 }
+
+.dept-btn:last-child {
+  border-bottom: 0;
+}
+
+.dept-btn:hover {
+  background: #f9fafb;
+}
+
 .dept-btn.active {
-    background: #ffe9cf;
-    font-weight: 600;
-}
-/* (2) 지도 영역 */
-.map-wrapper {
-    flex: 1;
-    margin-left: 12px;
-    border: 1px solid #ddd;
-    background: #eee;
-    height: 420px;
-}
-#map {
-    width: 100%;
-    height: 100%;
-}
-/* (3) 병원 카드 영역 */
-.card-section {
-    margin: 16px;
-    margin-top: 8px;
-    border-top: 1px solid #000;
-    padding-top: 12px;
-}
-.card-row {
-    display: flex;
-    gap: 12px;
-    overflow-x: auto;
-    padding-bottom: 12px;
-}
-.hospital-card {
-    min-width: 260px;
-    border-radius: 20px;
-    border: 2px solid #000;
-    background: #fff;
-    padding: 16px;
-    flex-shrink: 0;
-}
-.hospital-name {
-    cursor: pointer;
-    font-size: 18px;
+    color: white;
+    background: #1f6987;
     font-weight: 700;
-    margin-bottom: 8px;
-}
-.rating {
-    font-size: 14px;
-    margin-bottom: 8px;
-}
-.rating span.stars {
-    margin-left: 4px;
-}
-.hospital-desc {
-    font-size: 12px;
-    line-height: 1.6;
-}
-/* === 모달 공통 === */
-.modal {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: inherit;
 }
 
-.modal.hidden {
-    display: none;
+/* 지도 영역도 카드처럼 */
+.map-wrapper {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fafafa;
+  height: 420px;
 }
 
-.modal-backdrop {
-    position: absolute;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+#map {
+  width: 100%;
+  height: 100%;
 }
 
-/* 중앙 박스 */
-.modal-dialog {
-    position: relative;
-    background: #ffffff;
-    border-radius: 32px;
-    padding: 32px 40px 28px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
-    min-width: 640px;
-    max-width: 900px;
-    z-index: 1001;
+/* 카드 섹션 */
+.card-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 16px;
 }
 
-/* 별 아이콘 */
-.modal-favorite {
-    float:right;
-    border: none;
-    background: transparent;
-    font-size: 22px;
-    cursor: pointer;
-    color: #ccc;           /* 기본: 회색 별 */
-    padding: 0;
-}
-
-.modal-favorite.active {
-    color: #ffd400;        /* 즐겨찾기: 노란 별 */
-}
-
-/* 내용 */
-.modal-info-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 8px;
-    font-size: 14px;
-}
-
-.modal-info-table th,
-.modal-info-table td {
-    border: 1px solid #d0d0d0;
-    padding: 10px 12px;
-}
-
-.modal-info-table th {
-    width: 120px;
-    background-color: #f8f8f8;
-    text-align: center;
-    font-weight: 600;
-}
-
-.modal-info-table td {
-    background-color: #ffffff;
-}
-
-/* 하단 버튼 */
-.modal-footer {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    margin-top: 24px;
-}
-
-.modal-footer .btn-primary,
-.modal-footer .btn-secondary {
-    min-width: 140px;
-    padding: 10px 20px;
-    border-radius: 6px;
-    border: 1px solid #333;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.modal-footer .btn-primary {
-    background-color: #ffffff;
-}
-
-.modal-footer .btn-secondary {
-    background-color: #ffe4e4;
-}
-.card-header {  
-  padding-bottom: 20px;
-  margin: 12px 0 8px;
+/* 섹션 헤더: 뉴스레터 톤 */
+.card-header {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .card-title {
   margin: 0;
   font-size: 16px;
   font-weight: 700;
+  color: #111827;
 }
 
 .card-subtitle {
   margin: 0;
   font-size: 12px;
-  color: #666;
+  color: #6b7280;
+}
+
+/* 가로 스크롤 카드 row */
+.card-row {
+  display: flex;
+  gap: 14px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+/* 병원 카드: 뉴스 카드 스타일로 */
+.hospital-card {
+  min-width: 260px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  background: #ffffff;
+  padding: 16px;
+  flex-shrink: 0;
+  transition: 0.2s;
+}
+
+.hospital-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: #d0d0d0;
+}
+
+.hospital-name {
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #111827;
+}
+
+.rating {
+  font-size: 12px;
+  margin-bottom: 8px;
+  color: #e1e168;
+}
+
+.hospital-desc {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+/* ===== 모달: 톤만 뉴스레터 느낌으로 정리 ===== */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal.hidden { display: none; }
+
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal-dialog {
+  position: relative;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 24px 24px 20px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  min-width: 640px;
+  max-width: 900px;
+  z-index: 1001;
+  border: 1px solid #e0e0e0;
+}
+
+.modal-favorite {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  cursor: pointer;
+  color: #ccc;
+  padding: 0;
+}
+.modal-favorite.active { color: #ffd400; }
+
+.modal-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.modal-info-table th,
+.modal-info-table td {
+  border: 1px solid #e0e0e0;
+  padding: 10px 12px;
+}
+
+.modal-info-table th {
+  width: 120px;
+  background-color: #fafafa;
+  text-align: center;
+  font-weight: 600;
+  color: #111827;
+}
+
+.modal-info-table td {
+  background-color: #ffffff;
+  color: #111827;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.modal-footer .btn-primary,
+.modal-footer .btn-secondary {
+  min-width: 140px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+/* 뉴스레터 카드 hover 톤과 유사하게 */
+.modal-footer .btn-primary:hover,
+.modal-footer .btn-secondary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  border-color: #d0d0d0;
+}
+
+.modal-footer .btn-primary {
+  background: #ffffff;
+}
+
+.modal-footer .btn-secondary {
+  background: #1f6987;/* 포인트: 뉴스레터 badge 배경 */
+  color:white;
+}
+
+/* 반응형 */
+@media (max-width: 900px) {
+  .main {
+    grid-template-columns: 1fr;
+  }
+  .map-wrapper {
+    height: 360px;
+  }
+  .modal-dialog {
+    min-width: auto;
+    width: calc(100% - 32px);
+  }
 }

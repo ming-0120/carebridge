@@ -103,6 +103,7 @@
   cursor: pointer;
   transition: background-color 0.2s;
   margin-left: 10px;
+  margin-right: 0;
 }
 
 /* 
@@ -234,14 +235,14 @@
 
 .qna-table th:nth-child(3),
 .qna-table td:nth-child(3) {
-  width: 100px; /* 이름 컬럼 */
+  width: 40%; /* 문의 제목 컬럼 (넓은 공간 할당) */
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .qna-table th:nth-child(4),
 .qna-table td:nth-child(4) {
-  width: 40%; /* 문의 제목 컬럼 (넓은 공간 할당) */
-  word-wrap: break-word;
-  word-break: break-word;
+  width: 100px; /* 이름 컬럼 */
 }
 
 .qna-table th:nth-child(5),
@@ -348,9 +349,11 @@
     - cursor: pointer - 포인터 커서
     - width: 18px - 너비 18px
     - height: 18px - 높이 18px
-    - 사용처: 체크박스 입력 필드 (.checkbox-cell input[type="checkbox"])
+    - 사용처: 체크박스 입력 필드 (.checkbox-cell input[type="checkbox"], 헤더 체크박스 포함)
 */
-.checkbox-cell input[type="checkbox"] {
+.checkbox-cell input[type="checkbox"],
+.qna-table th input[type="checkbox"],
+.qna-table #selectAll {
   cursor: pointer;
   width: 18px;
   height: 18px;
@@ -473,20 +476,22 @@
     - 헤더 세로 배치: 제목과 버튼을 세로로 배치
     - 제목 글씨 크기 축소
     - 버튼 마진 조정
+    - 테이블 셀 너비 조정: 체크박스, 이름, 문의제목 셀 너비 조정
     - 사용처: 모바일 화면 (768px 이하)
 */
 @media (max-width: 768px) {
   /* 
-    문의 관리 헤더 세로 배치
+    문의 관리 헤더 레이아웃 유지 (가로 배치)
     
-    목적: 모바일 화면에서 헤더를 세로로 배치
-      - flex-direction: column - 세로 방향 배치
-      - align-items: flex-start - 왼쪽 정렬
-      - gap: 16px - 요소 간 간격
+    목적: 모바일 화면에서도 헤더를 가로로 배치하여 삭제 버튼이 오른쪽에 위치하도록 함
+      - flex-direction: row - 가로 방향 배치 유지
+      - justify-content: space-between - 양쪽 끝 정렬 (제목 왼쪽, 버튼 오른쪽)
+      - align-items: center - 수직 중앙 정렬
   */
   .qna-header {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
     gap: 16px;
   }
 
@@ -503,13 +508,152 @@
   /* 
     삭제 버튼 마진 조정
     
-    목적: 모바일 화면에서 삭제 버튼 마진 조정
+    목적: 모바일 화면에서 삭제 버튼이 오른쪽에 위치하도록 마진 조정
       - margin-left: 0 - 왼쪽 마진 제거
-      - margin-top: 8px - 상단 마진 추가
-      - 이유: 세로 배치로 변경되어 왼쪽 마진이 불필요하고 상단 마진이 필요함
+      - margin-right: 0 - 오른쪽 마진 제거 (헤더의 justify-content로 정렬)
   */
   .qna-header .btn-delete {
     margin-left: 0;
-    margin-top: 8px;
+    margin-right: 0;
+  }
+  
+  /* 
+    체크박스 셀 너비 조정 (1번째 컬럼)
+    
+    목적: 모바일 화면에서 체크박스 셀 너비를 승인대기 페이지와 동일하게 설정
+      - width: 27px - 체크박스 셀 너비 (승인대기 페이지와 동일)
+      - min-width, max-width: 고정 너비 유지
+      - padding: 패딩 조정
+  */
+  .qna-table th:first-child,
+  .qna-table td:first-child {
+    width: 27px !important;
+    min-width: 27px !important;
+    max-width: 27px !important;
+    padding: 10px 6px !important;
+  }
+  
+  /* 
+    체크박스 입력 필드 크기 조정
+    
+    목적: 모바일 화면에서 체크박스 크기를 승인대기 페이지와 동일하게 설정
+      - width, height: 체크박스 크기 유지 (기존 18px)
+      - 헤더 체크박스와 데이터 행 체크박스 모두 동일한 크기로 설정
+  */
+  .qna-table .checkbox-cell input[type="checkbox"],
+  .qna-table th input[type="checkbox"],
+  .qna-table #selectAll {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* 
+    문의 제목 셀 너비 조정 (3번째 컬럼) - 위치 변경됨
+    
+    목적: 모바일 화면에서 문의 제목 셀을 훨씬 넓히기
+      - width: 70% !important - 넓은 너비 할당 (기본 40%에서 증가)
+      - min-width: 350px !important - 최소 너비 보장 (더 넓게)
+      - max-width: none !important - 최대 너비 제한 없음
+      - word-wrap, word-break: 긴 텍스트 줄바꿈 처리
+  */
+  .qna-table th:nth-child(3),
+  .qna-table td:nth-child(3) {
+    width: 70% !important;
+    min-width: 350px !important;
+    max-width: none !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+  
+  /* 
+    이름 셀 너비 조정 (4번째 컬럼) - 위치 변경됨
+    
+    목적: 모바일 화면에서 이름 셀 너비를 훨씬 작게 줄이기
+      - width: 40px !important - 고정 너비 (기본 100px에서 크게 감소)
+      - min-width: 40px !important - 최소 너비
+      - max-width: 40px !important - 최대 너비 (고정)
+      - white-space: nowrap !important - 줄바꿈 방지
+  */
+  .qna-table th:nth-child(4),
+  .qna-table td:nth-child(4) {
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    white-space: nowrap !important;
+  }
+}
+
+/* 
+  작은 모바일 화면 스타일 (480px 이하)
+  
+  목적: 작은 모바일 화면 크기에 맞춘 스타일 조정
+    - max-width: 480px - 최대 너비 480px까지 적용
+    - 테이블 셀 너비 조정: 체크박스, 이름, 문의제목 셀 너비 조정
+    - 사용처: 작은 모바일 화면 (480px 이하)
+*/
+@media (max-width: 480px) {
+  /* 
+    체크박스 셀 너비 조정 (1번째 컬럼)
+    
+    목적: 작은 모바일 화면에서 체크박스 셀 너비를 승인대기 페이지와 동일하게 설정
+      - width: 27px - 체크박스 셀 너비 (승인대기 페이지와 동일)
+      - min-width, max-width: 고정 너비 유지
+      - padding: 패딩 조정
+  */
+  .qna-table th:first-child,
+  .qna-table td:first-child {
+    width: 27px !important;
+    min-width: 27px !important;
+    max-width: 27px !important;
+    padding: 8px 5px !important;
+  }
+  
+  /* 
+    체크박스 입력 필드 크기 조정
+    
+    목적: 작은 모바일 화면에서 체크박스 크기를 승인대기 페이지와 동일하게 설정
+      - width, height: 체크박스 크기 유지 (기존 18px)
+      - 헤더 체크박스와 데이터 행 체크박스 모두 동일한 크기로 설정
+  */
+  .qna-table .checkbox-cell input[type="checkbox"],
+  .qna-table th input[type="checkbox"],
+  .qna-table #selectAll {
+    width: 18px;
+    height: 18px;
+  }
+  
+  /* 
+    문의 제목 셀 너비 조정 (3번째 컬럼) - 위치 변경됨
+    
+    목적: 작은 모바일 화면에서 문의 제목 셀을 훨씬 넓히기
+      - width: 70% !important - 넓은 너비 할당
+      - min-width: 320px !important - 최소 너비 보장 (더 넓게)
+      - max-width: none !important - 최대 너비 제한 없음
+      - word-wrap, word-break: 긴 텍스트 줄바꿈 처리
+  */
+  .qna-table th:nth-child(3),
+  .qna-table td:nth-child(3) {
+    width: 70% !important;
+    min-width: 320px !important;
+    max-width: none !important;
+    word-wrap: break-word !important;
+    word-break: break-word !important;
+  }
+  
+  /* 
+    이름 셀 너비 조정 (4번째 컬럼) - 위치 변경됨
+    
+    목적: 작은 모바일 화면에서 이름 셀 너비를 훨씬 작게 줄이기
+      - width: 35px !important - 고정 너비 (더 작게)
+      - min-width: 35px !important - 최소 너비
+      - max-width: 35px !important - 최대 너비 (고정)
+      - white-space: nowrap !important - 줄바꿈 방지
+  */
+  .qna-table th:nth-child(4),
+  .qna-table td:nth-child(4) {
+    width: 35px !important;
+    min-width: 35px !important;
+    max-width: 35px !important;
+    white-space: nowrap !important;
   }
 }

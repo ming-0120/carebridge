@@ -63,7 +63,7 @@ def qna_list(request):
         'qna_id': 'qna_id',
         'title': 'title',
         'created_at': 'created_at',
-        'username': 'user__username',
+        'username': 'user__name',  # username 대신 name으로 정렬 (표시는 마스킹된 이름)
         'privacy': 'privacy',
         'status': 'reply',  # reply가 있으면 답변 완료, 없으면 대기
     }

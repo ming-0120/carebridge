@@ -1,5 +1,3 @@
-const hos_id = document.getElementById('hos_id');
-
 function goToRecord(type, order_id, user_id, medical_record_id) {
 
     // if (status === 'COMPLETED') {
@@ -17,7 +15,7 @@ function goToRecord(type, order_id, user_id, medical_record_id) {
 
 if (hos_id) {
     const socket = new WebSocket(
-        'ws://' + window.location.host + '/ws/hospital_dashboard/' + hos_id + '/'
+        'wss://' + window.location.host + '/ws/hospital_dashboard/' + hos_id + '/'
     );
 
     // 3. 연결 성공 시 로그

@@ -1,0 +1,99 @@
+/* ========= Footer 레이아웃 ========= */
+/* footer를 하단에 고정하기 위한 조건부 레이아웃 */
+body.has-footer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* main 태그와 .page 클래스를 가진 요소 모두 지원 */
+body.has-footer main,
+body.has-footer .page {
+  flex: 1;
+}
+
+/* ========= Footer ========= */
+.footer {
+  background: #2a2a2a;
+  color: #999;
+  padding: 40px 0 30px;
+  width: 100%;
+  font-size: 13px;
+}
+
+body.has-footer .footer {
+  margin-top: auto;
+}
+
+.footer-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+/* 브랜드명 (하얀 글씨) */
+.footer-brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 24px;
+  padding: 0;
+}
+
+/* 푸터 정보 영역 */
+.footer-info {
+  margin-bottom: 20px;
+  line-height: 1.8;
+}
+
+.footer-info-line {
+  margin: 0;
+  color: #999;
+  font-size: 13px;
+}
+
+/* 저작권 표시 */
+.footer-copyright {
+  text-align: center;
+  color: #999;
+  font-size: 12px;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+}
+
+/* ========= 반응형 디자인 ========= */
+/* 768px 이하: 푸터 반응형 */
+@media (max-width: 768px) {
+  .footer {
+    padding: 30px 0 20px;
+  }
+
+  .footer-container {
+    padding: 0 20px;
+  }
+
+  .footer-brand-name {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+
+  .footer-info-line {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .footer-copyright {
+    font-size: 11px;
+    padding-top: 16px;
+  }
+}
+
+/* 480px 이하: 푸터 모바일 최적화 */
+@media (max-width: 480px) {
+  .footer-info-line {
+    font-size: 11px;
+  }
+}
+

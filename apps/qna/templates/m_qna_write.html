@@ -7,8 +7,9 @@
   <title>QnA 작성 - CareBridge</title>
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_write.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
-<body>
+<body class="has-footer">
   {% include "core/_header.html" %}
   
   <main class="qna-main">
@@ -220,9 +221,7 @@
     </div>
   </main>
 
-  <footer class="footer">
-    © CareBridge All Rights Reserved.
-  </footer>
+  {% include "core/footer.html" %}
 
   <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
   <script src="{% static 'qna/js/m_qna_write.js' %}"></script>

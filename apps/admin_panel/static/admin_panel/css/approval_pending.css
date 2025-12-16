@@ -324,6 +324,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+  min-width: 600px; /* 모바일에서도 최소 너비 보장 (좌우 스크롤 가능) */
 }
 
 /* 
@@ -354,6 +355,14 @@
   font-weight: 600;
   color: #1B3C73;
   border-bottom: 2px solid #e1e4ec;
+  writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+  text-orientation: mixed !important; /* 텍스트 방향 정상 */
+  white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+  word-break: keep-all; /* 단어 단위로 줄바꿈 */
+  overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+  transform: none !important; /* 변환 제거 */
+  direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+  unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
 }
 
 /* 
@@ -367,6 +376,11 @@
 .approval-table td {
   padding: 12px;
   border-bottom: 1px solid #f0f0f0;
+  writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+  text-orientation: mixed !important; /* 텍스트 방향 정상 */
+  transform: none !important; /* 변환 제거 */
+  direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+  unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
 }
 
 /* 
@@ -682,4 +696,204 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+/* 
+  ========= 모바일 화면 스타일 =========
+  
+  목적: 모바일 화면에서 승인 테이블 텍스트를 가로로 표시하고 스크롤바 크기 조정
+*/
+
+/* 모바일 화면 (768px 이하) */
+@media (max-width: 768px) {
+  .approval-table {
+    min-width: 700px; /* 모바일에서도 최소 너비 보장 (모든 컬럼 표시) */
+    font-size: 13px; /* 글씨 크기 약간 축소 */
+  }
+  
+  /* 체크박스 셀 너비 기존의 2/3로 축소 (40px → 약 27px) */
+  .approval-table th:first-child,
+  .approval-table td:first-child {
+    width: 27px !important; /* 체크박스 셀 너비 2/3 (40px * 2/3 ≈ 27px) */
+    min-width: 27px !important;
+    max-width: 27px !important;
+    padding: 10px 6px !important; /* 패딩 적절히 조정 */
+  }
+  
+  /* 이름 셀 너비를 현재의 3분의 2로 줄이기 (3번째 컬럼) */
+  .approval-table th:nth-child(3),
+  .approval-table td:nth-child(3) {
+    min-width: 47px !important; /* 이름 셀 너비 3분의 2 (70px * 2/3 ≈ 47px) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 병원명 셀 넓히기 (5번째 컬럼) */
+  .approval-table th:nth-child(5),
+  .approval-table td:nth-child(5) {
+    min-width: 130px !important; /* 병원명 셀 최소 너비 보장 */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 전공과 셀 넓히기 (6번째 컬럼) - 최소 5글자 입력될 px */
+  .approval-table th:nth-child(6),
+  .approval-table td:nth-child(6) {
+    min-width: 110px !important; /* 전공과 셀 최소 너비 (5글자 정도) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 전화번호 셀 넓히기 (8번째 컬럼) - 남은 너비 추가 */
+  .approval-table th:nth-child(8),
+  .approval-table td:nth-child(8) {
+    min-width: 130px !important; /* 전화번호 셀 최소 너비 (010-1234-5678 형식) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  .approval-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+    transform: none !important; /* 변환 제거 */
+    direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+    unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
+    padding: 10px 8px; /* 패딩 약간 축소 */
+  }
+  
+  .approval-table th a {
+    writing-mode: horizontal-tb !important; /* 링크 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .approval-table td {
+    writing-mode: horizontal-tb !important; /* 데이터 셀 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+    padding: 10px 8px; /* 패딩 약간 축소 */
+  }
+  
+  .table-container {
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+/* 작은 모바일 화면 (480px 이하) */
+@media (max-width: 480px) {
+  .approval-table {
+    min-width: 650px; /* 작은 모바일에서도 최소 너비 보장 (모든 컬럼 표시) */
+    font-size: 12px; /* 글씨 크기 더 축소 */
+  }
+  
+  /* 체크박스 셀 너비 기존의 2/3로 축소 (40px → 약 27px) */
+  .approval-table th:first-child,
+  .approval-table td:first-child {
+    width: 27px !important; /* 체크박스 셀 너비 2/3 (40px * 2/3 ≈ 27px) */
+    min-width: 27px !important;
+    max-width: 27px !important;
+    padding: 8px 5px !important; /* 패딩 적절히 조정 */
+  }
+  
+  /* 이름 셀 너비를 현재의 3분의 2로 줄이기 (3번째 컬럼) */
+  .approval-table th:nth-child(3),
+  .approval-table td:nth-child(3) {
+    min-width: 43px !important; /* 이름 셀 너비 3분의 2 (65px * 2/3 ≈ 43px) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 병원명 셀 넓히기 (5번째 컬럼) */
+  .approval-table th:nth-child(5),
+  .approval-table td:nth-child(5) {
+    min-width: 120px !important; /* 병원명 셀 최소 너비 보장 */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 전공과 셀 넓히기 (6번째 컬럼) - 최소 5글자 입력될 px */
+  .approval-table th:nth-child(6),
+  .approval-table td:nth-child(6) {
+    min-width: 105px !important; /* 전공과 셀 최소 너비 (5글자 정도) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  /* 전화번호 셀 넓히기 (8번째 컬럼) - 남은 너비 추가 */
+  .approval-table th:nth-child(8),
+  .approval-table td:nth-child(8) {
+    min-width: 125px !important; /* 전화번호 셀 최소 너비 (010-1234-5678 형식) */
+    white-space: nowrap !important; /* 줄바꿈 방지 */
+  }
+  
+  .approval-table th {
+    writing-mode: horizontal-tb !important; /* 텍스트를 가로로 표시 */
+    text-orientation: mixed !important; /* 텍스트 방향 정상 */
+    white-space: normal !important; /* 텍스트 줄바꿈 허용 */
+    word-break: keep-all; /* 단어 단위로 줄바꿈 */
+    overflow-wrap: break-word; /* 긴 단어 줄바꿈 */
+    transform: none !important; /* 변환 제거 */
+    direction: ltr !important; /* 왼쪽에서 오른쪽으로 텍스트 방향 */
+    unicode-bidi: normal !important; /* 텍스트 방향 정상화 */
+    padding: 8px 6px; /* 패딩 더 축소 */
+  }
+  
+  .approval-table th a {
+    writing-mode: horizontal-tb !important; /* 링크 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+  }
+  
+  .approval-table td {
+    writing-mode: horizontal-tb !important; /* 데이터 셀 텍스트도 가로로 */
+    text-orientation: mixed !important;
+    transform: none !important;
+    direction: ltr !important;
+    unicode-bidi: normal !important;
+    padding: 8px 6px; /* 패딩 더 축소 */
+  }
+  
+  .table-container {
+    scrollbar-width: auto; /* 스크롤바 크기 2배 (thin → auto) */
+  }
+  
+  .table-container::-webkit-scrollbar {
+    width: 20px; /* 스크롤바 너비 2배 (기본 10px → 20px) */
+    height: 20px; /* 스크롤바 높이 2배 (기본 10px → 20px) */
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
 }

@@ -1,315 +1,355 @@
+/* CareBridge 통일 카드 스타일 */
+:root {
+  --cb-bg: #ffffff;
+  --cb-card-bg: #ffffff;
+  --cb-border: #e5e7eb; /* 미세 테두리 */
+  --cb-radius: 12px;    /* 필요 시 16px로 조정 가능 */
+  --cb-text: #111827;
+  --cb-muted: #6b7280;
+  --cb-shadow: 0 0 10px rgba(0, 0, 0, 0.03);
+  --cb-primary: #2563eb;
+}
+
 body {
-    font-family: 'Malgun Gothic', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #f0f4f7;
-    color: #333;
+  margin: 0;
+  background: var(--cb-bg); /* 여백까지 흰색 통일 */
+  font-family: "Pretendard", "Noto Sans KR", system-ui, -apple-system, sans-serif;
+  color: var(--cb-text);
 }
-.header {
-    background-color: #ffffff;
-    border-bottom: 2px solid #0056b3;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-.logo {
-    font-size: 24px;
-    font-weight: bold;
-    color: #0056b3;
-    cursor: pointer;
-}
-.user-info {
-    font-size: 16px;
-    color: #555;
-}
+
 .container {
-    max-width: 1500px;
-    margin: 20px auto;
-    padding: 20px;
+  max-width: 1500px;
+  margin: 24px auto;
+  padding: 0 24px 24px;
 }
-.card {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-}
+
 h2 {
-    color: #17a2b8;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 10px;
-    margin-top: 0;
+  margin: 0 0 16px 0;
+  color: var(--cb-text);
+  border-bottom: 1px solid var(--cb-border);
+  padding-bottom: 10px;
+}
+
+/* 공통 카드 */
+.cb-card,
+.card {
+  background: var(--cb-card-bg);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  padding: 16px;
+  box-shadow: var(--cb-shadow);
+  margin-bottom: 20px;
+}
+
+/* 카드가 컨테이너 역할일 때(예: form 박스) */
+.cb-card-wide {
+  width: 100%;
+  max-width: 640px;
+  background: var(--cb-card-bg);
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  padding: 40px 50px 60px;
+  box-shadow: var(--cb-shadow);
 }
 
 /* 환자 기본 정보 */
 .patient-info-header {
-    background-color: #e2f3ff;
-    padding: 15px 20px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    font-size: 14px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 10px;
+  background: #fff;
+  border: 1px solid var(--cb-border);
+  border-radius: var(--cb-radius);
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  box-shadow: var(--cb-shadow);
 }
+
 .info-item {
-    display: flex;
-    flex-direction: column;
-    border-right: 1px dotted #cce5ff;
-    padding-right: 10px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px dashed var(--cb-border);
+  padding-right: 10px;
 }
+
 .info-item:last-child {
-    border-right: none;
+  border-right: none;
 }
+
 .info-item strong {
-    color: #007bff;
-    font-weight: bold;
-    margin-bottom: 3px;
+  color: var(--cb-muted);
+  font-weight: 700;
+  margin-bottom: 3px;
 }
 
-/* 폼 입력 및 레이아웃 */
+/* 기록 입력 레이아웃 */
 .record-entry-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 30px;
-}
-.form-group {
-    margin-bottom: 20px;
-}
-.form-group label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #495057;
-}
-.input-with-button {
-    display: flex;
-    gap: 10px;
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 24px;
 }
 
-.input-with-button input{
-    width: 100%;
-    padding: 10px;;
-    border-radius: 4px;
-    box-sizing: border-box;
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--cb-text);
+}
+
+.input-with-button {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.input-with-button input,
+.input-with-button select,
+textarea,
+.search-controls input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid var(--cb-border);
+  border-radius: 10px;
+  box-sizing: border-box;
+  font-family: inherit;
+  color: inherit;
+  background: #fff;
+}
+
+textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+input[readonly],
+textarea[readonly],
+select[readonly] {
+  background-color: #f3f4f6 !important;
+  color: #6b7280;
+}
+
+select[readonly] {
+  pointer-events: none;
 }
 
 .search-btn {
-    background-color: #17a2b8;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: bold;
+  background-color: var(--cb-primary);
+  color: #fff;
+  border: 1px solid transparent;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  white-space: nowrap;
 }
+
+.search-btn:hover {
+  background-color: #1d4ed8;
+}
+
 .attach-btn {
-    background-color: #28a745;
+  background-color: #16a34a;
+}
+
+.attach-btn:hover {
+  background-color: #15803d;
 }
 
 .attachment-list {
-    list-style: none;
-    padding: 0;
-    margin-top: 10px;
-    font-size: 14px;
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  font-size: 14px;
 }
+
 .attachment-list li {
-    background-color: #f8f9fa;
-    border: 1px solid #eee;
-    padding: 8px;
-    margin-bottom: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  background-color: #f9fafb;
+  border: 1px solid var(--cb-border);
+  padding: 8px 10px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
 }
 
 .delete-btn {
-    background: none;
-    border: none;
-    color: #dc3545;
-    font-weight: bold;
-    cursor: pointer;
+  background: none;
+  border: none;
+  color: #dc2626;
+  font-weight: 800;
+  cursor: pointer;
 }
 
 /* 상태 버튼 */
 .status-button-group {
-    margin-top: 30px;
-    text-align: right;
-    border-top: 1px solid #eee;
-    padding-top: 20px;
+  margin-top: 24px;
+  text-align: right;
+  border-top: 1px solid var(--cb-border);
+  padding-top: 16px;
 }
+
 .status-button {
-    padding: 12px 25px;
-    border: none;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 10px;
+  padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-left: 10px;
 }
+
 .btn-sampled {
-    background-color: #ffc107;
-    color: #333;
+  background-color: #fde68a;
+  color: #111827;
 }
+
 .btn-completed {
-    background-color: #28a745;
-    color: white;
+  background-color: #16a34a;
+  color: #ffffff;
 }
+
 .btn-next {
-    background-color: #007bff;
-    color: white;
+  background-color: var(--cb-primary);
+  color: #ffffff;
 }
 
 /* 모달 overlay */
 .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    visibility: hidden;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  visibility: hidden;
 }
 
-/* 모달창 */
+/* 모달 */
 .modal-content {
-    background-color: #ffffff;
-    border-radius: 8px;
-    width: 500px;
-    max-height: 80vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+  background-color: #ffffff;
+  border-radius: 12px;
+  border: 1px solid var(--cb-border);
+  width: 500px;
+  max-width: calc(100vw - 32px);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.20);
 }
 
 .modal-header {
-    padding: 15px 20px;
-    background-color: #007bff;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  padding: 14px 16px;
+  background-color: var(--cb-primary);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
+
 .close-btn {
-    background: none;
-    border: none;
-    color: white;
-    font-size: 24px;
-    cursor: pointer;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 24px;
+  cursor: pointer;
+  line-height: 1;
 }
 
 .modal-body {
-    padding: 20px;
-    flex-grow: 1;
-    overflow-y: auto;
+  padding: 16px;
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .search-controls {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-.search-controls input {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-}
-.search-controls button {
-    background-color: #17a2b8;
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
 }
 
 .result-table {
-    width: 100%;
-    border-collapse: collapse;
+  width: 100%;
+  border-collapse: collapse;
 }
+
 .result-table th,
 .result-table td {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-    text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid var(--cb-border);
+  text-align: left;
 }
+
 .result-table th {
-    background-color: #f8f9fa;
-    font-weight: bold;
+  background-color: #f9fafb;
+  font-weight: 800;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
+
 .result-table tbody tr {
-    cursor: pointer;
+  cursor: pointer;
 }
+
 .result-table tbody tr:hover,
 .result-table tbody tr.selected {
-    background-color: #e6f7e9;
+  background-color: #eef2ff;
 }
 
-.modal-footer {
-    padding: 15px 20px;
-    border-top: 1px solid #dee2e6;
-    text-align: right;
-}
-.modal-footer button {
-    padding: 10px 15px;
-    border-radius: 4px;
-    font-weight: bold;
-    margin-left: 10px;
-    cursor: pointer;
-}
-.btn-cancel {
-    background-color: #dc3545;
-    color: white;
-}
-.btn-confirm {
-    background-color: #007bff;
-    color: white;
-}
-
-select[readonly] {
-  background-color: #ddd;
-  pointer-events: none;
-}
-
+/* 기타: 로딩 스피너(기존 유지) */
 .layerPopup {
-    display: none;
-    position: relative;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
+  display: none;
+  position: relative;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  justify-content: center;
+  align-items: center;
 }
 
 .spinner {
-    position: static;
-    top: 50%;
-    left: 50%;
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #3498db; /* Blue */
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    animation: spinner 2s linear infinite;
+  position: static;
+  top: 50%;
+  left: 50%;
+  border: 8px solid #f3f3f3;
+  border-top: 8px solid #3498db;
+  border-radius: 50%;
+  width: 25px;
+  height: 25px;
+  animation: spinner 2s linear infinite;
 }
 
 @keyframes spinner {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 1200px) {
+  .patient-info-header {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .record-entry-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .patient-info-header {
+    grid-template-columns: 1fr;
+  }
 }

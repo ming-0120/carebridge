@@ -1,291 +1,332 @@
 :root {
-      --primary: #4A6CF7;
-      --primary-dark: #3043b3;
-      --bg: #ffffff;      /* 전체 배경을 흰색으로 통일 */
-      --card-bg: #ffffff;
-      --text-main: #222;
-      --text-sub: #666;
-      --border: #e5e7eb;  /* 미세 테두리 색상 */
-    }
+  --primary: #4A6CF7;
+  --primary-dark: #3043b3;
+  --bg: #ffffff;      /* 전체 배경을 흰색으로 통일 */
+  --card-bg: #ffffff;
+  --text-main: #222;
+  --text-sub: #666;
+  --border: #e5e7eb;  /* 미세 테두리 색상 */
+}
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      margin: 0;
-      background: var(--bg); /* 흰 배경 */
-      font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      color: var(--text-main);
-    }
-
-    /* ===== 상단 네비게이션 ===== */
-    .top-nav {
-      height: 70px;
-      background: #f2f2f2;
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .top-nav-inner {
-      width: 1280px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    .top-nav .logo {
-      font-weight: 700;
-      font-size: 22px;
-    }
-
-    .top-nav .menu {
-      display: flex;
-      gap: 24px;
-      font-size: 15px;
-    }
-
-    .top-nav .menu a {
-      text-decoration: none;
-      color: var(--text-main);
-    }
-
-    .top-nav .menu a:hover {
-      color: var(--primary);
-    }
-
-    .top-nav .login {
-      font-size: 14px;
-    }
-
-    /* ===== 메인 컨테이너 ===== */
-    .page-wrapper {
-      display: flex;
-      justify-content: center;
-      padding: 24px 16px 40px;
-    }
-
-    .page-inner {
-      width: 1280px;
-    }
-
-    /* 상단 타이틀 / 필터 영역 */
-    .summary-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      margin-bottom: 16px;
-    }
-
-    .summary-row-left h1 {
-      font-size: 20px;
-      font-weight: 700;
-      margin-bottom: 4px;
-    }
-
-    .summary-row-left p {
-      font-size: 13px;
-      color: var(--text-sub);
-    }
-
-    .summary-row-right {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      font-size: 13px;
-    }
-
-    .summary-row-right select,
-    .summary-row-right input {
-      border-radius: 6px;
-      border: 1px solid var(--border);
-      padding: 6px 10px;
-      font-size: 13px;
-      background: #fff;
-      min-width: 120px;
-    }
-
-    .summary-row-right button {
-      border-radius: 6px;
-      border: none;
-      padding: 7px 14px;
-      font-size: 13px;
-      background: var(--primary);
-      color: #fff;
-      cursor: pointer;
-    }
-
-    .summary-row-right button:hover {
-      background: var(--primary-dark);
-    }
-
-    /* ===== 메인 레이아웃: 왼쪽 그래프(세로 2장) + 오른쪽 설명 ===== */
-    .content-row {
-      display: flex;
-      gap: 16px;
-      align-items: flex-start;
-    }
-    /* 왼쪽: 그래프 두 개 세로 */
-    .graph-column {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-
-    /* 오른쪽: 설명 카드 – 전체 폭의 약 45~50% */
-    .info-column {
-      flex: 0 0 45%;
-    }
-
-    .card {
-      background: var(--card-bg);          /* 흰 카드 */
-      border: 1px solid var(--border);     /* 미세 테두리 */
-      border-radius: 8px;                  /* 과하지 않은 라운드 */
-      padding: 16px 18px;
-      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 미세 그림자 */
-      border-color: #d1d5db;                      /* 호버 시 테두리 강조 */
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 8px;
-    }
-
-    .card-title {
-      font-size: 15px;
-      font-weight: 600;
-    }
-
-    .card-subtitle {
-      font-size: 12px;
-      color: var(--text-sub);
-    }
-
-    .card-body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    /* 도넛 차트 전용 래퍼 */
-    .chart-wrapper {
-      width: 100%;
-      max-width: 550px;    /* 여기만 조정하면 최대 크기 바뀜 */
-      aspect-ratio: 1 / 1; /* 정사각형 유지 */
-    }
-    
-    .chart-wrapper canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
-
-
-    /* 오른쪽 질병 설명 카드 */
-    .disease-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .disease-label {
-      font-size: 11px;
-      color: #999;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      margin-bottom: 2px;
-    }
-
-    .disease-section-title {
-      font-size: 13px;
-      font-weight: 600;
-      margin: 12px 0 4px;
-      color: var(--text-main);
-    }
-
-    .disease-paragraph {
-      font-size: 13px;
-      line-height: 1.6;
-      color: var(--text-sub);
-      white-space: pre-line;
-    }
-
-    /* 작은 번호 동그라미 */
-    .badge-circle {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #ffcc4d;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 700;
-      margin-right: 6px;
-    }
-
-    @media (max-width: 1024px) {
-      .content-row {
-        flex-direction: column;
-      }
-    
-      .info-column {
-        flex: 1 1 auto;
-      }
-    }
-    #diseaseDefinition{
+* {
+  box-sizing: border-box;
   margin: 0;
-  padding: 14px 14px;
-  border: 1px solid #e9ecef;
-  border-radius: 12px;
-  background: #fff;
-  font-size: 13px;
-  line-height: 1.65;
-  color: #495057;
+  padding: 0;
 }
 
-/* 섹션 타이틀(##) */
-#diseaseDefinition h2{
-  margin: 10px 0 8px;
-  font-size: 14px;
-  font-weight: 800;
-  color: #212529;
-  padding-top: 10px;
-  border-top: 1px solid #f1f3f5;
+body {
+  margin: 0;
+  background: var(--bg); /* 흰 배경 */
+  font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--text-main);
 }
-#diseaseDefinition h2:first-child{
-  border-top: none;
-  padding-top: 0;
+
+/* ===== 상단 네비게이션 ===== */
+.top-nav {
+  height: 70px;
+  background: #f2f2f2;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.top-nav-inner {
+  width: 1280px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.top-nav .logo {
+  font-weight: 700;
+  font-size: 22px;
+}
+
+.top-nav .menu {
+  display: flex;
+  gap: 24px;
+  font-size: 15px;
+}
+
+.top-nav .menu a {
+  text-decoration: none;
+  color: var(--text-main);
+}
+
+.top-nav .menu a:hover {
+  color: var(--primary);
+}
+
+.top-nav .login {
+  font-size: 14px;
+}
+
+/* ===== 메인 컨테이너 ===== */
+.page-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 24px 16px 40px;
+}
+
+.page-inner {
+  width: 1280px;
+}
+
+/* 상단 타이틀 / 필터 영역 */
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+
+.summary-row-left h1 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.summary-row-left p {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.summary-row-right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.summary-row-right select,
+.summary-row-right input {
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  font-size: 13px;
+  background: #fff;
+  min-width: 120px;
+}
+
+.summary-row-right button {
+  border-radius: 6px;
+  border: none;
+  padding: 7px 14px;
+  font-size: 13px;
+  background: var(--primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.summary-row-right button:hover {
+  background: var(--primary-dark);
+}
+
+.content-row{
+  display: grid;
+  grid-template-columns: 1fr 0.85fr; /* 우측 폭 */
+  gap: 16px;
+  align-items: stretch;
+}
+
+/* 왼쪽: 그래프 두 개 세로 */
+.graph-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* 오른쪽: 설명 카드 – 전체 폭의 약 45~50% */
+.info-column {
+  min-width: 0;
+}
+
+/* 우측 card-body가 남은 높이를 차지 + 내부 스크롤 가능하게 */
+.info-column > .card .card-body{
+  flex: 1;
+  min-height: 0;
+  display: block; /* 기존 flex(center) 덮어쓰기 */
+}
+
+/* 기존 diseaseDefinition max-height(320px) 제거하고, 부모 높이에 맞춰 스크롤 */
+#diseaseDefinition{
+  max-height: none;
+  height: 100%;
+  overflow: auto;
+}
+/* 우측의 "감염병 정보" 카드: 세로 레이아웃 */
+.info-column > .card{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.card {
+  background: var(--card-bg);          /* 흰 카드 */
+  border: 1px solid var(--border);     /* 미세 테두리 */
+  border-radius: 8px;                  /* 과하지 않은 라운드 */
+  padding: 16px 18px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+/* .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #d1d5db;
+} */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-sub);
+}
+
+.card-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 도넛 차트 전용 래퍼 */
+.chart-wrapper {
+  width: 100%;
+  max-width: 550px;    /* 여기만 조정하면 최대 크기 바뀜 */
+  aspect-ratio: 1 / 1; /* 정사각형 유지 */
+}
+
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 오른쪽 질병 설명 카드 */
+.disease-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.disease-label {
+  font-size: 11px;
+  color: #999;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+
+.disease-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 12px 0 4px;
+  color: var(--text-main);
+}
+
+.disease-paragraph {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-sub);
+  white-space: pre-line;
+}
+
+/* 작은 번호 동그라미 */
+.badge-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffcc4d;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+@media (max-width: 1024px) {
+  .content-row {
+    flex-direction: column;
+  }
+
+  .info-column {
+    flex: 1 1 auto;
+  }
+}
+
+/* =========================================================
+   AI 요약 영역(덮어쓰기/정리 버전)
+   - 번잡한 여백 제거
+   - 제목 구분선 제거
+   - 길면 접히거나 스크롤(기본)
+   ========================================================= */
+
+/* 오른쪽 카드에서 card-body가 flex(center)라 내용이 답답해질 수 있어서 block으로 */
+.info-column .card .card-body {
+  display: block;       /* 기존 flex 덮어쓰기 */
+  justify-content: initial;
+  align-items: initial;
+}
+
+/* AI 요약 박스: 패딩/라인하이트 축소 + 톤 다운 + 길이 제한 */
+#diseaseDefinition {
+  margin: 0;
+  padding: 10px 12px;          /* 14px -> 축소 */
+  border: 1px solid #eef1f4;   /* 더 연한 보더 */
+  border-radius: 10px;
+  background: #fafbfc;         /* 살짝 회색 톤 */
+  font-size: 13px;
+  line-height: 1.55;
+  color: #495057;
+  max-height: 580px;           /* 내용 길면 스크롤로 정리 */
+  overflow: auto;
+}
+
+/* 섹션 타이틀(##): 구분선/패딩 제거하고 간격만 최소화 */
+#diseaseDefinition h2 {
+  margin: 10px 0 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #212529;
+  padding: 0;          /* 기존 padding-top 제거 */
+  border: 0;           /* 기존 border-top 제거 */
+}
+
+#diseaseDefinition h2:first-child {
   margin-top: 0;
 }
 
-/* 서브 타이틀(###) */
-#diseaseDefinition h3{
-  margin: 10px 0 6px;
+/* 서브 타이틀(###): 간격 최소화 */
+#diseaseDefinition h3 {
+  margin: 8px 0 4px;
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: #343a40;
 }
 
-/* 리스트 */
-#diseaseDefinition ul{
-  margin: 6px 0 0;
-  padding-left: 18px;
-}
-#diseaseDefinition li{
+/* 문단/리스트 간격 통일 */
+#diseaseDefinition p,
+#diseaseDefinition ul,
+#diseaseDefinition ol {
   margin: 6px 0;
 }
-#diseaseDefinition p{
-  margin: 6px 0;
+
+/* 리스트 들여쓰기 조금 줄이기 */
+#diseaseDefinition ul,
+#diseaseDefinition ol {
+  padding-left: 16px;  /* 18px -> 축소 */
+}
+
+#diseaseDefinition li {
+  margin: 4px 0;       /* 6px -> 축소 */
 }

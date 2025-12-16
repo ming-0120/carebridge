@@ -39,16 +39,19 @@
         <!-- ✅ role은 반드시 form 안에 있어야 POST로 서버에 전달됨 -->
         <input type="hidden" name="role" id="roleInput" value="{{ role|default:'PATIENT' }}">
 
-        {% if messages %}
+          {% if messages %}
           <ul class="auth-messages">
             {% for message in messages %}
-              <li class="auth-message auth-message--error">
+              <li class="auth-message
+                  {% if message.tags == 'success' %} auth-message--success
+                  {% elif message.tags == 'error' %} auth-message--error
+                  {% else %} auth-message--info
+                  {% endif %}">
                 {{ message }}
               </li>
             {% endfor %}
           </ul>
         {% endif %}
-
         <div class="form-group">
           <label for="id_username">아이디</label>
           <input id="id_username" type="text" name="username"

@@ -1,10 +1,12 @@
 {% load static %}
+{% load tz %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <title>메디컬 뉴스레터</title> 
   <link rel="stylesheet" href="{% static 'newsletter/css/newsletter.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
 <body>
   {% include "core/_header.html" %}
@@ -12,6 +14,17 @@
   <main class="newsletter-page">
     <div class="newsletter-wrapper">
       <h1 class="newsletter-title">메디컬 뉴스레터</h1>
+
+      {% if items %}
+        <p class="newsletter-updated">
+          최근 업데이트 · {{ items.0.updated_at|date:"Y-m-d H:i" }}
+        </p>
+      {% else %}
+        <p class="newsletter-updated">
+          최근 업데이트 · 정보 없음
+        </p>
+      {% endif %}
+
 
       {% if items %}
         <div class="news-list">
@@ -66,5 +79,7 @@
       {% endif %}
     </div>
   </main>
+  
+  {% include "core/footer.html" %}
 </body>
 </html>

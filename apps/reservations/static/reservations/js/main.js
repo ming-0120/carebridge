@@ -40,39 +40,48 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function updateView(dept) {
-        clearMarkers();
-
-        const list = hospitalData[dept] || [];
-
-        // 마커 찍기
-        list.forEach((h) => {
-            const pos = new kakao.maps.LatLng(h.lat, h.lng);
-            const marker = new kakao.maps.Marker({
-                position: pos,
-                map: map,
-            });
-
-            // ① 이 마커가 어떤 병원인지 저장
-            const hospitalForModal = makeHospitalForModal(h);
-            marker.hospital = hospitalForModal;
-
-            // ② 마커 클릭 시 모달 오픈
-            kakao.maps.event.addListener(marker, "click", function () {
-                openHospitalModal(marker.hospital);
-            });
-
-            markers.push(marker);
+      clearMarkers();
+        
+      const list = hospitalData[dept] || [];
+        
+      // ✅ 모든 좌표를 포함할 bounds
+      const bounds = new kakao.maps.LatLngBounds();
+        
+      list.forEach((h) => {
+        const pos = new kakao.maps.LatLng(h.lat, h.lng);
+    
+        const marker = new kakao.maps.Marker({
+          position: pos,
+          map: map,
         });
-
-        // 카드 그리기
-        renderCards(list);
-
-        // 첫 번째 병원으로 지도 중심 이동
-        if (list.length > 0) {
-            const first = list[0];
-            const center = new kakao.maps.LatLng(first.lat, first.lng);
-            map.setCenter(center);
-        }
+    
+        // ① 이 마커가 어떤 병원인지 저장
+        const hospitalForModal = makeHospitalForModal(h);
+        marker.hospital = hospitalForModal;
+    
+        // ② 마커 클릭 시 모달 오픈
+        kakao.maps.event.addListener(marker, "click", function () {
+          openHospitalModal(marker.hospital);
+        });
+    
+        markers.push(marker);
+    
+        // ✅ bounds 확장
+        bounds.extend(pos);
+      });
+  
+      // 카드 그리기
+      renderCards(list);
+  
+      // ✅ 모든 마커가 보이도록 자동 포커스
+      if (list.length === 1) {
+        // 마커 1개면 setBounds가 과확대될 수 있어 center로 처리(원하면 유지/삭제 선택)
+        map.setCenter(new kakao.maps.LatLng(list[0].lat, list[0].lng));
+        // 필요 시 레벨 고정: map.setLevel(4);
+      } else if (list.length > 1) {
+        // padding(상,우,하,좌) 여백: UI 가림 방지
+        map.setBounds(bounds, 50, 50, 50, 50);
+      }
     }
 
     function initMap() {

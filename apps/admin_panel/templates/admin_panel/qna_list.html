@@ -19,6 +19,7 @@
     - JavaScript: admin_common.js, qna_list.js
 -->
 {% load static %}
+{% load qna_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -268,22 +269,6 @@
             </th>
             
             <!-- 
-              이름 컬럼 (정렬 가능)
-              
-              목적: 문의 작성자 이름을 표시하고 정렬 기능 제공
-                - data-sort-field="name": 정렬 필드 이름
-                - 정렬 방향 표시: 현재 정렬 필드가 'name'이면 화살표 표시
-            -->
-            <th>
-              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
-                이름
-                {% if sort_field == 'name' %}
-                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
-                {% endif %}
-              </a>
-            </th>
-            
-            <!-- 
               문의 제목 컬럼 (정렬 가능)
               
               목적: 문의 제목을 표시하고 정렬 기능 제공
@@ -294,6 +279,22 @@
               <a href="#" data-sort-field="title" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
                 문의 제목
                 {% if sort_field == 'title' %}
+                  {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
+                {% endif %}
+              </a>
+            </th>
+            
+            <!-- 
+              이름 컬럼 (정렬 가능)
+              
+              목적: 문의 작성자 이름을 표시하고 정렬 기능 제공
+                - data-sort-field="name": 정렬 필드 이름
+                - 정렬 방향 표시: 현재 정렬 필드가 'name'이면 화살표 표시
+            -->
+            <th>
+              <a href="#" data-sort-field="name" data-current-sort="{{ sort_field }}" data-current-order="{{ sort_order }}" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 4px;">
+                이름
+                {% if sort_field == 'name' %}
                   {% if sort_order == 'asc' %}↑{% else %}↓{% endif %}
                 {% endif %}
               </a>
@@ -407,6 +408,15 @@
               <td>{{ item.number }}</td>
               
               <!-- 
+                문의 제목 셀
+                
+                목적: 문의 제목 표시
+                  - {{ item.qna.title }}: 문의 제목
+                    → title: 문의 제목
+              -->
+              <td>{{ item.qna.title }}</td>
+              
+              <!-- 
                 이름 셀
                 
                 목적: 문의 작성자 이름 표시
@@ -415,16 +425,7 @@
                     → user: 문의 작성자 정보 (Users 모델 인스턴스)
                     → name: 사용자 이름
               -->
-              <td>{{ item.qna.user.name }}</td>
-              
-              <!-- 
-                문의 제목 셀
-                
-                목적: 문의 제목 표시
-                  - {{ item.qna.title }}: 문의 제목
-                    → title: 문의 제목
-              -->
-              <td>{{ item.qna.title }}</td>
+              <td>{{ item.qna.user.name|mask_last_char }}</td>
               
               <!-- 
                 이메일 셀

@@ -327,6 +327,7 @@ def register_view(request):
         del request.session["kakao_tmp"]
 
     request.session["just_registered_role"] = role
+    messages.success(request, "회원가입이 완료되었습니다. 로그인 해주세요.")
     return redirect("accounts:login")
 
 
@@ -399,6 +400,9 @@ def nurse_login_view(request):
 # =========================
 # ID 찾기 (주민번호 정규화 비교 적용)
 # =========================
+# =========================
+# ID 찾기 (주민번호 정규화 비교 적용)
+# =========================
 @require_http_methods(["GET", "POST"])
 def find_id_view(request):
     if request.method == "POST":
@@ -422,36 +426,43 @@ def find_id_view(request):
             withdrawal='0',
         ).only("username", "resident_reg_no")
 
-        matched = [u for u in candidates if normalize_rrn(u.resident_reg_no).startswith(birth_6)]
+        matched = [
+            u for u in candidates
+            if normalize_rrn(u.resident_reg_no).startswith(birth_6)
+        ]
 
-        messages.success(request, "입력하신 정보로 가입된 계정이 있으면 이메일로 안내를 전송했습니다.")
+        # ✅ 핵심: 매칭 실패면 에러 메시지 + 다시 입력
+        if not matched:
+            messages.error(request, "입력하신 정보와 일치하는 계정을 찾을 수 없습니다.")
+            return redirect("accounts:find_id")
 
-        if matched:
-            masked_ids = [mask_username(u.username) for u in matched]
-            body = (
-                "CareBridge 아이디 안내입니다.\n\n"
-                f"아이디: {', '.join(masked_ids)}\n\n"
-                "본인이 요청하지 않았다면 이 메일을 무시하세요."
-            )
-            send_mail(
-                subject="[CareBridge] 아이디 찾기 안내",
-                message=body,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=False,
-            )
+        # ✅ 매칭 성공: 안내 메시지 + 메일 전송
+        masked_ids = [mask_username(u.username) for u in matched]
+        body = (
+            "CareBridge 아이디 안내입니다.\n\n"
+            f"아이디: {', '.join(masked_ids)}\n\n"
+            "본인이 요청하지 않았다면 이 메일을 무시하세요."
+        )
 
+        send_mail(
+            subject="[CareBridge] 아이디 찾기 안내",
+            message=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+            fail_silently=False,
+        )
+
+        messages.success(request, "아이디 안내 메일을 전송했습니다.")
         return redirect("accounts:find_id")
 
     return render(request, "accounts/find_id.html")
+
 
 
 # =========================
 # 비밀번호 찾기 / 재설정 (Django auth 없이 Users 기준)
 # =========================
 PASSWORD_RESET_SALT = "cb-password-reset"
-
-
 @require_http_methods(["GET", "POST"])
 def find_password_view(request):
     if request.method == "GET":
@@ -480,31 +491,44 @@ def find_password_view(request):
         email__iexact=email,
     ).only("user_id", "email", "resident_reg_no")
 
-    matched = [u for u in candidates if normalize_rrn(u.resident_reg_no).startswith(birth_6)]
+    matched = [
+        u for u in candidates
+        if normalize_rrn(u.resident_reg_no).startswith(birth_6)
+    ]
 
-    if matched:
-        user = matched[0]
+    # ✅ 핵심 추가 분기
+    if not matched:
+        messages.error(request, "입력하신 정보와 일치하는 계정을 찾을 수 없습니다.")
+        return redirect("accounts:find_password")
 
-        payload = {
-            "uid": user.user_id,
-            "ts": int(timezone.now().timestamp()),
-        }
-        token = signing.dumps(payload, salt=PASSWORD_RESET_SALT)
-        reset_url = request.build_absolute_uri(reverse("accounts:password_reset_confirm")) + f"?token={token}"
-        
-        body = (
-            "비밀번호 재설정 요청이 접수되었습니다.\n\n"
-            f"아래 링크에서 새 비밀번호를 설정하세요:\n{reset_url}\n\n"
-            "본인이 요청하지 않았다면 이 메일을 무시하세요."
+    user = matched[0]
+
+    payload = {
+        "uid": user.user_id,
+        "ts": int(timezone.now().timestamp()),
+    }
+    token = signing.dumps(payload, salt=PASSWORD_RESET_SALT)
+
+    reset_url = (
+        request.build_absolute_uri(
+            reverse("accounts:password_reset_confirm")
         )
+        + f"?token={token}"
+    )
 
-        send_mail(
-            subject="[CareBridge] 비밀번호 재설정 안내",
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            fail_silently=False,
-        )
+    body = (
+        "비밀번호 재설정 요청이 접수되었습니다.\n\n"
+        f"아래 링크에서 새 비밀번호를 설정하세요:\n{reset_url}\n\n"
+        "본인이 요청하지 않았다면 이 메일을 무시하세요."
+    )
+
+    send_mail(
+        subject="[CareBridge] 비밀번호 재설정 안내",
+        message=body,
+        from_email=settings.DEFAULT_FROM_EMAIL,
+        recipient_list=[email],
+        fail_silently=False,
+    )
 
     return redirect("accounts:password_reset_done")
 
@@ -530,7 +554,7 @@ def reset_password_view(request):
         messages.error(request, "유효하지 않은 링크입니다.")
         return redirect("accounts:find_password")
 
-    # ✅ payload에서 uid/ts 꺼내기
+    # ✅ payload에서 uid/ts 꺼내
     uid = payload.get("uid")
     ts = payload.get("ts")
     if not uid or not ts:
