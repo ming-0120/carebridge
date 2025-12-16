@@ -721,27 +721,18 @@ def hospital_list(request):
             # 병원 추가 처리
             try:
                 hospital_name = request.POST.get('hospital_name', '').strip()
-                hospital_hpid = request.POST.get('hospital_hpid', '').strip()
                 hospital_hos_name = request.POST.get('hospital_hos_name', '').strip()
                 hospital_hos_password = request.POST.get('hospital_hos_password', '').strip()
                 hospital_address = request.POST.get('hospital_address', '').strip()
                 hospital_tel = request.POST.get('hospital_tel', '').strip()
-                hospital_category_name = request.POST.get('hospital_category_name', '').strip()
                 hospital_estb_date = request.POST.get('hospital_estb_date', '').strip()
                 
                 # 필수 필드 검증
-                if not hospital_name or not hospital_hpid or not hospital_hos_name or not hospital_hos_password:
+                if not hospital_name or not hospital_hos_name or not hospital_hos_password:
                     if is_ajax:
                         return JsonResponse({'success': False, 'message': '필수 항목을 모두 입력해주세요.'})
                     else:
                         # 일반 POST 요청인 경우 리다이렉트
-                        return redirect('hospital_list')
-                
-                # hpid 중복 확인
-                if Hospital.objects.filter(hpid=hospital_hpid).exists():
-                    if is_ajax:
-                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원ID(hpid)입니다.'})
-                    else:
                         return redirect('hospital_list')
                 
                 # hos_name 중복 확인
@@ -751,6 +742,10 @@ def hospital_list(request):
                     else:
                         return redirect('hospital_list')
                 
+                # hpid 자동 생성 (hos_name 기반으로 생성)
+                import uuid
+                hospital_hpid = str(uuid.uuid4())[:36]  # UUID 기반 고유 ID 생성
+                
                 # 병원 생성
                 new_hospital = Hospital.objects.create(
                     name=hospital_name,
@@ -759,7 +754,6 @@ def hospital_list(request):
                     hos_password=hospital_hos_password,
                     address=hospital_address if hospital_address else None,
                     tel=hospital_tel if hospital_tel else None,
-                    category_name=hospital_category_name if hospital_category_name else None,
                     estb_date=hospital_estb_date if hospital_estb_date else None,
                 )
                 

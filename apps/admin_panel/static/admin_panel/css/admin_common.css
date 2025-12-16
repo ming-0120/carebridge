@@ -1083,6 +1083,18 @@ body {
   border-color: #1B3C73;
 }
 
+/* readonly 필드 스타일 */
+.form-input[readonly] {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  color: #666;
+}
+
+.form-input[readonly]:focus {
+  border-color: #e1e4ec;
+  box-shadow: none;
+}
+
 /* 
   폼 텍스트 영역
   
@@ -1268,6 +1280,92 @@ body {
 }
 
 /* 
+  주소 입력 그룹
+  
+  목적: 주소 입력 필드들을 담는 그룹 스타일
+    - margin-bottom: 8px - 하단 마진
+    - 사용처: 주소 입력 영역
+*/
+.address-input-group {
+  margin-bottom: 8px;
+}
+
+/* 
+  우편번호 찾기 버튼
+  
+  목적: 우편번호 검색 버튼 스타일
+    - padding: 8px 16px - 내부 여백
+    - border: 1px solid #1B3C73 - 테두리 (관리자 패널 메인 색상)
+    - border-radius: 8px - 둥근 모서리
+    - background-color: #fff - 흰색 배경
+    - color: #1B3C73 - 관리자 패널 메인 색상 텍스트
+    - cursor: pointer - 포인터 커서
+    - font-size: 14px - 작은 글씨 크기
+    - font-weight: 600 - 굵은 글씨
+    - transition: background-color 0.2s, border-color 0.2s - 배경색 및 테두리 색상 변경 애니메이션
+    - 사용처: 우편번호 찾기 버튼
+*/
+.btn-postcode-search {
+  padding: 8px 16px;
+  border: 1px solid #1B3C73;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #1B3C73;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+}
+
+/* 
+  우편번호 찾기 버튼 호버 효과
+  
+  목적: 우편번호 찾기 버튼에 마우스를 올렸을 때 배경색 및 테두리 색상 변경
+    - background-color: #1B3C73 - 관리자 패널 메인 색상 배경
+    - color: #fff - 흰색 텍스트
+    - 사용자 경험(UX) 개선: 호버 상태를 시각적으로 표시
+*/
+.btn-postcode-search:hover {
+  background-color: #1B3C73;
+  color: #fff;
+}
+
+/* 
+  주소 입력 그룹 내 버튼 간격
+  
+  목적: 주소 입력 그룹 내 여러 버튼 간 간격 설정
+    - gap: 8px - 버튼 간 간격
+*/
+.address-input-group {
+  display: flex;
+  gap: 8px;
+}
+
+/* 
+  모달 검색 영역
+  
+  목적: 모달 내부의 검색 입력 영역 스타일
+    - margin-bottom: 16px - 하단 마진
+    - 사용처: 병원 검색 모달의 검색 영역
+*/
+.modal-search {
+  margin-bottom: 16px;
+}
+
+/* 
+  모달 결과 영역
+  
+  목적: 모달 내부의 검색 결과 표시 영역 스타일
+    - max-height: 400px - 최대 높이 제한
+    - overflow-y: auto - 세로 스크롤 허용
+    - 사용처: 병원 검색 모달의 결과 영역
+*/
+.modal-results {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 
   ========= Table (공통) =========
   
   목적: 관리자 패널의 테이블 공통 스타일 정의
@@ -1361,6 +1459,15 @@ body {
 .user-table td {
   padding: 12px;
   border-bottom: 1px solid #f0f0f0;
+}
+
+/* 등록된 병원 행 스타일 */
+.user-table tr.hospital-registered {
+  background-color: #FFF9E6;
+}
+
+.user-table tr.hospital-registered td {
+  color: #856404;
 }
 
 /* 

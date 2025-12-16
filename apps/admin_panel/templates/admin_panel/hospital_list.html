@@ -875,14 +875,17 @@
           <!-- 필수 정보 섹션 -->
           <div class="form-section">
             <h3 class="form-section-title">필수 정보</h3>
+            <div class="form-group">
+              <label for="hospital_address" class="form-label">주소</label>
+              <div class="address-input-group">
+                <button type="button" class="btn-postcode-search" id="openHospitalSearchModalBtn">병원 검색</button>
+              </div>
+              <input type="text" id="hospital_address" name="hospital_address" class="form-input" placeholder="병원 검색을 통해 주소를 입력하세요" readonly style="margin-top: 8px;">
+            </div>
             <div class="form-row">
               <div class="form-group form-col-half">
                 <label for="hospital_name" class="form-label">병원명 <span class="required">*</span></label>
-                <input type="text" id="hospital_name" name="hospital_name" class="form-input" required placeholder="병원명을 입력하세요">
-              </div>
-              <div class="form-group form-col-half">
-                <label for="hospital_hpid" class="form-label">병원ID (hpid) <span class="required">*</span></label>
-                <input type="text" id="hospital_hpid" name="hospital_hpid" class="form-input" required placeholder="병원ID를 입력하세요">
+                <input type="text" id="hospital_name" name="hospital_name" class="form-input" required placeholder="병원명을 입력하세요" readonly>
               </div>
             </div>
             <div class="form-row">
@@ -892,31 +895,18 @@
               </div>
               <div class="form-group form-col-half">
                 <label for="hospital_hos_password" class="form-label">병원 비밀번호 <span class="required">*</span></label>
-                <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required placeholder="비밀번호를 입력하세요">
+                <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required placeholder="비밀번호를 입력하세요" readonly>
               </div>
-            </div>
-          </div>
-          
-          <!-- 추가 정보 섹션 -->
-          <div class="form-section">
-            <h3 class="form-section-title">추가 정보</h3>
-            <div class="form-group">
-              <label for="hospital_address" class="form-label">주소</label>
-              <input type="text" id="hospital_address" name="hospital_address" class="form-input" placeholder="주소를 입력하세요">
             </div>
             <div class="form-row">
               <div class="form-group form-col-half">
                 <label for="hospital_tel" class="form-label">전화번호</label>
-                <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678">
+                <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678" readonly>
               </div>
               <div class="form-group form-col-half">
                 <label for="hospital_estb_date" class="form-label">개원일</label>
-                <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01">
+                <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01" readonly>
               </div>
-            </div>
-            <div class="form-group">
-              <label for="hospital_category_name" class="form-label">상세소개</label>
-              <textarea id="hospital_category_name" name="hospital_category_name" class="form-textarea" rows="4" placeholder="병원 상세소개를 입력하세요"></textarea>
             </div>
           </div>
           
@@ -930,16 +920,57 @@
     </div>
   </div>
 
+  {% comment %}
+    병원 검색 모달
+    
+    목적: 병원명으로 검색하여 주소를 자동으로 입력하기 위한 모달 창
+      - CSS 클래스: modal (모달 스타일)
+      - id: hospitalSearchModal (모달 식별자)
+      - 내용: 병원 검색 입력 및 결과 테이블
+  {% endcomment %}
+  <div id="hospitalSearchModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">병원 검색</h2>
+        <button type="button" class="modal-close" id="closeHospitalSearchModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-search">
+          <input type="text" id="hospital-search-input" class="form-input" placeholder="병원 이름을 입력하세요">
+        </div>
+        <div class="modal-results" style="margin-top: 16px; max-height: 400px; overflow-y: auto;">
+          <table class="user-table" style="min-width: 100%;">
+            <thead>
+              <tr>
+                <th>병원명</th>
+                <th>주소</th>
+                <th>전화번호</th>
+                <th>개원일</th>
+              </tr>
+            </thead>
+            <tbody id="hospital-results-body">
+              <!-- JavaScript로 검색 결과 렌더링 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 
     JavaScript 파일 로드
     
     목적: 페이지의 동적 기능을 제공하기 위한 JavaScript 파일 로드
-      - 로드 순서: admin_common.js를 먼저 로드한 후 hospital_list.js를 로드
+      - 로드 순서: admin_common.js → hospital_list.js
       - admin_common.js: 관리자 패널 공통 JavaScript 함수들
         → 페이지네이션, 정렬, 검색 등 공통 기능
       - hospital_list.js: 병원 목록 페이지 전용 JavaScript 함수들
-        → 병원 선택, 테이블 행 클릭 이벤트 등
+        → 병원 선택, 테이블 행 클릭 이벤트, 병원 검색 등
   -->
+  <script>
+    // 병원 검색 API URL
+    const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
+  </script>
   <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/hospital_list.js' %}"></script>
 </body>
