@@ -5,8 +5,6 @@
 <link rel="stylesheet" href="{% static 'mypage/css/favorite_hospitals.css' %}">
 <h2>즐겨 찾는 병원</h2>
 
-<!-- 오른쪽 콘텐츠 -->
-
         {% if favorites %}
             {% for fav in favorites %}
                 {% if fav.hos %}
@@ -29,11 +27,6 @@
                         </div>                
                         <div class="fav-hospital-info">
                             <div class="meta">
-                                <span class="distance"
-                                      data-lat="{{ hospital.lat }}"
-                                      data-lng="{{ hospital.lng }}">
-                                    -- km
-                                </span>
                                 <span class="address">{{ hospital.address }}</span>
                             </div>
                         </div>
