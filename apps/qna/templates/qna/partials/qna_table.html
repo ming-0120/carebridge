@@ -101,7 +101,7 @@
             </td>
             <td>{{ qna.title }}</td>
             <td>{{ qna.created_at|date:"Y-m-d" }}</td>
-            <td>{{ qna.user.name|mask_name }}</td>
+            <td>{{ qna.user.name|mask_last_char }}</td>
             <td>
               {% if qna.privacy == 'PUBLIC' %}
                 공개

@@ -425,7 +425,7 @@
                     → user: 문의 작성자 정보 (Users 모델 인스턴스)
                     → name: 사용자 이름
               -->
-              <td>{{ item.qna.user.name|mask_name }}</td>
+              <td>{{ item.qna.user.name|mask_last_char }}</td>
               
               <!-- 
                 이메일 셀
