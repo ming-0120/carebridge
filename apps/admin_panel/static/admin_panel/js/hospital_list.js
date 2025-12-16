@@ -136,6 +136,9 @@ document.addEventListener('DOMContentLoaded', function() {
         hideErrorMessage();
         // 필드 에러 상태 제거
         clearFieldErrors();
+        // 주소 필드 초기화
+        const addressInput = document.getElementById('hospital_address');
+        if (addressInput) addressInput.value = '';
         // 제출 버튼 활성화
         const submitBtn = form.querySelector('.btn-submit');
         if (submitBtn) {
@@ -197,6 +200,283 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
   
+  // ========= 병원 검색 기능 =========
+  
+  /**
+   * 디바운스 유틸리티 함수
+   * 
+   * 목적: 함수 호출을 지연시켜 불필요한 호출 방지
+   */
+  function debounce(fn, delay) {
+    let timer = null;
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+  
+  /**
+   * 병원 검색 모달 열기 함수
+   * 
+   * 목적: 병원 검색 모달을 표시
+   */
+  function openHospitalSearchModal() {
+    const modal = document.getElementById('hospitalSearchModal');
+    if (modal) {
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      // 검색 입력 필드 초기화 및 포커스
+      const searchInput = document.getElementById('hospital-search-input');
+      const resultsBody = document.getElementById('hospital-results-body');
+      if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+      }
+      if (resultsBody) {
+        resultsBody.innerHTML = '';
+      }
+    }
+  }
+  
+  /**
+   * 병원 검색 모달 닫기 함수
+   * 
+   * 목적: 병원 검색 모달을 숨김
+   */
+  function closeHospitalSearchModal() {
+    const modal = document.getElementById('hospitalSearchModal');
+    if (modal) {
+      modal.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+  }
+  
+  /**
+   * 병원 검색 함수
+   * 
+   * 목적: 병원명으로 검색하여 결과를 표시
+   */
+  async function fetchHospitals(q) {
+    const resultsBody = document.getElementById('hospital-results-body');
+    if (!resultsBody) return;
+    
+    if (!q || q.trim().length === 0) {
+      resultsBody.innerHTML = '';
+      return;
+    }
+
+    try {
+      resultsBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">검색 중...</td></tr>`;
+      
+      const resp = await fetch(`${HOSPITAL_SEARCH_URL}?q=${encodeURIComponent(q)}`, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+      });
+      
+      if (!resp.ok) {
+        throw new Error(`HTTP error! status: ${resp.status}`);
+      }
+      
+      const data = await resp.json();
+
+      resultsBody.innerHTML = '';
+
+      // API 에러 체크
+      if (data.error) {
+        resultsBody.innerHTML =
+          `<tr><td colspan="4" style="text-align:center; padding: 20px; color: #EF4444;">검색 중 오류가 발생했습니다: ${data.error}</td></tr>`;
+        return;
+      }
+
+      if (!data.results || data.results.length === 0) {
+        resultsBody.innerHTML =
+          `<tr><td colspan="4" style="text-align:center; padding: 20px;">검색 결과가 없습니다.</td></tr>`;
+        return;
+      }
+
+      data.results.forEach((h) => {
+        const tr = document.createElement('tr');
+        tr.classList.add('hospital-row');
+        tr.style.cursor = 'pointer';
+        tr.dataset.hpid = h.hpid || h.id || ''; // hpid 우선, 없으면 id 사용
+        tr.dataset.name = h.name || '';
+        tr.dataset.address = h.address || '';
+        tr.dataset.tel = h.tel || '';
+        tr.dataset.estbDate = h.estb_date || '';
+
+        // 이미 등록된 병원인지 확인
+        if (h.is_registered) {
+          tr.classList.add('hospital-registered');
+        }
+
+        tr.innerHTML = `
+          <td>${h.name || '-'}</td>
+          <td>${h.address || '-'}</td>
+          <td>${h.tel || '-'}</td>
+          <td>${h.estb_date || '-'}</td>
+        `;
+        
+        // 호버 효과
+        tr.addEventListener('mouseenter', function() {
+          if (h.is_registered) {
+            this.style.backgroundColor = '#FFF4E6'; // 등록된 병원 호버 색상
+          } else {
+            this.style.backgroundColor = '#F8FAFF'; // 일반 병원 호버 색상
+          }
+        });
+        tr.addEventListener('mouseleave', function() {
+          this.style.backgroundColor = '';
+        });
+        
+        resultsBody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error('병원 검색 오류:', err);
+      resultsBody.innerHTML =
+        `<tr><td colspan="4" style="text-align:center; padding: 20px; color: #EF4444;">검색 중 오류가 발생했습니다.</td></tr>`;
+    }
+  }
+  
+  // 병원 검색 버튼 클릭 이벤트
+  const openHospitalSearchModalBtn = document.getElementById('openHospitalSearchModalBtn');
+  if (openHospitalSearchModalBtn) {
+    openHospitalSearchModalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      openHospitalSearchModal();
+    });
+  }
+  
+  // 병원 검색 모달 닫기 버튼 클릭 이벤트
+  const closeHospitalSearchModalBtn = document.getElementById('closeHospitalSearchModal');
+  if (closeHospitalSearchModalBtn) {
+    closeHospitalSearchModalBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      closeHospitalSearchModal();
+    });
+  }
+  
+  // 병원 검색 모달 배경 클릭 시 닫기
+  const hospitalSearchModal = document.getElementById('hospitalSearchModal');
+  if (hospitalSearchModal) {
+    hospitalSearchModal.addEventListener('click', function(e) {
+      if (e.target === hospitalSearchModal) {
+        closeHospitalSearchModal();
+      }
+    });
+  }
+  
+  // 병원 검색 입력 필드 이벤트 (실시간 검색)
+  const hospitalSearchInput = document.getElementById('hospital-search-input');
+  const debouncedFetchHospitals = debounce(function() {
+    if (hospitalSearchInput) {
+      fetchHospitals(hospitalSearchInput.value);
+    }
+  }, 300);
+  
+  if (hospitalSearchInput) {
+    hospitalSearchInput.addEventListener('input', debouncedFetchHospitals);
+    // Enter 키로 검색
+    hospitalSearchInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        fetchHospitals(this.value);
+      }
+    });
+  }
+  
+  // 병원 검색 결과 클릭 시 선택
+  const hospitalResultsBody = document.getElementById('hospital-results-body');
+  if (hospitalResultsBody) {
+    hospitalResultsBody.addEventListener('click', function(e) {
+      const tr = e.target.closest('tr.hospital-row');
+      if (!tr) return;
+
+      const id = tr.dataset.id;
+      const name = tr.dataset.name;
+      const address = tr.dataset.address;
+      const tel = tr.dataset.tel;
+      const estbDate = tr.dataset.estbDate;
+
+      // 병원명 필드에 자동 입력
+      if (name) {
+        const nameInput = document.getElementById('hospital_name');
+        if (nameInput) {
+          nameInput.value = name;
+        }
+      }
+      
+      // 주소 필드에 자동 입력
+      if (address) {
+        const addressInput = document.getElementById('hospital_address');
+        if (addressInput) {
+          addressInput.value = address;
+        }
+      }
+      
+      // 전화번호 필드에 자동 입력
+      if (tel && tel !== '-') {
+        const telInput = document.getElementById('hospital_tel');
+        if (telInput) {
+          telInput.value = tel;
+        }
+      }
+      
+      // 개원일 필드에 자동 입력
+      if (estbDate && estbDate !== '-') {
+        const estbDateInput = document.getElementById('hospital_estb_date');
+        if (estbDateInput) {
+          estbDateInput.value = estbDate;
+          // 개원일이 입력되면 비밀번호 필드에 자동 입력 (숫자만 추출)
+          updatePasswordFromEstbDate(estbDate);
+        }
+      }
+      
+      // 모달 닫기
+      closeHospitalSearchModal();
+    });
+  }
+  
+  // ESC 키로 병원 검색 모달 닫기
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      const hospitalSearchModal = document.getElementById('hospitalSearchModal');
+      if (hospitalSearchModal && hospitalSearchModal.classList.contains('show')) {
+        closeHospitalSearchModal();
+      }
+    }
+  });
+  
+  /**
+   * 개원일에서 숫자만 추출하여 비밀번호 필드에 자동 입력하는 함수
+   * 
+   * 목적: 개원일 입력 시 비밀번호 필드에 개원일의 숫자만 자동 입력
+   *   - 개원일 형식: "2024.01.01" → 비밀번호: "20240101"
+   *   - 개원일 형식: "20240101" → 비밀번호: "20240101"
+   */
+  function updatePasswordFromEstbDate(estbDate) {
+    if (!estbDate) return;
+    
+    // 숫자만 추출 (점, 하이픈 등 제거)
+    const passwordValue = estbDate.replace(/[^0-9]/g, '');
+    
+    // 비밀번호 필드에 자동 입력
+    const passwordInput = document.getElementById('hospital_hos_password');
+    if (passwordInput && passwordValue) {
+      passwordInput.value = passwordValue;
+    }
+  }
+  
+  // 개원일 입력 필드 변경 시 비밀번호 자동 입력
+  const hospitalEstbDateInput = document.getElementById('hospital_estb_date');
+  if (hospitalEstbDateInput) {
+    hospitalEstbDateInput.addEventListener('input', function() {
+      updatePasswordFromEstbDate(this.value);
+    });
+    
+    hospitalEstbDateInput.addEventListener('change', function() {
+      updatePasswordFromEstbDate(this.value);
+    });
+  }
+  
   // 폼 제출 이벤트 (AJAX 처리)
   const addHospitalForm = document.getElementById('addHospitalForm');
   if (addHospitalForm) {
@@ -209,15 +489,13 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // 폼 유효성 검사
       const hospitalName = document.getElementById('hospital_name').value.trim();
-      const hospitalHpid = document.getElementById('hospital_hpid').value.trim();
       const hospitalHosName = document.getElementById('hospital_hos_name').value.trim();
       const hospitalHosPassword = document.getElementById('hospital_hos_password').value.trim();
       
-      if (!hospitalName || !hospitalHpid || !hospitalHosName || !hospitalHosPassword) {
+      if (!hospitalName || !hospitalHosName || !hospitalHosPassword) {
         showErrorMessage('필수 항목을 모두 입력해주세요.');
         // 필수 필드에 에러 상태 추가
         if (!hospitalName) document.getElementById('hospital_name').classList.add('error');
-        if (!hospitalHpid) document.getElementById('hospital_hpid').classList.add('error');
         if (!hospitalHosName) document.getElementById('hospital_hos_name').classList.add('error');
         if (!hospitalHosPassword) document.getElementById('hospital_hos_password').classList.add('error');
         return;
