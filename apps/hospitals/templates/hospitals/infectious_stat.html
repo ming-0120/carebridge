@@ -6,9 +6,10 @@
   <title>감염병 통계 대시보드</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <link rel="stylesheet" href="{% static 'hospitals/css/infectious_stat.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<body>
+<body class="has-footer">
 {% include "core/_header.html" %}
   <main class="page-wrapper">
     <div class="page-inner">
@@ -76,6 +77,9 @@
         </div>
       </div>
   </main>
+  
+  {% include "core/footer.html" %}
+  
   <script>
   const rawDataStr = '{{ raw_data_json|escapejs }}';
   const disDataStr = '{{ diseases_json|escapejs }}';

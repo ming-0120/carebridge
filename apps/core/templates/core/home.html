@@ -6,8 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareBridge 메인</title>
 <link rel="stylesheet" href="{% static 'core/css/home.css' %}">
+<link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
-<body>
+<body class="has-footer">
   {% include "core/_header.html" %}
 <main class="page">
   <!-- 배너 섹션 -->
@@ -156,26 +157,7 @@
   </div>
 </div>
 
-<footer class="footer">
-  <div class="footer-container">
-    <div class="footer-left">
-      <img src="{% static 'core/img/footer.png' %}" alt="CareBridge 로고" class="footer-logo">
-      <div class="footer-brand">
-      </div>
-    </div>
-    <div class="footer-info">
-      <p class="footer-info-line">
-        CareBridge 대표자명 : 디버깅내과 | 주소 : 서울특별시 강남구 현익빌딩 | 대표전화 : 02-000-0000
-      </p>
-      <p class="footer-info-line">
-        E-mail: devdebugging@carebridge.com
-      </p>
-    </div>
-    <div class="footer-copyright">
-      COPYRIGHT © CareBridge ALL RIGHTS RESERVED.
-    </div>
-  </div>
-</footer>
+{% include "core/footer.html" %}
 <script src="{% static 'core/js/home.js' %}"></script>
 </body>
 </html>

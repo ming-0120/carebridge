@@ -20,18 +20,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}QnA - CareBridge{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body>
+<body class="has-footer">
   {% include "core/_header.html" %}
   
   <main class="qna-main">
     {% block content %}{% endblock %}
   </main>
 
-  <footer class="footer">
-    © CareBridge All Rights Reserved.
-  </footer>
+  {% include "core/footer.html" %}
 
   <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
   {% block extra_js %}{% endblock %}
