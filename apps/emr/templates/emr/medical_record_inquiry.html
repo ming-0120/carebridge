@@ -55,7 +55,7 @@
             {# ------------------------------ #}
             {% if v.consult %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                [진료기록] <span class="toggle-icon">▼</span>
+                진료기록 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 <div class="level-3-detail"
@@ -76,7 +76,7 @@
             {# ------------------------------ #}
             {% if v.lab %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                [검사 오더] <span class="toggle-icon">▼</span>
+                검사 오더 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 {% for lab in v.lab %}
@@ -100,7 +100,7 @@
             {# ------------------------------ #}
             {% if v.prescriptions %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                [치료·처치 기록] <span class="toggle-icon">▼</span>
+                치료·처치 기록 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 {% for p in v.prescriptions %}
@@ -123,7 +123,7 @@
             {# ------------------------------ #}
             {% if v.treatment %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                [약물 처방] <span class="toggle-icon">▼</span>
+                약물 처방 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 {% for tr in v.treatment %}
