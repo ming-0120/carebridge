@@ -12,8 +12,9 @@
         const ACTIVE_DEPT = "{{ active_dept|default:'' }}";
     </script>
     <link rel="stylesheet" href="{% static 'reservations/css/main.css' %}">
+    <!-- <link rel="stylesheet" href="{% static 'core/css/footer.css' %}"> -->
 </head>
-<body>
+<body class="has-footer">
     {% include "core/_header.html" %}
     <div class="page">
         <!-- (1) 진료과 메뉴 -->
@@ -90,6 +91,9 @@
             </div>
         </div>
     </div>
+    
+    {% include "core/footer.html" %}
+    
     <script>
   const TOGGLE_FAVORITE_URL = "{% url 'toggle_favorite' %}";
 </script>

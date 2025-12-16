@@ -18,6 +18,12 @@ document.addEventListener("DOMContentLoaded", function () {
     const memoForm = document.getElementById("memoForm");
     const memoTextarea = document.getElementById("memoTextarea");
 
+    // 모달 닫기 함수 (textarea 초기화 포함)
+    function closeMemoModal() {
+        memoModal.classList.add("hidden");
+        memoTextarea.value = ""; // 입력 내용 초기화
+    }
+
     // 메모 버튼 클릭 → 모달 오픈
     document.querySelectorAll(".memo-open-btn").forEach(function (btn) {
         btn.addEventListener("click", function () {
@@ -32,10 +38,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 배경 클릭 시 모달 닫기 (선택)
+    // 취소 버튼 클릭 → 모달 닫기
+    const cancelBtn = document.querySelector(".memo-btn-cancel");
+    if (cancelBtn) {
+        cancelBtn.addEventListener("click", function () {
+            closeMemoModal();
+        });
+    }
+
+    // ESC 키 누르면 모달 닫기
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape" && !memoModal.classList.contains("hidden")) {
+            closeMemoModal();
+        }
+    });
+
+    // 배경 클릭 시 모달 닫기
     memoModal.addEventListener("click", function (e) {
         if (e.target === memoModal) {
-            memoModal.classList.add("hidden");
+            closeMemoModal();
         }
     });
 

@@ -14,14 +14,17 @@
     <link rel="stylesheet" href="{% static 'emergency/css/emergency.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/modal.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/detail.css' %}">
+    <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 
 
 </head>
 {% include "core/_header.html" %}
-<body>
+<body class="has-footer">
 <div class="page-wrap">
     {% block content %}{% endblock %}
 </div>
+
+{% include "core/footer.html" %}
 
 <!-- JS -->
 <script src="{% static 'emergency/js/emergency.js' %}"></script>
