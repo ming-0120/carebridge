@@ -910,6 +910,13 @@
             </div>
           </div>
           
+          <!-- API에서 가져온 추가 정보 (hidden fields) -->
+          <input type="hidden" id="hospital_lat" name="hospital_lat" value="">
+          <input type="hidden" id="hospital_lng" name="hospital_lng" value="">
+          <input type="hidden" id="hospital_dr_total" name="hospital_dr_total" value="">
+          <input type="hidden" id="hospital_sggu" name="hospital_sggu" value="">
+          <input type="hidden" id="hospital_sido" name="hospital_sido" value="">
+          
           <input type="hidden" name="action" value="add_hospital">
           <div class="modal-footer">
             <button type="button" class="btn-cancel" id="cancelAddHospital">취소</button>
@@ -970,6 +977,8 @@
   <script>
     // 병원 검색 API URL
     const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
+    // 병원 목록 URL (병원 추가 폼 제출용)
+    const HOSPITAL_LIST_URL = "{% url 'hospital_list' %}";
   </script>
   <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/hospital_list.js' %}"></script>

@@ -302,6 +302,11 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.dataset.address = h.address || '';
         tr.dataset.tel = h.tel || '';
         tr.dataset.estbDate = h.estb_date || '';
+        tr.dataset.lat = h.lat !== null && h.lat !== undefined ? h.lat : '';
+        tr.dataset.lng = h.lng !== null && h.lng !== undefined ? h.lng : '';
+        tr.dataset.drTotal = h.dr_total !== null && h.dr_total !== undefined ? h.dr_total : '';
+        tr.dataset.sggu = h.sggu || '';
+        tr.dataset.sido = h.sido || '';
 
         // 이미 등록된 병원인지 확인
         if (h.is_registered) {
@@ -395,6 +400,11 @@ document.addEventListener('DOMContentLoaded', function() {
       const address = tr.dataset.address;
       const tel = tr.dataset.tel;
       const estbDate = tr.dataset.estbDate;
+      const lat = tr.dataset.lat;
+      const lng = tr.dataset.lng;
+      const drTotal = tr.dataset.drTotal;
+      const sggu = tr.dataset.sggu;
+      const sido = tr.dataset.sido;
 
       // 병원명 필드에 자동 입력
       if (name) {
@@ -427,6 +437,45 @@ document.addEventListener('DOMContentLoaded', function() {
           estbDateInput.value = estbDate;
           // 개원일이 입력되면 비밀번호 필드에 자동 입력 (숫자만 추출)
           updatePasswordFromEstbDate(estbDate);
+        }
+      }
+      
+      // API에서 가져온 추가 정보를 hidden input에 저장
+      console.log('[병원 선택] 추가 정보:', { lat, lng, drTotal, sggu, sido });
+      
+      if (lat) {
+        const latInput = document.getElementById('hospital_lat');
+        if (latInput) {
+          latInput.value = lat;
+          console.log('[병원 선택] lat 저장:', lat);
+        }
+      }
+      if (lng) {
+        const lngInput = document.getElementById('hospital_lng');
+        if (lngInput) {
+          lngInput.value = lng;
+          console.log('[병원 선택] lng 저장:', lng);
+        }
+      }
+      if (drTotal) {
+        const drTotalInput = document.getElementById('hospital_dr_total');
+        if (drTotalInput) {
+          drTotalInput.value = drTotal;
+          console.log('[병원 선택] dr_total 저장:', drTotal);
+        }
+      }
+      if (sggu) {
+        const sgguInput = document.getElementById('hospital_sggu');
+        if (sgguInput) {
+          sgguInput.value = sggu;
+          console.log('[병원 선택] sggu 저장:', sggu);
+        }
+      }
+      if (sido) {
+        const sidoInput = document.getElementById('hospital_sido');
+        if (sidoInput) {
+          sidoInput.value = sido;
+          console.log('[병원 선택] sido 저장:', sido);
         }
       }
       
@@ -504,6 +553,22 @@ document.addEventListener('DOMContentLoaded', function() {
       // 폼 데이터 수집
       const formData = new FormData(addHospitalForm);
       
+      // 디버깅: 폼 데이터 확인
+      console.log('Form data:', {
+        hospital_name: formData.get('hospital_name'),
+        hospital_hos_name: formData.get('hospital_hos_name'),
+        hospital_hos_password: formData.get('hospital_hos_password') ? '***' : '',
+        hospital_address: formData.get('hospital_address'),
+        hospital_tel: formData.get('hospital_tel'),
+        hospital_estb_date: formData.get('hospital_estb_date'),
+        hospital_lat: formData.get('hospital_lat'),
+        hospital_lng: formData.get('hospital_lng'),
+        hospital_dr_total: formData.get('hospital_dr_total'),
+        hospital_sggu: formData.get('hospital_sggu'),
+        hospital_sido: formData.get('hospital_sido'),
+        action: formData.get('action')
+      });
+      
       // 제출 버튼 비활성화 (중복 제출 방지)
       const submitBtn = addHospitalForm.querySelector('.btn-submit');
       const originalBtnText = submitBtn.textContent;
@@ -511,35 +576,70 @@ document.addEventListener('DOMContentLoaded', function() {
       submitBtn.textContent = '처리 중...';
       
       // AJAX 요청
-      fetch(addHospitalForm.action, {
+      // action URL을 명시적으로 지정 (템플릿에서 전달받은 HOSPITAL_LIST_URL 사용)
+      const submitUrl = typeof HOSPITAL_LIST_URL !== 'undefined' ? HOSPITAL_LIST_URL : addHospitalForm.getAttribute('action');
+      fetch(submitUrl, {
         method: 'POST',
         body: formData,
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
         }
       })
-      .then(response => {
-        if (response.ok) {
-          return response.json();
+      .then(async response => {
+        console.log('Response status:', response.status, 'OK:', response.ok);
+        
+        let data;
+        try {
+          // 응답 본문을 JSON으로 파싱 시도
+          const responseText = await response.text();
+          console.log('Response text:', responseText.substring(0, 500));
+          
+          try {
+            data = JSON.parse(responseText);
+            console.log('Parsed JSON data:', data);
+          } catch (parseError) {
+            // JSON 파싱 실패 시 (서버가 HTML이나 다른 형식으로 응답한 경우)
+            console.error('JSON parse error:', parseError);
+            showErrorMessage(`서버 응답 오류 (${response.status}): 응답 형식이 올바르지 않습니다. 응답: ${responseText.substring(0, 200)}`);
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalBtnText;
+            return;
+          }
+        } catch (textError) {
+          console.error('Response text read error:', textError);
+          showErrorMessage(`응답 읽기 오류: ${textError.message}`);
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalBtnText;
+          return;
         }
-        throw new Error('Network response was not ok');
-      })
-      .then(data => {
-        if (data.success) {
+        
+        // 응답 상태와 success 플래그 확인
+        console.log('Response OK:', response.ok, 'Data success:', data.success);
+        
+        if (response.ok && data.success) {
           // 성공 시 모달 닫기 및 페이지 새로고침
+          console.log('병원 추가 성공! 페이지 새로고침 중...');
           closeAddHospitalModal();
           window.location.reload();
         } else {
-          // 실패 시 에러 메시지 표시
-          showErrorMessage(data.message || '병원 추가에 실패했습니다.');
+          // 실패 시 에러 메시지 표시 (서버에서 반환한 메시지 사용)
+          const errorMessage = data.message || '병원 추가에 실패했습니다.';
+          console.error('Server error:', errorMessage, 'Full response:', data);
+          showErrorMessage(errorMessage);
           // 제출 버튼 활성화
           submitBtn.disabled = false;
           submitBtn.textContent = originalBtnText;
         }
       })
       .catch(error => {
-        console.error('Error:', error);
-        showErrorMessage('병원 추가 중 오류가 발생했습니다. 다시 시도해주세요.');
+        console.error('Network/Fetch error:', error);
+        // 네트워크 에러인 경우에만 네트워크 메시지 표시
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          showErrorMessage('네트워크 연결 오류가 발생했습니다. 인터넷 연결을 확인해주세요.');
+        } else {
+          // 기타 에러는 실제 에러 메시지 표시
+          showErrorMessage(`오류가 발생했습니다: ${error.message || error.toString()}`);
+        }
         // 제출 버튼 활성화
         submitBtn.disabled = false;
         submitBtn.textContent = originalBtnText;
