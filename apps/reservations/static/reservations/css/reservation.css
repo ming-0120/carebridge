@@ -17,10 +17,10 @@ body {
 
 /* 전체 레이아웃 */
 .reservation-layout {
-    display: grid;
-    grid-template-columns: 220px 1fr;
-    gap: 24px;
-    padding: 24px;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  padding: 0; /* 기존 24px -> 0으로 */
 }
 
 /* 1. 진료과 목록 */
