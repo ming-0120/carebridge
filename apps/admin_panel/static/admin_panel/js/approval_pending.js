@@ -1109,24 +1109,24 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 동작: 모든 의사 행에 클릭 이벤트 리스너 연결
   //   - 목적: 행 클릭 시 상세 정보 표시 기능 활성화
   //   - 결과: 행 클릭 시 의사 상세 정보 표시
-  attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
+  attachTableRowListeners('.approval-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
   
   // ========= 페이지네이션 후 이벤트 리스너 재연결 함수 =========
   // 목적: 페이지네이션 완료 후 모든 이벤트 리스너를 다시 연결
   //   - handlePaginationAjax 함수에서 호출됨
   //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
+  //   - qna_list.js와 동일한 패턴으로 수정 (무한루프 방지)
+  //   - 중요: attachPaginationListeners는 admin_common.js의 handlePaginationAjax에서 이미 호출되므로 여기서는 제거
   window.reattachTableRowListeners = function() {
-    attachTableRowListeners('tr[data-doctor-id]', 'data-doctor-id', selectDoctor);
+    // 중복 호출 방지: attachPaginationListeners는 admin_common.js의 handlePaginationAjax에서 이미 호출됨
+    // 그 다음 테이블 행 클릭 이벤트 리스너 재연결
+    attachTableRowListeners('.approval-row[data-doctor-id]', 'data-doctor-id', selectDoctor);
     // 체크박스 이벤트 리스너 재연결
     attachCheckboxListeners();
     // 버튼 이벤트 리스너 재연결
     attachButtonListeners();
     // 정렬 링크 이벤트 리스너 재연결
     attachSortListeners();
-    // 페이지네이션 링크 이벤트 리스너 재연결
-    if (typeof attachPaginationListeners === 'function') {
-      attachPaginationListeners();
-    }
   };
   
   // ========= 체크박스 이벤트 리스너 연결 =========
@@ -1149,6 +1149,15 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 목적: 승인/거절 기능 활성화
   //   - 결과: 버튼 클릭 시 승인/거절 처리 수행
   attachButtonListeners();
+  
+  // ========= 페이지 로드 시 이벤트 리스너 재연결 =========
+  // 목적: 페이지 로드 시에도 이벤트 리스너를 확실히 연결
+  //   - 이미지 가이드에 따라 추가
+  //   - reattachTableRowListeners와 attachPaginationListeners를 페이지 로드 시에도 실행
+  window.reattachTableRowListeners();
+  if (typeof attachPaginationListeners === 'function') {
+    attachPaginationListeners();
+  }
   
   // ========= URL 파라미터에서 선택된 의사 ID 읽기 =========
   // 목적: URL에 의사 ID가 있으면 해당 의사 행을 선택 상태로 표시
@@ -1173,6 +1182,17 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 예: 파라미터 없음 → null
   //   - 목적: URL에 의사 ID가 있는지 확인
   const selectedDoctorId = urlParams.get('doctor_id');
+  
+  // ========= 기본 상태에서 상세정보 섹션 숨기기 =========
+  // 목적: URL에 doctor_id가 없으면 상세정보 섹션을 완전히 숨김
+  //   - 사용자 경험(UX) 개선: 아무것도 선택하지 않은 기본 상태에서는 상세정보가 보이지 않도록 함
+  //   - 데이터 일관성: 선택된 의사가 없으면 상세정보도 표시하지 않음
+  if (!selectedDoctorId) {
+    const detailSection = document.querySelector('.user-detail-section');
+    if (detailSection) {
+      detailSection.remove();
+    }
+  }
   
   // ========= 선택된 의사 행에 selected 클래스 추가 =========
   // 목적: URL에 의사 ID가 있으면 해당 의사 행을 선택 상태로 표시

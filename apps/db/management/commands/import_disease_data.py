@@ -4,6 +4,7 @@ from django.db import transaction
 import requests
 from apps.db.models.statistic import InfectiousStat
 from apps.db.models.disease import DimDisease 
+from django.core.management import call_command
 
 SERVICE_KEY = "8661f2737274c1d3578553e84076849efd87c7076b1cc5c8fe54183dae94c09c"
 
@@ -74,6 +75,7 @@ class Command(BaseCommand):
             min_result_val=10,
             valid_disease_ids=valid_disease_ids,   # ✅ GENDER 에서 살아남은 질병만 저장
         )
+        call_command("generate_disease_ai_summary")
 
 
     def fetch_and_save(
@@ -291,4 +293,3 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(
             f"[{dim_type}] 최종 저장 대상 resultVal>={min_result_val} 건수: {total_processed}"
         ))
-

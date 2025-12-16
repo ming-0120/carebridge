@@ -49,37 +49,6 @@
   {% endcomment %}
   <div class="detail-grid">
     {% comment %}
-      이름 정보 항목
-      
-      목적: 의사의 이름을 표시
-        - detail-label: "이름" (라벨)
-        - detail-value: selected_doctor.user.name (의사의 이름)
-          → selected_doctor: 선택된 의사 객체
-          → user: 의사의 사용자 정보
-          → name: 사용자의 이름
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">이름</span>
-      <span class="detail-value">{{ selected_doctor.user.name }}</span>
-    </div>
-    
-    {% comment %}
-      의사ID 정보 항목
-      
-      목적: 의사의 사용자 ID(로그인 ID)를 표시
-        - detail-label: "의사ID" (라벨)
-        - detail-value: selected_doctor.user.username (의사의 사용자 ID)
-          → selected_doctor: 선택된 의사 객체
-          → user: 의사의 사용자 정보
-          → username: 사용자의 로그인 ID
-          → username이 없으면 "-" 표시
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">의사ID</span>
-      <span class="detail-value">{{ selected_doctor.user.username|default:"-" }}</span>
-    </div>
-    
-    {% comment %}
       면허번호 정보 항목
       
       목적: 의사의 의사 면허번호를 표시
@@ -113,71 +82,6 @@
           -
         {% endif %}
       </span>
-    </div>
-    
-    {% comment %}
-      주근무 병원 정보 항목
-      
-      목적: 의사의 주근무 병원을 표시
-        - detail-label: "주근무 병원" (라벨)
-        - detail-value: selected_doctor.hos.name (의사의 주근무 병원 이름)
-          → selected_doctor: 선택된 의사 객체
-          → hos: 의사의 주근무 병원 정보 (Hospitals 모델 인스턴스)
-          → name: 병원 이름
-          → name이 없으면 "-" 표시
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">주근무 병원</span>
-      <span class="detail-value">{{ selected_doctor.hos.name|default:"-" }}</span>
-    </div>
-    
-    {% comment %}
-      전공과 정보 항목
-      
-      목적: 의사의 전공과를 표시 (주근무 병원 옆에 배치)
-        - detail-label: "전공과" (라벨)
-        - detail-value: selected_doctor.dep.dep_name (의사의 전공과 이름)
-          → selected_doctor: 선택된 의사 객체
-          → dep: 의사의 전공과 정보 (Departments 모델 인스턴스)
-          → dep_name: 전공과 이름
-          → dep_name이 없으면 "-" 표시
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">전공과</span>
-      <span class="detail-value">{{ selected_doctor.dep.dep_name|default:"-" }}</span>
-    </div>
-    
-    {% comment %}
-      연락처 정보 항목
-      
-      목적: 의사의 연락처(전화번호)를 표시 (주근무 병원 밑에 배치)
-        - detail-label: "연락처" (라벨)
-        - detail-value: selected_doctor.user.phone (의사의 전화번호)
-          → selected_doctor: 선택된 의사 객체
-          → user: 의사의 사용자 정보
-          → phone: 사용자의 전화번호
-          → phone이 없으면 "-" 표시
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">연락처</span>
-      <span class="detail-value">{{ selected_doctor.user.phone|default:"-" }}</span>
-    </div>
-    
-    {% comment %}
-      신청일 정보 항목
-      
-      목적: 의사 승인 신청일을 표시
-        - detail-label: "신청일" (라벨)
-        - detail-value: selected_doctor.user.created_at (의사 계정 생성일)
-          → selected_doctor: 선택된 의사 객체
-          → user: 의사의 사용자 정보
-          → created_at: 사용자 계정 생성일 (의사 승인 신청일로 간주)
-          → date:"Y.m.d": 날짜 형식을 "YYYY.MM.DD" 형식으로 변환
-          → 예: "2024.01.15"
-    {% endcomment %}
-    <div class="detail-item">
-      <span class="detail-label">신청일</span>
-      <span class="detail-value">{{ selected_doctor.user.created_at|date:"Y.m.d" }}</span>
     </div>
   </div>
 </div>

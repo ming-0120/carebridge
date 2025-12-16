@@ -43,6 +43,8 @@
   -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>병원 목록 - CareBridge 관리자</title>
+  <!-- Favicon 설정 -->
+  <link rel="icon" type="image/png" href="{% static 'core/img/logo_2.png' %}">
   
   <!-- 
     CSS 파일 로드
@@ -213,6 +215,20 @@
         -->
         <button type="submit" class="search-btn">
           <span class="search-icon">🔍</span>
+        </button>
+        
+        <!-- 
+          병원추가 버튼
+          
+          목적: 병원 추가 모달을 여는 버튼
+            - type="button": 폼 제출 방지
+            - CSS 클래스: add-hospital-btn (병원추가 버튼 스타일)
+            - 아이콘: ➕ (추가 아이콘)
+            - data-modal-target: 모달 ID 지정
+        -->
+        <button type="button" class="add-hospital-btn" id="openAddHospitalModal">
+          <span class="add-icon">➕</span>
+          <span class="add-text">병원추가</span>
         </button>
       </form>
     </div>
@@ -537,18 +553,19 @@
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: « (첫 페이지 기호)
         -->
-        <a href="?page=1{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">«</a>
+        <a href="#" class="page-link" data-page="1" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">«</a>
         
         <!-- 
           이전 페이지로 이동 링크
           
           목적: 현재 페이지의 이전 페이지로 이동
-            - href: ?page={{ page_obj.previous_page_number }} + 정렬 파라미터 + 검색 파라미터
+            - href: # (JavaScript로 처리)
+            - data-page: 이전 페이지 번호
             - page_obj.previous_page_number: 이전 페이지 번호
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: < (이전 페이지 기호)
         -->
-        <a href="?page={{ page_obj.previous_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link"><</a>
+        <a href="#" class="page-link" data-page="{{ page_obj.previous_page_number }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}"><</a>
       {% else %}
         <!-- 
           비활성화된 첫 페이지 버튼
@@ -603,7 +620,7 @@
               - 예: 현재 페이지가 5이면 2, 3, 4, 5, 6, 7, 8만 표시
           -->
           {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-            <a href="?page={{ num }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">{{ num }}</a>
+            <a href="#" class="page-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">{{ num }}</a>
           {% endif %}
         {% endfor %}
       {% else %}
@@ -634,18 +651,19 @@
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: > (다음 페이지 기호)
         -->
-        <a href="?page={{ page_obj.next_page_number }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">></a>
+        <a href="#" class="page-link" data-page="{{ page_obj.next_page_number }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">></a>
         
         <!-- 
           마지막 페이지로 이동 링크
           
           목적: 마지막 페이지로 이동
-            - href: ?page={{ page_obj.paginator.num_pages }} + 정렬 파라미터 + 검색 파라미터
+            - href: # (JavaScript로 처리)
+            - data-page: 마지막 페이지 번호
             - page_obj.paginator.num_pages: 전체 페이지 수 (마지막 페이지 번호)
             - CSS 클래스: page-link (페이지 링크 스타일)
             - 텍스트: » (마지막 페이지 기호)
         -->
-        <a href="?page={{ page_obj.paginator.num_pages }}{% if sort_field %}&sort={{ sort_field }}{% endif %}{% if sort_order %}&order={{ sort_order }}{% endif %}{% if search_type %}&search_type={{ search_type }}{% endif %}{% if search_keyword %}&search_keyword={{ search_keyword }}{% endif %}" class="page-link">»</a>
+        <a href="#" class="page-link" data-page="{{ page_obj.paginator.num_pages }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">»</a>
       {% else %}
         <!-- 
           비활성화된 다음 페이지 버튼
@@ -833,16 +851,135 @@
     {% endif %}
   </div>
 
+  {% comment %}
+    병원추가 모달
+    
+    목적: 새로운 병원을 추가하기 위한 모달 창
+      - CSS 클래스: modal (모달 스타일)
+      - id: addHospitalModal (모달 식별자)
+      - 내용: 병원 정보 입력 폼
+  {% endcomment %}
+  <div id="addHospitalModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title">병원 추가</h2>
+        <button type="button" class="modal-close" id="closeAddHospitalModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- 에러 메시지 표시 영역 -->
+        <div id="modalErrorMessage" class="error-message" style="display: none;"></div>
+        
+        <form id="addHospitalForm" method="post" action="{% url 'hospital_list' %}">
+          {% csrf_token %}
+          
+          <!-- 필수 정보 섹션 -->
+          <div class="form-section">
+            <h3 class="form-section-title">필수 정보</h3>
+            <div class="form-group">
+              <label for="hospital_address" class="form-label">주소</label>
+              <div class="address-input-group">
+                <button type="button" class="btn-postcode-search" id="openHospitalSearchModalBtn">병원 검색</button>
+              </div>
+              <input type="text" id="hospital_address" name="hospital_address" class="form-input" placeholder="병원 검색을 통해 주소를 입력하세요" readonly style="margin-top: 8px;">
+            </div>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_name" class="form-label">병원명 <span class="required">*</span></label>
+                <input type="text" id="hospital_name" name="hospital_name" class="form-input" required placeholder="병원명을 입력하세요" readonly>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_hos_name" class="form-label">병원 계정ID <span class="required">*</span></label>
+                <input type="text" id="hospital_hos_name" name="hospital_hos_name" class="form-input" required placeholder="계정ID를 입력하세요">
+              </div>
+              <div class="form-group form-col-half">
+                <label for="hospital_hos_password" class="form-label">병원 비밀번호 <span class="required">*</span></label>
+                <input type="password" id="hospital_hos_password" name="hospital_hos_password" class="form-input" required placeholder="비밀번호를 입력하세요" readonly>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group form-col-half">
+                <label for="hospital_tel" class="form-label">전화번호</label>
+                <input type="text" id="hospital_tel" name="hospital_tel" class="form-input" placeholder="예: 02-1234-5678" readonly>
+              </div>
+              <div class="form-group form-col-half">
+                <label for="hospital_estb_date" class="form-label">개원일</label>
+                <input type="text" id="hospital_estb_date" name="hospital_estb_date" class="form-input" placeholder="예: 2024.01.01" readonly>
+              </div>
+            </div>
+          </div>
+          
+          <!-- API에서 가져온 추가 정보 (hidden fields) -->
+          <input type="hidden" id="hospital_lat" name="hospital_lat" value="">
+          <input type="hidden" id="hospital_lng" name="hospital_lng" value="">
+          <input type="hidden" id="hospital_dr_total" name="hospital_dr_total" value="">
+          <input type="hidden" id="hospital_sggu" name="hospital_sggu" value="">
+          <input type="hidden" id="hospital_sido" name="hospital_sido" value="">
+          
+          <input type="hidden" name="action" value="add_hospital">
+          <div class="modal-footer">
+            <button type="button" class="btn-cancel" id="cancelAddHospital">취소</button>
+            <button type="submit" class="btn-submit">추가</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% comment %}
+    병원 검색 모달
+    
+    목적: 병원명으로 검색하여 주소를 자동으로 입력하기 위한 모달 창
+      - CSS 클래스: modal (모달 스타일)
+      - id: hospitalSearchModal (모달 식별자)
+      - 내용: 병원 검색 입력 및 결과 테이블
+  {% endcomment %}
+  <div id="hospitalSearchModal" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h2 class="modal-title">병원 검색</h2>
+        <button type="button" class="modal-close" id="closeHospitalSearchModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-search">
+          <input type="text" id="hospital-search-input" class="form-input" placeholder="병원 이름을 입력하세요">
+        </div>
+        <div class="modal-results" style="margin-top: 16px; max-height: 400px; overflow-y: auto;">
+          <table class="user-table" style="min-width: 100%;">
+            <thead>
+              <tr>
+                <th>병원명</th>
+                <th>주소</th>
+                <th>전화번호</th>
+                <th>개원일</th>
+              </tr>
+            </thead>
+            <tbody id="hospital-results-body">
+              <!-- JavaScript로 검색 결과 렌더링 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- 
     JavaScript 파일 로드
     
     목적: 페이지의 동적 기능을 제공하기 위한 JavaScript 파일 로드
-      - 로드 순서: admin_common.js를 먼저 로드한 후 hospital_list.js를 로드
+      - 로드 순서: admin_common.js → hospital_list.js
       - admin_common.js: 관리자 패널 공통 JavaScript 함수들
         → 페이지네이션, 정렬, 검색 등 공통 기능
       - hospital_list.js: 병원 목록 페이지 전용 JavaScript 함수들
-        → 병원 선택, 테이블 행 클릭 이벤트 등
+        → 병원 선택, 테이블 행 클릭 이벤트, 병원 검색 등
   -->
+  <script>
+    // 병원 검색 API URL
+    const HOSPITAL_SEARCH_URL = "{% url 'hospital_search' %}";
+    // 병원 목록 URL (병원 추가 폼 제출용)
+    const HOSPITAL_LIST_URL = "{% url 'hospital_list' %}";
+  </script>
   <script src="{% static 'admin_panel/js/admin_common.js' %}"></script>
   <script src="{% static 'admin_panel/js/hospital_list.js' %}"></script>
 </body>

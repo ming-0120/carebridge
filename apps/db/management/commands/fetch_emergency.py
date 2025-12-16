@@ -4,7 +4,6 @@ import requests
 import xmltodict
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
-
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from django.db import transaction
@@ -477,7 +476,8 @@ def merge_staging_to_main(basic_info_map):
         print(f"[MERGE] 기존 업데이트: {len(to_update)}건")
 
     total = ErStatus.objects.count()
-    print(f"[MAIN] 병합 완료 – 총 {total}개 저장됨")
+    print(f"[MAIN] 병합 완료 - 총 {total}개 저장됨")
+
 
 
 ###########################################################

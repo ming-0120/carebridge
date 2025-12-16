@@ -32,7 +32,7 @@
         
         <div class="inquiry-detail-item">
           <span class="inquiry-detail-label">작성자</span>
-          <span class="inquiry-detail-value">{{ qna.user.username }} ({{ qna.user.name }})</span>
+          <span class="inquiry-detail-value">{{ qna.user.name }} ({{ qna.user.username }})</span>
         </div>
         
         <div class="inquiry-detail-item">
@@ -42,9 +42,7 @@
         
         <div class="inquiry-detail-item">
           <span class="inquiry-detail-label">이메일</span>
-          <span class="inquiry-detail-value">
-            <a href="mailto:{{ qna.user.email }}">{{ qna.user.email }}</a>
-          </span>
+          <span class="inquiry-detail-value">{{ qna.user.email }}</span>
         </div>
         
         <div class="inquiry-detail-item">

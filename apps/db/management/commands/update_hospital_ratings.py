@@ -14,7 +14,7 @@ class Command(BaseCommand):
     help = "Google Places API를 이용하여 병원 평점 업데이트 (place_id 저장 없이)"
 
     def handle(self, *args, **options):
-        api_key = settings.GOOGLE_MAP_API_KEY
+        api_key = settings.GOOGLE_API_KEY
 
         hospitals = Hospital.objects.all()
 

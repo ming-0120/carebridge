@@ -1,11 +1,11 @@
 :root {
       --primary: #4A6CF7;
       --primary-dark: #3043b3;
-      --bg: #f4f6f9;
+      --bg: #ffffff;      /* 전체 배경을 흰색으로 통일 */
       --card-bg: #ffffff;
       --text-main: #222;
       --text-sub: #666;
-      --border: #e1e4ec;
+      --border: #e5e7eb;  /* 미세 테두리 색상 */
     }
 
     * {
@@ -16,7 +16,7 @@
 
     body {
       margin: 0;
-      background: var(--bg);
+      background: var(--bg); /* 흰 배경 */
       font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       color: var(--text-main);
     }
@@ -143,11 +143,17 @@
     }
 
     .card {
-      background: var(--card-bg);
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 4px rgba(15, 23, 42, 0.04);
+      background: var(--card-bg);          /* 흰 카드 */
+      border: 1px solid var(--border);     /* 미세 테두리 */
+      border-radius: 8px;                  /* 과하지 않은 라운드 */
       padding: 16px 18px;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* 미세 그림자 */
+      border-color: #d1d5db;                      /* 호버 시 테두리 강조 */
     }
 
     .card-header {
@@ -238,3 +244,48 @@
         flex: 1 1 auto;
       }
     }
+    #diseaseDefinition{
+  margin: 0;
+  padding: 14px 14px;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+  line-height: 1.65;
+  color: #495057;
+}
+
+/* 섹션 타이틀(##) */
+#diseaseDefinition h2{
+  margin: 10px 0 8px;
+  font-size: 14px;
+  font-weight: 800;
+  color: #212529;
+  padding-top: 10px;
+  border-top: 1px solid #f1f3f5;
+}
+#diseaseDefinition h2:first-child{
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+
+/* 서브 타이틀(###) */
+#diseaseDefinition h3{
+  margin: 10px 0 6px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #343a40;
+}
+
+/* 리스트 */
+#diseaseDefinition ul{
+  margin: 6px 0 0;
+  padding-left: 18px;
+}
+#diseaseDefinition li{
+  margin: 6px 0;
+}
+#diseaseDefinition p{
+  margin: 6px 0;
+}

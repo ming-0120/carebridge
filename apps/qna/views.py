@@ -10,6 +10,7 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.db.models import Q, Case, When, Value, IntegerField
 from django.utils import timezone
+from django.template.loader import render_to_string
 
 from apps.db.models import Qna, Users
 
@@ -25,16 +26,19 @@ def qna_list(request):
     """
     # 로그인 확인
     if not request.session.get('user_id'):
-        return redirect('login')
-    
+        return redirect('accounts:login')
     try:
         user = Users.objects.get(user_id=request.session.get('user_id'), withdrawal='0')
     except Users.DoesNotExist:
-        return redirect('login')
+        return redirect('accounts:login')
     
     # 검색 파라미터 (POST 방식)
     search_keyword = request.POST.get('search', '').strip()
     page_number = request.POST.get('page', 1)
+    
+    # 정렬 파라미터 (POST 방식)
+    sort_field = request.POST.get('sort', 'created_at')  # 기본값: created_at
+    sort_order = request.POST.get('order', 'desc')  # 기본값: desc (내림차순)
     
     # QnA 목록 조회 (로그인한 사용자 본인의 문의 + 다른 사람이 공개로 설정한 글 + 관리자가 만든 더미데이터)
     # select_related('user'): user 정보를 미리 로드하여 N+1 쿼리 문제 방지
@@ -43,33 +47,66 @@ def qna_list(request):
     # 1. 본인이 작성한 글 (Q(user=user)) - 공개/비공개 상관없이 모두 표시
     # 2. 다른 사람이 공개로 설정한 글 (Q(privacy='PUBLIC') & ~Q(user=user)) - 공개 글만 표시
     # 3. 더미데이터 표시 (Q(title__startswith='더미 문의')) - 관리자가 생성한 테스트 데이터
-    qnas = Qna.objects.select_related('user').filter(
-        Q(user=user) | 
-        (Q(privacy='PUBLIC') & ~Q(user=user)) | 
-        Q(title__startswith='더미 문의')
+    
+    qnas = (
+        Qna.objects.select_related('user')
+        .filter(
+            Q(user=user) |
+            (Q(privacy='PUBLIC') & ~Q(user=user))
+        )
+        .filter(user__withdrawal='0')  # Active 사용자만
     )
     
-    # 검색 필터 적용
-    if search_keyword:
-        qnas = qnas.filter(
-            Q(title__icontains=search_keyword) | 
-            Q(content__icontains=search_keyword)
-        )
+    # 정렬 처리
+    # 허용된 정렬 필드만 처리 (보안)
+    allowed_sort_fields = {
+        'qna_id': 'qna_id',
+        'title': 'title',
+        'created_at': 'created_at',
+        'username': 'user__username',
+        'privacy': 'privacy',
+        'status': 'reply',  # reply가 있으면 답변 완료, 없으면 대기
+    }
     
-    # 답변이 올려진 시간 순으로 정렬
-    # 1. 답변이 있는 것(reply가 있는 것)을 먼저 표시
-    # 2. 답변이 있는 것들은 문의 작성 시간(created_at) 기준 내림차순 (최신 답변 먼저)
-    # 3. 답변이 없는 것들은 문의 작성 시간(created_at) 기준 내림차순
-    # 주의: Qna 모델에 답변 작성 시간 필드가 없으므로, 답변이 있는 것들을 우선 표시하고
-    #       그 안에서 문의 작성 시간 순으로 정렬합니다.
-    qnas = qnas.annotate(
-        has_reply=Case(
-            When(reply__isnull=False, reply='', then=Value(0)),
-            When(reply__isnull=False, then=Value(1)),
-            default=Value(0),
-            output_field=IntegerField()
-        )
-    ).order_by('-has_reply', '-created_at')
+    # 정렬 필드 검증
+    if sort_field not in allowed_sort_fields:
+        sort_field = 'created_at'
+    
+    # 정렬 방향 검증
+    if sort_order not in ['asc', 'desc']:
+        sort_order = 'desc'
+    
+    # 정렬 필드 매핑
+    db_sort_field = allowed_sort_fields[sort_field]
+    
+    # 정렬 적용
+    if sort_field == 'status':
+        # 상태 정렬: reply가 있으면 답변 완료(1), 없으면 대기(0)
+        # Case/When을 사용하여 reply 필드의 NULL 여부에 따라 정렬
+        if sort_order == 'asc':
+            # 오름차순: 대기(0) 먼저, 답변 완료(1) 나중
+            qnas = qnas.annotate(
+                status_value=Case(
+                    When(reply__isnull=True, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField()
+                )
+            ).order_by('status_value')
+        else:
+            # 내림차순: 답변 완료(1) 먼저, 대기(0) 나중
+            qnas = qnas.annotate(
+                status_value=Case(
+                    When(reply__isnull=True, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField()
+                )
+            ).order_by('-status_value')
+    else:
+        # 일반 정렬
+        if sort_order == 'asc':
+            qnas = qnas.order_by(db_sort_field)
+        else:
+            qnas = qnas.order_by(f'-{db_sort_field}')
     
     # 페이지네이션 (10개씩)
     paginator = Paginator(qnas, 10)
@@ -79,7 +116,19 @@ def qna_list(request):
         'qnas': page_obj,
         'page_obj': page_obj,
         'search_keyword': search_keyword,
+        'sort_field': sort_field,
+        'sort_order': sort_order,
     }
+    
+    # AJAX 요청인 경우 테이블 부분만 반환
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # 테이블과 페이지네이션만 렌더링
+        table_html = render_to_string('qna/partials/qna_table.html', context, request=request)
+        pagination_html = render_to_string('qna/partials/qna_pagination.html', context, request=request)
+        return JsonResponse({
+            'table_html': table_html,
+            'pagination_html': pagination_html,
+        })
     
     return render(request, 'm_qna_list.html', context)
 
@@ -92,12 +141,12 @@ def qna_write(request):
     """
     # 로그인 확인
     if not request.session.get('user_id'):
-        return redirect('login')
+        redirect('accounts:login')
     
     try:
         user = Users.objects.get(user_id=request.session.get('user_id'), withdrawal='0')
     except Users.DoesNotExist:
-        return redirect('login')
+        redirect('accounts:login')
     
     if request.method == 'POST':
         # POST 데이터에서 필드 값 가져오기
@@ -196,13 +245,18 @@ def qna_write(request):
     return render(request, 'm_qna_write.html', context)
 
 
-def qna_post(request, qna_id):
+def qna_post(request):
     """
-    QnA 상세보기
+    QnA 상세보기 (POST 방식)
     - QnA 상세 내용 표시 (db/models/qna.py의 Qna 모델 구조에 맞춰 조회)
     - 답변 표시 (reply 필드가 있는 경우)
     - select_related('user')를 사용하여 성능 최적화
+    - POST 방식으로만 접근 가능 (URL에 qna_id 노출 방지)
     """
+    # POST 방식만 허용
+    if request.method != 'POST':
+        return redirect('qna:qna_list')
+    
     # 로그인 확인
     if not request.session.get('user_id'):
         return redirect('login')
@@ -212,13 +266,31 @@ def qna_post(request, qna_id):
     except Users.DoesNotExist:
         return redirect('login')
     
-    # QnA 조회 (본인이 작성한 것 또는 더미데이터)
+    # POST 데이터에서 qna_id 가져오기
+    qna_id = request.POST.get('qna_id')
+    if not qna_id:
+        return redirect('qna:qna_list')
+    
+    try:
+        qna_id = int(qna_id)
+    except (ValueError, TypeError):
+        return redirect('qna:qna_list')
+    
+    # QnA 조회 (본인이 작성한 것, 공개된 글, 또는 더미데이터)
     # select_related('user'): user 정보를 미리 로드하여 N+1 쿼리 문제 방지
     # 더미데이터는 제목이 "더미 문의"로 시작하는 문의
+    # 필터 조건:
+    # 1. 본인이 작성한 글 (공개/비공개 상관없이 모두 표시)
+    # 2. 다른 사람이 공개로 설정한 글 (privacy='PUBLIC')
+    # 3. 더미데이터 (제목이 "더미 문의"로 시작)
     qna = get_object_or_404(
         Qna.objects.select_related('user').filter(
-            Q(qna_id=qna_id) & (Q(user=user) | Q(title__startswith='더미 문의'))
-        )
+            Q(qna_id=qna_id) & (
+                Q(user=user) | 
+                (Q(privacy='PUBLIC') & ~Q(user=user)) | 
+                Q(title__startswith='더미 문의')
+            )
+        ).filter(user__withdrawal='0')  # Active 사용자만
     )
     
     # 본인이 작성한 글인지 확인 (더미데이터는 제외)

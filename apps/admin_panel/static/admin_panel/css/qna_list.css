@@ -188,6 +188,7 @@
   border-collapse: collapse;
   font-size: 14px;
   background-color: #fff;
+  table-layout: fixed; /* 테이블 레이아웃 고정 (컬럼 너비 일관성 유지) */
 }
 
 /* 
@@ -218,6 +219,44 @@
   font-weight: 600;
   color: #1B3C73;
   border-bottom: 2px solid #e1e4ec;
+}
+
+/* 테이블 컬럼 너비 지정 (페이지네이션 후에도 일관된 너비 유지) */
+.qna-table th:nth-child(1),
+.qna-table td:nth-child(1) {
+  width: 40px; /* 체크박스 컬럼 */
+}
+
+.qna-table th:nth-child(2),
+.qna-table td:nth-child(2) {
+  width: 60px; /* No. 컬럼 */
+}
+
+.qna-table th:nth-child(3),
+.qna-table td:nth-child(3) {
+  width: 100px; /* 이름 컬럼 */
+}
+
+.qna-table th:nth-child(4),
+.qna-table td:nth-child(4) {
+  width: 40%; /* 문의 제목 컬럼 (넓은 공간 할당) */
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.qna-table th:nth-child(5),
+.qna-table td:nth-child(5) {
+  width: 180px; /* 이메일 컬럼 */
+}
+
+.qna-table th:nth-child(6),
+.qna-table td:nth-child(6) {
+  width: 120px; /* 문의 일자 컬럼 */
+}
+
+.qna-table th:nth-child(7),
+.qna-table td:nth-child(7) {
+  width: 100px; /* 상태 컬럼 */
 }
 
 /* 

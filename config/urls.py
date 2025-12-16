@@ -32,7 +32,7 @@ urlpatterns = [
 
 
     # 희원가입
-    path('accounts/', include('apps.accounts.urls')),
+    path("accounts/", include(("apps.accounts.urls", "accounts"), namespace="accounts")),
     path('', include('apps.social_auth.urls')),  # 카카오 로그인 경로
     
     path("api/chat/", include("apps.chatbot.urls")),  # ← 추가

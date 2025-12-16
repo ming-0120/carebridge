@@ -59,6 +59,58 @@ window.addEventListener("DOMContentLoaded", () => {
   } else {
     console.log("캐시된 위치 사용:", storedLat, storedLng);
   }
+  const slides = document.querySelectorAll(".hero-slide");
+  const dots = document.querySelectorAll(".hero-dot");
+  const prevBtn = document.querySelector(".hero-arrow.prev");
+  const nextBtn = document.querySelector(".hero-arrow.next");
+
+  let current = 0;
+  const INTERVAL = 3000;
+  let timer = null;
+
+  function showSlide(index) {
+    slides.forEach((s, i) => {
+      s.classList.toggle("active", i === index);
+      dots[i].classList.toggle("active", i === index);
+    });
+    current = index;
+  }
+
+  function nextSlide() {
+    showSlide((current + 1) % slides.length);
+  }
+
+  function prevSlide() {
+    showSlide((current - 1 + slides.length) % slides.length);
+  }
+
+  function startAuto() {
+    stopAuto();
+    timer = setInterval(nextSlide, INTERVAL);
+  }
+
+  function stopAuto() {
+    if (timer) clearInterval(timer);
+  }
+
+  nextBtn.addEventListener("click", () => {
+    nextSlide();
+    startAuto();
+  });
+
+  prevBtn.addEventListener("click", () => {
+    prevSlide();
+    startAuto();
+  });
+
+  dots.forEach(dot => {
+    dot.addEventListener("click", () => {
+      showSlide(Number(dot.dataset.index));
+      startAuto();
+    });
+  });
+
+  startAuto();
 });
 
 

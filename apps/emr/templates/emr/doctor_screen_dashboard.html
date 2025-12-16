@@ -41,8 +41,12 @@
         <div class="card doctor-profile">
             <h3>나의 정보</h3>
             <div class="profile-content">
-                {% if doctor.profil_url != None %}
-                    <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                {% if doctor.profil_url %}
+                    {% if doctor.profil_url|slice:":4" == "http" %}
+                        <img src="{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% else %}
+                        <img src="/media/{{ doctor.profil_url }}" alt="의사 이미지">
+                    {% endif %}
                 {% else %}
                     <img src="{% static 'core/img/default_profile.png' %}" alt="의사 이미지">
                 {% endif %}
@@ -56,8 +60,8 @@
 
             <h3>🔍 환자 검색</h3>
                 <div class="search-container">
-                    <input type="text" placeholder="홍길" value="홍길">
-                    <button onclick="">검색</button>
+                    <input type="text" id="searchText">
+                    <button onclick="toPatientSearch();">검색</button>
                 </div>
             <p class="search-desc">현재 재직 중인 병원 내 환자만 조회 가능합니다.</p>
         </div>

@@ -115,7 +115,7 @@ def generate_dummy_email(username, role='PATIENT', index=0):
 
 def get_request_param(request, param_name, default=''):
     """
-    POST 요청에서 파라미터 값을 가져오는 공통 함수
+    GET 또는 POST 요청에서 파라미터 값을 가져오는 공통 함수
     
     Args:
         request: HTTP 요청 객체
@@ -125,12 +125,18 @@ def get_request_param(request, param_name, default=''):
     Returns:
         파라미터 값 또는 기본값
     """
-    return request.POST.get(param_name, default)
+    # GET 요청에서 먼저 확인, 없으면 POST 요청에서 확인
+    return request.GET.get(param_name) or request.POST.get(param_name, default)
 
 def paginate_queryset(request, queryset, per_page=5):
     """쿼리셋을 페이지네이션 처리하는 공통 함수"""
     paginator = Paginator(queryset, per_page)
     page_number = get_request_param(request, 'page', 1)
+    # page_number를 정수로 변환 (문자열로 전달될 수 있음)
+    try:
+        page_number = int(page_number) if page_number else 1
+    except (ValueError, TypeError):
+        page_number = 1
     page_obj = paginator.get_page(page_number)
     total_count = queryset.count()
     return page_obj, total_count
@@ -434,20 +440,30 @@ def user_list(request):
         else:
             number = start_index + idx
         
-        # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+        # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
         birth_date = None
         if user.resident_reg_no:
             reg_no = user.resident_reg_no.replace('-', '')  # 하이픈 제거
-            if len(reg_no) >= 6:
+            if len(reg_no) >= 7:
                 yy = reg_no[0:2]
                 mm = reg_no[2:4]
                 dd = reg_no[4:6]
+                gender_code = reg_no[6] if len(reg_no) > 6 else None
                 
                 try:
                     month_int = int(mm)
                     day_int = int(dd)
                     if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                        birth_date = f'{yy}.{mm}.{dd}'
+                        # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                        if gender_code in ['1', '2', '5', '6']:
+                            yyyy = f'19{yy}'
+                        elif gender_code in ['3', '4', '7', '8']:
+                            yyyy = f'20{yy}'
+                        else:
+                            # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                            yy_int = int(yy)
+                            yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                        birth_date = f'{yyyy}년{mm}월{dd}일'
                 except ValueError:
                     pass
         
@@ -492,19 +508,29 @@ def user_list(request):
             favorites = UserFavorite.objects.filter(user=selected_user)
             favorite_hospitals = [fav.hos.name for fav in favorites if hasattr(fav, 'hos')]
             
-            # 주민번호를 생년월일로 변환 (yy.mm.dd 형식으로 통일)
+            # 주민번호를 생년월일로 변환 (yyyy년mm월dd일 형식으로 통일)
             if selected_user.resident_reg_no:
                 reg_no = selected_user.resident_reg_no.replace('-', '')  # 하이픈 제거
-                if len(reg_no) >= 6:
+                if len(reg_no) >= 7:
                     yy = reg_no[0:2]
                     mm = reg_no[2:4]
                     dd = reg_no[4:6]
+                    gender_code = reg_no[6] if len(reg_no) > 6 else None
                     
                     try:
                         month_int = int(mm)
                         day_int = int(dd)
                         if 1 <= month_int <= 12 and 1 <= day_int <= 31:
-                            birth_date = f'{yy}.{mm}.{dd}'
+                            # 주민번호 7번째 자리로 연도 판단 (1,2: 1900년대, 3,4: 2000년대)
+                            if gender_code in ['1', '2', '5', '6']:
+                                yyyy = f'19{yy}'
+                            elif gender_code in ['3', '4', '7', '8']:
+                                yyyy = f'20{yy}'
+                            else:
+                                # 기본값: yy가 작으면 2000년대, 크면 1900년대
+                                yy_int = int(yy)
+                                yyyy = f'20{yy}' if yy_int < 50 else f'19{yy}'
+                            birth_date = f'{yyyy}년{mm}월{dd}일'
                     except ValueError:
                         pass
             
@@ -683,7 +709,203 @@ def doctor_list(request):
 
 
 def hospital_list(request):
-    """병원 목록 조회, 검색, 정렬, 페이지네이션"""
+    """병원 목록 조회, 검색, 정렬, 페이지네이션, 병원 추가"""
+    # POST 요청 처리 (병원 추가)
+    if request.method == 'POST':
+        action = request.POST.get('action', '')
+        
+        # AJAX 요청인 경우 JSON 응답
+        is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+        
+        if action == 'add_hospital':
+            # 병원 추가 처리
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"[병원 추가] 요청 시작: is_ajax={is_ajax}, action={action}")
+            
+            try:
+                hospital_name = request.POST.get('hospital_name', '').strip()
+                hospital_hos_name = request.POST.get('hospital_hos_name', '').strip()
+                hospital_hos_password = request.POST.get('hospital_hos_password', '').strip()
+                hospital_address = request.POST.get('hospital_address', '').strip()
+                hospital_tel = request.POST.get('hospital_tel', '').strip()
+                hospital_estb_date = request.POST.get('hospital_estb_date', '').strip()
+                
+                # API에서 가져온 추가 정보
+                hospital_lat = request.POST.get('hospital_lat', '').strip()
+                hospital_lng = request.POST.get('hospital_lng', '').strip()
+                hospital_dr_total = request.POST.get('hospital_dr_total', '').strip()
+                hospital_sggu = request.POST.get('hospital_sggu', '').strip()
+                hospital_sido = request.POST.get('hospital_sido', '').strip()
+                
+                # 디버깅: 받은 데이터 확인
+                logger.info(f"[병원 추가] 받은 데이터: name={hospital_name}, hos_name={hospital_hos_name}, address={hospital_address}, tel={hospital_tel}, estb_date={hospital_estb_date}")
+                logger.info(f"[병원 추가] 추가 정보: lat={hospital_lat}, lng={hospital_lng}, dr_total={hospital_dr_total}, sggu={hospital_sggu}, sido={hospital_sido}")
+                
+                # 필수 필드 검증
+                if not hospital_name or not hospital_hos_name or not hospital_hos_password:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '필수 항목을 모두 입력해주세요.'})
+                    else:
+                        # 일반 POST 요청인 경우 리다이렉트
+                        return redirect('hospital_list')
+                
+                # 필드 길이 검증 (모델 제약 조건 확인)
+                if len(hospital_name) > 100:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '병원명은 100자 이하여야 합니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                if len(hospital_hos_name) > 50:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '병원 계정ID는 50자 이하여야 합니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                if hospital_address and len(hospital_address) > 255:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '주소는 255자 이하여야 합니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                if hospital_tel and len(hospital_tel) > 50:
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '전화번호는 50자 이하여야 합니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # hos_name 중복 확인
+                if Hospital.objects.filter(hos_name=hospital_hos_name).exists():
+                    if is_ajax:
+                        return JsonResponse({'success': False, 'message': '이미 존재하는 병원 계정ID입니다.'})
+                    else:
+                        return redirect('hospital_list')
+                
+                # hpid 자동 생성 (hos_name 기반으로 생성)
+                import uuid
+                hospital_hpid = str(uuid.uuid4())[:36]  # UUID 기반 고유 ID 생성
+                
+                # API에서 가져온 추가 정보 파싱
+                lat_float = None
+                lng_float = None
+                dr_total_int = None
+                
+                if hospital_lat:
+                    try:
+                        lat_float = float(hospital_lat)
+                    except (ValueError, TypeError):
+                        lat_float = None
+                
+                if hospital_lng:
+                    try:
+                        lng_float = float(hospital_lng)
+                    except (ValueError, TypeError):
+                        lng_float = None
+                
+                if hospital_dr_total:
+                    try:
+                        dr_total_int = int(hospital_dr_total)
+                    except (ValueError, TypeError):
+                        dr_total_int = None
+                
+                # sggu, sido는 문자열이므로 그대로 사용 (빈 문자열이면 None)
+                hospital_sggu = hospital_sggu if hospital_sggu else None
+                hospital_sido = hospital_sido if hospital_sido else None
+                
+                # 병원 생성
+                # address 필드는 CharField이므로 빈 문자열 허용 (null=True 없음)
+                try:
+                    new_hospital = Hospital.objects.create(
+                        name=hospital_name,
+                        hpid=hospital_hpid,
+                        hos_name=hospital_hos_name,
+                        hos_password=hospital_hos_password,
+                        address=hospital_address if hospital_address else '',  # 빈 문자열로 저장
+                        tel=hospital_tel if hospital_tel else None,
+                        estb_date=hospital_estb_date if hospital_estb_date else None,
+                        lat=lat_float,
+                        lng=lng_float,
+                        dr_total=dr_total_int,
+                        sggu=hospital_sggu,
+                        sido=hospital_sido,
+                    )
+                    
+                    # 저장 후 실제로 DB에 저장되었는지 확인
+                    saved_hospital = Hospital.objects.filter(hpid=hospital_hpid).first()
+                    if not saved_hospital:
+                        logger.error(f"[병원 추가] 저장 실패: hpid={hospital_hpid}로 조회했지만 결과 없음")
+                        if is_ajax:
+                            return JsonResponse({'success': False, 'message': '병원 저장 후 확인 중 오류가 발생했습니다.'})
+                        else:
+                            return redirect('hospital_list')
+                    
+                    logger.info(f"[병원 추가] 성공: hos_id={new_hospital.hos_id}, hpid={new_hospital.hpid}, hos_name={new_hospital.hos_name}")
+                    
+                    if is_ajax:
+                        return JsonResponse({
+                            'success': True, 
+                            'message': '병원이 성공적으로 추가되었습니다.',
+                            'hospital_id': new_hospital.hos_id
+                        })
+                    else:
+                        return redirect('hospital_list')
+                except Exception as create_error:
+                    logger.error(f"[병원 추가] DB 저장 중 오류: {str(create_error)}")
+                    import traceback
+                    logger.error(traceback.format_exc())
+                    # create 에러를 상위 except로 전달
+                    raise
+                    
+            except Exception as e:
+                import traceback
+                from django.db import IntegrityError
+                error_detail = traceback.format_exc()
+                
+                # DB 제약 조건 위반 에러 처리
+                if isinstance(e, IntegrityError):
+                    error_msg = str(e)
+                    # hpid 중복 에러
+                    if 'hpid' in error_msg.lower() or 'unique' in error_msg.lower():
+                        if is_ajax:
+                            return JsonResponse({'success': False, 'message': '이미 존재하는 병원입니다. (hpid 중복)'})
+                        else:
+                            return redirect('hospital_list')
+                    # hos_name 중복 에러 (이미 위에서 체크하지만 DB 레벨에서도 발생 가능)
+                    elif 'hos_name' in error_msg.lower():
+                        if is_ajax:
+                            return JsonResponse({'success': False, 'message': '이미 존재하는 병원 계정ID입니다.'})
+                        else:
+                            return redirect('hospital_list')
+                    else:
+                        if is_ajax:
+                            return JsonResponse({'success': False, 'message': f'DB 제약 조건 위반: {error_msg}'})
+                        else:
+                            return redirect('hospital_list')
+                
+                # 기타 에러 - 더 자세한 에러 정보 제공
+                if is_ajax:
+                    # 개발 환경에서는 상세 에러 정보 제공
+                    import sys
+                    error_type = type(e).__name__
+                    error_message = str(e)
+                    # 에러 타입에 따른 사용자 친화적인 메시지
+                    if 'ValidationError' in error_type:
+                        return JsonResponse({'success': False, 'message': f'입력값 검증 오류: {error_message}'})
+                    elif 'ValueError' in error_type:
+                        return JsonResponse({'success': False, 'message': f'값 오류: {error_message}'})
+                    else:
+                        return JsonResponse({
+                            'success': False, 
+                            'message': f'병원 추가 중 오류가 발생했습니다: {error_message}',
+                            'error_type': error_type
+                        })
+                else:
+                    return redirect('hospital_list')
+        else:
+            # 검색 요청인 경우 (기존 로직)
+            pass
+    
     # 파라미터 추출
     search_type = get_request_param(request, 'search_type', '')
     search_keyword = get_request_param(request, 'search_keyword', '')
@@ -931,6 +1153,8 @@ def approval_pending(request):
     selected_doctor_id = get_request_param(request, 'doctor_id', '')
     selected_doctor = None
     
+    # URL에 doctor_id 파라미터가 있을 때만 의사 선택
+    # 기본 상태에서는 아무것도 선택하지 않음 (상세정보 숨김)
     if selected_doctor_id:
         try:
             selected_doctor = Doctors.objects.select_related(
@@ -938,11 +1162,14 @@ def approval_pending(request):
             ).get(doctor_id=selected_doctor_id, verified=False)
         except Doctors.DoesNotExist:
             pass
-    elif pending_doctors.exists():
-        selected_doctor = pending_doctors.first()
     
     # 페이지네이션
     page_obj, total_count = paginate_queryset(request, pending_doctors, per_page=5)
+    
+    # 디버깅: 페이지 번호 확인
+    page_number_from_request = get_request_param(request, 'page', 1)
+    print(f'[approval_pending] 요청된 page 파라미터: {page_number_from_request}, 타입: {type(page_number_from_request)}')
+    print(f'[approval_pending] 실제 page_obj.number: {page_obj.number}, 전체 페이지 수: {page_obj.paginator.num_pages}')
     
     # 면허번호 검증 및 번호 계산
     doctors_with_validation = []
@@ -986,9 +1213,27 @@ def approval_pending(request):
             if action == 'approve':
                 Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).update(verified=True)
             elif action == 'reject':
-                Doctors.objects.filter(doctor_id__in=doctor_ids, verified=False).delete()
-        
-        return redirect('approval_pending')
+                # 거절 시 Doctors와 관련 Users 모두 삭제
+                # Doctors 객체들을 먼저 가져와서 관련 Users ID 수집
+                doctors_to_delete = Doctors.objects.filter(
+                    doctor_id__in=doctor_ids, 
+                    verified=False
+                ).select_related('user')
+                
+                # 관련 Users ID 수집
+                user_ids = [doctor.user.user_id for doctor in doctors_to_delete]
+                
+                # Doctors 삭제 (CASCADE로 자동 삭제되지 않으므로 수동 삭제)
+                doctors_to_delete.delete()
+                
+                # 관련 Users 삭제
+                if user_ids:
+                    Users.objects.filter(user_id__in=user_ids).delete()
+            
+            # 승인/거절 처리 후 리다이렉트 (AJAX 요청이 아닌 경우에만)
+            # 페이지네이션 AJAX 요청은 리다이렉트하지 않음
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect('approval_pending')
     
     # 컨텍스트 데이터
     context = {
@@ -996,6 +1241,7 @@ def approval_pending(request):
         'pending_doctors': page_obj,
         'doctors_with_validation': doctors_with_validation,
         'selected_doctor': selected_doctor,
+        'selected_doctor_id': selected_doctor_id if selected_doctor_id else '',
         'total_pending_count': pending_doctors.count(),
         'sort_field': sort_field,
         'sort_order': sort_order,
@@ -1016,6 +1262,49 @@ def qna_list(request):
     user_role = request.session.get('role', '')
     if user_role != 'ADMIN':
         return redirect('/')
+    
+    # ========= 30일 이전 데이터 자동 삭제 =========
+    # 목적: 오늘 날짜 기준으로 30일 이전 문의 데이터를 자동으로 삭제
+    #   - 데이터 관리: 오래된 문의 데이터를 자동으로 정리하여 데이터베이스 용량 관리
+    #   - 개인정보 보호: 오래된 문의 데이터를 자동으로 삭제하여 개인정보 보호
+    #   - 성능 최적화: 오래된 데이터를 삭제하여 쿼리 성능 향상
+    # 
+    # timezone.now(): 현재 시간 (시간대를 고려한 현재 시간)
+    #   - Django의 timezone.now()는 settings.py의 TIME_ZONE 설정을 고려
+    #   - 반환값: datetime 객체 (예: 2024-12-12 16:30:00+09:00)
+    #   - 목적: 현재 시간을 기준으로 30일 전 날짜를 계산
+    # 
+    # timedelta(days=30): 30일의 시간 간격
+    #   - days=30: 30일
+    #   - 반환값: timedelta 객체
+    #   - 목적: 현재 시간에서 30일을 빼기 위함
+    # 
+    # timezone.now() - timedelta(days=30): 30일 전 날짜/시간 계산
+    #   - 반환값: datetime 객체 (30일 전 날짜/시간)
+    #   - 예: 오늘이 2024-12-12이면 2024-11-12 반환
+    #   - 목적: 이 날짜 이전의 문의 데이터를 삭제하기 위함
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    
+    # Qna.objects.filter(...): 조건에 맞는 문의들을 필터링
+    #   - created_at__lt=thirty_days_ago: created_at 필드가 thirty_days_ago보다 이전인 문의
+    #     → created_at__lt: Django ORM의 필드 조회 메서드 (less than)
+    #     → SQL의 WHERE created_at < '2024-11-12'와 동일한 역할
+    #     → 예: 2024-11-10에 생성된 문의는 삭제됨
+    #     → 예: 2024-11-15에 생성된 문의는 삭제되지 않음
+    #   - .delete(): 필터링된 문의들을 데이터베이스에서 삭제
+    #     → SQL의 DELETE 문과 동일한 역할
+    #     → 반환값: (삭제된 객체 수, {모델명: 삭제된 객체 수}) 튜플
+    #     → 예: (5, {'qna.Qna': 5}) - 5개의 문의가 삭제됨
+    #   - 목적: 30일 이전의 문의 데이터를 자동으로 삭제
+    #   - 결과: 30일 이전의 문의 데이터가 데이터베이스에서 제거됨
+    #   - 주의: 삭제된 데이터는 복구할 수 없으므로 신중하게 처리됨
+    deleted_count, _ = Qna.objects.filter(created_at__lt=thirty_days_ago).delete()
+    
+    # 삭제된 문의가 있는 경우 로그 출력 (선택사항)
+    #   - 디버깅 목적으로 삭제된 문의 개수를 확인할 수 있음
+    #   - 프로덕션 환경에서는 로깅 시스템으로 대체 가능
+    if deleted_count > 0:
+        print(f'[qna_list] 30일 이전 문의 데이터 {deleted_count}개 자동 삭제 완료')
     
     # 삭제 처리 (POST 요청)
     if request.method == 'POST':
@@ -1464,10 +1753,11 @@ def create_admin_account(request):
 def create_doctor_dummy_data(request):
     """
     더미 의사 데이터 생성
-    - 테스트용 의사 데이터 생성 (5명)
+    - 테스트용 의사 데이터 생성 (10명: 각 전공과마다 2명씩)
     - 전공과: 내과(IM), 외과(GS), 정형외과(OR), 소아과(PD), 이비인후과(EN)
+    - 각 전공과마다 1명씩 정상 승인(verified=True), 1명씩 비정상 승인(verified=False)
     - 면허번호: 전공과 영어코드 + 주민번호 뒷자리
-    - 첫 번째 의사는 면허번호와 주민번호가 일치하지 않도록 설정 (테스트용)
+    - 각 전공과의 비정상 승인 의사 중 1명은 면허번호와 주민번호가 일치하지 않도록 설정 (테스트용)
     
     이 함수가 필요한 이유:
     1. 개발 및 테스트 환경에서 의사 데이터가 필요할 때 빠르게 생성
@@ -1681,11 +1971,19 @@ def create_doctor_dummy_data(request):
     address_data = get_dummy_address_data()
     city_districts = list(address_data.keys())
     
-    # 더미 의사 데이터 생성 (5명씩, 동명이인 없이)
+    # 더미 의사 데이터 생성 (10명: 각 전공과마다 2명씩)
+    # 각 전공과마다 1명씩 정상 승인(verified=True), 1명씩 비정상 승인(verified=False)
+    # 각 전공과의 비정상 승인 의사 중 1명은 면허번호와 주민번호가 일치하지 않도록 설정
+    
     doctor_templates = []
     used_names = set()  # 이미 사용된 이름 조합을 추적
+    department_verified_count = {dept: 0 for dept in departments_list}  # 각 전공과별 정상 승인 의사 수 추적
+    department_unverified_count = {dept: 0 for dept in departments_list}  # 각 전공과별 비정상 승인 의사 수 추적
     
-    for i in range(5):
+    # 각 전공과마다 2명씩 생성 (총 10명)
+    # 0~4: 각 전공과의 첫 번째 의사 (정상 승인)
+    # 5~9: 각 전공과의 두 번째 의사 (비정상 승인)
+    for i in range(10):
         # 성씨와 이름을 랜덤으로 조합하여 동명이인 방지
         while True:
             surname = random.choice(surnames)
@@ -1697,8 +1995,11 @@ def create_doctor_dummy_data(request):
                 used_names.add(full_name)
                 break
         
-        # 전공과 할당 (순환)
-        department = departments_list[i % len(departments_list)]
+        # 전공과 할당: 각 전공과마다 2명씩 할당
+        # 0~4: 각 전공과의 첫 번째 의사
+        # 5~9: 각 전공과의 두 번째 의사
+        dept_index = i % len(departments_list)
+        department = departments_list[dept_index]
         
         # 지역 할당 (순환) - 사용자 더미 데이터와 동일
         city_district = city_districts[i % len(city_districts)]
@@ -1713,7 +2014,11 @@ def create_doctor_dummy_data(request):
             'city_district': city_district
         })
     
+    # 면허번호 불일치 의사 인덱스 선택 (비정상 승인 의사 중에서 랜덤 선택: 5~9 중 하나)
+    license_mismatch_index = random.randint(5, 9)
+    
     created_count = 0
+    
     for i, template in enumerate(doctor_templates):
         # 사용자명 생성 (누적 번호)
         username = f'doctor{start_num + i:02d}'
@@ -1731,8 +2036,8 @@ def create_doctor_dummy_data(request):
         # 전공과 정보 가져오기
         dept = dept_objects[template['department']]
         
-        # 면허번호 생성: 5명 중 1명(첫 번째)은 주민번호 뒷자리와 일치하지 않게
-        if i == 0:  # 첫 번째 의사는 면허번호와 주민번호 뒷자리가 일치하지 않게
+        # 면허번호 생성: 랜덤하게 선택된 1명은 주민번호 뒷자리와 일치하지 않게
+        if i == license_mismatch_index:  # 랜덤하게 선택된 의사는 면허번호와 주민번호 뒷자리가 일치하지 않게
             # 다른 주민번호 뒷자리 생성
             wrong_back_reg = f'{first_digit}{random.randint(0, 999999):06d}'
             # back_reg와 다를 때까지 반복
@@ -1780,11 +2085,19 @@ def create_doctor_dummy_data(request):
         hospital = random.choice(hospitals)
         
         # 의사 생성
-        # 첫 번째 의사(면허번호 불일치)는 반드시 대기상태(verified=False)로 생성
-        if i == 0:
-            verified_status = False  # 면허번호 불일치 의사는 반드시 대기상태
+        # 0~4: 각 전공과의 첫 번째 의사 (정상 승인)
+        # 5~9: 각 전공과의 두 번째 의사 (비정상 승인)
+        # 면허번호 불일치 의사는 비정상 승인 의사 중에서 랜덤 선택된 1명
+        current_dept = template['department']
+        
+        if i < 5:
+            # 첫 5명 (0~4): 각 전공과의 첫 번째 의사 → 정상 승인
+            verified_status = True
+            department_verified_count[current_dept] += 1
         else:
-            verified_status = random.choice([True, False])  # 나머지는 랜덤
+            # 나머지 5명 (5~9): 각 전공과의 두 번째 의사 → 비정상 승인
+            verified_status = False
+            department_unverified_count[current_dept] += 1
         
         doctor = Doctors.objects.create(
             user=user,

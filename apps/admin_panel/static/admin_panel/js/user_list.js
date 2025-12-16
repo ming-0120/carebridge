@@ -197,6 +197,9 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 페이지네이션으로 새로운 HTML이 추가되면 기존 이벤트 리스너가 사라지므로 다시 연결 필요
   window.reattachTableRowListeners = function() {
     attachTableRowListeners('.user-row[data-user-id]', 'data-user-id', selectUser);
+    // 정렬 링크 이벤트 리스너 재연결
+    attachSortListeners();
+    // 중복 호출 방지: attachPaginationListeners는 admin_common.js의 handlePaginationAjax에서 이미 호출됨
   };
   
   // ========= 정렬 링크 클릭 이벤트 리스너 연결 (공통 함수 사용) =========

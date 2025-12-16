@@ -143,25 +143,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const writerInfoGroup = document.getElementById('writer-info-group');
   const formContentGroups = document.querySelectorAll('.form-content-group');
   const formActionsGroup = document.querySelector('.form-actions-group');
-  const writerBirth = document.getElementById('writer-birth');
-  const phoneArea = document.getElementById('phone-area');
-  const phoneMiddle = document.getElementById('phone-middle');
-  const phoneLast = document.getElementById('phone-last');
-  const emailUsername = document.getElementById('email-username');
-  const emailDomain = document.getElementById('email-domain');
-  const emailDomainCustom = document.getElementById('email-domain-custom');
-  
-  // DB에서 가져온 원본 값 저장 (페이지 로드 시 한 번만 저장)
-  const originalValues = {
-    birth: writerBirth ? writerBirth.value : '',
-    phoneArea: phoneArea ? phoneArea.value : '',
-    phoneMiddle: phoneMiddle ? phoneMiddle.value : '',
-    phoneLast: phoneLast ? phoneLast.value : '',
-    emailUsername: emailUsername ? emailUsername.value : '',
-    emailDomain: emailDomain ? emailDomain.value : '',
-    emailDomainCustom: emailDomainCustom ? emailDomainCustom.value : '',
-    emailDomainCustomDisplay: emailDomain && emailDomain.value === '직접입력' ? 'block' : 'none'
-  };
   
   // 작성자 정보 섹션 및 폼 내용 숨기기
   function hideWriterInfoSection() {
@@ -193,41 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // DB 값으로 복원
+  // DB 값으로 복원 함수 (이제 텍스트로만 표시되므로 빈 함수)
   function restoreOriginalValues() {
-    // 값 복원
-    if (writerBirth) writerBirth.value = originalValues.birth;
-    if (phoneArea) phoneArea.value = originalValues.phoneArea;
-    if (phoneMiddle) phoneMiddle.value = originalValues.phoneMiddle;
-    if (phoneLast) phoneLast.value = originalValues.phoneLast;
-    if (emailUsername) emailUsername.value = originalValues.emailUsername;
-    if (emailDomain) emailDomain.value = originalValues.emailDomain;
-    if (emailDomainCustom) {
-      emailDomainCustom.value = originalValues.emailDomainCustom;
-      emailDomainCustom.style.display = originalValues.emailDomainCustomDisplay;
-    }
-    
-    // 필드 활성화
-    if (writerBirth) writerBirth.readOnly = false;
-    if (phoneArea) phoneArea.disabled = false;
-    if (phoneMiddle) phoneMiddle.readOnly = false;
-    if (phoneLast) phoneLast.readOnly = false;
-    if (emailUsername) emailUsername.readOnly = false;
-    if (emailDomain) emailDomain.disabled = false;
-    if (emailDomainCustom) emailDomainCustom.readOnly = false;
-  }
-  
-  // 이메일 도메인 직접입력 처리 함수
-  function handleEmailDomainChange() {
-    if (emailDomain && emailDomainCustom) {
-      if (emailDomain.value === '직접입력') {
-        emailDomainCustom.style.display = 'block';
-        emailDomainCustom.focus();
-      } else {
-        emailDomainCustom.style.display = 'none';
-        emailDomainCustom.value = '';
-      }
-    }
+    // HTML에서 이미 텍스트로 표시되므로 추가 작업 불필요
   }
   
   // 초기 상태: 작성자 정보 섹션 및 폼 내용 숨김 (CSS에서 이미 숨김 처리되어 있지만 명시적으로 호출)
@@ -239,8 +188,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (this.checked) {
         showWriterInfoSection();
         restoreOriginalValues();
-        // 이메일 도메인 직접입력 상태 복원
-        handleEmailDomainChange();
       }
     });
   }
@@ -252,21 +199,6 @@ document.addEventListener('DOMContentLoaded', function() {
         hideWriterInfoSection();
       }
     });
-  }
-  
-  // 이메일 도메인 직접입력 처리
-  if (emailDomain && emailDomainCustom) {
-    emailDomain.addEventListener('change', handleEmailDomainChange);
-    
-    // 초기 상태 설정: 직접입력이 선택되어 있거나 커스텀 도메인 값이 있으면 표시
-    const emailDomainValue = emailDomain.value;
-    const customDomainValue = emailDomainCustom.value;
-    
-    if (emailDomainValue === '직접입력' || (customDomainValue && emailDomainValue !== 'naver.com' && emailDomainValue !== 'gmail.com' && emailDomainValue !== 'daum.net' && emailDomainValue !== 'kakao.com')) {
-      emailDomainCustom.style.display = 'block';
-    } else {
-      emailDomainCustom.style.display = 'none';
-    }
   }
 
   // ========= 초기화 완료 로그 =========

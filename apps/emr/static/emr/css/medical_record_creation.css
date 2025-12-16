@@ -101,7 +101,7 @@ h2 {
 
 .form-group input,
 .form-group select {
-    width: 100%;
+    width: 95%;
     padding: 8px 10px;
     border: 1px solid #ced4da;
     border-radius: 4px;
@@ -116,6 +116,12 @@ h2 {
 
 .soap-area label {
     color: #28a745;
+}
+
+.soap-area textarea {
+    width: 90%;
+    min-height: 80px;
+    resize: none;
 }
 
 .prescription-area .drug-input-wrap {
@@ -145,6 +151,18 @@ h2 {
     border-radius: 4px;
     cursor: pointer;
     margin-top: 10px;
+}
+
+/* 예약 메모 영역: 크기 고정, 내용 초과 시 스크롤 */
+#reservationMemo {
+    width: 92%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    resize: none;          /* 상하좌우 크기 조절 핸들 제거 */
+    overflow-y: auto;      /* 내용이 길어지면 세로 스크롤 */
+    overflow-x: hidden;    /* 가로 스크롤은 숨김 */
 }
 
 /* PC 기본 2열 */
@@ -180,6 +198,33 @@ h2 {
     border-radius: 6px;
     margin-bottom: 15px;
     background-color: #f9fcff;
+}
+
+.prescription-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 8px;
+}
+
+.prescription-title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.prescription-summary {
+    font-size: 13px;
+    color: #6c757d;
+}
+
+.prescription-block.collapsed {
+    padding: 10px 12px;
+    background-color: #f1f5fb;
+}
+
+.prescription-block.collapsed .prescription-row {
+    display: none;
 }
 
 .prescription-row {
@@ -373,6 +418,15 @@ h2 {
     color: white;
     border-radius: 4px;
     cursor: pointer;
+}
+
+/* 약품 검색 모달에서 버튼 숨기기 (자동 검색) */
+#drugSearchModal .search-controls button {
+    display: none;
+}
+
+#drugSearchModal .modal-footer {
+    display: none;
 }
 
 /* ---------------------------
