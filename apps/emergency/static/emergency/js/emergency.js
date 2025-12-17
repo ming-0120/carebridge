@@ -46,11 +46,12 @@ document.addEventListener('keydown', function(e) {
 // ===============================
 window.addEventListener("beforeunload", () => {
   // 페이지를 떠나기 전에 새로고침 플래그 설정
-  // 단, 버튼 클릭으로 인한 새로고침이 아닌 경우만
+  // 단, 버튼 클릭이나 위치 정보 새로고침이 아닌 경우만
   const buttonClick = sessionStorage.getItem("emergency_button_click");
+  const locationRefresh = sessionStorage.getItem("location_refresh");
   const sessionResetDone = sessionStorage.getItem("session_reset_done");
-  // session 초기화가 진행 중이면 플래그를 설정하지 않음 (무한 루프 방지)
-  if (!buttonClick && !sessionResetDone) {
+  // session 초기화가 진행 중이거나 위치 정보 새로고침이면 플래그를 설정하지 않음 (무한 루프 방지)
+  if (!buttonClick && !locationRefresh && !sessionResetDone) {
     sessionStorage.setItem("is_refresh", "true");
   }
 });
@@ -62,6 +63,7 @@ window.addEventListener("load", () => {
   const userLat = sessionStorage.getItem("user_lat");
   const userLng = sessionStorage.getItem("user_lng");
   const buttonClick = sessionStorage.getItem("emergency_button_click");
+  const locationRefresh = sessionStorage.getItem("location_refresh");
   const isRefresh = sessionStorage.getItem("is_refresh");
   const sessionResetDone = sessionStorage.getItem("session_reset_done");
   
@@ -69,10 +71,19 @@ window.addEventListener("load", () => {
   if (sessionResetDone) {
     // 초기화 완료 플래그 제거 (정상 상태로 복귀)
     sessionStorage.removeItem("session_reset_done");
+    // 위치 정보 새로고침 플래그도 제거
+    if (locationRefresh) {
+      sessionStorage.removeItem("location_refresh");
+    }
     return;
   }
   
   localStorage.clear();
+  
+  // 위치 정보 새로고침 플래그 제거 (처리 완료)
+  if (locationRefresh) {
+    sessionStorage.removeItem("location_refresh");
+  }
   
   // is_refresh 플래그를 즉시 제거 (무한 루프 방지)
   if (isRefresh) {
@@ -84,8 +95,8 @@ window.addEventListener("load", () => {
   if (userLng) sessionStorage.setItem("user_lng", userLng);
   if (buttonClick) sessionStorage.setItem("emergency_button_click", buttonClick);
   
-  // 새로고침 감지: 버튼 클릭이 아닌 경우에만 session 초기화
-  if (isRefresh && !buttonClick) {
+  // 새로고침 감지: 버튼 클릭이나 위치 정보 새로고침이 아닌 경우에만 session 초기화
+  if (isRefresh && !buttonClick && !locationRefresh) {
     // 초기화 진행 중 플래그 설정 (무한 루프 방지)
     sessionStorage.setItem("session_reset_done", "true");
     
