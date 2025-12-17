@@ -42,24 +42,50 @@ def rrn_to_birthdate(reg_num):
 
 @register.filter
 def calculate_age_from_rrn(rrn_string):
-    birth_date_part = rrn_string[:6]
-    gender_code = rrn_string[7]
+    """
+    주민등록번호로 (한국식) 나이 계산.
+    입력값이 비어있거나 형식이 잘못된 경우 템플릿 렌더링이 깨지지 않도록 빈 문자열을 반환한다.
 
-    if gender_code in ('1', '2', '5', '6', '9', '0'):
-        if gender_code in ('1', '2', '9', '0'):
-            century_prefix = 19
-        else:
-            century_prefix = 18
-    else:
+    허용 입력 예:
+    - "870513-1082019"
+    - "8705131082019"
+    """
+    if rrn_string is None:
+        return ""
+
+    rrn = str(rrn_string).strip().replace(" ", "")
+    if not rrn:
+        return ""
+
+    # 하이픈 제거 후 숫자만 남겨 처리
+    rrn = rrn.replace("-", "")
+
+    # YYMMDD + 성별코드(7번째 자리) 최소 7자리 필요
+    if len(rrn) < 7 or not rrn[:7].isdigit():
+        return ""
+
+    birth_date_part = rrn[:6]
+    gender_code = rrn[6]
+
+    # 세기 판별 로직은 rrn_to_birthdate와 동일하게 맞춘다.
+    if gender_code in ("1", "2", "7", "8"):
+        century_prefix = 19
+    elif gender_code in ("3", "4", "5", "6"):
         century_prefix = 20
+    elif gender_code in ("9", "0"):
+        century_prefix = 18
+    else:
+        return ""
 
-    birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
-    birth_month = int(birth_date_part[2:4])
-    birth_day = int(birth_date_part[4:6])
+    try:
+        birth_year = int(f"{century_prefix}{birth_date_part[:2]}")
+        birth_month = int(birth_date_part[2:4])
+        birth_day = int(birth_date_part[4:6])
+        date(birth_year, birth_month, birth_day)  # 유효성 검증
+    except Exception:
+        return ""
 
     today = date.today()
-
-  
     return today.year - birth_year + 1
 
 

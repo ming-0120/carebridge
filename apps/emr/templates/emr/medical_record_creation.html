@@ -40,18 +40,24 @@
 
             <div class="middle-content-grid">
 
+                <!-- 빈 박스 (기능 추가 예정) -->
+                <div class="card placeholder-card">
+                    <div class="section-title">기능 추가 예정</div>
+                    <div class="placeholder-text">빈 박스(기능 추가 예정)</div>
+                </div>
+
                 <!-- 진료기록 -->
                 <div class="card">
                     <div class="section-title">진료기록 작성</div>
 
                     <div class="form-group">
                         <label>진료과</label>
-                        <input type="text" value="{{ department }} (자동입력됨)" disabled>
+                        <input type="text" value="{{ department }}" disabled>
                     </div>
 
                     <div class="form-group">
                         <label>담당의사</label>
-                        <input type="text" value="{{ doctor_name }} (자동입력됨)" disabled>
+                        <input type="text" value="{{ doctor_name }}" disabled>
                     </div>
 
                     <div class="form-group">
@@ -99,7 +105,12 @@
                     </div>
                 </div>
 
-                <!-- 처방전 영역 -->
+            </div>
+
+            <!-- 추가 오더 + 예약 -->
+            <div class="bottom-content-grid">
+
+                <!-- 처방전 작성 -->
                 <div class="card prescription-area">
                     <div class="section-title">처방전 작성</div>
 
@@ -120,10 +131,6 @@
                         처방 추가 (+)
                     </button>
                 </div>
-            </div>
-
-            <!-- 추가 오더 + 예약 -->
-            <div class="bottom-content-grid">
 
                 <div class="card">
                     <div class="section-title">추가 오더 설정</div>
