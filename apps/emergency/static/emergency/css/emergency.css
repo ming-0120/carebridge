@@ -13,6 +13,7 @@ body {
   max-width:1320px;  /* 헤더와 동일한 너비로 변경 */
   margin:0 auto;
   padding:32px 24px; /* 페이지 내부 패딩 */
+  padding-bottom: 120px;
 }
 
 header h1 {

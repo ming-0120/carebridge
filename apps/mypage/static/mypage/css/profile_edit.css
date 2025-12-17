@@ -2,6 +2,15 @@
    MyPage CSS (정리본: 중복/깨진 중괄호 제거 + 사이드바 언더라인 적용)
    ========================= */
 
+/* =========================
+   CSS Reset (필수)
+   ========================= */
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 /* 전체 레이아웃 */
 .mypage-layout {
   max-width: 1100px;
@@ -330,4 +339,70 @@
   font-size: 13px;
   color: #666;
   line-height: 1.4;
+}
+
+/* === 마이페이지 전용 footer === */
+/* body, main, layout에는 절대 관여하지 않는다 */
+
+.footer {
+  background: #2a2a2a;
+  color: #999;
+  padding: 40px 0 30px;
+  width: 100%;
+  font-size: 13px;
+  /* margin-top: 80px; 콘텐츠와 시각적 분리만 담당 */
+}
+
+.footer-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.footer-brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
+
+.footer-info-line {
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.footer-copyright {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+  font-size: 12px;
+}
+
+/* 반응형은 footer 내부만 */
+@media (max-width: 768px) {
+  .footer {
+    padding: 30px 0 20px;
+  }
+
+  .footer-container {
+    padding: 0 20px;
+  }
+}
+
+/* =========================
+   MyPage Sticky Footer (필수)
+   ========================= */
+
+.mypage-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.mypage-main {
+  flex: 1;
+  display: block;
+  padding-bottom: 120px;
 }

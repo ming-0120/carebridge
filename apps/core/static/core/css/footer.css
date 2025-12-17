@@ -19,6 +19,7 @@ body.has-footer .page {
   padding: 40px 0 30px;
   width: 100%;
   font-size: 13px;
+  margin-top: 0;
 }
 
 body.has-footer .footer {

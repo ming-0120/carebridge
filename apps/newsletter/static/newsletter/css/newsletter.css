@@ -11,6 +11,7 @@
       display: flex;
       justify-content: center;
       padding: 40px 24px;
+      padding-bottom: 120px;
     }
     
     /* 기존 코드 그대로 사용 */

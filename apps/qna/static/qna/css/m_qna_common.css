@@ -1,83 +1,145 @@
+/* =========================
+   QnA 공통 CSS
+   ========================= */
+
 /* 
-  ========= QnA 공통 CSS =========
-  
   목적: QnA 관련 페이지들에 공통으로 적용되는 CSS 스타일 정의
     - 사용자 경험(UX) 개선: QnA 관련 페이지들에 일관된 디자인 제공
     - 공통 레이아웃: 메인 컨테이너 등 공통 레이아웃 스타일
     - 반응형 디자인: 모바일, 태블릿, PC 화면에 대응하는 반응형 레이아웃
   
   주요 기능:
+    - Sticky Footer: 푸터를 화면 하단에 고정
     - 메인 컨테이너: QnA 관련 페이지의 메인 컨테이너 스타일
   
   관련 파일:
-    - HTML: m_qna_list.html, m_qna_write.html, m_qna_post.html
+    - HTML: m_qna_list.html, m_qna_write.html, m_qna_post.html, m_qna_common.html
     - 페이지별 CSS: m_qna_list.css, m_qna_write.css, m_qna_post.css
 */
 
-/* 
-  ========= 메인 컨테이너 =========
-  
-  목적: QnA 관련 페이지의 메인 컨테이너 스타일
-    - 레이아웃: 페이지의 주요 내용을 담는 컨테이너
-    - 반응형: 화면 크기에 따라 너비 조정
-*/
+/* =========================
+   기본 리셋
+   ========================= */
 
-/* 
-  QnA 메인 영역
-  
-  목적: QnA 관련 페이지의 메인 영역 스타일
-    - padding: 24px - 내부 여백
-    - max-width: 1200px - 최대 너비 (PC 화면 기준)
-    - margin: 0 auto - 중앙 정렬
-    - 사용처: QnA 관련 페이지의 메인 영역 (.qna-main)
-*/
-.qna-main {
-  padding: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
 }
 
-/* 
-  QnA 컨테이너
+/* =========================
+   Sticky Footer 레이아웃
+   ========================= */
+
+/* has-footer 클래스 사용 시 (m_qna_list.html, m_qna_post.html, m_qna_write.html) */
+body.has-footer {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.has-footer main.qna-main {
+  flex: 1;
+  width: 100%;
+  padding-bottom: 120px;
+}
+
+body.has-footer .footer {
+  margin-top: auto;
+}
+
+/* qna-body 클래스 사용 시 (m_qna_common.html base 템플릿) */
+.qna-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.qna-body .qna-main {
+  flex: 1;
+  width: 100%;
   
-  목적: QnA 관련 페이지의 컨테이너 스타일
-    - width: 100% - 전체 너비 사용
-    - 사용처: QnA 관련 페이지의 컨테이너 (.qna-container)
-*/
+}
+
+.qna-body .footer {
+  margin-top: auto;
+}
+
+/* header가 flex 흐름을 차지하도록 강제 */
+.qna-header-wrapper {
+  flex-shrink: 0;
+}
+
+/* =========================
+   QnA 공통 컨테이너
+   ========================= */
+
 .qna-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
   width: 100%;
 }
 
-/* 
-  ========= 반응형 디자인 =========
-  
-  목적: 화면 크기에 따라 레이아웃과 스타일을 조정하는 미디어 쿼리
-    - 사용자 경험(UX) 개선: 다양한 화면 크기에서 최적의 사용자 경험 제공
-    - 모바일 우선: 모바일 화면을 기본으로 하고 큰 화면에서 확장
-    - 주요 브레이크포인트:
-      → 모바일: 768px 이하
-*/
+/* =========================
+   Footer 스타일
+   ========================= */
 
-/* 
-  모바일 화면 스타일 (768px 이하)
-  
-  목적: 모바일 화면 크기에 맞춘 스타일 조정
-    - max-width: 768px - 최대 너비 768px까지 적용
-    - 패딩 축소: 모바일 화면에서 패딩 축소
-    - 사용처: 모바일 화면 (768px 이하)
-*/
-@media (max-width: 768px) {
-  /* 
-    QnA 메인 영역 패딩 축소
-    
-    목적: 모바일 화면에서 메인 영역 패딩 축소
-      - padding: 16px - 패딩 축소 (기본 24px → 16px)
-  */
-  .qna-main {
-    padding: 16px;
-  }
+.footer {
+  background: #2a2a2a;
+  color: #999;
+  padding: 40px 0 30px;
+  width: 100%;
+  font-size: 13px;
 }
 
+.footer-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 40px;
+  box-sizing: border-box;
+  text-align: center;
+}
 
+.footer-brand-name {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 24px;
+}
 
+.footer-info-line {
+  font-size: 13px;
+  line-height: 1.8;
+}
 
+.footer-copyright {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #444;
+  font-size: 12px;
+}
+
+/* =========================
+   반응형 디자인
+   ========================= */
+
+@media (max-width: 768px) {
+  .qna-container {
+    padding: 0 16px;
+  }
+
+  .footer {
+    padding: 30px 0 20px;
+  }
+
+  .footer-container {
+    padding: 0 20px;
+  }
+
+  .footer-brand-name {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+}

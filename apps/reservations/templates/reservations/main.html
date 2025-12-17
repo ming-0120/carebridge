@@ -15,27 +15,29 @@
 
   <link rel="stylesheet" href="{% static 'reservations/css/main.css' %}">
 </head>
-<body>
+
+<body class="reservation-body">
   {% include "core/_header.html" %}
 
-  <div class="page">
-    <header class="hospital-header">
-      <h1 class="hospital_title">근처 병원 예약</h1>
-    </header>
+  <main class="reservation-main">
+    <div class="page">
+      <header class="hospital-header">
+        <h1 class="hospital_title">근처 병원 예약</h1>
+      </header>
 
-    <div class="main">
-      <aside class="sidebar">
-        <button class="dept-btn" data-dept="내과">내과</button>
-        <button class="dept-btn" data-dept="외과">외과</button>
-        <button class="dept-btn" data-dept="정형외과">정형외과</button>
-        <button class="dept-btn" data-dept="이비인후과">이비인후과</button>
-        <button class="dept-btn" data-dept="소아과">소아과</button>
-      </aside>
+      <div class="main">
+        <aside class="sidebar">
+          <button class="dept-btn" data-dept="내과">내과</button>
+          <button class="dept-btn" data-dept="외과">외과</button>
+          <button class="dept-btn" data-dept="정형외과">정형외과</button>
+          <button class="dept-btn" data-dept="이비인후과">이비인후과</button>
+          <button class="dept-btn" data-dept="소아과">소아과</button>
+        </aside>
 
-      <section class="map-wrapper">
-        <div id="map"></div>
-      </section>
-    </div>
+        <section class="map-wrapper">
+          <div id="map"></div>
+        </section>
+      </div>
 
     <section class="card-section">
       <div class="card-header">
@@ -43,9 +45,7 @@
         <p class="card-subtitle">현재 위치 기준 가까운 병원 Top 5를 보여줍니다.</p>
       </div>
 
-      <div class="card-row" id="hospitalCards">
-        <!-- JS로 카드가 채워진다 -->
-      </div>
+      <div class="card-row" id="hospitalCards"></div>
     </section>
   </div>
 
@@ -107,5 +107,7 @@
   </script>
 
   <script src="{% static 'reservations/js/main.js' %}"></script>
+
+  {% include "core/footer.html" %}
 </body>
 </html>

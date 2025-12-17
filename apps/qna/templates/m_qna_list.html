@@ -5,15 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0">
   <title>QnA - CareBridge</title>
+
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_list.css' %}">
-  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
 </head>
+
 <body class="has-footer">
   {% include "core/_header.html" %}
   
   <main class="qna-main">
     <div class="qna-container">
+
       <div class="qna-header">
         <a href="{% url 'qna:qna_list' %}" class="qna-title qna-title-link">QnA</a>
         <a href="{% url 'qna:qna_write' %}" class="btn-write">문의하기</a>
