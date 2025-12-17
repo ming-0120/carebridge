@@ -184,7 +184,7 @@ def reservation_page(request):
             "departments": departments,
             "selected_department": selected_department,
             "doctors": doctors,
-            "holidays": holidays,   # ← 추가
+            "holidays": json.dumps(holidays, ensure_ascii=False),
         }
     return render(request, "reservations/reservation_page.html", context)
 

@@ -35,7 +35,7 @@
  * // 1. QnA ID 1의 상세 페이지 URL 생성: /qna/1/
  * // 2. 해당 URL로 페이지 이동
  */
-function goToQnaDetail(qnaId) {
+function goToQnaDetail(qnaId, source) {
   if (!qnaId) {
     console.error('qnaId가 없습니다.');
     return;
@@ -65,7 +65,14 @@ function goToQnaDetail(qnaId) {
   qnaIdInput.value = qnaId;
   form.appendChild(qnaIdInput);
   
-  // 폼을 body에 추가하고 제출
+  if (source) {
+    const src = document.createElement('input');
+    src.type = 'hidden';
+    src.name = 'from_page';
+    src.value = source;           // 'mypage' 등
+    form.appendChild(src);
+  }
+
   document.body.appendChild(form);
   form.submit();
 }

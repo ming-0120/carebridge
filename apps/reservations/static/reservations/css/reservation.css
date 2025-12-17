@@ -196,28 +196,31 @@ body{
   border-radius: 999px;
   border: 1px solid rgba(27,60,115,0.25);
 }
-/* 기본: 날짜 셀(클릭 가능한 영역)에 포인터 */
 .fc .fc-daygrid-day:not(.fc-day-disabled),
 .fc .fc-daygrid-day:not(.fc-day-disabled) .fc-daygrid-day-frame,
 .fc .fc-daygrid-day:not(.fc-day-disabled) .fc-daygrid-day-number {
   cursor: pointer;
 }
+
+/* 비활성 날짜는 not-allowed */
 .fc .fc-daygrid-day.fc-day-disabled,
 .fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-frame,
 .fc .fc-daygrid-day.fc-day-disabled .fc-daygrid-day-number {
   cursor: not-allowed !important;
 }
+
+/* ✅ 공휴일(날짜 셀에 is-holiday 클래스가 붙어있을 때만 적용됨) */
 .fc .fc-daygrid-day.is-holiday .fc-daygrid-day-number{
-  color:#e11d48 !important;
-  font-weight:700 !important;
+  color: #e11d48 !important;
+  font-weight: 700 !important;
 }
 
 /* 공휴일 + 비활성화 상태에서도 빨강 유지 */
 .fc .fc-daygrid-day.fc-day-disabled.is-holiday .fc-daygrid-day-number {
   color: #e11d48 !important;
+  font-weight: 700 !important;
 }
 
-/* 일요일(빨강) / 토요일(파랑) - FullCalendar 기본 클래스 사용 */
 .fc .fc-day-sun .fc-daygrid-day-number{
   color: #e11d48 !important;
   font-weight: 700 !important;
@@ -227,12 +230,13 @@ body{
   font-weight: 700 !important;
 }
 
-/* 비활성화 */
+/* 비활성화 배경 */
 .fc .fc-day-disabled{
   background-color: #f5f5f5 !important;
   cursor: not-allowed !important;
   opacity: 1 !important;
 }
+
 
 
 /* time select */

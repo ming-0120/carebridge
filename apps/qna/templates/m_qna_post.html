@@ -30,7 +30,9 @@
         </div>
 
         <div class="qna-header-actions">
-          <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+            {% if not is_from_mypage %}
+              <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+            {% endif %}
           {% if is_owner %}
           <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
             {% csrf_token %}

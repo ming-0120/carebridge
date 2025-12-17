@@ -301,10 +301,11 @@ def qna_post(request):
     
     # 본인이 작성한 글인지 확인 (더미데이터는 제외)
     is_owner = (qna.user == user) and (not qna.title.startswith('더미 문의'))
-    
+    is_from_mypage = request.POST.get('from_page') == 'mypage'
     context = {
         'qna': qna,
         'is_owner': is_owner,
+        'is_from_mypage': is_from_mypage,
     }
     
     return render(request, 'm_qna_post.html', context)

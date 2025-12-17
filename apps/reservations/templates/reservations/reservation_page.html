@@ -13,7 +13,15 @@
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.8.0/locales-all.min.js"></script>
 
   <script>
-    const HOLIDAYS = {{ holidays|safe }};
+    let holidays = "{{ holidays|escape }}";
+
+    function htmlDecode(input) {
+      const doc = new DOMParser().parseFromString(input, "text/html");
+      return doc.documentElement.textContent;
+    }
+  
+    // ✅ 문자열 → 배열로 복원
+    window.HOLIDAYS = JSON.parse(htmlDecode(holidays));
   </script>
 </head>
 <body>
