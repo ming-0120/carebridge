@@ -1753,30 +1753,42 @@ def create_admin_account(request):
 def create_doctor_dummy_data(request):
     """
     더미 의사 데이터 생성
-    - 테스트용 의사 데이터 생성 (10명: 각 전공과마다 2명씩)
+    - 테스트용 의사 데이터 생성
+    - 전공과별 생성 또는 전체 생성 지원
     - 전공과: 내과(IM), 외과(GS), 정형외과(OR), 소아과(PD), 이비인후과(EN)
     - 각 전공과마다 1명씩 정상 승인(verified=True), 1명씩 비정상 승인(verified=False)
     - 면허번호: 전공과 영어코드 + 주민번호 뒷자리
-    - 각 전공과의 비정상 승인 의사 중 1명은 면허번호와 주민번호가 일치하지 않도록 설정 (테스트용)
     
-    이 함수가 필요한 이유:
-    1. 개발 및 테스트 환경에서 의사 데이터가 필요할 때 빠르게 생성
-       - 실제 의사 정보를 입력하지 않고도 테스트 가능
-       - 다양한 전공과, 병원, 면허번호 검증 시나리오 테스트 가능
-    2. 관리자 패널의 의사 목록, 승인 대기 기능 등을 테스트하기 위함
-       - 의사 목록 페이지네이션 테스트
-       - 의사 승인/거절 기능 테스트
-       - 면허번호 검증 로직 테스트 (첫 번째 의사는 불일치로 설정)
-    3. 여러 번 실행해도 중복되지 않도록 번호 자동 증가
-       - 기존 더미 의사 번호를 확인하여 다음 번호부터 생성
-       - 예: doctor01~05가 있으면 → doctor06~10 생성
-       - 데이터베이스 무결성 보장 (username 고유성)
+    파라미터:
+    - department: 생성할 전공과 (내과, 외과, 정형외과, 소아과, 이비인후과, all)
+      - 특정 전공과 선택 시: 해당 전공과 의사 2명 생성
+      - 'all' 선택 시: 모든 전공과 의사 10명 생성
     """
     from django.contrib.auth.hashers import make_password
     import random
     
+    # POST 요청에서 전공과 파라미터 가져오기
+    selected_department = request.POST.get('department', 'all')
+    
     # 전공과 정보 (이름, 코드)
-    departments = [
+    all_departments = [
+        {'name': '내과', 'code': 'IM'},
+        {'name': '외과', 'code': 'GS'},
+        {'name': '정형외과', 'code': 'OR'},
+        {'name': '소아과', 'code': 'PD'},
+        {'name': '이비인후과', 'code': 'EN'},
+    ]
+    
+    # 선택된 전공과에 따라 생성할 전공과 목록 필터링
+    if selected_department == 'all':
+        departments = all_departments
+    else:
+        departments = [d for d in all_departments if d['name'] == selected_department]
+        if not departments:
+            return redirect('doctor_list')
+    
+    # 기존 코드와 호환성을 위해 원래 변수명 유지
+    departments_backup = [
         {'name': '내과', 'code': 'IM'},
         {'name': '외과', 'code': 'GS'},
         {'name': '정형외과', 'code': 'OR'},
@@ -1861,9 +1873,32 @@ def create_doctor_dummy_data(request):
         #   - 데이터베이스 쿼리 없이 메모리에서 바로 조회 가능 (성능 향상)
         dept_objects[dept_info['name']] = dept
     
-    # 병원이 없으면 생성
+    # 전공과별 지정 병원 매핑
+    department_hospitals = {
+        '내과': ['서울본브릿지병원', '삼성서울병원', '서울숭인병원', '서울성심병원', '녹색병원'],
+        '외과': ['비에비스나무병원', '아이디병원', '혜민병원', '왕십리휴병원', '서울석병원'],
+        '정형외과': ['서울본브릿지병원', '연세사랑병원', '서울송도병원', '강남힘찬병원', '서울석병원'],
+        '이비인후과': ['비에비스나무병원', '9988병원', '에이치 플러스 양지병원', '서울대학교병원', '한림대학교 강남성심병원'],
+        '소아과': ['올바로병원', '모두가행복한연세병원', '건국대학교병원', '연세한강병원', '서울연세병원'],
+    }
+    
+    # 전공과별 병원 객체 저장
+    dept_hospital_objects = {}
+    for dept_name, hospital_names in department_hospitals.items():
+        dept_hospital_objects[dept_name] = []
+        for hos_name in hospital_names:
+            # 병원명으로 DB에서 검색 (부분 일치)
+            hospital = Hospital.objects.filter(name__icontains=hos_name).first()
+            if hospital:
+                dept_hospital_objects[dept_name].append(hospital)
+        
+        # 해당 전공과에 병원이 하나도 없으면 전체 병원에서 랜덤 선택
+        if not dept_hospital_objects[dept_name]:
+            all_hospitals = list(Hospital.objects.all()[:5])
+            dept_hospital_objects[dept_name] = all_hospitals
+    
+    # 병원이 없으면 기본 병원 생성
     if Hospital.objects.count() == 0:
-        # 기본 병원 생성
         Hospital.objects.create(
             hpid='TEST001',
             name='테스트 병원',
@@ -1873,7 +1908,7 @@ def create_doctor_dummy_data(request):
             tel='02-1234-5678',
         )
     
-    # 병원 목록 가져오기
+    # 전체 병원 목록 (백업용)
     hospitals = list(Hospital.objects.all())
     if not hospitals:
         return redirect('doctor_list')
@@ -1964,58 +1999,87 @@ def create_doctor_dummy_data(request):
     # 이름 데이터 가져오기
     surnames, given_names = get_dummy_name_data()
     
-    # 전공과 목록
-    departments_list = ['내과', '외과', '정형외과', '소아과', '이비인후과']
+    # 선택된 전공과 목록 (전공과별 생성 또는 전체 생성)
+    departments_list = [d['name'] for d in departments]
     
     # 주소 데이터 가져오기 (사용자 더미 데이터와 동일)
     address_data = get_dummy_address_data()
     city_districts = list(address_data.keys())
     
-    # 더미 의사 데이터 생성 (10명: 각 전공과마다 2명씩)
-    # 각 전공과마다 1명씩 정상 승인(verified=True), 1명씩 비정상 승인(verified=False)
-    # 각 전공과의 비정상 승인 의사 중 1명은 면허번호와 주민번호가 일치하지 않도록 설정
+    # 더미 의사 데이터 생성
+    # - 전체 생성(all): 각 전공과마다 6명씩 총 30명
+    # - 전공과별 생성: 해당 전공과 6명 (5명 승인 - 병원당 1명, 1명 대기)
     
     doctor_templates = []
     used_names = set()  # 이미 사용된 이름 조합을 추적
     department_verified_count = {dept: 0 for dept in departments_list}  # 각 전공과별 정상 승인 의사 수 추적
     department_unverified_count = {dept: 0 for dept in departments_list}  # 각 전공과별 비정상 승인 의사 수 추적
     
-    # 각 전공과마다 2명씩 생성 (총 10명)
-    # 0~4: 각 전공과의 첫 번째 의사 (정상 승인)
-    # 5~9: 각 전공과의 두 번째 의사 (비정상 승인)
-    for i in range(10):
-        # 성씨와 이름을 랜덤으로 조합하여 동명이인 방지
+    # 생성할 의사 수 계산 (전공과당 6명: 승인 5명 + 대기 1명)
+    doctors_per_dept = 6
+    verified_per_dept = 5  # 승인 의사 수 (병원당 1명씩)
+    
+    # 전공과별로 의사 템플릿 생성
+    for dept_name in departments_list:
+        # 해당 전공과의 병원 목록 가져오기
+        dept_hospitals = dept_hospital_objects.get(dept_name, hospitals[:5])
+        
+        # 승인 의사 5명 생성 (각 병원당 1명씩)
+        for hospital_idx, hospital in enumerate(dept_hospitals[:5]):
+            # 성씨와 이름을 랜덤으로 조합하여 동명이인 방지
+            while True:
+                surname = random.choice(surnames)
+                given_name = random.choice(given_names)
+                full_name = f'{surname}{given_name}'
+                
+                if full_name not in used_names:
+                    used_names.add(full_name)
+                    break
+            
+            # 지역 할당 (순환)
+            city_district = city_districts[hospital_idx % len(city_districts)]
+            
+            # 성별 랜덤 할당
+            gender = generate_dummy_gender()
+            
+            doctor_templates.append({
+                'name': full_name,
+                'gender': gender,
+                'department': dept_name,
+                'city_district': city_district,
+                'hospital': hospital,
+                'verified': True  # 승인 상태
+            })
+        
+        # 대기 의사 1명 생성 (랜덤 병원)
         while True:
             surname = random.choice(surnames)
             given_name = random.choice(given_names)
             full_name = f'{surname}{given_name}'
             
-            # 동명이인이 없으면 사용
             if full_name not in used_names:
                 used_names.add(full_name)
                 break
         
-        # 전공과 할당: 각 전공과마다 2명씩 할당
-        # 0~4: 각 전공과의 첫 번째 의사
-        # 5~9: 각 전공과의 두 번째 의사
-        dept_index = i % len(departments_list)
-        department = departments_list[dept_index]
-        
-        # 지역 할당 (순환) - 사용자 더미 데이터와 동일
-        city_district = city_districts[i % len(city_districts)]
-        
-        # 성별 랜덤 할당
+        # 대기 의사는 해당 전공과 병원 중 랜덤 선택
+        pending_hospital = random.choice(dept_hospitals) if dept_hospitals else random.choice(hospitals)
+        city_district = city_districts[5 % len(city_districts)]
         gender = generate_dummy_gender()
         
         doctor_templates.append({
             'name': full_name,
             'gender': gender,
-            'department': department,
-            'city_district': city_district
+            'department': dept_name,
+            'city_district': city_district,
+            'hospital': pending_hospital,
+            'verified': False  # 대기 상태
         })
     
-    # 면허번호 불일치 의사 인덱스 선택 (비정상 승인 의사 중에서 랜덤 선택: 5~9 중 하나)
-    license_mismatch_index = random.randint(5, 9)
+    total_doctors = len(doctor_templates)
+    
+    # 면허번호 불일치 의사 인덱스 선택 (대기 의사 중에서 랜덤 선택)
+    pending_indices = [i for i, t in enumerate(doctor_templates) if not t['verified']]
+    license_mismatch_index = random.choice(pending_indices) if pending_indices else -1
     
     created_count = 0
     
@@ -2081,22 +2145,17 @@ def create_doctor_dummy_data(request):
             )
         user.refresh_from_db()  # 객체를 다시 로드하여 변경사항 반영
         
-        # 병원 랜덤 할당
-        hospital = random.choice(hospitals)
+        # 병원 할당 (템플릿에서 가져오기)
+        hospital = template['hospital']
         
         # 의사 생성
-        # 0~4: 각 전공과의 첫 번째 의사 (정상 승인)
-        # 5~9: 각 전공과의 두 번째 의사 (비정상 승인)
-        # 면허번호 불일치 의사는 비정상 승인 의사 중에서 랜덤 선택된 1명
+        # 승인 상태는 템플릿에서 가져오기 (5명 승인 - 병원당 1명, 1명 대기)
         current_dept = template['department']
+        verified_status = template['verified']
         
-        if i < 5:
-            # 첫 5명 (0~4): 각 전공과의 첫 번째 의사 → 정상 승인
-            verified_status = True
+        if verified_status:
             department_verified_count[current_dept] += 1
         else:
-            # 나머지 5명 (5~9): 각 전공과의 두 번째 의사 → 비정상 승인
-            verified_status = False
             department_unverified_count[current_dept] += 1
         
         doctor = Doctors.objects.create(
