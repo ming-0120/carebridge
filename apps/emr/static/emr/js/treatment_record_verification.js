@@ -93,9 +93,9 @@ function updateButtonVisibility() {
 }
 
 // // 다음 환자 이동
-// function goToNextPatient() {
-//     alert('다음 환자의 치료기록 화면으로 이동합니다.');
-// }
+function goToCatalogPatient() {
+    window.location.href = "/mstaff/hospital_dashboard/";
+}
 
 // 모달 닫기
 function closeModal(id) {

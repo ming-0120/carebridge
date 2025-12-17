@@ -572,6 +572,7 @@ def lab_record_creation(request):
             'order': order,
             'files': files,
             'resident_reg_no_display': resident_reg_no_display,
+            'hos_id': hos_id,
         }
 
         return render(request, 'emr/lab_record_creation.html', context)
@@ -586,7 +587,7 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
-        hos_id = request.session.get('user_id', None)
+        hos_id = request.session.get('hospital_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1144,6 +1145,7 @@ def treatment_record_verification(request):
             'medical_record': medical_record,
             'order': order,
             'resident_reg_no_display': resident_reg_no_display,
+            'hos_id': hos_id,
         }
 
         return render(request, "emr/treatment_record_verification.html", context)
@@ -1156,7 +1158,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
-        hos_id = request.session.get('user_id', None)
+        hos_id = request.session.get('hospital_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)

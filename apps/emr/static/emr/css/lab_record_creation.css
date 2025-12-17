@@ -214,10 +214,10 @@ select[readonly] {
   color: #ffffff;
 }
 
-.btn-next {
+/* .btn-next {
   background-color: var(--cb-primary);
   color: #ffffff;
-}
+} */
 
 /* 모달 overlay */
 .modal-overlay {

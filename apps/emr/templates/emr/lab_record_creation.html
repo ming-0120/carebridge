@@ -10,8 +10,8 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
     <script>
         let currentState = "{{ order.status }}";
-        let select = "{{order.specimen_cd}}"
-        console.log(currentState);
+        let select = "{{order.specimen_cd}}";
+        let hos_id = "{{ hos_id }}";
     </script>
 </head>
 <body>
@@ -108,7 +108,7 @@
                 {% elif order.status == 'Sampled' %}
                     <button class="status-button btn-completed" type="button" id="btnCompleted" onclick="updateStatus('Completed')">COMPLETED</button>
                 {% endif %}
-                <!-- <button class="status-button btn-next" type="button" id="btnNext" onclick="goToNextPatient()">다음환자</button> -->
+                <button class="status-button btn-next" style="display: inline-block;" type="button" id="btnNext" onclick="goToCatalogPatient()">목록</button>
             </div>
         </form>
     </div>
