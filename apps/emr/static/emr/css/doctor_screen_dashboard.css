@@ -101,6 +101,13 @@ body {
 .patient-list h4 { margin: 0 0 5px 0; color: var(--cb-text); }
 .patient-list p { margin: 0; font-size: 14px; color: var(--cb-muted); }
 
+.patient-list-item--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  border-left-color: var(--cb-border);
+}
+.patient-list-item--disabled:hover { background-color: transparent; }
+
 /* 메모 */
 .memo textarea {
   width: 100%;

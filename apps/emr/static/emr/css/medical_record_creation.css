@@ -123,25 +123,6 @@ h2 {
   justify-content: flex-start;
 }
 
-.note-meta {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 12px;
-  color: var(--cb-muted);
-  font-weight: 700;
-}
-
-.note-meta-label {
-  padding: 4px 8px;
-  border: 1px solid var(--cb-border);
-  border-radius: 999px;
-  background: #f9fafb;
-  color: var(--cb-text);
-  font-weight: 900;
-}
-
 .readonly-textarea {
   width: 100%;
   min-height: 160px;

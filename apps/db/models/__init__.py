@@ -7,6 +7,7 @@ from .disease import DimDisease
 from .emergency import ErInfo, ErStatus, ErStatusStaging, ErMessage
 from .doctor import Doctors
 from .medical_record import MedicalRecord
+from .medical_record_reservation_map import MedicalRecordReservationMap
 from .slot_reservation import TimeSlots, Reservations
 from .treatment import TreatmentProcedures
 from .lab import LabData, LabOrders, LabUpload  
