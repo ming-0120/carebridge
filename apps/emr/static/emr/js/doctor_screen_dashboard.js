@@ -1,5 +1,29 @@
 let selectedDate = undefined;
 let currentYear = new Date().getFullYear();
+
+// ============================
+// medical_record 이동 날짜 제한 토글 (주석 1개로 전환)
+// - (현재 상태) 주석 설정(OFF) -> "오늘"만 medical_record 이동 가능
+// - 주석 해제(ON)             -> "오늘이 아닌 날짜"만 medical_record 이동 가능
+// ============================
+let ENABLE_NON_TODAY_MEDICAL_RECORD = true; // OFF: 오늘만 이동 가능 (기본값)
+// let ENABLE_NON_TODAY_MEDICAL_RECORD = true; // ON: 다른 날짜만 이동 가능
+
+function getTodayIsoDate() {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+function isMedicalRecordDateAllowed(dateStr) {
+    const today = getTodayIsoDate();
+    if (ENABLE_NON_TODAY_MEDICAL_RECORD) {
+        return dateStr !== today;
+    }
+    return dateStr === today;
+}
 function saveMemo() {
     const memoContent = document.getElementById('doctorMemo').value;
 
@@ -18,6 +42,7 @@ window.onload = function() {
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        fixedWeekCount: false,
         dateClick: async function(info) {
             if (!selectedDate) {
                 selectedDate = info.dayEl
@@ -39,12 +64,20 @@ window.onload = function() {
 
             if (response.status == 200) {
                 const result = [];
+                const canNavigateMedicalRecord = isMedicalRecordDateAllowed(info.dateStr);
                 result.push(`
                     <h3>예약 환자 (${datas.users.length}명)</h3>    
                 `)
                 for (d of datas.users) {
+                    const disabledClass = canNavigateMedicalRecord ? "" : " patient-list-item--disabled";
+                    const clickAttr = canNavigateMedicalRecord
+                        ? `onclick="toMedicalRecord('${d.user.user_id}', '${d.slot.slot_id}', '${d.slot.slot_date}', '${d.reservation_id || ""}');"`
+                        : "";
+                    const titleAttr = canNavigateMedicalRecord
+                        ? ""
+                        : `title="선택한 날짜는 진료기록 작성이 제한되어 있습니다."`;
                     result.push(`
-                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
+                        <div class="patient-list-item${disabledClass}" ${clickAttr} ${titleAttr}>
                             <h4>성명: ${d.user.name}</h4>
                             <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                             <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -96,12 +129,20 @@ window.onload = function() {
 
                     if (response.status == 200) {
                         const result = [];
+                        const canNavigateMedicalRecord = isMedicalRecordDateAllowed(today);
                         result.push(`
                             <h3>예약 환자 (${datas.users.length}명)</h3>    
                         `)
                         for (d of datas.users) {
+                            const disabledClass = canNavigateMedicalRecord ? "" : " patient-list-item--disabled";
+                            const clickAttr = canNavigateMedicalRecord
+                                ? `onclick="toMedicalRecord('${d.user.user_id}', '${d.slot.slot_id}', '${d.slot.slot_date}', '${d.reservation_id || ""}');"`
+                                : "";
+                            const titleAttr = canNavigateMedicalRecord
+                                ? ""
+                                : `title="선택한 날짜는 진료기록 작성이 제한되어 있습니다."`;
                             result.push(`
-                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
+                                <div class="patient-list-item${disabledClass}" ${clickAttr} ${titleAttr}>
                                     <h4>성명: ${d.user.name}</h4>
                                     <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                                     <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -202,8 +243,17 @@ function rrnToBirthdate(regNum) {
     return birthDate;
 }
 
-function toMedicalRecord(patient_id) {
-    window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
+function toMedicalRecord(patient_id, slot_id, slot_date, reservation_id) {
+    if (slot_date && !isMedicalRecordDateAllowed(slot_date)) {
+        alert(`선택한 날짜(${slot_date})는 진료기록 작성이 제한되어 있습니다.`);
+        return;
+    }
+    const params = new URLSearchParams();
+    params.set("patient_id", patient_id);
+    if (reservation_id) params.set("reservation_id", reservation_id);
+    if (slot_id) params.set("slot_id", slot_id);
+    if (slot_date) params.set("date", slot_date);
+    window.location.href = `/mstaff/medical_record/?${params.toString()}`;
 }
 
 function toTodayPatient(doctor_id, today) {

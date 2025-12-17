@@ -2,58 +2,60 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
     <meta charset="UTF-8">
     <title>예약 확인 - {{ hospital.name }}</title>
     <link rel="stylesheet" href="{% static 'reservations/css/reservation_confirm.css' %}">
 </head>
-<body>
-{% include "core/_header.html" %}
 
-<main class="confirm-layout">
+<body class="reservation-body">
+  {% include "core/_header.html" %}
 
-    <!-- 1. 상단: 과/의사 정보 -->
-    <section class="confirm-header">
+  <main class="reservation-main">
+    <div class="confirm-layout">
+
+      <section class="confirm-header">
         <div class="confirm-title">
-            {{ department.name }} {{ doctor.user.name }}
+          {{ department.name }} {{ doctor.user.name }}
         </div>
         <div class="confirm-subinfo">
-            {{ hospital.name }} · {{ reserved_date }} 
-            {{ reserved_start|time:"H:i" }} ~ {{ reserved_end|time:"H:i" }}
+          {{ hospital.name }} · {{ reserved_date }}
+          {{ reserved_start|time:"H:i" }} ~ {{ reserved_end|time:"H:i" }}
         </div>
-    </section>
+      </section>
 
-    <!-- 2. 안내 박스 -->
-    <section class="confirm-notice">
+      <section class="confirm-notice">
         <h3>진료예약 참고사항</h3>
         <ul>
-            <li>진료분야를 정확히 선택하기 어려운 경우 병원에 직접 문의 후 예약해주시길 바랍니다.</li>
-            <li>진료 분야가 맞지 않게 예약된 경우, 진료를 받지 못할 수 있습니다.</li>
-            <li>당일 예약은 병원에 문의 부탁드립니다.</li>
+          <li>진료분야를 정확히 선택하기 어려운 경우 병원에 직접 문의 후 예약해주시길 바랍니다.</li>
+          <li>진료 분야가 맞지 않게 예약된 경우, 진료를 받지 못할 수 있습니다.</li>
+          <li>당일 예약은 병원에 문의 부탁드립니다.</li>
         </ul>
-    </section>
+      </section>
 
-    <!-- 3. 증상 입력 -->
-    <section class="confirm-form">
+      <section class="confirm-form">
         <p class="confirm-label">
-            해당 진료과에 처음 오시는 경우 진단명 또는 증상을 입력해 주세요.
-            <span class="optional">(선택 입력)</span>
+          해당 진료과에 처음 오시는 경우 진단명 또는 증상을 입력해 주세요.
+          <span class="optional">(선택 입력)</span>
         </p>
 
         <form method="post" action="{% url 'reserve_submit' %}">
-            {% csrf_token %}
-            <input type="hidden" name="slot_id" value="{{ slot.slot_id }}">
+          {% csrf_token %}
+          <input type="hidden" name="slot_id" value="{{ slot.slot_id }}">
 
-            <textarea name="notes" rows="6" class="symptom-textarea"
-                      placeholder="진단명과 증상을 입력해주세요."></textarea>
+          <textarea name="notes" rows="6" class="symptom-textarea"
+                    placeholder="진단명과 증상을 입력해주세요."></textarea>
 
-            <div class="confirm-button-wrap">
-                <button type="submit" class="btn-confirm">
-                    예약확정
-                </button>
-            </div>
+          <div class="confirm-button-wrap">
+            <button type="submit" class="btn-confirm">예약확정</button>
+          </div>
         </form>
-    </section>
-</main>
+      </section>
 
+    </div>
+  </main>
+
+  {% include "core/footer.html" %}
 </body>
+
 </html>

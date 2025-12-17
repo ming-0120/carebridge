@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>진료 기록 작성</title>
@@ -24,6 +25,8 @@
         <input type="hidden" name="patient_id" value="{{ patient.user_id }}">
         <input type="hidden" name="doctor_id" value="{{ doctor.doctor_id }}">
         <input type="hidden" name="hos_id" value="{{ doctor.hos_id }}">
+        <input type="hidden" name="source_slot_id" value="{{ source_slot_id }}">
+        <input type="hidden" name="source_reservation_id" value="{{ source_reservation_id }}">
 
         <div class="container">
             <h2>진료 기록 작성</h2>
@@ -40,18 +43,24 @@
 
             <div class="middle-content-grid">
 
+                <!-- 예약 시 환자가 입력한 증상 메모(읽기 전용) -->
+                <div class="card patient-note-card">
+                    <div class="section-title">환자 증상 메모</div>
+                    <textarea class="readonly-textarea" readonly aria-label="환자 증상 메모(읽기 전용)">{% if reservation_notes %}{{ reservation_notes }}{% else %}입력 없음{% endif %}</textarea>
+                </div>
+
                 <!-- 진료기록 -->
                 <div class="card">
                     <div class="section-title">진료기록 작성</div>
 
                     <div class="form-group">
                         <label>진료과</label>
-                        <input type="text" value="{{ department }} (자동입력됨)" disabled>
+                        <input type="text" value="{{ department }}" disabled>
                     </div>
 
                     <div class="form-group">
                         <label>담당의사</label>
-                        <input type="text" value="{{ doctor_name }} (자동입력됨)" disabled>
+                        <input type="text" value="{{ doctor_name }}" disabled>
                     </div>
 
                     <div class="form-group">
@@ -99,7 +108,12 @@
                     </div>
                 </div>
 
-                <!-- 처방전 영역 -->
+            </div>
+
+            <!-- 추가 오더 + 예약 -->
+            <div class="bottom-content-grid">
+
+                <!-- 처방전 작성 -->
                 <div class="card prescription-area">
                     <div class="section-title">처방전 작성</div>
 
@@ -120,10 +134,6 @@
                         처방 추가 (+)
                     </button>
                 </div>
-            </div>
-
-            <!-- 추가 오더 + 예약 -->
-            <div class="bottom-content-grid">
 
                 <div class="card">
                     <div class="section-title">추가 오더 설정</div>
@@ -163,6 +173,7 @@
 
                         <!-- 실제 서버로 보내는 값 -->
                         <input type="hidden" id="reservation_hour" name="reservation_hour">
+                        <input type="hidden" id="reservation_slot_id" name="reservation_slot_id">
 
                         <!-- 시간 모달을 여는 버튼 -->
                         <button type="button" class="btn-time-select" onclick="openTimeModal()">
@@ -197,6 +208,10 @@
 
     <script>
     const CURRENT_DOCTOR_ID = "{{ doctor.doctor_id }}";
+    const __HOLIDAYS_RAW = "{{ holidays|escape }}";
+    const HOLIDAYS = __HOLIDAYS_RAW
+        ? JSON.parse(new DOMParser().parseFromString(__HOLIDAYS_RAW, "text/html").documentElement.textContent)
+        : [];
     </script>
 
 

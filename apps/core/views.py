@@ -4,10 +4,8 @@ from django.utils import timezone  # 시간대를 고려한 현재 시간/날짜
 
 # 데이터베이스 모델
 from apps.db.models import DailyVisit, MedicalNewsletter  # 일일 방문자 수, 의료 뉴스레터 모델
-
 # Django ORM 기능
-from django.db.models import F  # 데이터베이스 필드 참조 및 원자적 업데이트를 위한 F 객체
-
+from django.db.models import F  # 데이터베이스 필드 참조 및 원자적 업데이트를 위한 F 
 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse

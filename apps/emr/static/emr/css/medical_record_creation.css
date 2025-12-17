@@ -78,7 +78,7 @@ h2 {
 /* 하단 2열 */
 .bottom-content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   align-items: stretch;
   margin-bottom: 16px;
@@ -104,6 +104,41 @@ h2 {
   margin-bottom: 12px;
   border-bottom: 1px dashed var(--cb-border);
   padding-bottom: 8px;
+}
+
+.placeholder-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.placeholder-text {
+  color: var(--cb-muted);
+  font-weight: 700;
+}
+
+.patient-note-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.readonly-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 12px 12px;
+  border: 1px solid var(--cb-border);
+  border-radius: 12px;
+  background: #f9fafb;
+  color: var(--cb-text);
+  line-height: 1.5;
+  font-weight: 700;
+  resize: none;
+}
+
+.readonly-textarea:focus {
+  outline: 2px solid rgba(37, 99, 235, 0.25);
+  outline-offset: 2px;
 }
 
 .form-group {

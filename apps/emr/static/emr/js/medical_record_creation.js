@@ -5,6 +5,58 @@ let prescriptionList = [];
 let currentDrugBlock = null;
 let selectedDrug = null;
 
+const HOLIDAY_DATES = new Set(
+    (typeof HOLIDAYS !== "undefined" && Array.isArray(HOLIDAYS) ? HOLIDAYS : [])
+        .map((h) => h && h.date)
+        .filter(Boolean)
+);
+
+function isHoliday(dateStr) {
+    return Boolean(dateStr) && HOLIDAY_DATES.has(dateStr);
+}
+
+function clearReservationTimeSelection() {
+    const hourInput = document.getElementById("reservation_hour");
+    if (hourInput) hourInput.value = "";
+
+    const slotIdInput = document.getElementById("reservation_slot_id");
+    if (slotIdInput) slotIdInput.value = "";
+
+    const label = document.getElementById("selectedTimeLabel");
+    if (label) label.textContent = "";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    const dateInput = document.getElementById("reservationDate");
+    if (!dateInput) return;
+
+    dateInput.addEventListener("change", () => {
+        const dateVal = dateInput.value || "";
+        if (!dateVal) {
+            clearReservationTimeSelection();
+            return;
+        }
+
+        const dateObj = new Date(`${dateVal}T00:00:00`);
+        const isSunday = dateObj.getDay() === 0;
+        if (isSunday) {
+            alert("일요일에는 예약이 불가합니다.");
+            dateInput.value = "";
+            clearReservationTimeSelection();
+            return;
+        }
+
+        if (isHoliday(dateVal)) {
+            alert("공휴일은 예약이 불가합니다.");
+            dateInput.value = "";
+            clearReservationTimeSelection();
+            return;
+        }
+
+        clearReservationTimeSelection();
+    });
+});
+
 // 저장 성공 시 진료기록 작성 화면에서 의사용 대시보드로 이동
 const __originalFetch = window.fetch;
 window.fetch = async function (...args) {
@@ -41,6 +93,36 @@ const TIME_SLOTS = [
     "17:00"
 ];
 
+function isDisabledDate(dateObj) {
+    const d = new Date(dateObj);
+    d.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const limit = new Date(today);
+    limit.setDate(limit.getDate() + 14);
+
+    const day = d.getDay(); // 0: Sun, 6: Sat
+    const isWeekend = day === 0 || day === 6;
+    const isOutOfRange = d < today || d > limit;
+
+    return isWeekend || isOutOfRange;
+}
+
+function isOutOfRangeDate(dateObj) {
+    const d = new Date(dateObj);
+    d.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const limit = new Date(today);
+    limit.setDate(limit.getDate() + 14);
+
+    return d < today || d > limit;
+}
+
 /* --------------------------
    시간 선택 모달 열기
 -------------------------- */
@@ -61,7 +143,23 @@ function openTimeModal() {
         return;
     }
 
-    fetchReservedHoursForModal(dateVal);
+    const dateObj = new Date(`${dateVal}T00:00:00`);
+    if (isOutOfRangeDate(dateObj)) {
+        alert("예약은 오늘부터 2주 이내만 가능합니다.");
+        return;
+    }
+
+    if (dateObj.getDay() === 0) {
+        alert("일요일에는 예약이 불가합니다.");
+        return;
+    }
+
+    if (isHoliday(dateVal)) {
+        alert("공휴일은 예약이 불가합니다.");
+        return;
+    }
+
+    fetchSlotsForModal(dateVal);
 
     const modal = document.getElementById("timeSelectModal");
     if (modal) {
@@ -72,18 +170,18 @@ function openTimeModal() {
 /* --------------------------
    선택 날짜의 예약 시간 조회
 -------------------------- */
-async function fetchReservedHoursForModal(dateVal) {
+async function fetchSlotsForModal(dateVal) {
     try {
-        const res = await fetch(
-            `/mstaff/api/reserved-hours/?doctor_id=${CURRENT_DOCTOR_ID}&date=${dateVal}`
-        );
+        const params = new URLSearchParams({
+            doctor_id: CURRENT_DOCTOR_ID,
+            date: dateVal,
+        });
+        const res = await fetch(`/reservations/api/doctor-slots/?${params.toString()}`);
 
         const data = await res.json();
-        const reserved = new Set(data.reserved_hours || []);
-
-        buildTimeGrid(reserved, dateVal);
+        buildSlotGrid(data, dateVal);
     } catch (err) {
-        console.error("예약 시간 조회 실패:", err);
+        console.error("예약 슬롯 조회 실패:", err);
     }
 }
 
@@ -92,28 +190,45 @@ async function fetchReservedHoursForModal(dateVal) {
    - 이미 예약된 시간: 비활성
    - (오늘 기준) 현재 시간 이전 슬롯: 비활성
 -------------------------- */
-function buildTimeGrid(reservedSet, dateVal) {
+function buildSlotGrid(slotPayload, dateVal) {
     const grid = document.getElementById("timeGrid");
     if (!grid) return;
 
     grid.innerHTML = "";
 
+    const am = Array.isArray(slotPayload?.am) ? slotPayload.am : [];
+    const pm = Array.isArray(slotPayload?.pm) ? slotPayload.pm : [];
+    const slots = [...am, ...pm];
+
+    const slotByStart = new Map();
+    slots.forEach((s) => {
+        if (s && s.start) slotByStart.set(String(s.start), s);
+    });
+
+    const selectedDateObj = new Date(`${dateVal}T00:00:00`);
+    const isSaturday = selectedDateObj.getDay() === 6;
+
     const now = new Date();
     const todayStr = now.toISOString().split("T")[0];
     const isToday = dateVal === todayStr;
-    const isPastDay = dateVal < todayStr;
 
-    TIME_SLOTS.forEach((t) => {
-        const [slotHour, slotMinute] = t.split(":").map(Number);
+    TIME_SLOTS.forEach((startStr) => {
+        const slot = slotByStart.get(startStr);
+        const btn = document.createElement("button");
+        btn.classList.add("time-btn");
+        btn.type = "button";
+
+        const endStr = slot?.end || "";
+        btn.textContent = endStr ? `${startStr} ~ ${endStr}` : startStr;
+
+        const startHour = Number(String(startStr).split(":")[0]);
+        const saturdayBlocked = isSaturday && startHour >= 14;
 
         let isPastTime = false;
-        if (isPastDay) {
-            // 과거 날짜는 모든 시간 비활성
-            isPastTime = true;
-        } else if (isToday) {
-            // 오늘인 경우 현재 시각 이전(같은 시, 분까지)은 비활성
+        if (isToday) {
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
+            const [slotHour, slotMinute] = String(startStr).split(":").map(Number);
             if (
                 slotHour < currentHour ||
                 (slotHour === currentHour && slotMinute <= currentMinute)
@@ -122,16 +237,12 @@ function buildTimeGrid(reservedSet, dateVal) {
             }
         }
 
-        const btn = document.createElement("button");
-        btn.classList.add("time-btn");
-        btn.type = "button";
-        btn.textContent = t;
-
-        if (reservedSet.has(slotHour) || isPastTime) {
+        const selectable = Boolean(slot?.slot_id) && !saturdayBlocked && !isPastTime;
+        if (!selectable) {
             btn.classList.add("disabled");
             btn.disabled = true;
         } else {
-            btn.addEventListener("click", () => selectTime(t));
+            btn.addEventListener("click", () => selectSlot(slot.slot_id, startStr, endStr, dateVal));
         }
 
         grid.appendChild(btn);
@@ -141,15 +252,16 @@ function buildTimeGrid(reservedSet, dateVal) {
 /* --------------------------
    시간 선택 처리
 -------------------------- */
-function selectTime(t) {
+function selectSlot(slotId, startStr, endStr, dateVal) {
+    const slotIdInput = document.getElementById("reservation_slot_id");
+    if (slotIdInput) slotIdInput.value = String(slotId || "");
+
     const hourInput = document.getElementById("reservation_hour");
-    if (hourInput) {
-        hourInput.value = t.substring(0, 2);
-    }
+    if (hourInput && startStr) hourInput.value = String(startStr).substring(0, 2);
 
     const label = document.getElementById("selectedTimeLabel");
     if (label) {
-        label.textContent = t;
+        label.textContent = `${dateVal} ${startStr} ~ ${endStr}`;
     }
 
     closeModal("timeSelectModal");

@@ -127,6 +127,7 @@ document.addEventListener("DOMContentLoaded", function () {
             address: h.address,
             rating: h.rating,
             sggu: h.sggu,
+            is_favorite: !!h.is_favorite,
         };
     }
     // =======================
@@ -144,15 +145,16 @@ document.addEventListener("DOMContentLoaded", function () {
             const ratingRaw = Number(h.rating ?? 0);
             const rating = Math.max(0, Math.min(5, Math.round(ratingRaw)));
             const stars = "★".repeat(rating) + "☆".repeat(5 - rating);
-        
+            const formatted = (h.address ?? "").split(",")[0];
+            const hospitalName = (h.name ?? "").trim().replace(/\s+/g, "<br>");
             card.innerHTML = `
-                <div class="hospital-name" id="${h.id}">${h.name}</div>
+                <div class="hospital-name" id="${h.id}">${hospitalName}</div>
                 <div class="rating">
                     <span class="stars">${stars}</span>
                 </div>
                 <div class="hospital-desc">
                     <div>${h.specialty ?? ""}</div>
-                    <div>${h.address ?? ""}</div>
+                    <div>${formatted}</div>
                     <div>${h.opening ?? ""}</div>
                     <div>${h.tel ?? ""}</div>
                     <div>거리: ${h.distance.toFixed(2)} km</div>
@@ -209,14 +211,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (favoriteBtn) {
           favoriteBtn.dataset.hospitalId = hospital.id;
-
-          // ✅ 1) 기본은 초기화 (이걸 안 해서 다른 병원도 즐겨찾기처럼 보임)
-          favoriteBtn.classList.remove("active");
-
-          // ✅ 2) hospital 객체에 is_favorite가 있으면 그 상태로 반영
-          if (typeof hospital.is_favorite !== "undefined") {
-            favoriteBtn.classList.toggle("active", !!hospital.is_favorite);
-          }
+                
+          const isFav = !!hospital.is_favorite; // undefined여도 false로 처리
+                
+          favoriteBtn.classList.toggle("active", isFav);
+          // 모양까지 바꾸고 싶으면 추가:
+          // favoriteBtn.textContent = isFav ? "★" : "☆";
         }
 
         modal.classList.remove("hidden");
@@ -276,7 +276,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const hospitalId = favoriteBtn.dataset.hospitalId;
             if (!hospitalId) return;
 
-            fetch("/reservations/favorite/toggle/", {
+            fetch(TOGGLE_FAVORITE_URL, {
     method: "POST",
     headers: {
         "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",

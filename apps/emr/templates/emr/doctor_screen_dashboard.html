@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>의사 화면 대시보드</title>
@@ -76,7 +77,7 @@
         <div class="card patient-list" id="patinetList">
             <h3>예약 환자 ({{ users | length }}명)</h3>
             {% for user in users %}
-                <div class="patient-list-item" onclick="toMedicalRecord('{{user.user.user_id}}')">
+                <div class="patient-list-item" onclick="toMedicalRecord('{{ user.user.user_id }}', '{{ user.slot.slot_id }}', '{{ user.slot.slot_date|date:'Y-m-d' }}', '{{ user.reservation_id }}')">
                     <h4>성명: {{ user.user.name }}</h4>
                     <p>생년월일: {{ user.user.resident_reg_no | rrn_to_birthdate }} | 성별: {% if user.user.gender == 'F' %}여{% else %}남{% endif %}</p>
                     <p>예약시간: {{ user.slot.slot_date | date:"Y-m-d" }} {{ user.slot.start_time | time:"H:i:s" }}</p>

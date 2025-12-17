@@ -34,8 +34,27 @@ function saveUserLocation() {
 
       console.log("위치 저장 완료:", lat, lng);
 
+      // 응급실/예약 페이지에서 위치 정보 새로고침 처리
       if (window.location.pathname.includes('/emergency/') || window.location.pathname.includes('/reservations/')) {
-        window.location.reload();
+        // URL에 이미 위치 정보가 있으면 새로고침하지 않음 (중복 방지)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasUrlLocation = urlParams.get("lat") && urlParams.get("lng");
+        
+        // 위치 정보 새로고침 플래그 설정 (emergency.js에서 구분하기 위해)
+        sessionStorage.setItem("location_refresh", "true");
+        
+        if (!hasUrlLocation) {
+          // URL에 위치 정보가 없을 때만 새로고침
+          // 단, 버튼 클릭으로 인한 새로고침이 아닐 때만
+          const buttonClick = sessionStorage.getItem("emergency_button_click");
+          if (!buttonClick) {
+            window.location.reload();
+          }
+        } else {
+          // URL에 이미 위치 정보가 있으면 AJAX로만 업데이트 (main.html의 로직 활용)
+          // 플래그 제거하여 emergency.js의 세션 초기화와 충돌 방지
+          sessionStorage.removeItem("location_refresh");
+        }
       }
     },
     (err) => {

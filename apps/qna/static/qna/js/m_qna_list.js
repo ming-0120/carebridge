@@ -35,7 +35,7 @@
  * // 1. QnA ID 1의 상세 페이지 URL 생성: /qna/1/
  * // 2. 해당 URL로 페이지 이동
  */
-function goToQnaDetail(qnaId) {
+function goToQnaDetail(qnaId, source) {
   if (!qnaId) {
     console.error('qnaId가 없습니다.');
     return;
@@ -65,7 +65,14 @@ function goToQnaDetail(qnaId) {
   qnaIdInput.value = qnaId;
   form.appendChild(qnaIdInput);
   
-  // 폼을 body에 추가하고 제출
+  if (source) {
+    const src = document.createElement('input');
+    src.type = 'hidden';
+    src.name = 'from_page';
+    src.value = source;           // 'mypage' 등
+    form.appendChild(src);
+  }
+
   document.body.appendChild(form);
   form.submit();
 }
@@ -479,9 +486,58 @@ function handlePaginationClick(e) {
   });
 }
 
+/**
+ * FAQ 항목 아코디언 동작 제어 함수
+ * 
+ * 목적: FAQ 항목 중 하나가 열릴 때 다른 항목들을 자동으로 닫기
+ *   - 사용자 경험(UX) 개선: 한 번에 하나의 FAQ 항목만 열리도록 하여 가독성 향상
+ *   - 아코디언 패턴 구현: 전형적인 아코디언 UI 동작 제공
+ * 
+ * 동작 방식:
+ *   1. 모든 FAQ 항목(.faq-item)에 toggle 이벤트 리스너 연결
+ *   2. 항목이 열릴 때 (open 속성이 true가 될 때) 다른 모든 항목 닫기
+ *   3. 현재 열린 항목은 그대로 유지
+ * 
+ * 사용 시점:
+ *   - 페이지 로드 시 (DOMContentLoaded 이벤트)
+ * 
+ * @returns {void} 반환값 없음
+ * 
+ * @example
+ * // 페이지 로드 시 자동 호출
+ * attachFaqAccordionListeners();
+ * // 결과:
+ * // 1. 모든 FAQ 항목에 이벤트 리스너 연결
+ * // 2. 하나가 열리면 다른 항목들 자동으로 닫힘
+ */
+function attachFaqAccordionListeners() {
+  const faqItems = document.querySelectorAll('.faq-item');
+  
+  faqItems.forEach(item => {
+    // 기존 이벤트 리스너 제거 (중복 방지)
+    item.removeEventListener('toggle', item._toggleHandler);
+    
+    // toggle 이벤트 핸들러 생성 및 연결
+    item._toggleHandler = function(e) {
+      // 현재 항목이 열렸는지 확인
+      if (item.open) {
+        // 다른 모든 FAQ 항목 닫기
+        faqItems.forEach(otherItem => {
+          if (otherItem !== item && otherItem.open) {
+            otherItem.open = false;
+          }
+        });
+      }
+    };
+    
+    item.addEventListener('toggle', item._toggleHandler);
+  });
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   attachTableRowListeners();
   attachSortListeners();
+  attachFaqAccordionListeners(); // FAQ 아코디언 기능 추가
   
   // 페이지네이션 링크에 이벤트 리스너 연결
   const paginationLinks = document.querySelectorAll('.pagination .page-link[data-page]');

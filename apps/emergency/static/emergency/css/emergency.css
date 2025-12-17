@@ -13,6 +13,7 @@ body {
   max-width:1320px;  /* 헤더와 동일한 너비로 변경 */
   margin:0 auto;
   padding:32px 24px; /* 페이지 내부 패딩 */
+  padding-bottom: 120px;
 }
 
 header h1 {
@@ -60,6 +61,7 @@ header h1 {
 /* ===== 테이블 영역 ===== */
 .table-box {
   width:100%;
+  min-width: 100%; /* 최소 너비 보장 */
   background:white;
   border-radius:16px;
   overflow:hidden;
@@ -69,7 +71,7 @@ header h1 {
 
 .table-header {
   display:grid;
-  grid-template-columns: 1.6fr repeat(6,1fr) 0.5fr;
+  grid-template-columns: minmax(200px, 1.6fr) repeat(6, minmax(80px, 1fr)) minmax(40px, 0.5fr);
   padding:18px 24px;
   background:white;
   color:#2d4f77;
@@ -94,7 +96,7 @@ header h1 {
 
 .row {
   display:grid;
-  grid-template-columns: 1.6fr repeat(6,1fr) 0.5fr;
+  grid-template-columns: minmax(200px, 1.6fr) repeat(6, minmax(80px, 1fr)) minmax(40px, 0.5fr);
   padding:22px 24px;
   align-items:center;
   border-bottom:1px solid #e0e0e0; /* 미세한 테두리 */
@@ -123,6 +125,20 @@ header h1 {
 .row > div:first-child {
   align-items:flex-start;
   text-align:left;
+}
+
+/* 빈 데이터 메시지 스타일 (커서 및 호버 효과 제거) */
+.empty-message {
+  cursor: default;
+  color: #5f6673;
+  font-size: 14px;
+}
+
+.empty-message:hover {
+  background: #ffffff;
+  box-shadow: none;
+  border-color: #e0e0e0;
+  z-index: 0;
 }
 
 .h-name {
@@ -208,9 +224,9 @@ header h1 {
   color:#E53935;
 }
 
-.circle.red .meter-bg {
-  stroke:#E53935;
-}
+/* .circle.red .meter-bg 규칙 제거 - 템플릿에서 조건부로 처리 */
+/* 배경 원은 available == 0이고 red일 때만 빨간색, 그 외에는 회색 */
+/* 상세 모달(detail_modal.js)과 동일한 로직 */
 
 .circle.none .meter {
   stroke:#e0e0e0;

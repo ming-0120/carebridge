@@ -356,6 +356,11 @@
 
 /* 768px 이하: 전부 1열 */
 @media (max-width: 768px) {
+  /* 반응형일 때 배너 섹션 숨김 */
+  .hero-banner-section {
+    display: none;
+  }
+
   .hero-left {
     height: 300px;
   }
@@ -391,6 +396,11 @@
 
 /* 480px 이하: 폰용 최적화 */
 @media (max-width: 480px) {
+  /* 반응형일 때 배너 섹션 숨김 */
+  .hero-banner-section {
+    display: none;
+  }
+
   .hero-left {
     height: 250px;
   }
@@ -720,7 +730,7 @@
 /* 카드 제목 (검정색) */
 .service-cards-container .info-card h3 {
   margin: 0 0 15px;
-  font-size: 22px;
+  font-size: 36px;
   font-weight: 700;
   color: #000; /* 검정색 */
 }
@@ -827,6 +837,7 @@
 }
 
 .service-item-4 {
+  padding-bottom:120px;
   background: #FFFFFF; 
 }
 

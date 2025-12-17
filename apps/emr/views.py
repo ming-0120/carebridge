@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404, HttpResponseBadRequest
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -9,7 +9,15 @@ from django.db.models import Q
 from pytz import timezone as tz
 from django.utils import timezone
 from django.utils.timezone import localdate
-from apps.db.models import MedicalRecord, Users, Doctors, Reservations, LabOrders, TreatmentProcedures
+from apps.db.models import (
+    MedicalRecord,
+    MedicalRecordReservationMap,
+    Users,
+    Doctors,
+    Reservations,
+    LabOrders,
+    TreatmentProcedures,
+)
 import requests, json
 import os
 import xml.etree.ElementTree as ET
@@ -27,6 +35,8 @@ from asgiref.sync import async_to_sync
 from django.forms.models import model_to_dict
 from django.core.paginator import Paginator
 import socket
+from django.conf import settings
+from apps.services.holidays import get_holidays_for_years, is_holiday_date
 
 
 KST = tz("Asia/Seoul")
@@ -187,6 +197,8 @@ def api_reserved_hours(request):
         return JsonResponse({"error": "doctor_id, date 필요"}, status=400)
 
     target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+    if is_holiday_date(target_date):
+        return JsonResponse({"reserved_hours": [], "holiday": True})
 
     # slot_date를 직접 사용
     qs = Reservations.objects.filter(
@@ -211,31 +223,7 @@ def doctor_screen_dashboard(request):
 
     user_id = request.session.get('user_id', '')
     currentYear = datetime.now().year
-
-    items = []
-    for i in range(2):
-        url = (
-            f'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/'
-            f'getRestDeInfo?solYear={currentYear}&numOfRows=100&ServiceKey={os.getenv("API_KEY")}&_type=json'
-        )
-        response = requests.get(url)
-        item = response.json()
-
-        if item['response']['body']['items']['item']:
-            items += item['response']['body']['items']['item']
-
-        currentYear += 1
-
-    holidays = []
-    for data in items:
-        y = str(data['locdate'])[0:4]
-        m = str(data['locdate'])[4:6]
-        d = str(data['locdate'])[6:8]
-
-        holidays.append({
-            'date': f'{y}-{m}-{d}',
-            'name': data['dateName']
-        })
+    holidays = get_holidays_for_years(currentYear, years=2)
 
     doctor = {}
     users = []
@@ -248,10 +236,17 @@ def doctor_screen_dashboard(request):
             user_id=user_id
         )
 
+        target_date = date.today()
+        completed_reservation_ids = MedicalRecordReservationMap.objects.filter(
+            reservation__slot__doctor_id=doctor.doctor_id,
+        ).values_list("reservation_id", flat=True)
+
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
             slot__doctor_id=doctor.doctor_id,
-            slot__slot_date=date.today() 
+            slot__slot_date=target_date
+        ).exclude(
+            reservation_id__in=completed_reservation_ids
         ).select_related(
             # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
             'user', 
@@ -472,11 +467,25 @@ def medical_record_creation(request):
 
     # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
+    user_id = request.session.get("user_id")
+    slot_id = request.GET.get("slot_id")
+    reservation_id = request.GET.get("reservation_id")
+    reservation_date_str = request.GET.get("date")
 
     # 2) 환자(Users), 의사(Doctors) 객체 조회
     #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
-    patient = Users.objects.get(user_id=patient_id)
-    doctor = Doctors.objects.get(doctor_id=68)
+    if not patient_id:
+        raise Http404("patient_id required")
+
+    try:
+        patient = Users.objects.get(user_id=patient_id)
+    except Users.DoesNotExist as exc:
+        raise Http404("patient not found") from exc
+
+    try:
+        doctor = Doctors.objects.select_related("user", "hos", "dep").get(user_id=user_id)
+    except Doctors.DoesNotExist as exc:
+        raise Http404("doctor not found") from exc
 
     # 3) 화면용 파생 값 세팅
     #    주민번호 → 생년월일
@@ -502,6 +511,46 @@ def medical_record_creation(request):
 
     now_dt = timezone.now()
 
+    def _parse_iso_date(date_str: str | None):
+        if not date_str:
+            return None
+        try:
+            return date.fromisoformat(date_str)
+        except Exception:
+            return None
+
+    # 예약 시 환자가 입력한 증상 메모(Reservations.notes) 조회
+    reservation_notes = ""
+    reservation_slot_date = None
+    reservation_slot_time = None
+
+    try:
+        reservation_qs = Reservations.objects.select_related("slot").filter(user_id=patient.user_id)
+        if doctor:
+            reservation_qs = reservation_qs.filter(slot__doctor_id=doctor.doctor_id)
+
+        if reservation_id:
+            reservation_qs = reservation_qs.filter(reservation_id=reservation_id)
+        elif slot_id:
+            reservation_qs = reservation_qs.filter(slot_id=slot_id)
+        else:
+            target_date = _parse_iso_date(reservation_date_str)
+            if target_date:
+                reservation_qs = reservation_qs.filter(slot__slot_date=target_date)
+
+        reservation = reservation_qs.order_by("-slot__slot_date", "-slot__start_time", "-reservation_id").first()
+        if reservation:
+            reservation_notes = (reservation.notes or "").strip()
+            reservation_slot_date = getattr(reservation.slot, "slot_date", None)
+            reservation_slot_time = getattr(reservation.slot, "start_time", None)
+    except Exception:
+        pass
+
+    requested_reservation_date = _parse_iso_date(reservation_date_str)
+    target_record_date = reservation_slot_date or requested_reservation_date
+    if target_record_date and is_holiday_date(target_record_date):
+        return HttpResponseBadRequest("공휴일에는 예약/진료기록을 생성할 수 없습니다.")
+
     context = {
         "patient": patient,
         "doctor": doctor,          # doctor.doctor_id, doctor.hos_id 템플릿에서 사용
@@ -511,6 +560,12 @@ def medical_record_creation(request):
         "department": department,
         "doctor_name": doctor_name,
         "now": now_dt,
+        "reservation_notes": reservation_notes,
+        "reservation_slot_date": reservation_slot_date,
+        "reservation_slot_time": reservation_slot_time,
+        "holidays": json.dumps(get_holidays_for_years(datetime.now().year, years=2), ensure_ascii=False),
+        "source_slot_id": slot_id,
+        "source_reservation_id": reservation_id,
     }
 
     return render(request, 'emr/medical_record_creation.html', context)
@@ -561,6 +616,7 @@ def lab_record_creation(request):
             'order': order,
             'files': files,
             'resident_reg_no_display': resident_reg_no_display,
+            'hos_id': hos_id,
         }
 
         return render(request, 'emr/lab_record_creation.html', context)
@@ -575,7 +631,7 @@ def lab_record_creation(request):
         special_notes = request.POST['specialNotes']
         uploaded_files = request.FILES.getlist('fileAttachment')
         files = []
-        hos_id = request.session.get('user_id', None)
+        hos_id = request.session.get('hospital_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1133,6 +1189,7 @@ def treatment_record_verification(request):
             'medical_record': medical_record,
             'order': order,
             'resident_reg_no_display': resident_reg_no_display,
+            'hos_id': hos_id,
         }
 
         return render(request, "emr/treatment_record_verification.html", context)
@@ -1145,7 +1202,7 @@ def treatment_record_verification(request):
         procedure_code = request.POST['procedureCode']
         procedure_site = request.POST['procedureSite']
         special_notes = request.POST['specialNotes']
-        hos_id = request.session.get('user_id', None)
+        hos_id = request.session.get('hospital_id', None)
 
         try:
             user = Users.objects.get(user_id=user_id)
@@ -1326,6 +1383,8 @@ def api_create_medical_record(request):
     patient_id = request.POST.get("patient_id")
     doctor_id = request.POST.get("doctor_id")
     hos_id = request.POST.get("hos_id")
+    source_reservation_id = request.POST.get("source_reservation_id")
+    source_slot_id = request.POST.get("source_slot_id")
 
     prescriptions_raw = request.POST.get("prescriptions", "[]")
     prescriptions = json.loads(prescriptions_raw)
@@ -1360,6 +1419,30 @@ def api_create_medical_record(request):
         hos_id=hos_id,
         user_id=patient_id,
     )
+
+    source_reservation = None
+    try:
+        if source_reservation_id:
+            source_reservation = Reservations.objects.select_related("slot").filter(
+                reservation_id=source_reservation_id
+            ).first()
+        elif source_slot_id and patient_id and doctor_id:
+            source_reservation = Reservations.objects.select_related("slot").filter(
+                slot_id=source_slot_id,
+                user_id=patient_id,
+                slot__doctor_id=doctor_id,
+            ).order_by("-reservation_id").first()
+    except Exception:
+        source_reservation = None
+
+    if source_reservation:
+        try:
+            MedicalRecordReservationMap.objects.update_or_create(
+                reservation=source_reservation,
+                defaults={"medical_record": record},
+            )
+        except Exception:
+            pass
 
     # ------------------------------
     # 처방전 생성
@@ -1405,13 +1488,79 @@ def api_create_medical_record(request):
     # ------------------------------
     reservation_type = request.POST.get("reservation_type")
     reservation_memo = request.POST.get("reservation_memo")
-    reserved_at = None
-    reserved_end = None
 
+    reservation_slot_id = request.POST.get("reservation_slot_id")
     date_str = request.POST.get("reservation_date_day")
     hour_str = request.POST.get("reservation_hour")
 
-    if date_str and hour_str:
+    # reservations 앱 기준: 미리 열린 TimeSlots 중에서만 예약 생성 (2주 제한)
+    if reservation_slot_id:
+        try:
+            slot = TimeSlots.objects.select_related("doctor").get(pk=reservation_slot_id)
+        except Exception:
+            return JsonResponse({"error": "invalid_slot"}, status=400)
+
+        if str(slot.doctor_id) != str(doctor_id):
+            return JsonResponse({"error": "invalid_slot_doctor"}, status=400)
+
+        target_date = slot.slot_date
+        if is_holiday_date(target_date):
+            return JsonResponse({"error": "holiday_not_allowed"}, status=400)
+
+        # 주말 정책:
+        # - 일요일: 예약 불가
+        # - 토요일: 09:00 ~ 13:00(시작시간 기준)만 허용
+        weekday = target_date.weekday()  # 0=Mon ... 5=Sat, 6=Sun
+        if weekday == 6:
+            return JsonResponse({"error": "sunday_not_allowed"}, status=400)
+        if weekday == 5:
+            start_hour = getattr(slot.start_time, "hour", None)
+            if start_hour is None or start_hour < 9 or start_hour > 13:
+                return JsonResponse({"error": "saturday_hours_only"}, status=400)
+
+        today = timezone.localdate()
+        if target_date < today or target_date > (today + timedelta(days=14)):
+            return JsonResponse({"error": "out_of_range"}, status=400)
+
+        if getattr(slot, "status", None) != "OPEN":
+            return JsonResponse({"error": "slot_not_open"}, status=400)
+
+        if Reservations.objects.filter(slot_id=slot.slot_id).exists():
+            return JsonResponse({"error": "slot_already_reserved"}, status=400)
+
+        reserved_at = timezone.make_aware(
+            datetime.combine(slot.slot_date, slot.start_time),
+            timezone.get_current_timezone(),
+        )
+        reserved_end = timezone.make_aware(
+            datetime.combine(slot.slot_date, slot.end_time),
+            timezone.get_current_timezone(),
+        )
+
+        Reservations.objects.create(
+            reserved_at=reserved_at,
+            reserved_end=reserved_end,
+            slot_type=1 if reservation_type == "consultation" else 2,
+            notes=reservation_memo,
+            user_id=patient_id,
+            slot_id=slot.slot_id,
+        )
+        slot.status = "CLOSED"
+        slot.save(update_fields=["status"])
+
+    # legacy: hour 기반 예약(미사용 예정)
+    elif date_str and hour_str:
+        reserved_at = None
+        reserved_end = None
+
+        try:
+            target_date = datetime.strptime(date_str, "%Y-%m-%d").date()
+        except Exception:
+            return JsonResponse({"error": "invalid_reservation_date"}, status=400)
+
+        if is_holiday_date(target_date):
+            return JsonResponse({"error": "holiday_not_allowed"}, status=400)
+
         naive_dt = datetime.strptime(
             f"{date_str} {hour_str}:00",
             "%Y-%m-%d %H:%M"
@@ -1428,34 +1577,22 @@ def api_create_medical_record(request):
         if local_hour < 9 or local_hour > 17:
             return JsonResponse({"error": "예약 가능 시간은 09~12, 14~17"}, status=400)
 
-        # ------------------------------
-        # 예약 시간 충돌 검사 (의사 기준)
-        # ------------------------------
         exists = Reservations.objects.filter(
             slot__doctor_id=doctor_id,
             reserved_at=reserved_at
         ).exists()
-
         if exists:
             return JsonResponse({"error": "이미 해당 의사에게 예약된 시간입니다"}, status=400)
 
-
-        # ------------------------------
-        # 예약 시간 충돌 검사 (환자 기준)  ← ★ 새로 추가
-        # ------------------------------
         patient_conflict = Reservations.objects.filter(
             user_id=patient_id,
             reserved_at=reserved_at
         ).exists()
-
         if patient_conflict:
             return JsonResponse({"error": "해당 시간에 이미 환자의 다른 예약이 존재합니다"}, status=400)
 
-
-    if reserved_at:
         slot_id = get_or_create_slot_id(int(doctor_id), reserved_at, reserved_end)
-
-        reservation = Reservations.objects.create(
+        Reservations.objects.create(
             reserved_at=reserved_at,
             reserved_end=reserved_end,
             slot_type=1 if reservation_type == "consultation" else 2,
@@ -1549,7 +1686,7 @@ def lab_data_search(request):
 def treatment_data_search(request):
     search = request.GET.get('search', '')
 
-    url = f'https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey={os.getenv("API_KEY")}&numOfRows=9999&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_NM&searchText={search}'
+    url = f'https://apis.data.go.kr/B551182/diseaseInfoService1/getDissNameCodeList1?serviceKey={settings.OPENAPI_SERVICE_KEY}&numOfRows=9999&pageNo=1&sickType=1&medTp=1&diseaseType=SICK_NM&searchText={search}'
 
     response = requests.get(url)
     root = ET.fromstring(response.text)
@@ -1824,7 +1961,14 @@ def set_doctor_memo(request):
 
 def get_reservation_medical_record(request):
     doctor_id = request.GET['doctor_id']
-    date = request.GET['date']
+    date_str = request.GET['date']
+    try:
+        target_date = date.fromisoformat(date_str)
+    except Exception:
+        return JsonResponse({'users': []})
+
+    if is_holiday_date(target_date):
+        return JsonResponse({'users': []})
 
     doctor = {}
     users = []
@@ -1832,10 +1976,16 @@ def get_reservation_medical_record(request):
     try:
         doctor = Doctors.objects.get(doctor_id=doctor_id)
 
+        completed_reservation_ids = MedicalRecordReservationMap.objects.filter(
+            reservation__slot__doctor_id=doctor.doctor_id,
+        ).values_list("reservation_id", flat=True)
+
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
             slot__doctor_id=doctor.doctor_id,
-            slot__slot_date=date
+            slot__slot_date=target_date
+        ).exclude(
+            reservation_id__in=completed_reservation_ids
         ).select_related(
             # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
             'user', 
@@ -1850,6 +2000,7 @@ def get_reservation_medical_record(request):
             slot = reservation.slot
             
             user_data_list.append({
+                'reservation_id': reservation.reservation_id,
                 'user': {
                     'user_id': user.user_id,
                     'gender': user.gender,

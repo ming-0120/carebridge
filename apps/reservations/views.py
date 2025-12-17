@@ -1,11 +1,11 @@
 import json
 import math
-import os
 
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.urls import reverse
-import requests
+from django.contrib import messages
+from django.utils import timezone
 from apps.db.models.department import Department
 from apps.db.models.doctor import Doctors
 from apps.db.models.favorite import UserFavorite
@@ -14,9 +14,10 @@ from apps.db.models.slot_reservation import Reservations
 from apps.db.models import TimeSlots
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 from django.views.decorators.http import require_POST
 from apps.db.models.users import Users
+from apps.services.holidays import get_holidays_for_years, is_holiday_date
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -31,11 +32,12 @@ def haversine(lat1, lon1, lat2, lon2):
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def main_view(request):        
+def main_view(request):
     user_id = request.session.get("user_id")
     if not user_id:
-            login_url = reverse("accounts:login")
-            return redirect(f"{login_url}?next={request.get_full_path()}")
+        login_url = reverse("accounts:login")
+        return redirect(f"{login_url}?next={request.get_full_path()}")
+
     get_dept_code = request.GET.get("dept_id")
     active_dept = None
 
@@ -45,27 +47,32 @@ def main_view(request):
             active_dept = dept_obj.dep_name
         except Department.DoesNotExist:
             active_dept = None
-        
+
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
+
+    # ✅ 0) 로그인 유저의 "병원 즐겨찾기" hos_id 목록을 set으로 준비
+    favorite_ids = set(
+        UserFavorite.objects.filter(user_id=user_id, er__isnull=True)
+        .values_list("hos_id", flat=True)
+    )
 
     doctors = Doctors.objects.select_related("hos", "dep")
 
     grouped = {}
 
     for d in doctors:
-        h = d.hos 
+        h = d.hos
         dept_name = d.dep.dep_name
         dept_code = d.dep.dep_code
-        hos_lat = h.lat 
-        hos_lon = h.lng 
+        hos_lat = h.lat
+        hos_lon = h.lng
 
         if hos_lat is None or hos_lon is None:
             continue
 
         distance = haversine(user_lat, user_lon, float(hos_lat), float(hos_lon))
 
-        # 과 딕셔너리 초기화
         if dept_name not in grouped:
             grouped[dept_name] = {}
 
@@ -79,14 +86,17 @@ def main_view(request):
                 "id": h.hos_id,
                 "name": h.name,
                 "dept": dept_name,
-                "dept_code":dept_code,
+                "dept_code": dept_code,
                 "lat": float(hos_lat),
                 "lng": float(hos_lon),
                 "distance": distance,
                 "address": getattr(h, "address", ""),
                 "tel": getattr(h, "tel", ""),
-                "sggu":h.sggu,
+                "sggu": h.sggu,
                 "rating": h.rating,
+
+                # ✅ 1) 추가: 즐겨찾기 여부 (user_favorite에 hos_id가 있으면 True)
+                "is_favorite": (h.hos_id in favorite_ids),
             }
 
     result_by_dept = {}
@@ -96,7 +106,8 @@ def main_view(request):
         result_by_dept[dept_name] = hospitals[:5]
 
     context = {
-        "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder),
+        # ✅ 2) ensure_ascii=False 권장(한글 깨짐 방지). DjangoJSONEncoder는 유지
+        "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder, ensure_ascii=False),
         "user_lat": user_lat,
         "user_lon": user_lon,
         "active_dept": active_dept,
@@ -145,37 +156,14 @@ def reservation_page(request):
         hos_id=hospital_id,
         dep=selected_department,
     ).select_related("user", "dep")
-    items = []
-    for i in range(2):
-        url = (
-            f'https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/'
-            f'getRestDeInfo?solYear={currentYear}&numOfRows=100&ServiceKey={os.getenv("API_KEY")}&_type=json'
-        )
-        response = requests.get(url)
-        item = response.json()
-    
-        if item['response']['body']['items']['item']:
-            items += item['response']['body']['items']['item']
-    
-        currentYear += 1
-    
-    holidays = []
-    for data in items:
-        y = str(data['locdate'])[0:4]
-        m = str(data['locdate'])[4:6]
-        d = str(data['locdate'])[6:8]
-    
-        holidays.append({
-            'date': f'{y}-{m}-{d}', 
-            'name': data['dateName'] 
-        })
-        context = {
-            "hospital": hospital,
-            "departments": departments,
-            "selected_department": selected_department,
-            "doctors": doctors,
-            "holidays": holidays,   # ← 추가
-        }
+    holidays = json.dumps(get_holidays_for_years(currentYear, years=2), ensure_ascii=False)
+    context = {
+        "hospital": hospital,
+        "departments": departments,
+        "selected_department": selected_department,
+        "doctors": doctors,
+        "holidays": holidays,
+    }
     return render(request, "reservations/reservation_page.html", context)
 
 
@@ -196,6 +184,9 @@ def reserve_submit(request):
         return redirect("main")
 
     slot = get_object_or_404(TimeSlots, pk=slot_id)
+    if is_holiday_date(slot.slot_date):
+        messages.error(request, "공휴일에는 예약할 수 없습니다.")
+        return redirect("reservation_page")
 
     # 증상 메모
     notes = request.POST.get("notes", "").strip()
@@ -257,15 +248,33 @@ def doctor_slots_api(request):
     date_str = request.GET.get("date")  # YYYY-MM-DD
 
     if not doctor_id or not date_str:
-        return JsonResponse({"am": [], "pm": []})
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
 
-    target_date = datetime.fromisoformat(date_str).date()
+    try:
+        target_date = datetime.fromisoformat(date_str).date()
+    except Exception:
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    today = timezone.localdate()
+    if target_date < today or target_date > (today + timedelta(days=14)):
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    weekday = target_date.weekday()  # 0=Mon ... 5=Sat, 6=Sun
+    if weekday == 6:
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    is_holiday = is_holiday_date(target_date)
+    if is_holiday:
+        return JsonResponse({"am": [], "pm": [], "holiday": True})
 
     slots = TimeSlots.objects.filter(
         doctor_id=doctor_id,
         slot_date=target_date,
-        status="OPEN",   # OPEN 슬롯만
     ).order_by("start_time")
+
+    # 토요일은 09:00~12:00(12:00~13:00이 마지막)만 허용
+    if weekday == 5:
+        slots = slots.filter(start_time__gte=time(9, 0), start_time__lt=time(13, 0))
 
     am = []
     pm = []
@@ -275,13 +284,14 @@ def doctor_slots_api(request):
             "slot_id": s.slot_id,
             "start": s.start_time.strftime("%H:%M"),
             "end": s.end_time.strftime("%H:%M"),
+            "status": s.status,
         }
-        if s.start_time.hour < 12:
+        if s.start_time.hour < 13:
             am.append(data)
         else:
             pm.append(data)
 
-    return JsonResponse({"am": am, "pm": pm})
+    return JsonResponse({"am": am, "pm": pm, "holiday": is_holiday})
 
 def reservation_confirm(request):
     """예약하기 버튼을 누른 뒤 보여줄 '상세 확인 + 증상 입력' 페이지"""
@@ -355,3 +365,68 @@ def toggle_favorite(request):
 
     # 4) JSON 응답
     return JsonResponse({"ok": True, "is_favorite": is_favorite})
+
+
+# -----------------------------------------------------------------------------
+# Slot API (override)
+# -----------------------------------------------------------------------------
+# 기존 doctor_slots_api는 "미리 생성된 TimeSlots"가 없는 경우 빈 리스트를 반환해서,
+# EMR 예약 화면에서 항상 "예약 가능한 시간이 없습니다" 상태가 되었다.
+# 아래에서 동일 이름으로 다시 정의해 URLConf에서 참조하는 함수를 덮어쓴다.
+def doctor_slots_api(request):
+    """
+    doctor_id + date(YYYY-MM-DD)로 예약 가능한 TimeSlots를 반환한다.
+    - 2주 이내만 허용
+    - 일요일/공휴일은 빈 리스트 반환
+    - TimeSlots가 없으면 기본 슬롯 자동 생성
+      * 평일: 09,10,11,12,14,15,16,17
+      * 토요일: 09,10,11,12 (12:00~13:00이 마지막)
+    """
+    doctor_id = request.GET.get("doctor_id")
+    date_str = request.GET.get("date")
+
+    if not doctor_id or not date_str:
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    try:
+        target_date = datetime.fromisoformat(date_str).date()
+    except Exception:
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    today = timezone.localdate()
+    if target_date < today or target_date > (today + timedelta(days=14)):
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    weekday = target_date.weekday()  # 0=Mon ... 5=Sat, 6=Sun
+    if weekday == 6:
+        return JsonResponse({"am": [], "pm": [], "holiday": False})
+
+    if is_holiday_date(target_date):
+        return JsonResponse({"am": [], "pm": [], "holiday": True})
+
+    slots = TimeSlots.objects.filter(
+        doctor_id=doctor_id,
+        slot_date=target_date,
+        status="OPEN",
+    ).order_by("start_time")
+
+    # 운영자가 생성한 TimeSlots만 사용 (자동 생성 금지)
+    # 토요일은 09:00~12:00(12:00~13:00이 마지막)만 허용
+    if weekday == 5:
+        slots = slots.filter(start_time__gte=time(9, 0), start_time__lt=time(13, 0))
+
+    am = []
+    pm = []
+
+    for s in slots:
+        data = {
+            "slot_id": s.slot_id,
+            "start": s.start_time.strftime("%H:%M"),
+            "end": s.end_time.strftime("%H:%M"),
+        }
+        if s.start_time.hour < 13:
+            am.append(data)
+        else:
+            pm.append(data)
+
+    return JsonResponse({"am": am, "pm": pm, "holiday": False})

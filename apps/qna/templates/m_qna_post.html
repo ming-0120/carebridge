@@ -1,23 +1,26 @@
 {% load static %}
-{% load qna_filters %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>QnA 상세보기 - CareBridge</title>
+
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_post.css' %}">
-  <!-- <link rel="stylesheet" href="{% static 'core/css/footer.css' %}"> -->
 </head>
+
 <body class="has-footer">
   {% include "core/_header.html" %}
   
   <main class="qna-main">
     <div class="qna-container">
+
       <h1 class="page-title">Q&A 상세</h1>
       <hr class="title-divider">
-      
+
       <div class="qna-header-top">
         <div class="qna-header-left">
           {% if qna.reply %}
@@ -25,18 +28,20 @@
           {% endif %}
           <h2 class="qna-post-title">{{ qna.title }}</h2>
         </div>
+
         <div class="qna-header-actions">
-          <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+            {% if not is_from_mypage %}
+              <a href="{% url 'qna:qna_list' %}" class="btn-list">목록으로</a>
+            {% endif %}
           {% if is_owner %}
-            <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-              {% csrf_token %}
-              <button type="submit" class="btn-delete">삭제</button>
-            </form>
+          <form method="post" action="{% url 'qna:qna_delete' qna.qna_id %}" style="display:inline;" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+            {% csrf_token %}
+            <button type="submit" class="btn-delete">삭제</button>
+          </form>
           {% endif %}
         </div>
       </div>
 
-      {% comment %} 문의 상세 정보 {% endcomment %}
       <div class="inquiry-info">
         <div class="inquiry-info-row">
           <div class="inquiry-info-item">
@@ -46,11 +51,7 @@
           <div class="inquiry-info-item">
             <span class="inquiry-info-label">공개여부</span>
             <span class="inquiry-info-value">
-              {% if qna.privacy == 'PUBLIC' %}
-                공개
-              {% else %}
-                비공개
-              {% endif %}
+              {% if qna.privacy == 'PUBLIC' %}공개{% else %}비공개{% endif %}
             </span>
           </div>
           <div class="inquiry-info-item">
@@ -58,23 +59,20 @@
             <span class="inquiry-info-value">{{ qna.created_at|date:"Y-m-d" }}</span>
           </div>
         </div>
-        
-        {% comment %} 이메일은 개인정보 보호를 위해 숨김 처리 {% endcomment %}
       </div>
-      
+
       <hr class="info-content-divider">
-      
-      {% comment %} 문의 내용 {% endcomment %}
+
       <div class="inquiry-content-box">
         {{ qna.content }}
       </div>
 
-      {% comment %} 답변 섹션 {% endcomment %}
       {% if qna.reply %}
-        <div class="reply-content-box">
-          {{ qna.reply|linebreaks }}
-        </div>
+      <div class="reply-content-box">
+        {{ qna.reply|linebreaks }}
+      </div>
       {% endif %}
+
     </div>
   </main>
 
@@ -84,5 +82,3 @@
   <script src="{% static 'qna/js/m_qna_post.js' %}"></script>
 </body>
 </html>
-
-

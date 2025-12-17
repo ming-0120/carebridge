@@ -3,6 +3,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>치료 기록 화면</title>
@@ -42,6 +43,7 @@
             <input type="hidden" name="order_id" value="{{ order.treatment_id }}">
             <input type="hidden" name="user_id" value="{{ user.user_id }}">
             <input type="hidden" name="current_status" value="{{ order.status }}">
+            <input type="hidden" name="hos_id" value="{{ hos_id }}">
             
             <div class="record-entry-grid">
                 
@@ -90,7 +92,7 @@
                 <div class="status-button-group">
                     <button class="status-button btn-start" id="btnStart" type="button" onclick="updateStatus('In progress')">IN PROGRESS</button>
                     <button class="status-button btn-complete" id="btnComplete" type="button" onclick="updateStatus('Completed')">COMPLETED</button>
-                    <!-- <button class="status-button btn-next" id="btnNext" type="button" onclick="goToNextPatient()">다음환자</button> -->
+                    <button class="status-button btn-next" style="display: inline-block;" id="btnCatalog" type="button" onclick="goToCatalogPatient()">목록</button>
                 </div>
             </div>
         </form>

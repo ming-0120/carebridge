@@ -16,23 +16,31 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}QnA - CareBridge{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- QnA 공통 CSS -->
   <link rel="stylesheet" href="{% static 'qna/css/m_qna_common.css' %}">
-  <link rel="stylesheet" href="{% static 'core/css/footer.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
-<body class="has-footer">
-  {% include "core/_header.html" %}
+
+<body class="qna-body">
   
+  <!-- header를 레이아웃에 포함시키는 wrapper -->
+  <div class="qna-header-wrapper">
+    {% include "core/_header.html" %}
+  </div>
+
+  <!-- footer를 밀어내는 메인 영역 -->
   <main class="qna-main">
-    {% block content %}{% endblock %}
+    <div class="qna-container">
+      {% block content %}{% endblock %}
+    </div>
   </main>
 
   {% include "core/footer.html" %}
-
-  <script src="{% static 'qna/js/m_qna_common.js' %}"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

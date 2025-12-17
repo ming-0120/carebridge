@@ -28,7 +28,7 @@
       <span></span>
     </button>
     <div class="nav-wrapper">
-{% if request.session.role != 'DOCTOR' and request.session.role != 'ADMIN' %}
+{% if request.session.role != 'DOCTOR' and request.session.role != 'ADMIN' and request.session.role != 'HOSPITAL'%}
 <nav class="nav">
     <a href="{% url 'emergency_main' %}">응급실 조회</a>
     <a href="{% url 'reservation_main' %}">병원 예약</a>

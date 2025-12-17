@@ -25,8 +25,8 @@
               {% for row in rows %}
                   {% with q=row.obj %}
                     <tr class="qna-row"
-                        onclick="goToQnaDetail({{ q.qna_id }})"
-                        style="cursor:pointer;">
+                      onclick="goToQnaDetail({{ q.qna_id }}, 'mypage')"
+                      style="cursor:pointer;">
                       <td>{{ forloop.counter }}</td>
                       <td>{{ q.title }}</td>
                       <td>{{ q.created_at|date:"Y-m-d" }}</td>

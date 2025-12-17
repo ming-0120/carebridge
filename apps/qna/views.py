@@ -213,19 +213,25 @@ def qna_write(request):
                     year = '20' + year
             birth_date = f"{year}-{month}-{day}"
     
-    # 전화번호 분리 (010-1234-5678 형식)
+    # 전화번호 분리 (010-1234-5678 형식) 및 마스킹 (010 6*** ****)
     phone_parts = {'area': '', 'middle': '', 'last': ''}
     if user.phone:
         phone_split = user.phone.split('-')
         if len(phone_split) >= 3:
             phone_parts['area'] = phone_split[0]
-            phone_parts['middle'] = phone_split[1]
-            phone_parts['last'] = phone_split[2]
+            # 중간 번호 마스킹: 첫 글자만 표시, 나머지 *
+            middle = phone_split[1]
+            phone_parts['middle'] = middle[0] + '*' * (len(middle) - 1) if middle else ''
+            # 마지막 번호 마스킹: 전체 *
+            last = phone_split[2]
+            phone_parts['last'] = '*' * len(last) if last else ''
         elif len(phone_split) == 1 and len(user.phone) >= 10:
             # 하이픈 없는 경우 (01012345678)
             phone_parts['area'] = user.phone[:3]
-            phone_parts['middle'] = user.phone[3:7]
-            phone_parts['last'] = user.phone[7:]
+            middle = user.phone[3:7]
+            phone_parts['middle'] = middle[0] + '*' * (len(middle) - 1) if middle else ''
+            last = user.phone[7:]
+            phone_parts['last'] = '*' * len(last) if last else ''
     
     # 이메일 분리 (user@domain.com 형식)
     email_parts = {'username': '', 'domain': ''}
@@ -295,10 +301,11 @@ def qna_post(request):
     
     # 본인이 작성한 글인지 확인 (더미데이터는 제외)
     is_owner = (qna.user == user) and (not qna.title.startswith('더미 문의'))
-    
+    is_from_mypage = request.POST.get('from_page') == 'mypage'
     context = {
         'qna': qna,
         'is_owner': is_owner,
+        'is_from_mypage': is_from_mypage,
     }
     
     return render(request, 'm_qna_post.html', context)

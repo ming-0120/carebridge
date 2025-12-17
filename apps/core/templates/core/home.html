@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareBridge 메인</title>
@@ -18,8 +19,8 @@
         <img src="{% static 'core/img/main2.png' %}" class="hero-slide" alt="">
         <img src="{% static 'core/img/main3.png' %}" class="hero-slide" alt="">
 
-      <button class="hero-arrow prev">&#10094;</button>
-      <button class="hero-arrow next">&#10095;</button>
+      <button class="hero-arrow prev" style="display: none;"></button>
+      <button class="hero-arrow next" style="display: none;"></button>
 
       <div class="hero-dots">
         <div class="hero-dot active" data-index="0"></div>
@@ -83,7 +84,7 @@
         </div>
         <div class="service-text">
           <h3>실시간 응급실 조회</h3>
-          <p>현재 위치 기준으로 가용 병상 수, 거리, 응급실 상태를 종합해 <br>가장 적합한 응급실을 안내합니다.</p>
+          <p>현재 위치 기준으로 가용 병상 수, 거리, 응급실 상태를 종합해<br>가장 적합한 응급실을 안내합니다.</p>
         </div>
       </div>
     </section>

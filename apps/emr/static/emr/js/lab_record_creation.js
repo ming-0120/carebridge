@@ -126,7 +126,7 @@ async function updateStatus(newStatus) {
             medical_record_id = data.medical_record.medical_record_id;
             order_id = data.order.lab_order_id;
 
-            window.location.href = `/mstaff/lab_record/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}`;
+            window.location.href = `/mstaff/lab_record/?order_id=${order_id}&user_id=${user_id}&medical_record_id=${medical_record_id}&hos_id=${hos_id}`;
         }
 
     } else if (newStatus === 'Completed') {
@@ -155,8 +155,8 @@ async function updateStatus(newStatus) {
     }
 }
 
-function goToNextPatient() {
-    alert('다음 대기 환자 기록 작성 화면으로 이동합니다.');
+function goToCatalogPatient() {
+    window.location.href = "/mstaff/hospital_dashboard/";
 }
 
 /* 모달 열기 */

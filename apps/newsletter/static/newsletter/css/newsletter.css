@@ -10,7 +10,8 @@
     .newsletter-page {
       display: flex;
       justify-content: center;
-      padding: 40px 24px;
+      padding: 32px 24px;
+      padding-bottom: 120px;
     }
     
     /* 기존 코드 그대로 사용 */
@@ -21,9 +22,10 @@
     }
     
     .newsletter-title {
-      font-size: 26px;
+      font-size: 30px;
       font-weight: 700;
-      margin-bottom: 24px;
+      margin-bottom: 26px;
+      color: #1f2430;
     }
     
     .news-list {

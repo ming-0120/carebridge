@@ -2,34 +2,40 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}마이페이지 - CareBridge{% endblock %}</title>
+
+  <!-- 마이페이지 공통 레이아웃 CSS -->
+  <link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+
   {% block extra_css %}{% endblock %}
 </head>
-<body class="has-footer">
-{% block content %}
+
+<!-- ✅ 마이페이지 전용 sticky-footer를 위한 body class -->
+<body class="mypage-body">
+  {% block content %}
     {% include "core/_header.html" %}
 
-    <!-- 마이페이지 공통 레이아웃 CSS -->
-    <link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
-    <!-- <link rel="stylesheet" href="{% static 'core/css/footer.css' %}"> -->
-
-    <div class="mypage-layout">
+    <!-- ✅ main이 화면 높이를 채우도록 래핑 -->
+    <main class="mypage-main">
+      <div class="mypage-layout">
         <!-- 왼쪽 마이페이지 메뉴 -->
         <aside class="mypage-sidebar">
-            {% include "mypage/_sidebar.html" %}
+          {% include "mypage/_sidebar.html" %}
         </aside>
 
         <!-- 오른쪽 콘텐츠 -->
         <section class="mypage-content">
-            {% block mypage_content %}{% endblock %}
+          {% block mypage_content %}{% endblock %}
         </section>
-    </div>
+      </div>
+    </main>
 
     {% include "core/footer.html" %}
 
     {% block extra_js %}{% endblock %}
-{% endblock %}
+  {% endblock %}
 </body>
 </html>

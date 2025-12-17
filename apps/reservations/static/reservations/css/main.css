@@ -12,8 +12,9 @@ body {
   max-width: 1320px;
   width: 100%;
   margin: 0 auto;
-  padding: 40px 24px;
+  padding: 32px 24px;
   background: #ffffff;
+  padding-bottom: 120px;
 }
 
 /* 제목 영역 */
@@ -22,9 +23,10 @@ body {
 }
 
 .hospital_title {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 700;
-  margin: 0;
+  margin-bottom: 26px;
+  color: #1f2430;
 }
 
 /* 메인 레이아웃 (사이드 + 지도) */
@@ -48,7 +50,7 @@ body {
   width: 100%;
   padding: 12px 12px;
   border: 0;
-  border-bottom: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0; 
   background: #ffffff;
   font-size: 14px;
   text-align: center;
@@ -125,7 +127,7 @@ body {
 
 /* 병원 카드: 뉴스 카드 스타일로 */
 .hospital-card {
-  min-width: 260px;
+  max-width: 260px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   background: #ffffff;
@@ -135,9 +137,8 @@ body {
 }
 
 .hospital-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  border-color: #d0d0d0;
+ cursor: pointer;
+ background-color:#dfe6f3;
 }
 
 .hospital-name {
@@ -151,7 +152,7 @@ body {
 .rating {
   font-size: 12px;
   margin-bottom: 8px;
-  color: #e1e168;
+  color: #ffb300;
 }
 
 .hospital-desc {
@@ -228,7 +229,9 @@ body {
   background-color: #ffffff;
   color: #111827;
 }
-
+.modal-rating {
+  color: #ffb300 !important;
+}
 .modal-footer {
   display: flex;
   justify-content: center;
@@ -277,3 +280,85 @@ body {
     width: calc(100% - 32px);
   }
 }
+
+/* =========================
+   Sticky Footer (최종본)
+   ========================= */
+
+   html, body {
+    margin: 0;
+    padding: 0;
+    /* height: 100% 제거 - min-height: 100vh만 사용 */
+  }
+  
+  /* body를 flex 컨테이너로 */
+  .reservation-body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* 실제 콘텐츠 영역 */
+  .reservation-main {
+    flex: 1 0 auto;  /* flex: 1 0 auto로 명시적 설정 */
+    width: 100%;
+  }
+  
+  /* 핵심: footer를 하단에 고정 */
+  .reservation-body .footer {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+  
+  /* =========================
+     Footer (페이지 전용)
+     ========================= */
+  
+  .footer {
+    width: 100%;
+    background: #2a2a2a;
+    color: #9ca3af;
+    font-size: 13px;
+  }
+
+/* footer 내부 컨테이너 */
+.footer-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 24px 30px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.footer-brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 18px;
+}
+
+.footer-info-line {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c7c7c7;
+}
+
+.footer-copyright {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #444;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .footer-container {
+    padding: 32px 16px 24px;
+  }
+
+  .footer-brand-name {
+    font-size: 20px;
+  }
+}
+
