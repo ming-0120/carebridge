@@ -224,8 +224,10 @@ def qna_write(request):
         elif len(phone_split) == 1 and len(user.phone) >= 10:
             # 하이픈 없는 경우 (01012345678)
             phone_parts['area'] = user.phone[:3]
-            phone_parts['middle'] = user.phone[3:7]
-            phone_parts['last'] = user.phone[7:]
+            middle = user.phone[3:7]
+            phone_parts['middle'] = middle[0] + '*' * (len(middle) - 1) if middle else ''
+            last = user.phone[7:]
+            phone_parts['last'] = '*' * len(last) if last else ''
     
     # 이메일 분리 (user@domain.com 형식)
     email_parts = {'username': '', 'domain': ''}
