@@ -64,3 +64,26 @@
 .btn-cancel {
     background: #eee;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .withdraw-notice {
+        padding: 12px 14px;
+        font-size: 13px;
+    }
+
+    #password {
+        max-width: 100%;
+        font-size: 16px; /* iOS 줌 방지 */
+    }
+
+    .withdraw-actions {
+        flex-direction: column;
+    }
+
+    .btn-withdraw,
+    .btn-cancel {
+        width: 100%;
+        min-width: auto;
+    }
+}

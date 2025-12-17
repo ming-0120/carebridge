@@ -143,7 +143,16 @@
       </div>
     {% endwith %}
   {% empty %}
-  <div style="padding:24px;">표시할 병원 데이터가 없습니다.</div>
+  <div class="row empty-message">
+    <div>표시할 병원 데이터가 없습니다.</div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+    <div></div>
+  </div>
   {% endfor %}
 
 </div>
@@ -279,8 +288,10 @@
   // -------------------------
   function toggleErFavorite(event, erId) {
     // 이벤트 전파 중지 (행 클릭 이벤트 방지)
-    event.stopPropagation();
-    event.preventDefault();
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
     
     // AJAX 요청으로 즐겨찾기 토글
     fetch('{% url "toggle_er_favorite" %}', {
@@ -308,11 +319,13 @@
     .then(data => {
       if (data && data.ok) {
         // 즐겨찾기 상태 업데이트
-        const favoriteElement = event.target.closest('.favorite') || event.target;
-        if (data.is_favorite) {
-          favoriteElement.classList.add('on');
-        } else {
-          favoriteElement.classList.remove('on');
+        const favoriteElement = document.querySelector(`.favorite[data-er-id="${erId}"]`);
+        if (favoriteElement) {
+          if (data.is_favorite) {
+            favoriteElement.classList.add('on');
+          } else {
+            favoriteElement.classList.remove('on');
+          }
         }
         
         // 상세 모달이 열려있고 같은 병원이면 동기화
@@ -336,24 +349,35 @@
   }
 
   // -------------------------
-  // 즐겨찾기 버튼 클릭 이벤트 리스너 (이벤트 위임 사용)
+  // 즐겨찾기 버튼 클릭 이벤트 리스너 (캡처 단계에서 실행하여 row의 onclick보다 먼저 처리)
   // -------------------------
-  // 이벤트 위임 방식: 동적으로 추가되는 요소에도 작동
+  // 캡처 단계(true)에서 이벤트를 잡아서 row의 onclick보다 먼저 실행되도록 함
   document.addEventListener('click', function(event) {
     // 클릭된 요소가 .favorite 클래스를 가진 요소인지 확인
     const favoriteElement = event.target.closest('.favorite');
     if (favoriteElement) {
       const erId = favoriteElement.getAttribute('data-er-id');
       if (erId) {
+        // 이벤트 전파를 먼저 막고 toggleErFavorite 호출
+        event.stopPropagation();
+        event.preventDefault();
         toggleErFavorite(event, parseInt(erId, 10));
+        return false;
       }
     }
-  });
+  }, true); // 캡처 단계에서 실행 (true)
 
   // -------------------------
   // sessionStorage에서 위치 정보 읽어서 서버에 전달 (URL에는 추가하지 않음)
   // -------------------------
   (function() {
+    // 위치 정보 새로고침 플래그가 있으면 AJAX 업데이트 건너뛰기 (이미 새로고침됨)
+    const locationRefresh = sessionStorage.getItem("location_refresh");
+    if (locationRefresh) {
+      // 플래그는 emergency.js에서 제거하므로 여기서는 건너뛰기만
+      return;
+    }
+    
     const userLat = sessionStorage.getItem("user_lat");
     const userLng = sessionStorage.getItem("user_lng");
     

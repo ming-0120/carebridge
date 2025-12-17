@@ -232,7 +232,7 @@ function fillStatusRow(key, available, total, uiData) {
       : (safeAvailable === 0 && colorClass === "red") ? "#E53935" : "#e0e0e0";
 
     circleContainer.innerHTML = `
-      <div class="status-circle ${colorClass}">
+      <div class="circle ${colorClass}">
         <svg>
           <circle class="meter-bg"
             cx="24" cy="24" r="20"
@@ -261,7 +261,7 @@ function fillStatusRow(key, available, total, uiData) {
   } else if (available !== null && available !== undefined && available >= 0) {
     // available만 있고 total이 None이거나 0인 경우: "-" 표시
     circleContainer.innerHTML = `
-      <div class="status-circle none">
+      <div class="circle none">
         <svg>
           <circle class="meter-bg"
             cx="24" cy="24" r="20"
@@ -286,7 +286,7 @@ function fillStatusRow(key, available, total, uiData) {
   } else {
     // available이 None이고 total만 있는 경우 또는 모두 None: "-" 표시
     circleContainer.innerHTML = `
-      <div class="status-circle none">
+      <div class="circle none">
         <svg>
           <circle class="meter-bg"
             cx="24" cy="24" r="20"

@@ -23,13 +23,30 @@ function openRegionModal() {
   const modal = document.getElementById("region-modal");
   if (modal) modal.classList.remove("hidden");
   
-  // 모달 열 때 현재 선택된 값 반영
+  // 검색 입력 필드 초기화
+  const searchInput = document.getElementById("region-search-input");
+  if (searchInput) {
+    searchInput.value = "";
+  }
+  
+  // 모든 시/도 항목 표시 초기화
+  document.querySelectorAll(".sido-item").forEach(el => {
+    el.style.display = "block";
+  });
+  
+  // 모든 시/군/구 항목 표시 초기화 (이미 로드된 경우)
+  document.querySelectorAll(".sigungu-item").forEach(el => {
+    el.style.display = "block";
+  });
+  
+  // 모달 열 때 현재 선택된 값 반영 (필터링 없이)
   if (selectedSido) {
     const sidoItem = Array.from(document.querySelectorAll(".sido-item")).find(
       el => el.textContent.trim() === selectedSido
     );
     if (sidoItem) {
-      selectSido(selectedSido, selectedSigungu);
+      // sigunguKeyword를 전달하지 않아 필터링되지 않도록 함
+      selectSido(selectedSido);
     }
   }
 }

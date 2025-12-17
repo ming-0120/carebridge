@@ -1,99 +1,89 @@
- {% include "core/_header.html" %}
-
+{% extends "mypage/base_mypage.html" %}
 {% load static %}
 
 {% block mypage_content %}
-<link rel="stylesheet" href="{% static 'mypage/css/profile_edit.css' %}">
+<h2>개인정보수정</h2>
 
-<div class="mypage-layout doctor-edit-page">
+{% if messages %}
+    <ul class="django-messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
 
-    <section class="mypage-content">
+<form method="post" enctype="multipart/form-data" class="doctor-edit-page">
+    {% csrf_token %}
+    
+    <div class="form-row">
+        <label>프로필 사진</label>
+        <div class="doctor-profile-box">
+            {% if doctor.profil_url %}
+              <img id="profilePreview"
+                   src="/media/{{ doctor.profil_url }}"
+                   data-default-src="{% static 'core/img/default_profile.png' %}"
+                   alt="프로필"
+                   class="doctor-profile-img">
+            {% else %}
+              <img id="profilePreview"
+                   src="{% static 'core/img/default_profile.png' %}"
+                   data-default-src="{% static 'core/img/default_profile.png' %}"
+                   alt="default"
+                   class="doctor-profile-img">
+            {% endif %}
+            
+            <input id="profileImageInput" type="file" name="profile_image" accept="image/*">
+            
+            <button type="button" id="resetProfileImage" class="btn btn-secondary">
+              기본 이미지로
+            </button>
+        </div>
+    </div>
 
-        <h2>개인정보수정</h2>
+    <div class="form-row">
+        <label>성명</label>
+        <div class="form-value">{{ user.name }}</div>
+    </div>
 
-        {% if messages %}
-            <ul class="django-messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+    <div class="form-row">
+        <label>생년월일</label>
+        <div class="form-value">{{ birth_display }}</div>
+    </div>
 
-        <form method="post" enctype="multipart/form-data">
-            {% csrf_token %}
-               {% if doctor.profil_url %}
-                  <img id="profilePreview"
-                       src="/media/{{ doctor.profil_url }}"
-                       data-default-src="{% static 'core/img/default_profile.png' %}"
-                       alt="프로필"
-                       style="width:150px;">
-                {% else %}
-                  <img id="profilePreview"
-                       src="{% static 'core/img/default_profile.png' %}"
-                       data-default-src="{% static 'core/img/default_profile.png' %}"
-                       alt="default"
-                       style="width:150px;">
-                {% endif %}
-                        
-                <input id="profileImageInput" type="file" name="profile_image" accept="image/*">
-                        
-                <button type="button" id="resetProfileImage" class="btn btn-secondary" style="margin-top:8px;">
-                  기본 이미지로
-                </button>
+    <div class="form-row">
+        <label>아이디</label>
+        <div class="form-value">{{ user.username }}</div>
+    </div>
 
-            <!-- 2. 성명 -->
-            <div class="form-row">
-                <label>성명</label>
-                <div class="form-value">{{ user.name }}</div>
-            </div>
+    <div class="form-row email-row">
+        <label>이메일</label>
+        <div class="form-inline">
+            <input type="text" name="email_local" class="input-email" value="{{ email_local }}">
+            <span>@</span>
+            <input type="text" name="email_domain_input" id="emailDomainInput"
+                   class="input-email" value="{{ email_domain }}">
 
-            <!-- 3. 생년월일 -->
-            <div class="form-row">
-                <label>생년월일</label>
-                <div class="form-value">{{ birth_display }}</div>
-            </div>
+            <select name="email_domain_select" id="emailDomainSelect" class="select-email">
+                <option value="custom">직접입력</option>
+                <option value="naver.com">naver.com</option>
+                <option value="gmail.com">gmail.com</option>
+                <option value="daum.net">daum.net</option>
+                <option value="nate.com">nate.com</option>
+            </select>
+        </div>
+    </div>
 
-            <!-- 4. 아이디 -->
-            <div class="form-row">
-                <label>아이디</label>
-                <div class="form-value">{{ user.username }}</div>
-            </div>
+    <div class="form-row">
+        <label>연락처</label>
+        <div class="form-inline">
+            <input type="text" name="phone" class="input-text" value="{{ user.phone }}">
+        </div>
+    </div>
 
-            <!-- 5. 이메일 수정 -->
-            <div class="form-row email-row">
-                <label>이메일</label>
-                <div class="form-inline">
-                    <input type="text" name="email_local" class="input-email" value="{{ email_local }}">
-                    <span>@</span>
-                    <input type="text" name="email_domain_input" id="emailDomainInput"
-                           class="input-email" value="{{ email_domain }}">
-
-                    <select name="email_domain_select" id="emailDomainSelect" class="select-email">
-                        <option value="custom">직접입력</option>
-                        <option value="naver.com">naver.com</option>
-                        <option value="gmail.com">gmail.com</option>
-                        <option value="daum.net">daum.net</option>
-                        <option value="nate.com">nate.com</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 6. 연락처 -->
-            <div class="form-row">
-                <label>연락처</label>
-                <div class="form-inline">
-                    <input type="text" name="phone" class="input-text" value="{{ user.phone }}">
-                </div>
-            </div>
-
-            <!-- 7. 버튼 -->
-            <div class="form-buttons">
-                <button type="submit" class="btn btn-primary">수정</button>
-                <button type="button" class="btn btn-secondary" onclick="history.back();">취소</button>
-            </div>
-
-        </form>
-    </section>
-</div>
+    <div class="form-buttons">
+        <button type="submit" class="btn btn-primary">수정</button>
+        <button type="button" class="btn btn-secondary" onclick="history.back();">취소</button>
+    </div>
+</form>
 <script src="{% static 'mypage/js/profile_edit.js' %}"></script>
 {% endblock %}

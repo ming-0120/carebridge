@@ -57,9 +57,10 @@
     - 사용처: QnA 목록 페이지의 제목 (.qna-title)
 */
 .qna-title {
-  font-size: 24px;
+  font-size: 30px;
   font-weight: 700;
-  color: #1B3C73;
+  margin-bottom: 26px;
+  color: #1f2430;
   margin: 0;
 }
 
@@ -260,8 +261,9 @@
 .faq-item p {
   padding: 12px 16px 16px 44px;
   margin: 0;
-  color: #666;
+  color: #000000;
   line-height: 1.6;
+  background-color: #F8F8F8;
 }
 
 /* 스크롤바 스타일링 (웹킷 브라우저) */
