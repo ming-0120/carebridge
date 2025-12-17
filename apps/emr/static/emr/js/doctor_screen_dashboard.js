@@ -18,6 +18,7 @@ window.onload = function() {
     var calendarEl = document.getElementById('calendar');
     var calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        fixedWeekCount: false,
         dateClick: async function(info) {
             if (!selectedDate) {
                 selectedDate = info.dayEl
