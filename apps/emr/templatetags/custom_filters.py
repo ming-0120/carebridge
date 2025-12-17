@@ -61,3 +61,20 @@ def calculate_age_from_rrn(rrn_string):
 
   
     return today.year - birth_year + 1
+
+
+@register.filter
+def mask_last_char(name):
+    """
+    이름의 마지막 글자를 마스킹하는 필터
+    예: "김철수" → "김철*", "홍길동" → "홍길*", "이름" → "이*"
+    """
+    if not name:
+        return ""
+    
+    name = str(name)
+    
+    if len(name) == 1:
+        return "*"
+    else:
+        return name[:-1] + "*"

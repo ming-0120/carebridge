@@ -472,11 +472,12 @@ def medical_record_creation(request):
 
     # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
+    user_id = request.session.get("user_id")
 
     # 2) 환자(Users), 의사(Doctors) 객체 조회
     #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
     patient = Users.objects.get(user_id=patient_id)
-    doctor = Doctors.objects.get(doctor_id=68)
+    doctor = Doctors.objects.get(user_id=user_id)
 
     # 3) 화면용 파생 값 세팅
     #    주민번호 → 생년월일
