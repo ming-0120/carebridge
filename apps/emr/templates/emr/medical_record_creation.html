@@ -41,10 +41,20 @@
 
             <div class="middle-content-grid">
 
-                <!-- 빈 박스 (기능 추가 예정) -->
-                <div class="card placeholder-card">
-                    <div class="section-title">기능 추가 예정</div>
-                    <div class="placeholder-text">빈 박스(기능 추가 예정)</div>
+                <!-- 예약 시 환자가 입력한 증상 메모(읽기 전용) -->
+                <div class="card patient-note-card">
+                    <div class="section-title">환자 증상 메모</div>
+                    <div class="note-meta">
+                        <span class="note-meta-label">예약</span>
+                        {% if reservation_slot_date and reservation_slot_time %}
+                            <span>{{ reservation_slot_date }} {{ reservation_slot_time|time:"H:i" }}</span>
+                        {% elif reservation_slot_date %}
+                            <span>{{ reservation_slot_date }}</span>
+                        {% else %}
+                            <span>-</span>
+                        {% endif %}
+                    </div>
+                    <textarea class="readonly-textarea" readonly aria-label="환자 증상 메모(읽기 전용)">{% if reservation_notes %}{{ reservation_notes }}{% else %}입력 없음{% endif %}</textarea>
                 </div>
 
                 <!-- 진료기록 -->

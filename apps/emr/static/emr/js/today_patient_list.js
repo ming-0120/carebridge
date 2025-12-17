@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-async function loadPatientSummary(patientId) {
+async function loadPatientSummary(patientId, slotId) {
     const url = `/mstaff/api/patient/summary/?patient_id=${patientId}`;
     const res = await fetch(url);
     const data = await res.json();
@@ -44,7 +44,7 @@ async function loadPatientSummary(patientId) {
             </div>
 
             <div class="action-buttons">
-                <button class="btn-create" onclick="goToMedicalRecord(${patientId})">진료 기록 작성</button>
+                <button class="btn-create" onclick="goToMedicalRecord(${patientId}, ${slotId || "null"})">진료 기록 작성</button>
                 <button class="btn-history" onclick="goToHistory(${patientId})">이전 진료 기록</button>
             </div>
         </div>
@@ -79,7 +79,7 @@ async function loadPatients(doctorId, date) {
         `;
 
         tr.onclick = () => {
-            loadPatientSummary(u.user_id);
+            loadPatientSummary(u.user_id, s.slot_id);
         };
 
         tbody.appendChild(tr);
@@ -162,8 +162,14 @@ function formatToKoreanDateTime(dateTimeStr) {
     return `${formattedDate} ${hh}시 ${mm}분`;
 }
 
-function goToMedicalRecord(patientId) {
-    window.location.href = `/mstaff/medical_record/?patient_id=${patientId}`;
+function goToMedicalRecord(patientId, slotId) {
+    const params = new URLSearchParams();
+    params.set("patient_id", patientId);
+    if (slotId) params.set("slot_id", slotId);
+    if (doctorId) params.set("doctor_id", doctorId);
+    if (date) params.set("date", date);
+
+    window.location.href = `/mstaff/medical_record/?${params.toString()}`;
 }
 
 function goToHistory(patientId) {

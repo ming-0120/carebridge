@@ -45,7 +45,7 @@ window.onload = function() {
                 `)
                 for (d of datas.users) {
                     result.push(`
-                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
+                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}', '${d.slot.slot_id}', '${d.slot.slot_date}');">
                             <h4>성명: ${d.user.name}</h4>
                             <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                             <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -102,7 +102,7 @@ window.onload = function() {
                         `)
                         for (d of datas.users) {
                             result.push(`
-                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
+                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}', '${d.slot.slot_id}', '${d.slot.slot_date}');">
                                     <h4>성명: ${d.user.name}</h4>
                                     <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
                                     <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
@@ -203,8 +203,12 @@ function rrnToBirthdate(regNum) {
     return birthDate;
 }
 
-function toMedicalRecord(patient_id) {
-    window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
+function toMedicalRecord(patient_id, slot_id, slot_date) {
+    const params = new URLSearchParams();
+    params.set("patient_id", patient_id);
+    if (slot_id) params.set("slot_id", slot_id);
+    if (slot_date) params.set("date", slot_date);
+    window.location.href = `/mstaff/medical_record/?${params.toString()}`;
 }
 
 function toTodayPatient(doctor_id, today) {

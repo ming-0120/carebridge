@@ -473,6 +473,9 @@ def medical_record_creation(request):
     # 1) 쿼리스트링에서 patient_id 가져오기
     patient_id = request.GET.get("patient_id")
     user_id = request.session.get("user_id")
+    slot_id = request.GET.get("slot_id")
+    reservation_id = request.GET.get("reservation_id")
+    reservation_date_str = request.GET.get("date")
 
     # 2) 환자(Users), 의사(Doctors) 객체 조회
     #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
@@ -513,6 +516,41 @@ def medical_record_creation(request):
 
     now_dt = timezone.now()
 
+    def _parse_iso_date(date_str: str | None):
+        if not date_str:
+            return None
+        try:
+            return date.fromisoformat(date_str)
+        except Exception:
+            return None
+
+    # 예약 시 환자가 입력한 증상 메모(Reservations.notes) 조회
+    reservation_notes = ""
+    reservation_slot_date = None
+    reservation_slot_time = None
+
+    try:
+        reservation_qs = (
+            Reservations.objects.select_related("slot")
+            .filter(user_id=patient.user_id, slot__doctor_id=doctor.doctor_id)
+        )
+
+        if reservation_id:
+            reservation_qs = reservation_qs.filter(reservation_id=reservation_id)
+        elif slot_id:
+            reservation_qs = reservation_qs.filter(slot_id=slot_id)
+        else:
+            target_date = _parse_iso_date(reservation_date_str) or localdate()
+            reservation_qs = reservation_qs.filter(slot__slot_date=target_date)
+
+        reservation = reservation_qs.order_by("slot__slot_date", "slot__start_time").first()
+        if reservation:
+            reservation_notes = (reservation.notes or "").strip()
+            reservation_slot_date = getattr(reservation.slot, "slot_date", None)
+            reservation_slot_time = getattr(reservation.slot, "start_time", None)
+    except Exception:
+        pass
+
     context = {
         "patient": patient,
         "doctor": doctor,          # doctor.doctor_id, doctor.hos_id 템플릿에서 사용
@@ -522,6 +560,9 @@ def medical_record_creation(request):
         "department": department,
         "doctor_name": doctor_name,
         "now": now_dt,
+        "reservation_notes": reservation_notes,
+        "reservation_slot_date": reservation_slot_date,
+        "reservation_slot_time": reservation_slot_time,
     }
 
     return render(request, 'emr/medical_record_creation.html', context)
