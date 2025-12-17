@@ -18,13 +18,16 @@
             <div class="circle {{ color_class }}">
                 <svg>
                     {# 배경 원: available == 0이면 색상으로, 아니면 회색으로 표시 #}
+                    {# 상세 모달과 동일한 로직: available == 0이고 red일 때만 빨간색 #}
                     <circle class="meter-bg"
                         cx="24" cy="24" r="20"
                         stroke-dasharray="125.66, 125.66"
                         {% if available == 0 and color_class == "red" %}
                             stroke="#E53935"
+                            style="stroke: #E53935 !important;"
                         {% else %}
                             stroke="#e0e0e0"
+                            style="stroke: #e0e0e0 !important;"
                         {% endif %}
                         fill="none"
                         stroke-width="4"
