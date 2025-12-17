@@ -274,7 +274,6 @@ def doctor_slots_api(request):
     slots = TimeSlots.objects.filter(
         doctor_id=doctor_id,
         slot_date=target_date,
-        status="OPEN",   # OPEN 슬롯만
     ).order_by("start_time")
 
     am = []
@@ -285,6 +284,7 @@ def doctor_slots_api(request):
             "slot_id": s.slot_id,
             "start": s.start_time.strftime("%H:%M"),
             "end": s.end_time.strftime("%H:%M"),
+            "status": s.status,
         }
         if s.start_time.hour < 12:
             am.append(data)

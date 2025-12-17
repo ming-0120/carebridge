@@ -64,14 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         });
     }
-// Django에서 넘어온 HOLIDAYS 활용
-const holidayEvents = HOLIDAYS.map(h => ({
-    title: h.name,
-    start: h.date,
-    allDay: true,
-    display: "background",  // 날짜 배경 표시
-    // color: "#ffe6e6",    // 필요하면 색 지정 가능
-}));
 // ============================
 // 2. FullCalendar 초기화
 // ============================
@@ -98,7 +90,12 @@ if (calendarEl) {
 
         return isWeekend || isOutOfRange;
     }
-
+    function toYmdLocal(dateObj) {
+      const y = dateObj.getFullYear();
+      const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const d = String(dateObj.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: "dayGridMonth",   // 한달 전체 보이기
         locale: "ko",
@@ -113,7 +110,7 @@ if (calendarEl) {
             const doctorId = doctorIdInput ? doctorIdInput.value : null;
 
             if (!doctorId) {
-                successCallback(holidayEvents);
+                successCallback([]);
                 return;
             }
 
@@ -126,26 +123,24 @@ if (calendarEl) {
             fetch(`/reservations/api/doctor-reservations/?${params.toString()}`)
                 .then(res => res.json())
                 .then(data => {
-                    successCallback([...holidayEvents, ...data]);
+                    successCallback(data);
                 })
                 .catch(err => {
                     console.error("events load error", err);
-                    successCallback(holidayEvents);
+                    successCallback([]);
                     failureCallback(err);
                 });
         },
 
         // ★ 각 날짜 셀이 렌더링될 때 회색 처리
-        dayCellDidMount: function (info) {
-            const dateObj = info.date;
-            const clickedDate = info.dateStr;
+       dayCellDidMount: function (info) {
+          const dateStr = toYmdLocal(info.date); // ✅ 로컬 날짜
+          const isHoliday = HOLIDAYS.some(h => String(h.date).slice(0, 10) === dateStr);
 
-            const disabled = isDisabledDate(dateObj);
-            const isHoliday = HOLIDAYS.some(h => h.date === clickedDate);
+          const disabled = isDisabledDate(info.date);
 
-            if (disabled || isHoliday) {
-                info.el.classList.add("fc-day-disabled");
-            }
+          if (disabled || isHoliday) info.el.classList.add("fc-day-disabled");
+          if (isHoliday) info.el.classList.add("is-holiday");
         },
 
         dateClick: function (info) {
@@ -159,7 +154,7 @@ if (calendarEl) {
             }
 
             // 2) 공휴일 차단
-            const isHoliday = HOLIDAYS.some(h => h.date === clickedDate);
+           const isHoliday = HOLIDAYS.some(h => String(h.date).slice(0,10) === clickedDate);
             if (isHoliday) {
                 alert("공휴일에는 예약이 불가합니다.");
                 return;
@@ -205,72 +200,72 @@ if (calendarEl) {
     // 3. 슬롯 로드 + 버튼 렌더
     // ============================
     function loadSlots(doctorId, dateStr) {
-        const params = new URLSearchParams({
-            doctor_id: doctorId,
-            date: dateStr,
+    const params = new URLSearchParams({
+        doctor_id: doctorId,
+        date: dateStr,
+    });
+
+    fetch(`/reservations/api/doctor-slots/?${params.toString()}`)
+        .then(res => res.json())
+        .then(data => {
+            console.log("slots data:", data);
+
+            const amRow = document.querySelector(".time-select .am-row");
+            const pmRow = document.querySelector(".time-select .pm-row");
+            const selectedSlotInput = document.getElementById("selectedSlotId");
+
+            if (!amRow || !pmRow || !selectedSlotInput) return;
+
+            // 초기화
+            amRow.innerHTML = "";
+            pmRow.innerHTML = "";
+            selectedSlotInput.value = "";
+
+            // ✅ 네 응답 기준: status가 "CLOSED"면 닫힘
+            const isClosed = (slot) => slot.status === "CLOSED";
+
+            const makeSlotButton = (slot) => {
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "time-btn";
+                btn.dataset.slotId = slot.slot_id;
+                btn.textContent = `${slot.start} ~ ${slot.end}`;
+
+                if (isClosed(slot)) {
+                    btn.disabled = true;
+                    btn.classList.add("time-btn-disabled");
+                    return btn; // 클릭 이벤트 등록 안 함
+                }
+
+                btn.addEventListener("click", () => {
+                    document.querySelectorAll(".time-btn")
+                        .forEach(b => b.classList.remove("selected"));
+
+                    btn.classList.add("selected");
+                    selectedSlotInput.value = slot.slot_id;
+                });
+
+                return btn;
+            };
+
+            // 오전 슬롯
+            if (Array.isArray(data.am) && data.am.length > 0) {
+                data.am.forEach(s => amRow.appendChild(makeSlotButton(s)));
+            } else {
+                amRow.textContent = "오전 예약 가능 시간이 없습니다.";
+            }
+
+            // 오후 슬롯
+            if (Array.isArray(data.pm) && data.pm.length > 0) {
+                data.pm.forEach(s => pmRow.appendChild(makeSlotButton(s)));
+            } else {
+                pmRow.textContent = "오후 예약 가능 시간이 없습니다.";
+            }
+        })
+        .catch(err => {
+            console.error("slots load error", err);
         });
+}
 
-        fetch(`/reservations/api/doctor-slots/?${params.toString()}`)
-            .then(res => res.json())
-            .then(data => {
-                console.log("slots data:", data);
-
-                const amRow = document.querySelector(".time-select .am-row");
-                const pmRow = document.querySelector(".time-select .pm-row");
-                const selectedSlotInput = document.getElementById("selectedSlotId");
-
-                if (!amRow || !pmRow || !selectedSlotInput) return;
-
-                amRow.innerHTML = "";
-                pmRow.innerHTML = "";
-
-                // 오전 슬롯
-                if (data.am && data.am.length > 0) {
-                    data.am.forEach(s => {
-                        const btn = document.createElement("button");
-                        btn.type = "button";
-                        btn.className = "time-btn";
-                        btn.dataset.slotId = s.slot_id;
-                        btn.textContent = `${s.start} ~ ${s.end}`;
-
-                        btn.addEventListener("click", () => {
-                            document.querySelectorAll(".time-btn")
-                                .forEach(b => b.classList.remove("selected"));
-                            btn.classList.add("selected");
-                            selectedSlotInput.value = s.slot_id;
-                        });
-
-                        amRow.appendChild(btn);
-                    });
-                } else {
-                    amRow.textContent = "오전 예약 가능 시간이 없습니다.";
-                }
-
-                // 오후 슬롯
-                if (data.pm && data.pm.length > 0) {
-                    data.pm.forEach(s => {
-                        const btn = document.createElement("button");
-                        btn.type = "button";
-                        btn.className = "time-btn";
-                        btn.dataset.slotId = s.slot_id;
-                        btn.textContent = `${s.start} ~ ${s.end}`;
-
-                        btn.addEventListener("click", () => {
-                            document.querySelectorAll(".time-btn")
-                                .forEach(b => b.classList.remove("selected"));
-                            btn.classList.add("selected");
-                            selectedSlotInput.value = s.slot_id;
-                        });
-
-                        pmRow.appendChild(btn);
-                    });
-                } else {
-                    pmRow.textContent = "오후 예약 가능 시간이 없습니다.";
-                }
-            })
-            .catch(err => {
-                console.error("slots load error", err);
-            });
-    }
 });
 

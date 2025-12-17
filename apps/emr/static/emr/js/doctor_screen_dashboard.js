@@ -1,218 +1,235 @@
-let selectedDate = undefined;
-let currentYear = new Date().getFullYear();
-function saveMemo() {
-    const memoContent = document.getElementById('doctorMemo').value;
+// static/reservations/js/reservation_page.js
+document.addEventListener("DOMContentLoaded", () => {
+  // ============================
+  // 1) 의사 선택
+  // ============================
+  const doctorCards = document.querySelectorAll(".doctor-card");
+  const doctorIdInput = document.getElementById("selectedDoctorId");
 
-    const url = "/mstaff/set_doctor_memo/";
-    const formData = new FormData();
-    formData.append('memo', memoContent);
-    formData.append('doctor_id', doctor_id);
-    fetch(url, {
-        method: 'POST',
-        body: formData,
+  if (doctorCards.length && doctorIdInput) {
+    doctorCards.forEach((card) => {
+      const btn = card.querySelector(".btn-select-doctor");
+      if (!btn) return;
+
+      btn.addEventListener("click", () => {
+        doctorCards.forEach((c) => c.classList.remove("selected"));
+        card.classList.add("selected");
+
+        const doctorId = card.dataset.doctorId;
+        doctorIdInput.value = doctorId || "";
+
+        // 의사 바뀌면 달력 이벤트 새로고침
+        if (window.calendar) {
+          window.calendar.refetchEvents();
+        }
+      });
     });
-}
+  }
 
-window.onload = function() {
-    // console.log(JSON.parse(holidays))
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        dateClick: async function(info) {
-            if (!selectedDate) {
-                selectedDate = info.dayEl
-            } else {
-                selectedDate.style.backgroundColor = '#ffffff'
-                selectedDate = info.dayEl
-            }
+  // ============================
+  // 2) FullCalendar 초기화
+  // ============================
+  const calendarEl = document.getElementById("calendar");
+  const selectedDateInput = document.getElementById("selectedDate");
 
-            if (document.getElementsByClassName('fc-day-today')[0]) {
-                document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)'
-            }
-            info.dayEl.style.backgroundColor = '#2c6cc5aa';
-            console.log(info.dateStr);
+  if (!calendarEl) return;
 
-            const url = `/mstaff/get_reservation_medical_record/?date=${info.dateStr}&doctor_id=${doctor_id}`;
-            response = await fetch(url);
+  // 오늘 ~ 오늘+14일까지만 "예약 가능" 범위
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-            const datas = await response.json();
+  const limit = new Date(today);
+  limit.setDate(limit.getDate() + 14); // 오늘 포함 2주
 
-            if (response.status == 200) {
-                const result = [];
-                result.push(`
-                    <h3>예약 환자 (${datas.users.length}명)</h3>    
-                `)
-                for (d of datas.users) {
-                    result.push(`
-                        <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
-                            <h4>성명: ${d.user.name}</h4>
-                            <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
-                            <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
-                        </div>    
-                    `)
-                }
-                $('#patinetList').html(result.join('\n'));
-            }
-        },
-        selectable: false,
-        selectOverlap: false,
-        height: 400,
-        dayCellClassNames: function(arg) {
-            const day = arg.date.getDay();
-            const y = arg.date.getFullYear();
-            const m = String(arg.date.getMonth() + 1).padStart(2, "0");
-            const d = String(arg.date.getDate()).padStart(2, "0");
-            const dateStr = `${y}-${m}-${d}`;
-            const holiday = holidays && holidays.find((h) => h.date == dateStr);
-            if (holiday) return ["fc-holiday-cell"];
-            return [];
-        },
-        locale: "ko",
-        customButtons: {
-            // ⭐ 'myTodayButton'이라는 사용자 정의 버튼 정의
-            myTodayButton: {
-                text: '오늘', // 버튼에 표시될 텍스트
-                click: async function() {
-                    calendar.today(); 
+  // 예약 가능 여부 판별
+  function isOutOfRangeOrPast(dateObj) {
+    const d = new Date(dateObj);
+    d.setHours(0, 0, 0, 0);
+    return d < today || d > limit;
+  }
 
-                    if (selectedDate) {
-                        selectedDate.style.backgroundColor = '#ffffff';
-                        selectedDate = undefined;
-                    }
+  function isWeekend(dateObj) {
+    const day = dateObj.getDay(); // 0:일, 6:토
+    return day === 0 || day === 6;
+  }
 
-                    if (document.getElementsByClassName('fc-day-today')[0]) {
-                        document.getElementsByClassName('fc-day-today')[0].style.backgroundColor = 'rgba(255, 220, 40, .15)';
-                    }
-                    const date = new Date();
-                    const year = date.getFullYear();
-                    const month = String(date.getMonth() + 1).padStart(2, '0');
-                    const day = String(date.getDate()).padStart(2, '0');
-                    const today = `${year}-${month}-${day}`;
+  // 날짜를 YYYY-MM-DD로 고정 포맷
+  function toYmd(dateObj) {
+    const y = dateObj.getFullYear();
+    const m = String(dateObj.getMonth() + 1).padStart(2, "0");
+    const d = String(dateObj.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
 
-                    const url = `/mstaff/get_reservation_medical_record/?date=${today}&doctor_id=${doctor_id}`;
-                    response = await fetch(url);
+  function isHolidayDateStr(dateStr) {
+    // HOLIDAYS: [{date: "YYYY-MM-DD", name: "..."}] 형태라고 가정
+    // date가 다른 포맷이면 slice(0,10)로 안전하게 비교
+    return Array.isArray(HOLIDAYS) && HOLIDAYS.some((h) => String(h.date).slice(0, 10) === dateStr);
+  }
 
-                    const datas = await response.json();
+  const calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: "dayGridMonth",
+    locale: "ko",
+    height: "auto",
+    showNonCurrentDates: false,
+    fixedWeekCount: false,
 
-                    if (response.status == 200) {
-                        const result = [];
-                        result.push(`
-                            <h3>예약 환자 (${datas.users.length}명)</h3>    
-                        `)
-                        for (d of datas.users) {
-                            result.push(`
-                                <div class="patient-list-item" onclick="toMedicalRecord('${d.user.user_id}');">
-                                    <h4>성명: ${d.user.name}</h4>
-                                    <p>생년월일: ${rrnToBirthdate(d.user.resident_reg_no)} | 성별: ${d.user.gender == 'F' ? '여' : '남'}</p>
-                                    <p>예약시간: ${d.slot.slot_date} ${d.slot.start_time}</p>
-                                </div>    
-                            `)
-                        }
-                        $('#patinetList').html(result.join('\n'));
-                    }
-                    toTodayPatient(doctor_id, today);
-                }
-            }
-        },
-        headerToolbar: {
-            // ⭐ 내장 'today' 대신 사용자 정의 버튼 이름 사용
-            left: 'title', 
-            center: '',
-            right: 'myTodayButton prev,next',
-        },
+    // 의사별 예약 이벤트
+    events: function (info, successCallback, failureCallback) {
+      const doctorId = doctorIdInput ? doctorIdInput.value : null;
+
+      if (!doctorId) {
+        successCallback([]);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        doctor_id: doctorId,
+        start: info.startStr,
+        end: info.endStr,
+      });
+
+      fetch(`/reservations/api/doctor-reservations/?${params.toString()}`)
+        .then((res) => res.json())
+        .then((data) => {
+          successCallback(data);
+        })
+        .catch((err) => {
+          console.error("events load error", err);
+          successCallback([]); // 공휴일 이벤트를 그리지 않음
+          failureCallback(err);
+        });
+    },
+
+    // ✅ mstaff 방식: 날짜 셀 클래스 부여
+    dayCellClassNames: function (arg) {
+      const dateStr = toYmd(arg.date);
+
+      const classes = [];
+      const holiday = isHolidayDateStr(dateStr);
+
+      // 공휴일은 빨강 표시용 클래스
+      if (holiday) classes.push("fc-holiday-cell");
+
+      // 비활성화(회색 처리) 대상: 과거/범위 밖 + 주말 + 공휴일
+      // (기존 정책 그대로: 주말도 예약 불가)
+      const disabled = isOutOfRangeOrPast(arg.date) || isWeekend(arg.date) || holiday;
+      if (disabled) classes.push("fc-day-disabled");
+
+      return classes;
+    },
+
+    dateClick: function (info) {
+      const clickedDateStr = info.dateStr; // 보통 YYYY-MM-DD
+      const clickedDateObj = info.date;
+
+      // 0) 의사 선택 여부 확인
+      const doctorId = doctorIdInput ? doctorIdInput.value : null;
+      if (!doctorId) {
+        alert("먼저 의사를 선택해 주세요.");
+        return;
+      }
+
+      // 1) 과거/범위 밖 차단
+      if (isOutOfRangeOrPast(clickedDateObj)) {
+        alert("해당 날짜에는 예약이 불가합니다.");
+        return;
+      }
+
+      // 2) 주말 차단(기존 정책 유지)
+      if (isWeekend(clickedDateObj)) {
+        alert("해당 날짜에는 예약이 불가합니다.");
+        return;
+      }
+
+      // 3) 공휴일 차단
+      if (isHolidayDateStr(clickedDateStr)) {
+        alert("공휴일에는 예약이 불가합니다.");
+        return;
+      }
+
+      // 4) 날짜 선택 표시
+      document.querySelectorAll(".fc-daygrid-day").forEach((dayCell) => {
+        dayCell.classList.remove("fc-day-selected");
+      });
+
+      const cell = document.querySelector(`.fc-daygrid-day[data-date="${clickedDateStr}"]`);
+      if (cell) cell.classList.add("fc-day-selected");
+
+      // 5) 선택 날짜 저장
+      if (selectedDateInput) selectedDateInput.value = clickedDateStr;
+
+      // 6) 타임 슬롯 로드
+      loadSlots(doctorId, clickedDateStr);
+    },
+  });
+
+  calendar.render();
+  window.calendar = calendar;
+
+  // ============================
+  // 3) 슬롯 로드 + 버튼 렌더
+  // ============================
+  function loadSlots(doctorId, dateStr) {
+    const params = new URLSearchParams({
+      doctor_id: doctorId,
+      date: dateStr,
     });
-    calendar.render();
-}
 
-function getLastSevenDays() {
-    const dates = [];
-    
-    // 7일간 반복 (0부터 6까지 총 7번)
-    for (let i = 0; i < 7; i++) {
-        // 1. 현재 날짜 객체를 생성합니다. (루프가 돌 때마다 현재 시점을 복사)
-        const d = new Date();
-        
-        // 2. 현재 날짜에서 i일 만큼 뺌 (i=0: 오늘, i=1: 어제, ..., i=6: 6일 전)
-        d.setDate(d.getDate() - i); 
+    fetch(`/reservations/api/doctor-slots/?${params.toString()}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const amRow = document.querySelector(".time-select .am-row");
+        const pmRow = document.querySelector(".time-select .pm-row");
+        const selectedSlotInput = document.getElementById("selectedSlotId");
 
-        // 3. YYYY-MM-DD 형식으로 포맷팅
-        const year = d.getFullYear();
-        // getMonth()는 0부터 시작하므로 +1을 해주고, padStart로 두 자릿수를 맞춥니다.
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
+        if (!amRow || !pmRow || !selectedSlotInput) return;
 
-        // 4. 배열의 맨 뒤(i=0)가 아닌 맨 앞(i=6)부터 채워서 날짜 순서를 오름차순으로 맞춥니다.
-        // 예를 들어, 12월 8일인 경우: ['12-02', '12-03', ..., '12-08'] 순서로 저장됩니다.
-        dates.unshift(`${year}-${month}-${day}`);
-    }
+        // 초기화
+        amRow.innerHTML = "";
+        pmRow.innerHTML = "";
+        selectedSlotInput.value = "";
 
-    return dates;
-}
+        const isClosed = (slot) => slot.status === "CLOSED";
 
-function rrnToBirthdate(regNum) {
-    // 1. 입력된 주민등록번호에서 하이픈(-) 등 비숫자 문자 제거 및 정리
-    let regNumStr = String(regNum).replace(/[^0-9]/g, '').trim();
+        const makeSlotButton = (slot) => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "time-btn";
+          btn.dataset.slotId = slot.slot_id;
+          btn.textContent = `${slot.start} ~ ${slot.end}`;
 
-    // 2. 입력값 유효성 검사 (최소 7자리 확인)
-    if (regNumStr.length < 7) {
-        return "정보 오류: 주민등록번호는 최소 7자리여야 합니다.";
-    } 
+          if (isClosed(slot)) {
+            btn.disabled = true;
+            btn.classList.add("time-btn-disabled");
+            return btn;
+          }
 
-    // 추출에 사용할 정확히 7자리만 선택
-    regNumStr = regNumStr.substring(0, 7);
+          btn.addEventListener("click", () => {
+            document.querySelectorAll(".time-btn").forEach((b) => b.classList.remove("selected"));
+            btn.classList.add("selected");
+            selectedSlotInput.value = slot.slot_id;
+          });
 
-    // 3. 생년월일 부분 (앞 6자리)
-    const yy = regNumStr.substring(0, 2); // 년도 끝 두 자리
-    const mm = regNumStr.substring(2, 4); // 월
-    const dd = regNumStr.substring(4, 6); // 일
-    
-    // 4. 성별/세기 구분 번호 (7번째 자리)
-    const centuryDigit = regNumStr.charAt(6); 
-    let yearPrefix = '';
+          return btn;
+        };
 
-    // 5. 세기 결정
-    switch (centuryDigit) {
-        // 1900년대 출생 남성/여성 (1, 2) 또는 외국인 (7, 8)
-        case '1':
-        case '2':
-        case '7':
-        case '8':
-            yearPrefix = '19';
-            break;
-        // 2000년대 출생 남성/여성 (3, 4) 또는 외국인 (5, 6)
-        case '3':
-        case '4':
-        case '5':
-        case '6':
-            yearPrefix = '20';
-            break;
-        // 1800년대 출생 남성/여성 (9, 0) - 거의 사용되지 않음
-        case '9':
-        case '0':
-            yearPrefix = '18';
-            break;
-        default:
-            return "세기 오류: 유효하지 않은 7번째 자리 번호입니다.";
-    }
-    
-    // 6. 최종 생년월일 문자열 조합
-    const fullYear = yearPrefix + yy;
-    const birthDate = `${fullYear}-${mm}-${dd}`;
-    
-    return birthDate;
-}
+        // 오전
+        if (Array.isArray(data.am) && data.am.length > 0) {
+          data.am.forEach((s) => amRow.appendChild(makeSlotButton(s)));
+        } else {
+          amRow.textContent = "오전 예약 가능 시간이 없습니다.";
+        }
 
-function toMedicalRecord(patient_id) {
-    window.location.href = `/mstaff/medical_record/?patient_id=${patient_id}`;
-}
-
-function toTodayPatient(doctor_id, today) {
-    window.location.href = `/mstaff/today_list/?doctor_id=${doctor_id}&date=${today}`;
-}
-
-function toPatientSearch() {
-    const query = $('#searchText').val();
-    const keyword = (query || "").trim();
-    const qs = keyword ? `?keyword=${encodeURIComponent(keyword)}` : "";
-    window.location.href = `/mstaff/patient_search_list/${qs}`;
-}
+        // 오후
+        if (Array.isArray(data.pm) && data.pm.length > 0) {
+          data.pm.forEach((s) => pmRow.appendChild(makeSlotButton(s)));
+        } else {
+          pmRow.textContent = "오후 예약 가능 시간이 없습니다.";
+        }
+      })
+      .catch((err) => {
+        console.error("slots load error", err);
+      });
+  }
+});
