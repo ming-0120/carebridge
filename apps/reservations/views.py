@@ -31,11 +31,12 @@ def haversine(lat1, lon1, lat2, lon2):
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
-def main_view(request):        
+def main_view(request):
     user_id = request.session.get("user_id")
     if not user_id:
-            login_url = reverse("accounts:login")
-            return redirect(f"{login_url}?next={request.get_full_path()}")
+        login_url = reverse("accounts:login")
+        return redirect(f"{login_url}?next={request.get_full_path()}")
+
     get_dept_code = request.GET.get("dept_id")
     active_dept = None
 
@@ -45,27 +46,32 @@ def main_view(request):
             active_dept = dept_obj.dep_name
         except Department.DoesNotExist:
             active_dept = None
-        
+
     user_lat = float(request.session.get("user_lat", 37.4979))
     user_lon = float(request.session.get("user_lon", 127.0276))
+
+    # ✅ 0) 로그인 유저의 "병원 즐겨찾기" hos_id 목록을 set으로 준비
+    favorite_ids = set(
+        UserFavorite.objects.filter(user_id=user_id, er__isnull=True)
+        .values_list("hos_id", flat=True)
+    )
 
     doctors = Doctors.objects.select_related("hos", "dep")
 
     grouped = {}
 
     for d in doctors:
-        h = d.hos 
+        h = d.hos
         dept_name = d.dep.dep_name
         dept_code = d.dep.dep_code
-        hos_lat = h.lat 
-        hos_lon = h.lng 
+        hos_lat = h.lat
+        hos_lon = h.lng
 
         if hos_lat is None or hos_lon is None:
             continue
 
         distance = haversine(user_lat, user_lon, float(hos_lat), float(hos_lon))
 
-        # 과 딕셔너리 초기화
         if dept_name not in grouped:
             grouped[dept_name] = {}
 
@@ -79,14 +85,17 @@ def main_view(request):
                 "id": h.hos_id,
                 "name": h.name,
                 "dept": dept_name,
-                "dept_code":dept_code,
+                "dept_code": dept_code,
                 "lat": float(hos_lat),
                 "lng": float(hos_lon),
                 "distance": distance,
                 "address": getattr(h, "address", ""),
                 "tel": getattr(h, "tel", ""),
-                "sggu":h.sggu,
+                "sggu": h.sggu,
                 "rating": h.rating,
+
+                # ✅ 1) 추가: 즐겨찾기 여부 (user_favorite에 hos_id가 있으면 True)
+                "is_favorite": (h.hos_id in favorite_ids),
             }
 
     result_by_dept = {}
@@ -96,7 +105,8 @@ def main_view(request):
         result_by_dept[dept_name] = hospitals[:5]
 
     context = {
-        "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder),
+        # ✅ 2) ensure_ascii=False 권장(한글 깨짐 방지). DjangoJSONEncoder는 유지
+        "hospital_json": json.dumps(result_by_dept, cls=DjangoJSONEncoder, ensure_ascii=False),
         "user_lat": user_lat,
         "user_lon": user_lon,
         "active_dept": active_dept,

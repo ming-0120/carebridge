@@ -14,6 +14,7 @@ body {
   margin: 0 auto;
   padding: 40px 24px;
   background: #ffffff;
+  padding-bottom: 120px;
 }
 
 /* 제목 영역 */
@@ -125,7 +126,7 @@ body {
 
 /* 병원 카드: 뉴스 카드 스타일로 */
 .hospital-card {
-  min-width: 260px;
+  max-width: 260px;
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   background: #ffffff;
@@ -151,7 +152,7 @@ body {
 .rating {
   font-size: 12px;
   margin-bottom: 8px;
-  color: #e1e168;
+  color: #ffb300;
 }
 
 .hospital-desc {
@@ -228,7 +229,9 @@ body {
   background-color: #ffffff;
   color: #111827;
 }
-
+.modal-rating {
+  color: #ffb300 !important;
+}
 .modal-footer {
   display: flex;
   justify-content: center;
@@ -275,5 +278,91 @@ body {
   .modal-dialog {
     min-width: auto;
     width: calc(100% - 32px);
+  }
+}
+/* =========================
+   Sticky Footer (최종본)
+   ========================= */
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+/* body를 flex 컨테이너로 */
+.reservation-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 헤더가 flex 아이템으로 들어가므로 flex-shrink: 0 설정 */
+.reservation-body > .header {
+  flex-shrink: 0;
+}
+
+/* 실제 콘텐츠 영역 */
+.reservation-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* =========================
+   Footer (페이지 전용)
+   ========================= */
+
+/* Footer 기본 스타일 (먼저 정의) */
+.footer {
+  width: 100%;
+  background: #2a2a2a;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* 핵심: footer를 하단에 고정 - !important로 우선순위 보장 */
+.reservation-body .footer {
+  flex-shrink: 0 !important;
+  margin-top: auto !important;
+  width: 100%;
+}
+
+/* footer 내부 컨테이너 */
+.footer-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 40px 24px 30px;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.footer-brand-name {
+  font-size: 22px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 18px;
+}
+
+.footer-info-line {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c7c7c7;
+}
+
+.footer-copyright {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #444;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .footer-container {
+    padding: 32px 16px 24px;
+  }
+
+  .footer-brand-name {
+    font-size: 20px;
   }
 }

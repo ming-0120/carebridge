@@ -720,7 +720,7 @@
 /* 카드 제목 (검정색) */
 .service-cards-container .info-card h3 {
   margin: 0 0 15px;
-  font-size: 22px;
+  font-size: 36px;
   font-weight: 700;
   color: #000; /* 검정색 */
 }
@@ -827,6 +827,7 @@
 }
 
 .service-item-4 {
+  padding-bottom:120px;
   background: #FFFFFF; 
 }
 
