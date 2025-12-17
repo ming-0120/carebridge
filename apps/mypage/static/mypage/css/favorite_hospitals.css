@@ -93,3 +93,26 @@
 .favorite-star:hover {
     color: #d79e00;
 }
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+    .fav-hospital-card {
+        padding: 12px 14px;
+        border-radius: 12px;
+    }
+
+    .fav-hospital-header {
+        flex-wrap: wrap;
+    }
+
+    .memo-modal {
+        min-width: auto;
+        width: 90%;
+        max-width: 400px;
+        padding: 20px;
+    }
+
+    .memo-textarea {
+        font-size: 16px; /* iOS 줌 방지 */
+    }
+}

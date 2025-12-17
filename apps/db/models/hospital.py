@@ -20,7 +20,7 @@ class Hospital(models.Model):
     homepage = models.CharField(max_length=255, null=True, blank=True)        # hospUrl
     estb_date = models.CharField(max_length=20, null=True, blank=True)        # estbDd
     sido = models.CharField(max_length=6, null=True, blank=True)              # sidoCd
-    sggu = models.CharField(max_length=6, null=True, blank=True)              # sgguCd
+    sggu = models.CharField(max_length=20, null=True, blank=True)             # sgguCdNm (구 이름)
     dr_total = models.IntegerField(null=True, blank=True)                     # drTotCnt
 
     class Meta:

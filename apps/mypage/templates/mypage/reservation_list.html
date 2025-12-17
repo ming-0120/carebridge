@@ -3,84 +3,78 @@
 
 {% block mypage_content %}
 <link rel="stylesheet" href="{% static 'mypage/css/reservation_list.css' %}">
- <h2>예약조회</h2>
-<div class="mypage-layout">
+<h2>예약조회</h2>
 
-    <!-- 오른쪽 컨텐츠 -->
-    <section class="mypage-content">
-        <div class="notice">
-            <p>진료예약자는 진료시작 10분 전까지만 예약취소가 가능합니다.</p>
-            <p>진료를 수납하신 경우 온라인으로 예약취소가 불가합니다.</p>
-        </div>        
+<div class="notice">
+    <p>진료예약자는 진료시작 10분 전까지만 예약취소가 가능합니다.</p>
+    <p>진료를 수납하신 경우 온라인으로 예약취소가 불가합니다.</p>
+</div>        
 
-        {% if messages %}
-            <ul class="django-messages">
-                {% for message in messages %}
-                    <li class="{{ message.tags }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
+{% if messages %}
+    <ul class="django-messages">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
 
-        <div class="reservation-table-wrapper">
-            <table class="reservation-table">
-                <thead>
+<div class="reservation-table-wrapper">
+    <table class="reservation-table">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>예약자</th>
+                <th>병원정보</th>
+                <th>담당의</th>
+                <th>예약일시</th>
+                <th>예약취소</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if reservations %}
+                {% for item in reservations %}
+                    {% with r=item.obj %}
                     <tr>
-                        <th>No.</th>
-                        <th>예약자</th>
-                        <th>병원정보</th>
-                        <th>담당의</th>
-                        <th>예약일시</th>
-                        <th>예약취소</th>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ r.user.name }}</td>
+                        <td>
+                          {{ r.slot.doctor.hos.name }}<br>
+                          <small>{{ r.slot.doctor.hos.address }}</small>
+                        </td>
+                        <td>{{ r.slot.doctor.user.name }}</td>
+                        <td>
+                            {{ r.reserved_at|date:"Y년 m월 d일" }}<br>
+                            {{ r.reserved_at|time:"H:i" }} ~
+                            {{ r.reserved_end|time:"H:i" }}
+                        </td>
+                        <td>
+                            {% if item.can_cancel %}
+                                <form action="{% url 'reservation_cancel' r.pk %}"
+                                      method="post"
+                                      class="cancel-form">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-cancel">
+                                        예약취소
+                                    </button>
+                                </form>
+                            {% else %}
+                                <button type="button" class="btn btn-cancel disabled" disabled>
+                                    예약취소
+                                </button>
+                            {% endif %}
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    {% if reservations %}
-                        {% for item in reservations %}
-                            {% with r=item.obj %}
-                            <tr>
-                                <td>{{ forloop.counter }}</td>
-                                <td>{{ r.user.name }}</td>
-                                <td>
-                                  {{ r.slot.doctor.hos.name }}<br>
-                                  <small>{{ r.slot.doctor.hos.address }}</small>
-                                </td>
-                                <td>{{ r.slot.doctor.user.name }}</td>
-                                <td>
-                                    {{ r.reserved_at|date:"Y년 m월 d일" }}<br>
-                                    {{ r.reserved_at|time:"H:i" }} ~
-                                    <!-- {{ r.reserved_end|date:"Y년 m월 d일" }}<br> -->
-                                    {{ r.reserved_end|time:"H:i" }}
-                                </td>
-                                <td>
-                                    {% if item.can_cancel %}
-                                        <form action="{% url 'reservation_cancel' r.pk %}"
-                                              method="post"
-                                              class="cancel-form">
-                                            {% csrf_token %}
-                                            <button type="submit" class="btn btn-cancel">
-                                                예약취소
-                                            </button>
-                                        </form>
-                                    {% else %}
-                                        <button type="button" class="btn btn-cancel disabled" disabled>
-                                            예약취소
-                                        </button>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endwith %}
-                        {% endfor %}
-                    {% else %}
-                        <tr>
-                            <td colspan="6" class="text-center">
-                                최근 3개월 내 예약 내역이 없습니다.
-                            </td>
-                        </tr>
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </section>
+                    {% endwith %}
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">
+                        최근 3개월 내 예약 내역이 없습니다.
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
 </div>
 <script src="{% static 'mypage/js/reservation_list.js' %}"></script>
 {% endblock %}
