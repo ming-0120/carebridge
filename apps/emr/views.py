@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, Http404
 from dotenv import load_dotenv
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
@@ -476,8 +476,18 @@ def medical_record_creation(request):
 
     # 2) 환자(Users), 의사(Doctors) 객체 조회
     #    의사는 지금 전체를 doctor_id=1로 쓰고 있으니 동일하게 통일
-    patient = Users.objects.get(user_id=patient_id)
-    doctor = Doctors.objects.get(user_id=user_id)
+    if not patient_id:
+        raise Http404("patient_id required")
+
+    try:
+        patient = Users.objects.get(user_id=patient_id)
+    except Users.DoesNotExist as exc:
+        raise Http404("patient not found") from exc
+
+    try:
+        doctor = Doctors.objects.select_related("user", "hos", "dep").get(user_id=user_id)
+    except Doctors.DoesNotExist as exc:
+        raise Http404("doctor not found") from exc
 
     # 3) 화면용 파생 값 세팅
     #    주민번호 → 생년월일

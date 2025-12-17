@@ -78,7 +78,7 @@ h2 {
 /* 하단 2열 */
 .bottom-content-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 16px;
   align-items: stretch;
   margin-bottom: 16px;
@@ -104,6 +104,17 @@ h2 {
   margin-bottom: 12px;
   border-bottom: 1px dashed var(--cb-border);
   padding-bottom: 8px;
+}
+
+.placeholder-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.placeholder-text {
+  color: var(--cb-muted);
+  font-weight: 700;
 }
 
 .form-group {

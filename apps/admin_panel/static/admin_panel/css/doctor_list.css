@@ -268,7 +268,136 @@
   box-shadow: inset 3px 0 0 0 #2196F3;
 }
 
+/* 
+  ========= 더미 데이터 관리 버튼 스타일 =========
+  
+  목적: 개발 환경에서 테스트용 더미 의사 데이터를 생성/삭제하는 버튼 스타일
+*/
 
+/* 
+  더미 데이터 버튼 컨테이너 스타일
+*/
+.dummy-data-buttons {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
+/* 전공별 버튼 영역 */
+.dummy-dept-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
+/* 전공별 생성 라벨 */
+.dummy-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-right: 5px;
+}
+
+/* 전공별 버튼 공통 스타일 */
+.btn-dummy-dept {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  color: #fff;
+}
+
+/* 내과 버튼 - 파란색 */
+.btn-dept-im {
+  background-color: #3B82F6;
+  border-color: #3B82F6;
+}
+.btn-dept-im:hover {
+  background-color: #2563EB;
+}
+
+/* 외과 버튼 - 빨간색 */
+.btn-dept-gs {
+  background-color: #EF4444;
+  border-color: #EF4444;
+}
+.btn-dept-gs:hover {
+  background-color: #DC2626;
+}
+
+/* 정형외과 버튼 - 주황색 */
+.btn-dept-or {
+  background-color: #F97316;
+  border-color: #F97316;
+}
+.btn-dept-or:hover {
+  background-color: #EA580C;
+}
+
+/* 소아과 버튼 - 분홍색 */
+.btn-dept-pd {
+  background-color: #EC4899;
+  border-color: #EC4899;
+}
+.btn-dept-pd:hover {
+  background-color: #DB2777;
+}
+
+/* 이비인후과 버튼 - 보라색 */
+.btn-dept-en {
+  background-color: #8B5CF6;
+  border-color: #8B5CF6;
+}
+.btn-dept-en:hover {
+  background-color: #7C3AED;
+}
+
+/* 액션 버튼 영역 (전체 생성, 삭제) */
+.dummy-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* 
+  더미 데이터 버튼 공통 스타일
+*/
+.btn-dummy-create,
+.btn-dummy-delete {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+/* 
+  더미 생성 버튼 스타일 (전체 생성)
+*/
+.btn-dummy-create {
+  background-color: #10B981;
+  color: #fff;
+}
+
+.btn-dummy-create:hover {
+  background-color: #059669;
+}
+
+/* 
+  더미 삭제 버튼 스타일
+*/
+.btn-dummy-delete {
+  background-color: #6B7280;
+  color: #fff;
+}
+
+.btn-dummy-delete:hover {
+  background-color: #4B5563;
+}
 
