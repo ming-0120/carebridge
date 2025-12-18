@@ -44,28 +44,19 @@ document.addEventListener('keydown', function(e) {
 // ===============================
 // 새로고침 감지: beforeunload에서 플래그 설정
 // ===============================
-window.addEventListener("beforeunload", () => {
-  // 페이지를 떠나기 전에 새로고침 플래그 설정
-  // 단, 버튼 클릭이나 위치 정보 새로고침이 아닌 경우만
-  const buttonClick = sessionStorage.getItem("emergency_button_click");
-  const locationRefresh = sessionStorage.getItem("location_refresh");
-  const sessionResetDone = sessionStorage.getItem("session_reset_done");
-  // session 초기화가 진행 중이거나 위치 정보 새로고침이면 플래그를 설정하지 않음 (무한 루프 방지)
-  if (!buttonClick && !locationRefresh && !sessionResetDone) {
-    sessionStorage.setItem("is_refresh", "true");
-  }
-});
+
 
 // ===============================
 // 새로고침 시 저장된 상태 초기화 (위치 정보 및 버튼 클릭 플래그는 제외)
 // ===============================
 window.addEventListener("load", () => {
+  // 먼저 모든 플래그를 변수에 저장 (sessionStorage.clear() 전에)
   const userLat = sessionStorage.getItem("user_lat");
   const userLng = sessionStorage.getItem("user_lng");
   const buttonClick = sessionStorage.getItem("emergency_button_click");
-  const locationRefresh = sessionStorage.getItem("location_refresh");
-  const isRefresh = sessionStorage.getItem("is_refresh");
-  const sessionResetDone = sessionStorage.getItem("session_reset_done");
+  // const locationRefresh = sessionStorage.getItem("location_refresh");
+  // const isRefresh = sessionStorage.getItem("is_refresh");
+  // const sessionResetDone = sessionStorage.getItem("session_reset_done");
   
   // session 초기화가 이미 진행 중이면 아무것도 하지 않음
   if (sessionResetDone) {
@@ -85,18 +76,25 @@ window.addEventListener("load", () => {
     sessionStorage.removeItem("location_refresh");
   }
   
-  // is_refresh 플래그를 즉시 제거 (무한 루프 방지)
-  if (isRefresh) {
-    sessionStorage.removeItem("is_refresh");
+  // 버튼 클릭으로 인한 자동 새로고침인 경우: 플래그 제거만 하고 리턴
+  // (다음 사용자 새로고침 시 초기화되도록 함)
+  if (buttonClick) {
+    // sessionStorage.clear() 전에 필요한 값들 저장
+    sessionStorage.clear();
+    if (userLat) sessionStorage.setItem("user_lat", userLat);
+    if (userLng) sessionStorage.setItem("user_lng", userLng);
+    // emergency_button_click 플래그는 제거 (이미 처리 완료)
+    return;  // 여기서 리턴하여 세션 초기화 로직을 건너뜀
   }
   
-  sessionStorage.clear();
-  if (userLat) sessionStorage.setItem("user_lat", userLat);
-  if (userLng) sessionStorage.setItem("user_lng", userLng);
-  if (buttonClick) sessionStorage.setItem("emergency_button_click", buttonClick);
-  
-  // 새로고침 감지: 버튼 클릭이나 위치 정보 새로고침이 아닌 경우에만 session 초기화
-  if (isRefresh && !buttonClick && !locationRefresh) {
+  // is_refresh 플래그 확인 (이미 변수에 저장되어 있음)
+  // 새로고침 감지: 버튼 클릭이 아닌 경우에만 session 초기화
+  if (isRefresh === "true" && !locationRefresh) {
+    // sessionStorage.clear() 실행 (is_refresh는 이미 변수에 저장됨)
+    sessionStorage.clear();
+    if (userLat) sessionStorage.setItem("user_lat", userLat);
+    if (userLng) sessionStorage.setItem("user_lng", userLng);
+    
     // 초기화 진행 중 플래그 설정 (무한 루프 방지)
     sessionStorage.setItem("session_reset_done", "true");
     
@@ -127,9 +125,11 @@ window.addEventListener("load", () => {
       // 실패 시 플래그 제거 (다음 시도를 위해)
       sessionStorage.removeItem("session_reset_done");
     });
-  } else if (buttonClick) {
-    // 버튼 클릭 플래그 제거 (다음 새로고침을 위해)
-    sessionStorage.removeItem("emergency_button_click");
+  } else {
+    // is_refresh가 없거나 locationRefresh인 경우: 일반 sessionStorage 정리만 수행
+    sessionStorage.clear();
+    if (userLat) sessionStorage.setItem("user_lat", userLat);
+    if (userLng) sessionStorage.setItem("user_lng", userLng);
   }
 });
 
@@ -253,7 +253,7 @@ function renderFilterTags() {
   resetBtn.classList.remove("hidden");
 
   resetBtn.addEventListener("click", () => {
-    // POST 방식으로 모든 필터 초기화
+    // POST 방식으로 모든 설정 초기화 (action: 'reset' 사용)
     fetch('/emergency/update_preferences/', {
       method: 'POST',
       headers: {
@@ -261,9 +261,7 @@ function renderFilterTags() {
         'X-CSRFToken': getCookie('csrftoken')
       },
       body: JSON.stringify({
-        action: 'filter',
-        etype: "",
-        filters: {}
+        action: 'reset'  // 모든 설정 초기화 (지역, 필터, 정렬 모두)
       })
     })
     .then(response => response.json())
@@ -315,3 +313,38 @@ function getCookie(name) {
   }
   return cookieValue;
 }
+
+// =====================================
+// F5 / 새로고침 시 → 서버 session 초기화
+// =====================================
+window.addEventListener("load", () => {
+  const nav = performance.getEntriesByType("navigation")[0];
+
+  // ✅ 버튼 클릭에 의한 reload면 무시
+  const buttonClick = sessionStorage.getItem("emergency_button_click");
+
+  if (nav && nav.type === "reload" && !buttonClick) {
+    fetch('/emergency/update_preferences/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': getCookie('csrftoken')
+      },
+      body: JSON.stringify({ action: 'reset' })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'ok') {
+        window.location.replace(window.location.pathname);
+      }
+    })
+    .catch(err => {
+      console.error('새로고침 초기화 실패:', err);
+    });
+  }
+
+  // ✅ 버튼 클릭 플래그는 1회성 → 여기서 제거
+  if (buttonClick) {
+    sessionStorage.removeItem("emergency_button_click");
+  }
+});
