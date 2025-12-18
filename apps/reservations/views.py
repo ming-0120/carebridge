@@ -242,7 +242,7 @@ def doctor_reservations_api(request):
 
     return JsonResponse(events, safe=False)
 
-def doctor_slots_api(request):
+def doctor_slots_api_override(request):
     """의사 + 날짜에 대한 TimeSlots 리스트 (AM / PM 구분)"""
     doctor_id = request.GET.get("doctor_id")
     date_str = request.GET.get("date")  # YYYY-MM-DD
