@@ -50,7 +50,7 @@ function closeFilterModal() {
 function resetFilter() {
   resetFilterUIOnly();
 
-  // POST 방식으로 필터 정보 초기화
+  // POST 방식으로 모든 설정 초기화 (action: 'reset' 사용)
   fetch('/emergency/update_preferences/', {
     method: 'POST',
     headers: {
@@ -58,9 +58,7 @@ function resetFilter() {
       'X-CSRFToken': getCookie('csrftoken')
     },
     body: JSON.stringify({
-      action: 'filter',
-      etype: "",
-      filters: {}
+      action: 'reset'  // 모든 설정 초기화 (지역, 필터, 정렬 모두)
     })
   })
   .then(response => response.json())

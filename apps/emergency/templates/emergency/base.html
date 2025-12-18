@@ -4,6 +4,7 @@
 <head>
   
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CareBridge 응급실{% endblock %}</title>
     {% load static %}
 
@@ -12,6 +13,7 @@
 
 
     <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/_header.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/emergency.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/modal.css' %}">
     <link rel="stylesheet" href="{% static 'emergency/css/detail.css' %}">
@@ -19,8 +21,8 @@
 
 
 </head>
-{% include "core/_header.html" %}
 <body class="has-footer">
+  {% include "core/_header.html" %}
 <div class="page-wrap">
     {% block content %}{% endblock %}
 </div>
@@ -40,6 +42,15 @@
       document.querySelectorAll(".modal-overlay").forEach(function(m) {
         m.classList.add("hidden");
       });
+    }
+  });
+
+  // 모달 오버레이 클릭 시 모달 닫기 (모달 내부 콘텐츠 클릭 시는 닫히지 않음)
+  document.addEventListener("click", function(e) {
+    // 클릭된 요소가 modal-overlay인지 확인 (오버레이의 빈 공간 클릭 시만)
+    const modalOverlay = e.target.closest(".modal-overlay");
+    if (modalOverlay && e.target === modalOverlay) {
+      modalOverlay.classList.add("hidden");
     }
   });
 

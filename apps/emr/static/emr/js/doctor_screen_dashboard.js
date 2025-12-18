@@ -6,8 +6,10 @@ let currentYear = new Date().getFullYear();
 // - (현재 상태) 주석 설정(OFF) -> "오늘"만 medical_record 이동 가능
 // - 주석 해제(ON)             -> "오늘이 아닌 날짜"만 medical_record 이동 가능
 // ============================
-let ENABLE_NON_TODAY_MEDICAL_RECORD = true; // OFF: 오늘만 이동 가능 (기본값)
-// let ENABLE_NON_TODAY_MEDICAL_RECORD = true; // ON: 다른 날짜만 이동 가능
+// 기본 정책: doctor_dashboard에서는 "오늘 예약"만 medical_record로 이동 가능
+let ENABLE_NON_TODAY_MEDICAL_RECORD = false;
+// 아래를 true로 바꾸면(디버그/특수 케이스) 날짜 제한 없이 이동 가능
+// let ENABLE_NON_TODAY_MEDICAL_RECORD = true;
 
 function getTodayIsoDate() {
     const now = new Date();
@@ -20,7 +22,7 @@ function getTodayIsoDate() {
 function isMedicalRecordDateAllowed(dateStr) {
     const today = getTodayIsoDate();
     if (ENABLE_NON_TODAY_MEDICAL_RECORD) {
-        return dateStr !== today;
+        return true;
     }
     return dateStr === today;
 }
