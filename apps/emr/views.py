@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
 from datetime import datetime, date, time, timezone as dt_timezone, timedelta
 from django.db import connection
+from django.db import transaction
 from django.db.models import Q
 from pytz import timezone as tz
 from django.utils import timezone
@@ -1368,6 +1369,7 @@ def api_search_medicine(request):
 # 진료기록 + 처방 + 오더 + 예약 저장
 # ---------------------------------------------------------
 @csrf_exempt
+@transaction.atomic
 def api_create_medical_record(request):
     if request.method != "POST":
         return JsonResponse({"error": "POST only"}, status=400)
@@ -1489,22 +1491,29 @@ def api_create_medical_record(request):
     reservation_type = request.POST.get("reservation_type")
     reservation_memo = request.POST.get("reservation_memo")
 
-    reservation_slot_id = request.POST.get("reservation_slot_id")
-    date_str = request.POST.get("reservation_date_day")
-    hour_str = request.POST.get("reservation_hour")
+    reservation_slot_id = (request.POST.get("reservation_slot_id") or "").strip()
+    date_str = (request.POST.get("reservation_date_day") or "").strip()
+    hour_str = (request.POST.get("reservation_hour") or "").strip()
 
     # reservations 앱 기준: 미리 열린 TimeSlots 중에서만 예약 생성 (2주 제한)
     if reservation_slot_id:
         try:
-            slot = TimeSlots.objects.select_related("doctor").get(pk=reservation_slot_id)
+            slot = (
+                TimeSlots.objects.select_for_update()
+                .select_related("doctor")
+                .get(pk=reservation_slot_id)
+            )
         except Exception:
+            transaction.set_rollback(True)
             return JsonResponse({"error": "invalid_slot"}, status=400)
 
         if str(slot.doctor_id) != str(doctor_id):
+            transaction.set_rollback(True)
             return JsonResponse({"error": "invalid_slot_doctor"}, status=400)
 
         target_date = slot.slot_date
         if is_holiday_date(target_date):
+            transaction.set_rollback(True)
             return JsonResponse({"error": "holiday_not_allowed"}, status=400)
 
         # 주말 정책:
@@ -1512,20 +1521,25 @@ def api_create_medical_record(request):
         # - 토요일: 09:00 ~ 13:00(시작시간 기준)만 허용
         weekday = target_date.weekday()  # 0=Mon ... 5=Sat, 6=Sun
         if weekday == 6:
+            transaction.set_rollback(True)
             return JsonResponse({"error": "sunday_not_allowed"}, status=400)
         if weekday == 5:
             start_hour = getattr(slot.start_time, "hour", None)
-            if start_hour is None or start_hour < 9 or start_hour > 13:
+            if start_hour is None or start_hour < 9 or start_hour >= 13:
+                transaction.set_rollback(True)
                 return JsonResponse({"error": "saturday_hours_only"}, status=400)
 
         today = timezone.localdate()
         if target_date < today or target_date > (today + timedelta(days=14)):
+            transaction.set_rollback(True)
             return JsonResponse({"error": "out_of_range"}, status=400)
 
         if getattr(slot, "status", None) != "OPEN":
+            transaction.set_rollback(True)
             return JsonResponse({"error": "slot_not_open"}, status=400)
 
         if Reservations.objects.filter(slot_id=slot.slot_id).exists():
+            transaction.set_rollback(True)
             return JsonResponse({"error": "slot_already_reserved"}, status=400)
 
         reserved_at = timezone.make_aware(
@@ -1549,7 +1563,9 @@ def api_create_medical_record(request):
         slot.save(update_fields=["status"])
 
     # legacy: hour 기반 예약(미사용 예정)
-    elif date_str and hour_str:
+    elif date_str or hour_str:
+        transaction.set_rollback(True)
+        return JsonResponse({"error": "slot_required"}, status=400)
         reserved_at = None
         reserved_end = None
 
