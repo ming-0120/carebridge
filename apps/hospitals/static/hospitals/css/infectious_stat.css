@@ -19,6 +19,7 @@ body {
   background: var(--bg); /* 흰 배경 */
   font-family: "Noto Sans KR", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text-main);
+  overflow-x: hidden; /* 좌우 스크롤 방지 */
 }
 
 /* ===== 상단 네비게이션 ===== */
@@ -68,10 +69,14 @@ body {
   justify-content: center;
   padding: 32px 24px;
   padding-bottom: 120px;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden; /* 좌우 스크롤 방지 */
 }
 
 .page-inner {
   width: 1280px;
+  max-width: 100%; /* 모바일에서 전체 폭 사용 */
 }
 
 /* 상단 타이틀 / 필터 영역 */
@@ -169,6 +174,8 @@ body {
   border-radius: 8px;                  /* 과하지 않은 라운드 */
   padding: 16px 18px;
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  max-width: 100%; /* 컨텐츠 잘림 방지 */
+  box-sizing: border-box; /* padding 포함한 크기 계산 */
 }
 
 /* .card:hover {
@@ -205,11 +212,20 @@ body {
   width: 100%;
   max-width: 550px;    /* 여기만 조정하면 최대 크기 바뀜 */
   aspect-ratio: 1 / 1; /* 정사각형 유지 */
+  max-width: 100%; /* 모바일에서 넘치지 않도록 */
 }
 
 .chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;
+  max-width: 100%; /* 컨텐츠 잘림 방지 */
+}
+
+/* 차트 캔버스 직접 스타일링 */
+#genderChart,
+#ageChart {
+  max-width: 100% !important;
+  height: auto !important;
 }
 
 /* 오른쪽 질병 설명 카드 */
@@ -256,12 +272,102 @@ body {
 }
 
 @media (max-width: 1024px) {
-  .content-row {
+  /* 상단 텍스트 영역: 모바일에서 세로 배치 */
+  .summary-row {
     flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .summary-row-left {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .summary-row-left h1 {
+    font-size: 24px;
+    margin-bottom: 12px;
+    word-break: keep-all; /* 단어 단위 줄바꿈 */
+  }
+
+  .summary-row-left p {
+    font-size: 12px;
+    word-break: keep-all; /* 단어 단위 줄바꿈 */
+  }
+
+  .summary-row-right {
+    width: 100%;
+    max-width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .summary-row-right > span {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .summary-row-right select {
+    width: 100%;
+    min-width: auto;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 모바일: grid를 flex column으로 변경하여 세로 배치 */
+  .content-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 그래프 컬럼과 정보 컬럼이 순서대로 세로 배치되도록 */
+  .graph-column {
+    width: 100%;
+    max-width: 100%;
   }
 
   .info-column {
-    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    /* 모바일에서는 높이 제한 해제 */
+  }
+
+  /* 모바일에서 info-column 내부 카드 높이 제한 해제 */
+  .info-column > .card {
+    height: auto;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 모바일에서 카드 패딩 조정 */
+  .card {
+    padding: 12px 14px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 차트 래퍼 모바일 최적화 */
+  .chart-wrapper {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* 차트 캔버스 모바일 최적화 */
+  #genderChart,
+  #ageChart {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .card-body {
+    max-width: 100%;
+    overflow: hidden; /* 컨텐츠가 넘치지 않도록 */
   }
 }
 

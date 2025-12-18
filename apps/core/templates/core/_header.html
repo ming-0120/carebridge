@@ -39,13 +39,13 @@
 {% endif %}
       <div class="util">
         {% if request.session.username %}
-            <span>{{ request.session.username }}님 안녕하세요</span>
-            |
+            <span class="greeting">{{ request.session.username }}님 안녕하세요</span>
+            <span class="separator">|</span>
             {% if request.session.role == 'PATIENT' %}
               <a href="{% url 'reservation_list' %}">마이페이지</a>
             {% elif request.session.role == 'DOCTOR' %}
-              <a href="{% url 'profile_edit' %}">마이페이지</a>            
-            |
+              <a href="{% url 'profile_edit' %}">마이페이지</a>
+            <span class="separator">|</span>
             {% endif %}
             <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
                 {% csrf_token %}

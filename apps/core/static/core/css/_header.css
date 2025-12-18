@@ -175,21 +175,25 @@
     display: none;
     position: absolute;
     left: 0;
-    width:100%;
+    width: 100%;
     top: 80px;
     background: #ffffff;
     box-shadow: 0 4px 10px rgba(0,0,0,0.06);
     padding: 10px 16px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
   }
 
   /* 메뉴 열림 */
   .header.menu-open .nav-wrapper {
-    display: block;
+    display: flex;
   }
 
   .nav {
     flex-direction: column;
     gap: 6px;
+    width: 100%;
   }
 
   .nav a {
@@ -203,13 +207,66 @@
     transform: translateY(-2px);
   }
 
+  /* 모바일에서 util 영역 스타일 개선 */
   .util {
-    margin-top: 8px;
-    text-align: right;
+    margin-top: 0;
+    text-align: left;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    white-space: normal;
+    word-break: break-word;
   }
 
+  /* 모바일에서 인사말과 구분자 숨김 - 마이페이지와 로그아웃만 표시 */
+  .util .greeting,
+  .util .separator {
+    display: none;
+  }
+
+  /* 모바일에서 util 내부 요소 스타일 - .nav a와 동일하게 정렬 */
   .util a {
-    margin-left: 12px;
+    margin-left: 0;
+    display: block;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #222;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: .2s;
+  }
+
+  /* 마이페이지 링크 hover 효과 - .nav a와 동일 */
+  .util a:hover {
+    background: #E9F1FF;
+    transform: translateY(-2px);
+  }
+
+  /* 로그아웃 버튼 스타일 - .nav a와 동일하게 정렬 */
+  .util form {
+    display: block;
+    margin: 0;
+    width: 100%;
+  }
+
+  .util button {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 15px;
+    color: #222;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    border-radius: 10px;
+    transition: .2s;
+  }
+
+  /* 로그아웃 버튼 hover 효과 - .nav a와 동일 */
+  .util button:hover {
+    background: #E9F1FF;
+    transform: translateY(-2px);
   }
 }
 

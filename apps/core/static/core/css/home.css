@@ -372,8 +372,9 @@
     margin: 20px 10px 0;
   }
 
+  /* 모바일에서 서비스 소개 섹션 숨김 */
   .service-intro-section {
-    padding: 60px 0;
+    display: none;
   }
 
   .section-header {
@@ -403,6 +404,11 @@
 
   .hero-left {
     height: 250px;
+  }
+
+  /* 모바일에서 서비스 소개 섹션 숨김 */
+  .service-intro-section {
+    display: none;
   }
 
   .hero-row > .info-card-link .info-card h3,
