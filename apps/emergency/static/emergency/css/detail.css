@@ -411,7 +411,29 @@
     margin-top: 20px;
   }
 
-  .detail-map { height: 260px; }
+  /* 모바일에서 detail-box 스타일 제거 */
+  .detail-box {
+    background: transparent; /* 배경 제거 */
+    border: none; /* 테두리 제거 */
+    padding: 0; /* 패딩 제거 */
+    border-radius: 0; /* 둥근 모서리 제거 */
+  }
+
+  /* 모바일에서 제목 숨기기 */
+  .detail-box-title {
+    display: none;
+  }
+
+  /* 모바일에서 지도 미리보기 숨기기 */
+  .detail-map {
+    display: none;
+  }
+
+  /* 길찾기 버튼만 표시 */
+  .navigation-btn {
+    width: 100%;
+    margin-top: 0; /* 지도가 없으므로 상단 마진 제거 */
+  }
 }
 
 /* Tablet */
