@@ -11,9 +11,12 @@ body {
 
 .page-wrap {
   max-width:1320px;  /* 헤더와 동일한 너비로 변경 */
+  width: 100%;
   margin:0 auto;
   padding:32px 24px; /* 페이지 내부 패딩 */
   padding-bottom: 120px;
+  overflow-x: hidden; /* 좌우 스크롤 방지 */
+  box-sizing: border-box; /* 패딩 포함 너비 계산 */
 }
 
 header h1 {
@@ -56,6 +59,8 @@ header h1 {
 .region-summary {
   font-size:14px;
   color:#555;
+  white-space: nowrap; /* 줄바꿈 방지 */
+  flex-shrink: 0; /* 축소 방지 */
 }
 
 /* ===== 테이블 영역 ===== */
@@ -67,6 +72,152 @@ header h1 {
   overflow:hidden;
   box-shadow:0 4px 12px rgba(0,0,0,0.08); /* 더 미세한 그림자 */
   border:1px solid #e0e0e0; /* 미세한 테두리 */
+}
+
+/* 테블릿 및 모바일에서 가로 스크롤 활성화 */
+@media (max-width: 1024px) {
+  .page-wrap {
+    padding: 24px 16px; /* 모바일에서 패딩 축소 */
+    padding-bottom: 120px;
+  }
+  
+  .table-box {
+    overflow-x: auto; /* 가로 스크롤 활성화 */
+    overflow-y: visible; /* 세로는 기본 동작 유지 */
+    -webkit-overflow-scrolling: touch; /* iOS 부드러운 스크롤 */
+    width: 100%; /* 부모 너비에 맞춤 */
+    max-width: 100%; /* 최대 너비 제한 */
+  }
+  
+  /* 스크롤바 스타일링 */
+  .table-box::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .table-box::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+  }
+  
+  .table-box::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+  }
+  
+  .table-box::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  
+  /* 테이블 헤더와 행이 최소 너비를 유지하도록 설정 */
+  .table-header,
+  .row {
+    min-width: 720px; /* 그리드 최소 너비 보장 */
+  }
+}
+
+/* 모바일에서 추가 조정 */
+@media (max-width: 768px) {
+  .page-wrap {
+    padding: 16px 12px; /* 모바일에서 패딩 더 축소 */
+    padding-bottom: 120px;
+  }
+
+  /* 모든 화면에서 툴팁 숨기기 */
+  .tooltip-wrapper {
+    display: none !important;
+  }
+
+  /* 컨트롤 영역 모바일 조정 - 가로 1열 배치, 좌우 스크롤 방지 */
+  .control-row {
+    gap: 6px; /* 간격 축소 */
+    flex-wrap: nowrap; /* 한 줄로 유지 */
+    overflow-x: visible; /* 가로 스크롤 제거 */
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 모바일에서 버튼 크기 및 폰트 조정 - 가로 1열 배치를 위해 */
+  .control-row .btn {
+    font-size: 11px; /* 폰트 크기 축소 */
+    padding: 7px 10px; /* 패딩 축소 */
+    margin-left: 0; /* 첫 번째 버튼의 왼쪽 마진 제거 */
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
+    flex: 0 1 auto; /* 필요시 크기 조정 허용 */
+    min-width: 0; /* 최소 너비 제한 제거 */
+  }
+
+  /* 지역 요약 텍스트 모바일 조정 */
+  .region-summary {
+    font-size: 11px; /* 폰트 크기 축소 */
+    white-space: nowrap;
+    flex-shrink: 1; /* 필요시 축소 허용 */
+    overflow: hidden; /* 넘치는 텍스트 숨김 */
+    text-overflow: ellipsis; /* 말줄임표 표시 */
+    max-width: 80px; /* 최대 너비 제한 */
+  }
+
+  /* 정렬 컨트롤 래퍼 모바일 조정 */
+  .sort-control-wrapper {
+    gap: 0; /* 툴팁이 숨겨지므로 gap 제거 */
+    flex-shrink: 1; /* 필요시 축소 허용 */
+    min-width: 0; /* 최소 너비 제한 제거 */
+  }
+
+  /* 정렬 기준 표시 모바일 조정 */
+  .sort-criteria-display {
+    font-size: 12px;
+    margin: 8px 0 16px 0;
+    padding-left: 4px;
+  }
+
+  /* 필터 결과 영역 모바일 조정 - 잘림 방지 */
+  #filter-tags-container {
+    flex-direction: column; /* 세로 배치 */
+    align-items: stretch; /* 전체 너비 사용 */
+    gap: 12px;
+    padding: 12px 16px;
+    margin: 12px 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* 필터 태그 라벨 */
+  .filter-tags-label {
+    font-size: 14px;
+    font-weight: 700;
+    width: 100%;
+  }
+
+  /* 필터 태그 영역 - 줄바꿈 허용하여 좌우 스크롤 방지 */
+  /* 인라인 스타일을 덮어쓰기 위해 !important 사용 */
+  #filter-tags {
+    display: flex !important;
+    flex-wrap: wrap !important; /* 줄바꿈 허용 */
+    gap: 8px !important;
+    overflow-x: visible !important; /* 가로 스크롤 제거 */
+    overflow-y: visible !important;
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 필터 태그 모바일 조정 */
+  .filter-tag {
+    font-size: 14px; /* PC와 동일한 폰트 크기 */
+    padding: 6px 12px; /* PC와 동일한 패딩 */
+    white-space: nowrap; /* PC와 동일하게 줄바꿈 방지 */
+    flex: 0 0 auto; /* 크기 고정 */
+  }
+
+  /* 선택 초기화 버튼 모바일 조정 - 오른쪽 끝 배치 */
+  #filter-tags-reset {
+    align-self: flex-end; /* 오른쪽 끝 배치 */
+    margin-left: 0; /* 자동 마진 제거 */
+    padding: 6px 14px; /* PC와 동일한 패딩 */
+    font-size: 14px; /* PC와 동일한 폰트 크기 */
+    width: auto; /* 자동 너비 */
+    white-space: nowrap; /* PC와 동일하게 줄바꿈 방지 */
+  }
 }
 
 .table-header {
@@ -532,6 +683,8 @@ header h1 {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #filter-modal #emergency-type-group .chip {
@@ -544,6 +697,11 @@ header h1 {
   padding: 12px 16px;
   border: 1px solid #bfc6d4;
   background: #fff;
+  /* 잘림 방지 */
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 #filter-modal #emergency-type-group .chip.active {
@@ -654,6 +812,7 @@ header h1 {
   border: 1px solid #e0e0e0; /* 미세한 테두리 */
   border-radius: 10px;
   margin: 18px 0;
+  box-sizing: border-box; /* 패딩 포함 너비 계산 */
 }
 
 #filter-tags {

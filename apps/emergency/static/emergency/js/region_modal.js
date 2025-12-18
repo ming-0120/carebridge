@@ -230,7 +230,7 @@ function applyRegionFilter() {
 // 초기화
 // ===============================
 function resetRegion() {
-  // POST 방식으로 지역 정보 초기화
+  // POST 방식으로 모든 설정 초기화 (action: 'reset' 사용)
   fetch('/emergency/update_preferences/', {
     method: 'POST',
     headers: {
@@ -238,9 +238,7 @@ function resetRegion() {
       'X-CSRFToken': getCookie('csrftoken')
     },
     body: JSON.stringify({
-      action: 'region',
-      sido: "",
-      sigungu: ""
+      action: 'reset'  // 모든 설정 초기화 (지역, 필터, 정렬 모두)
     })
   })
   .then(response => response.json())

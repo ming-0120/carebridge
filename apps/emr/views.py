@@ -6,13 +6,12 @@ from django.views.decorators.http import require_GET
 from datetime import datetime, date, time, timezone as dt_timezone, timedelta
 from django.db import connection
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Exists, OuterRef
 from pytz import timezone as tz
 from django.utils import timezone
 from django.utils.timezone import localdate
 from apps.db.models import (
     MedicalRecord,
-    MedicalRecordReservationMap,
     Users,
     Doctors,
     Reservations,
@@ -237,17 +236,32 @@ def doctor_screen_dashboard(request):
             user_id=user_id
         )
 
-        target_date = date.today()
-        completed_reservation_ids = MedicalRecordReservationMap.objects.filter(
-            reservation__slot__doctor_id=doctor.doctor_id,
-        ).values_list("reservation_id", flat=True)
+        # 서버/DB TZ와 무관하게 로컬(설정된 TIME_ZONE, 기본 Asia/Seoul) 기준 날짜 사용
+        target_date = timezone.localdate()
+        # record_datetime는 DB에 UTC로 저장될 수 있어 __date 비교가 KST 기준으로 어긋날 수 있음.
+        # 로컬(Asia/Seoul) 기준 하루 범위로 비교한다.
+        day_start = timezone.make_aware(
+            datetime.combine(target_date, time.min),
+            timezone.get_current_timezone(),
+        )
+        day_end = day_start + timedelta(days=1)
+
+        completed_today = MedicalRecord.objects.filter(
+            doctor_id=doctor.doctor_id,
+            hos_id=doctor.hos_id,
+            user_id=OuterRef("user_id"),
+            record_datetime__gte=day_start,
+            record_datetime__lt=day_end,
+        )
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
             slot__doctor_id=doctor.doctor_id,
             slot__slot_date=target_date
-        ).exclude(
-            reservation_id__in=completed_reservation_ids
+        ).annotate(
+            has_medical_record=Exists(completed_today)
+        ).filter(
+            has_medical_record=False
         ).select_related(
             # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
             'user', 
@@ -1437,15 +1451,6 @@ def api_create_medical_record(request):
     except Exception:
         source_reservation = None
 
-    if source_reservation:
-        try:
-            MedicalRecordReservationMap.objects.update_or_create(
-                reservation=source_reservation,
-                defaults={"medical_record": record},
-            )
-        except Exception:
-            pass
-
     # ------------------------------
     # 처방전 생성
     # ------------------------------
@@ -1992,16 +1997,30 @@ def get_reservation_medical_record(request):
     try:
         doctor = Doctors.objects.get(doctor_id=doctor_id)
 
-        completed_reservation_ids = MedicalRecordReservationMap.objects.filter(
-            reservation__slot__doctor_id=doctor.doctor_id,
-        ).values_list("reservation_id", flat=True)
+        # record_datetime는 DB에 UTC로 저장될 수 있어 __date 비교가 KST 기준으로 어긋날 수 있음.
+        # 로컬(Asia/Seoul) 기준 하루 범위로 비교한다.
+        day_start = timezone.make_aware(
+            datetime.combine(target_date, time.min),
+            timezone.get_current_timezone(),
+        )
+        day_end = day_start + timedelta(days=1)
+
+        completed_today = MedicalRecord.objects.filter(
+            doctor_id=doctor.doctor_id,
+            hos_id=doctor.hos_id,
+            user_id=OuterRef("user_id"),
+            record_datetime__gte=day_start,
+            record_datetime__lt=day_end,
+        )
 
         users = list(Reservations.objects.filter(
             # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
             slot__doctor_id=doctor.doctor_id,
             slot__slot_date=target_date
-        ).exclude(
-            reservation_id__in=completed_reservation_ids
+        ).annotate(
+            has_medical_record=Exists(completed_today)
+        ).filter(
+            has_medical_record=False
         ).select_related(
             # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
             'user', 
