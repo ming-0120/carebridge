@@ -4,6 +4,7 @@
 <head>
   <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ hospital.name }} 예약</title>
 
   <link rel="stylesheet" href="{% static 'reservations/css/reservation.css' %}">
@@ -24,7 +25,7 @@
     window.HOLIDAYS = JSON.parse(htmlDecode(holidays));
   </script>
 </head>
-<body>
+<body class="reservation-body">
   {% include "core/_header.html" %}
 
   <!-- ✅ 뉴스레터와 동일한 중앙 컨테이너 -->
@@ -105,5 +106,6 @@
     </main>
   </div>
   <script src="{% static 'reservations/js/reservation_page.js' %}"></script>
+  {% include "core/footer.html" %}
 </body>
 </html>

@@ -120,3 +120,71 @@
   font-size: 13px;
   color: #6b7280;              /* 뉴스 날짜 톤과 동일 */
 }
+
+/* =========================
+   반응형 디자인
+   ========================= */
+
+/* 768px 이하: 모바일 */
+@media (max-width: 768px) {
+  /* 모바일에서 .news-body 숨김 - 사진과 제목만 표시 */
+  .news-body {
+    display: none;
+  }
+  
+  /* 모바일에서 카드 레이아웃 조정 */
+  .news-card {
+    gap: 12px;
+    padding: 12px;
+  }
+  
+  .news-thumb {
+    width: 100px;
+    height: 70px;
+  }
+  
+  .news-title {
+    font-size: 15px;
+    margin: 4px 0 0;
+  }
+  
+  .news-card-header {
+    margin-bottom: 4px;
+  }
+}
+
+/* 480px 이하: 작은 모바일 */
+@media (max-width: 480px) {
+  .newsletter-page {
+    padding: 24px 16px;
+    padding-bottom: 120px;
+  }
+  
+  .newsletter-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .news-card {
+    gap: 10px;
+    padding: 10px;
+  }
+  
+  .news-thumb {
+    width: 80px;
+    height: 60px;
+  }
+  
+  .news-title {
+    font-size: 14px;
+  }
+  
+  .news-badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+  
+  .news-date {
+    font-size: 11px;
+  }
+}

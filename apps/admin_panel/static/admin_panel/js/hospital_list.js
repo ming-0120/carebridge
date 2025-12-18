@@ -110,10 +110,14 @@ document.addEventListener('DOMContentLoaded', function() {
    */
   function openAddHospitalModal() {
     const modal = document.getElementById('addHospitalModal');
+    console.log('[모달 열기] 모달 요소:', modal);
     if (modal) {
       modal.classList.add('show');
+      console.log('[모달 열기] show 클래스 추가 완료, 현재 클래스:', modal.className);
       // 모달이 열릴 때 body 스크롤 방지
       document.body.style.overflow = 'hidden';
+    } else {
+      console.error('[모달 열기] 모달을 찾을 수 없습니다. ID: addHospitalModal');
     }
   }
   
@@ -151,14 +155,20 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // 병원추가 버튼 클릭 이벤트
   const openAddHospitalBtn = document.getElementById('openAddHospitalModal');
+  console.log('[병원추가 버튼] 버튼 요소:', openAddHospitalBtn);
   if (openAddHospitalBtn) {
     openAddHospitalBtn.addEventListener('click', function(e) {
       e.preventDefault();
+      e.stopPropagation();
+      console.log('[병원추가 버튼] 클릭 이벤트 발생');
       // 에러 메시지 및 필드 에러 상태 초기화
       hideErrorMessage();
       clearFieldErrors();
       openAddHospitalModal();
     });
+    console.log('[병원추가 버튼] 이벤트 리스너 연결 완료');
+  } else {
+    console.error('[병원추가 버튼] 버튼을 찾을 수 없습니다. ID: openAddHospitalModal');
   }
   
   // 모달 닫기 버튼 클릭 이벤트
@@ -300,8 +310,9 @@ document.addEventListener('DOMContentLoaded', function() {
         tr.dataset.hpid = h.hpid || h.id || ''; // hpid 우선, 없으면 id 사용
         tr.dataset.name = h.name || '';
         tr.dataset.address = h.address || '';
-        tr.dataset.tel = h.tel || '';
-        tr.dataset.estbDate = h.estb_date || '';
+        // tel과 estb_date는 null일 수 있으므로 명시적으로 처리
+        tr.dataset.tel = (h.tel !== null && h.tel !== undefined && h.tel !== '') ? h.tel : '';
+        tr.dataset.estbDate = (h.estb_date !== null && h.estb_date !== undefined && h.estb_date !== '') ? h.estb_date : '';
         tr.dataset.lat = h.lat !== null && h.lat !== undefined ? h.lat : '';
         tr.dataset.lng = h.lng !== null && h.lng !== undefined ? h.lng : '';
         tr.dataset.drTotal = h.dr_total !== null && h.dr_total !== undefined ? h.dr_total : '';
@@ -423,20 +434,36 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       // 전화번호 필드에 자동 입력
-      if (tel && tel !== '-') {
+      // tel이 null, undefined, 빈 문자열, '-'가 아닌 경우에만 입력
+      if (tel && tel !== '' && tel !== '-' && tel !== 'null' && tel !== 'undefined') {
         const telInput = document.getElementById('hospital_tel');
         if (telInput) {
           telInput.value = tel;
+          console.log('[병원 선택] 전화번호 저장:', tel);
+        }
+      } else {
+        // tel이 없으면 필드 초기화
+        const telInput = document.getElementById('hospital_tel');
+        if (telInput) {
+          telInput.value = '';
         }
       }
       
       // 개원일 필드에 자동 입력
-      if (estbDate && estbDate !== '-') {
+      // estbDate가 null, undefined, 빈 문자열, '-'가 아닌 경우에만 입력
+      if (estbDate && estbDate !== '' && estbDate !== '-' && estbDate !== 'null' && estbDate !== 'undefined') {
         const estbDateInput = document.getElementById('hospital_estb_date');
         if (estbDateInput) {
           estbDateInput.value = estbDate;
+          console.log('[병원 선택] 개원일 저장:', estbDate);
           // 개원일이 입력되면 비밀번호 필드에 자동 입력 (숫자만 추출)
           updatePasswordFromEstbDate(estbDate);
+        }
+      } else {
+        // estbDate가 없으면 필드 초기화
+        const estbDateInput = document.getElementById('hospital_estb_date');
+        if (estbDateInput) {
+          estbDateInput.value = '';
         }
       }
       
