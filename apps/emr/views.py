@@ -236,7 +236,8 @@ def doctor_screen_dashboard(request):
             user_id=user_id
         )
 
-        target_date = date.today()
+        # 서버/DB TZ와 무관하게 로컬(설정된 TIME_ZONE, 기본 Asia/Seoul) 기준 날짜 사용
+        target_date = timezone.localdate()
         # record_datetime는 DB에 UTC로 저장될 수 있어 __date 비교가 KST 기준으로 어긋날 수 있음.
         # 로컬(Asia/Seoul) 기준 하루 범위로 비교한다.
         day_start = timezone.make_aware(
