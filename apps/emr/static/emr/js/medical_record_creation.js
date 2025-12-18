@@ -218,8 +218,10 @@ function buildSlotGrid(slotPayload, dateVal) {
         btn.classList.add("time-btn");
         btn.type = "button";
 
+        // 시간 버튼 표기는 "시작 시간"으로 통일 (09:00, 10:00, ...)
+        // endStr는 선택 후 라벨(선택된 시간 표시)용으로만 사용
         const endStr = slot?.end || "";
-        btn.textContent = endStr ? `${startStr} ~ ${endStr}` : startStr;
+        btn.textContent = startStr;
 
         const startHour = Number(String(startStr).split(":")[0]);
         const saturdayBlocked = isSaturday && startHour >= 14;
