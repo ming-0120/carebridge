@@ -140,10 +140,10 @@ def calculate_score(hospital, user_lat, user_lng, filter_type=None, status=None)
             birth_rate * 0.30
         )
     else:
-        # 기본: 거리 50% + 혼잡도 50%
+        # 기본: 거리 60% + 혼잡도 40%
         total_score = (
-            distance_score * 0.50 +
-            congestion_score * 0.50
+            distance_score * 0.60 +
+            congestion_score * 0.40
         )
     
     return total_score, distance_km
