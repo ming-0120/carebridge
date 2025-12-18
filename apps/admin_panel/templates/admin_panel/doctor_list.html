@@ -19,6 +19,7 @@
     - 상세 정보 템플릿: doctor_list_detail.html (AJAX로 로드)
 -->
 {% load static %}
+{% load masking_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -311,7 +312,7 @@
             <td>{{ doctor.dep.dep_name|default:"-" }}</td>
             <td>{{ doctor.license_no }}</td>
             <td>{{ doctor.hos.name|default:"-" }}</td>
-            <td>{{ doctor.user.phone|default:"-" }}</td>
+            <td>{{ doctor.user.phone|mask_phone|default:"-" }}</td>
             <td>{{ doctor.user.email|default:"-" }}</td>
             <td>
               {% if doctor.verified %}
