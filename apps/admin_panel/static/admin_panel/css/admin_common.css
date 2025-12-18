@@ -578,12 +578,13 @@ body {
     - display: flex - 플렉스 레이아웃
     - gap: 10px - 요소 간 간격
     - align-items: center - 수직 중앙 정렬
+    - align-items: flex-start - 수직 상단 정렬 (검색 조건과 입력 필드의 왼쪽 정렬 일관성)
     - 사용처: 검색 폼 컨테이너
 */
 .search-form {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-start; /* 왼쪽 정렬 일관성을 위해 flex-start로 변경 */
 }
 
 /* 
@@ -599,6 +600,8 @@ body {
     - cursor: pointer - 포인터 커서
     - min-width: 100px - 최소 너비
     - flex-shrink: 0 - 축소 방지
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - margin: 0 - 마진 제거 (정렬 일관성)
     - 사용처: 검색 조건 선택 드롭다운 (예: ID, 이름, 이메일, 전화번호)
 */
 .search-select {
@@ -611,6 +614,8 @@ body {
   cursor: pointer;
   min-width: 100px;
   flex-shrink: 0;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 /* 
@@ -622,6 +627,8 @@ body {
     - border: 1px solid #e1e4ec - 테두리 (연한 회색)
     - border-radius: 8px - 둥근 모서리
     - font-size: 14px - 글씨 크기
+    - box-sizing: border-box - 패딩과 테두리를 너비에 포함
+    - margin: 0 - 마진 제거 (정렬 일관성)
     - 사용처: 검색어 입력 필드
 */
 .search-input {
@@ -630,6 +637,8 @@ body {
   border: 1px solid #e1e4ec;
   border-radius: 8px;
   font-size: 14px;
+  box-sizing: border-box;
+  margin: 0;
 }
 
 /* 
@@ -713,6 +722,8 @@ body {
     - margin-bottom: 24px - 하단 마진
     - flex-shrink: 0 - 축소 방지
     - -webkit-overflow-scrolling: touch - iOS에서 부드러운 스크롤
+    - width: 100% - 전체 너비 사용
+    - max-width: 100% - 최대 너비 제한
     - 사용처: 모든 목록 페이지의 테이블 컨테이너
 */
 .table-container {
@@ -721,6 +732,30 @@ body {
   margin-bottom: 24px;
   flex-shrink: 0;
   -webkit-overflow-scrolling: touch;
+  width: 100%;
+  max-width: 100%;
+  /* 스크롤바가 항상 보이도록 */
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+/* 테이블 컨테이너 스크롤바 스타일 (Webkit 브라우저) */
+.table-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+  background: #f7fafc;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+  background: #a0aec0;
 }
 
 /* 
@@ -1349,15 +1384,18 @@ body {
   }
   
   .tabs {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+    overflow-x: visible;
     margin-bottom: 16px;
+    flex-wrap: wrap;
   }
   
   .tab {
     padding: 10px 16px;
     font-size: 14px;
     white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+    text-align: center;
   }
   
   .search-section {
@@ -1366,10 +1404,18 @@ body {
   
   .search-form {
     flex-wrap: wrap;
+    align-items: flex-start; /* 왼쪽 정렬 */
   }
   
   .search-select {
     min-width: 120px;
+    box-sizing: border-box;
+    margin: 0;
+  }
+  
+  .search-input {
+    box-sizing: border-box;
+    margin: 0;
   }
   
   .table-container {
@@ -1381,7 +1427,7 @@ body {
   
   .user-table {
     font-size: 12px;
-    min-width: 800px;
+    min-width: 1000px; /* 모든 컬럼이 보이도록 최소 너비 증가 */
   }
   
   .user-table th,
@@ -1390,10 +1436,11 @@ body {
     white-space: nowrap;
   }
   
-  .user-table th:nth-child(n+7),
+  /* 컬럼 숨김 제거 - 모든 컬럼이 가로 스크롤로 볼 수 있도록 */
+  /* .user-table th:nth-child(n+7),
   .user-table td:nth-child(n+7) {
     display: none;
-  }
+  } */
   
   .pagination {
     margin: 16px 0;
@@ -1489,12 +1536,15 @@ body {
   .search-form {
     flex-direction: column;
     gap: 8px;
+    align-items: stretch; /* 모든 요소를 같은 너비로 */
   }
   
   .search-select,
   .search-input {
     width: 100%;
     padding: 12px;
+    box-sizing: border-box;
+    margin: 0; /* 마진 제거로 정렬 일관성 */
   }
   
   .search-btn {
@@ -1511,18 +1561,20 @@ body {
   
   .user-table {
     font-size: 12px;
-    min-width: 600px;
+    min-width: 800px; /* 모든 컬럼이 보이도록 최소 너비 증가 */
   }
   
   .user-table th,
   .user-table td {
     padding: 8px 6px;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
   }
   
-  .user-table th:nth-child(n+6),
+  /* 컬럼 숨김 제거 - 모든 컬럼이 가로 스크롤로 볼 수 있도록 */
+  /* .user-table th:nth-child(n+6),
   .user-table td:nth-child(n+6) {
     display: none;
-  }
+  } */
   
   .pagination {
     margin: 16px 0;
@@ -1591,12 +1643,13 @@ body {
   
   .user-table {
     font-size: 11px;
-    min-width: 500px;
+    min-width: 700px; /* 모든 컬럼이 보이도록 최소 너비 증가 */
   }
   
   .user-table th,
   .user-table td {
     padding: 6px 4px;
+    white-space: nowrap; /* 텍스트 줄바꿈 방지 */
   }
   
   .page-link,

@@ -102,8 +102,8 @@ def hospital_search(request):
     results = []
 
     try:
-        # 외부 API 호출
-        resp = requests.get(base_url, params=params, timeout=10)
+        # 외부 API 호출 (타임아웃 30초로 증가)
+        resp = requests.get(base_url, params=params, timeout=30)
         
         # 500 에러인 경우 (이 API는 검색 결과 없음, 모호한 검색어 등에서 500 반환)
         if resp.status_code == 500:
@@ -163,11 +163,13 @@ def hospital_search(request):
 
         # DB에서 등록된 병원의 병원명 목록 조회 (hos_name이 있는 병원만)
         # 병원명으로 비교하여 등록 여부 확인 (hpid는 UUID로 자동 생성되므로 API의 ykiho와 일치하지 않음)
+        # distinct()로 중복 제거하여 쿼리 최적화
         registered_names = set(
             Hospital.objects
             .filter(hos_name__isnull=False)
             .exclude(hos_name="")
             .values_list("name", flat=True)
+            .distinct()
         )
 
         # API 응답 데이터를 결과 형식으로 변환
@@ -183,14 +185,18 @@ def hospital_search(request):
             # addr: 주소
             address = item.get("addr") or ""
             
-            # telno: 전화번호
-            tel = item.get("telno") or None
+            # telno: 전화번호 (None이면 빈 문자열로 변환)
+            tel = item.get("telno") or ""
+            if tel:
+                tel = str(tel).strip()
+            else:
+                tel = ""
             
             # estbDd: 개설일자 (개원일)
             estb_date = item.get("estbDd")
             
             # 개원일 포맷팅 (YYYYMMDD -> YYYY.MM.DD)
-            estb_date_formatted = None
+            estb_date_formatted = ""
             if estb_date:
                 estb_date_str = str(estb_date).strip()
                 if len(estb_date_str) == 8 and estb_date_str.isdigit():
@@ -237,23 +243,38 @@ def hospital_search(request):
                 "hpid": hpid,
                 "name": name,
                 "address": address,
-                "tel": tel,
-                "estb_date": estb_date_formatted,
+                "tel": tel if tel else "",  # None이면 빈 문자열로 변환
+                "estb_date": estb_date_formatted if estb_date_formatted else "",  # None이면 빈 문자열로 변환
                 "lat": lat_float,
                 "lng": lng_float,
                 "dr_total": dr_total_int,
-                "sggu": sggu,
-                "sido": sido,
+                "sggu": sggu if sggu else "",  # None이면 빈 문자열로 변환
+                "sido": sido if sido else "",  # None이면 빈 문자열로 변환
                 "is_registered": name in registered_names,  # DB에 등록된 병원인지 확인 (병원명 기준)
             }
             
             results.append(result)
 
+    except requests.exceptions.Timeout as e:
+        # 타임아웃 에러 처리
+        return JsonResponse({
+            "results": [], 
+            "error": "API 요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+        })
     except requests.exceptions.RequestException as e:
-        # API 요청 실패 시 에러 반환
-        return JsonResponse({"results": [], "error": f"API 요청 실패: {str(e)}"})
+        # API 요청 실패 시 에러 반환 (타임아웃 제외)
+        error_msg = str(e)
+        # 너무 긴 에러 메시지는 간단하게 표시
+        if "timeout" in error_msg.lower() or "timed out" in error_msg.lower():
+            error_msg = "API 요청 시간이 초과되었습니다. 잠시 후 다시 시도해주세요."
+        elif len(error_msg) > 200:
+            error_msg = "API 요청 중 오류가 발생했습니다."
+        return JsonResponse({"results": [], "error": f"API 요청 실패: {error_msg}"})
     except Exception as e:
         # 기타 에러 처리
-        return JsonResponse({"results": [], "error": f"처리 중 오류 발생: {str(e)}"})
+        error_msg = str(e)
+        if len(error_msg) > 200:
+            error_msg = "처리 중 오류가 발생했습니다."
+        return JsonResponse({"results": [], "error": f"처리 중 오류 발생: {error_msg}"})
 
     return JsonResponse({"results": results})

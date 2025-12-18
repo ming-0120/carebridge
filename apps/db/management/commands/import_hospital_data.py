@@ -221,25 +221,53 @@ class Command(BaseCommand):
                 "address": item.get("addr") or "",
                 "lat": y_pos,
                 "lng": x_pos,
-                "tel": item.get("telno"),
+                "tel": item.get("telno") or None,  # None이면 None으로 저장 (빈 문자열 대신)
                 # "category": item.get("dgsbjtCd"),
                 # "category_name": item.get("dgsbjtCd"),
-                "homepage": item.get("hospUrl"),
-                "estb_date": item.get("estbDd"),
-                "sido": item.get("sidoCd"),
-                "sggu": item.get("sgguCdNm"),
+                "homepage": item.get("hospUrl") or None,
+                "estb_date": item.get("estbDd") or None,  # None이면 None으로 저장
+                "sido": item.get("sidoCd") or None,
+                "sggu": item.get("sgguCdNm") or None,
                 "dr_total": self._to_int(item.get("drTotCnt")),
                 "hos_name": "",
                 "hos_password": "",
             }
 
+            # get_or_create를 사용하여 기존 데이터는 보존
+            # 기존 병원의 tel, estb_date 등이 None이거나 빈 문자열인 경우만 업데이트
             obj, created = Hospital.objects.get_or_create(
                 hpid=hpid,
                 defaults=defaults,
             )
+            
+            # 기존 데이터인 경우에도 tel과 estb_date가 None이거나 빈 문자열이면 업데이트
+            if not created:
+                updated = False
+                # tel이 None이거나 빈 문자열이고 API에서 값이 있으면 업데이트
+                if (obj.tel is None or obj.tel == '') and defaults.get("tel"):
+                    obj.tel = defaults["tel"]
+                    updated = True
+                # estb_date가 None이거나 빈 문자열이고 API에서 값이 있으면 업데이트
+                if (obj.estb_date is None or obj.estb_date == '') and defaults.get("estb_date"):
+                    obj.estb_date = defaults["estb_date"]
+                    updated = True
+                # dr_total이 None이고 API에서 값이 있으면 업데이트
+                if obj.dr_total is None and defaults.get("dr_total"):
+                    obj.dr_total = defaults["dr_total"]
+                    updated = True
+                # sido가 None이거나 빈 문자열이고 API에서 값이 있으면 업데이트
+                if (obj.sido is None or obj.sido == '') and defaults.get("sido"):
+                    obj.sido = defaults["sido"]
+                    updated = True
+                # sggu가 None이거나 빈 문자열이고 API에서 값이 있으면 업데이트
+                if (obj.sggu is None or obj.sggu == '') and defaults.get("sggu"):
+                    obj.sggu = defaults["sggu"]
+                    updated = True
+                if updated:
+                    obj.save()
 
             # created == True  → 새로 insert
-            # created == False → 이미 있어서 skip (update 안 함)
+            # created == False → 이미 있어서 업데이트 또는 skip
             return created
 
         except Exception as e:
