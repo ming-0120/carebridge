@@ -21,6 +21,7 @@ from collections import defaultdict
 from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
 from apps.db.models.review import AiReview
 from apps.db.models.favorite import UserFavorite  # 추가
+from apps.db.models.slot_reservation import TimeSlots
 from apps.db.models.users import Users  # 추가
 from django.conf import settings
 
@@ -66,7 +67,15 @@ def reservation_cancel(request, pk):
     )
 
     if request.method == "POST":
+        # 1) 삭제 전에 slot_id 확보
+        slot_id = reservation.slot_id
+
+        # 2) 예약 삭제
         reservation.delete()
+
+        # 3) 해당 slot을 OPEN으로 변경
+        TimeSlots.objects.filter(slot_id=slot_id).update(status="OPEN")
+
         messages.success(request, "예약이 삭제되었습니다.")
         return redirect("reservation_list")
 
