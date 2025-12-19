@@ -64,13 +64,23 @@
       <hr class="info-content-divider">
 
       <div class="inquiry-content-box">
-        {{ qna.content }}
+        {{ qna.content|linebreaks }}
       </div>
 
       {% if qna.reply %}
-      <div class="reply-content-box">
-        {{ qna.reply|linebreaks }}
-      </div>
+      <section class="reply-section">
+        
+        <div class="reply-header">
+          <h3 class="reply-title">CareBridge에서 답변드립니다.</h3>
+          <div class="reply-date-wrapper">
+            <span class="reply-date">답변일</span>
+            <span class="reply-date-value">{{ qna.created_at|date:"Y-m-d" }}</span>
+          </div>
+        </div>
+        <div class="reply-content-box">
+          {{ qna.reply|linebreaks }}
+        </div>
+      </section>
       {% endif %}
 
     </div>
