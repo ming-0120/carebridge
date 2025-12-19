@@ -154,19 +154,15 @@ body {
   flex: 1;
   min-height: 0;
   display: block; /* 기존 flex(center) 덮어쓰기 */
+  overflow: hidden; /* card-body 경계를 넘지 않도록 */
 }
 
-/* 기존 diseaseDefinition max-height(320px) 제거하고, 부모 높이에 맞춰 스크롤 */
-#diseaseDefinition{
-  max-height: none;
-  height: 100%;
-  overflow: auto;
-}
 /* 우측의 "감염병 정보" 카드: 세로 레이아웃 */
 .info-column > .card{
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden; /* 카드 경계를 넘지 않도록 */
 }
 .card {
   background: var(--card-bg);          /* 흰 카드 */
@@ -383,6 +379,15 @@ body {
   display: block;       /* 기존 flex 덮어쓰기 */
   justify-content: initial;
   align-items: initial;
+  overflow: hidden; /* 추가: card-body 경계를 넘지 않도록 */
+}
+
+/* AI 요약 영역 래퍼 */
+.ai-summary {
+  height: 100%;
+  overflow: hidden; /* ai-summary 경계를 넘지 않도록 */
+  display: flex;
+  flex-direction: column;
 }
 
 /* AI 요약 박스: 패딩/라인하이트 축소 + 톤 다운 + 길이 제한 */
@@ -395,8 +400,12 @@ body {
   font-size: 13px;
   line-height: 1.55;
   color: #495057;
-  max-height: 580px;           /* 내용 길면 스크롤로 정리 */
-  overflow: auto;
+  min-height: 0;               /* flex 컨테이너 내에서 유연하게 */
+  max-height: 100%;            /* 부모 높이를 넘지 않도록 */
+  height: 100%;                /* 부모 높이에 맞춤 */
+  overflow: auto;              /* 내용이 길면 위아래 스크롤 */
+  /* 부드러운 전환 효과 추가 */
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
 }
 
 /* 섹션 타이틀(##): 구분선/패딩 제거하고 간격만 최소화 */

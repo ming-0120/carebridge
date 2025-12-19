@@ -62,3 +62,4 @@ class Command(BaseCommand):
         self.stdout.write(f"개원일 있는 병원: {with_estb_date}개")
 
 
+

@@ -731,6 +731,11 @@
     flex: 0 0 calc(33.333% - 14px);
     max-width: calc(33.333% - 14px);
   }
+
+  /* PC 버전에서 서비스 소개 섹션 숨김 (모바일과 동일하게) */
+  .service-intro-section {
+    display: none;
+  }
 }
 
 /* 카드 제목 (검정색) */

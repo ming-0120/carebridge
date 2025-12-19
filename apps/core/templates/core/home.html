@@ -56,16 +56,17 @@
           </div>
         </div>
       </a>
-
-      <div class="info-card card-qna">
-        <div>
-          <h3>QnA</h3>
-          <p>진료 및 서비스 이용에 대한<br>궁금증을 남겨보세요.</p>
+      <a href="{% url 'qna:qna_list' %}" class="info-card-link">
+        <div class="info-card card-qna">
+          <div>
+            <h3>QnA</h3>
+            <p>진료 및 서비스 이용에 대한<br>궁금증을 남겨보세요.</p>
+          </div>
+          <div class="card-btn-area">
+            <span class="card-btn">문의하기</span>
+          </div>
         </div>
-        <div class="card-btn-area">
-          <a href="{% url 'qna:qna_list' %}" class="card-btn">문의하기</a>
-        </div>
-      </div>
+      </a>
     </div>
   </section>
 

@@ -19,6 +19,7 @@
     - 상세 정보 템플릿: user_list_detail.html (AJAX로 로드)
 -->
 {% load static %}
+{% load masking_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -473,13 +474,14 @@
               <td>{% if item.user.gender == 'M' %}남{% else %}여{% endif %}</td>
               
               <!-- 
-                전화번호 셀
+                전화번호 셀 (마스킹 처리)
                 
-                목적: 사용자 전화번호 표시
-                  - {{ item.user.phone }}: 사용자 전화번호
+                목적: 사용자 전화번호를 마스킹 처리하여 표시 (개인정보 보호)
+                  - {{ item.user.phone|mask_phone }}: 사용자 전화번호 마스킹 처리
                     → phone: 사용자의 전화번호
+                    → mask_phone: 전화번호 마스킹 필터 (010 + 공백 + 첫 번째 숫자 + "****" + 공백 + "****")
               -->
-              <td>{{ item.user.phone }}</td>
+              <td>{{ item.user.phone|mask_phone }}</td>
               
               <!-- 
                 이메일 셀

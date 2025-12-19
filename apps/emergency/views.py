@@ -12,6 +12,7 @@ from apps.db.models.favorite import UserFavorite
 from apps.db.models.users import Users
 from django.conf import settings
 from .templatetags import status_filters
+from django.core.cache import cache
 
 
 import math
@@ -300,25 +301,32 @@ def emergency_main(request):
     # status(실시간) 정보 미리 가져오기 (N+1 방지)
     hospitals_qs = hospitals_qs.prefetch_related("statuses")
 
-    # 3) 시/도별 시/군/구 목록 (표준화 적용)
-    raw_regions = (
-        ErInfo.objects
-        .values_list("er_sido", "er_sigungu")
-        .distinct()
-    )
+    # 3) 시/도별 시/군/구 목록 (표준화 적용) — 캐시 적용
+    cache_key = "region_dict_json:v1"
+    region_dict_json = cache.get(cache_key)
 
-    region_dict = defaultdict(set)
+    if region_dict_json is None:
+        raw_regions = (
+            ErInfo.objects
+            .values_list("er_sido", "er_sigungu")
+            .distinct()
+        )
 
-    for sido, sigungu in raw_regions:
-        if sido and sigungu:
-            std_sido = normalize_sido_name(sido)   # 표준화 적용
-            region_dict[std_sido].add(sigungu)
+        region_dict = defaultdict(set)
 
-    # JSON 직렬화 (템플릿에서 사용)
-    region_dict_json = json.dumps(
-        {sido: sorted(list(sigungus)) for sido, sigungus in region_dict.items()},
-        ensure_ascii=False,
-    )
+        for sido, sigungu in raw_regions:
+            if sido and sigungu:
+                std_sido = normalize_sido_name(sido)
+                region_dict[std_sido].add(sigungu)
+
+        region_dict_json = json.dumps(
+            {sido: sorted(list(sigungus)) for sido, sigungus in region_dict.items()},
+            ensure_ascii=False,
+        )
+
+        # 6시간 캐시 (지역 정보는 자주 안 바뀜)
+        cache.set(cache_key, region_dict_json, 60 * 60 * 6)
+
 
 
 

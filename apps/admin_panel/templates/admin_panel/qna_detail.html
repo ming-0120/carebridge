@@ -198,19 +198,14 @@
         <!-- 
           이메일 정보 항목
           
-          목적: 문의 작성자의 이메일을 표시하고 메일 링크 제공
+          목적: 문의 작성자의 이메일을 표시
             - 라벨: "이메일"
-            - 값: 이메일 링크
-              → <a href="mailto:{{ qna.user.email }}">: 메일 클라이언트 실행 링크
-                → mailto: 프로토콜을 사용하여 메일 클라이언트 실행
-                → 사용자가 클릭하면 기본 메일 클라이언트가 실행되고 수신자 주소가 자동 입력됨
-              → {{ qna.user.email }}: 사용자의 이메일 주소
+            - 값: {{ qna.user.email }} - 사용자의 이메일 주소 (일반 텍스트로 표시)
+              → 이메일은 클릭 불가능한 일반 텍스트로 표시
         -->
         <div class="inquiry-detail-item">
           <span class="inquiry-detail-label">이메일</span>
-          <span class="inquiry-detail-value">
-            <a href="mailto:{{ qna.user.email }}">{{ qna.user.email }}</a>
-          </span>
+          <span class="inquiry-detail-value">{{ qna.user.email }}</span>
         </div>
         
         <!-- 
