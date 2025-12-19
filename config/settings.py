@@ -26,7 +26,7 @@ env = environ.Env(
 )
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
-DEBUG = True
+DEBUG = env('DEBUG')
 SECRET_KEY = env('SECRET_KEY', default='django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u')
 
 # 카카오 관련 설정
