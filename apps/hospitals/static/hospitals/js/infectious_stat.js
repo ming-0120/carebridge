@@ -7,6 +7,9 @@ let rawData = [];
 let genderChartInstance = null;
 let ageChartInstance = null;
 
+// 디바운싱을 위한 타이머
+let syncHeightTimer = null;
+
 // ================================================================
 // 1) 질병 셀렉트 초기화
 // ================================================================
@@ -107,6 +110,9 @@ function renderGenderChart(rows, disease) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 0, // 애니메이션 비활성화하여 즉시 렌더링
+      },
       plugins: {
         legend: { display: true, position: "bottom" },
       },
@@ -205,6 +211,9 @@ function renderAgeChart(rows, disease) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: {
+        duration: 0, // 애니메이션 비활성화하여 즉시 렌더링
+      },
       plugins: {
         legend: { display: false },
       },
@@ -323,12 +332,25 @@ function renderDiseaseInfo(selectedValue) {
   } else {
     mdText = "AI 요약이 없습니다.";
   }
-
-  if (window.marked && typeof window.marked.parse === "function") {
-    contentEl.innerHTML = window.marked.parse(mdText);
-  } else {
-    contentEl.textContent = mdText;
-  }
+  // 콘텐츠 삽입 전에 visibility를 hidden으로 설정하여 레이아웃 공간은 유지하되 보이지 않게 함
+  // 이렇게 하면 높이 변화 없이 콘텐츠를 교체할 수 있음
+  contentEl.style.visibility = "hidden";
+  contentEl.style.opacity = "0";
+  
+  // 다음 프레임에서 콘텐츠 삽입 및 visibility/opacity 복원
+  requestAnimationFrame(() => {
+    if (window.marked && typeof window.marked.parse === "function") {
+      contentEl.innerHTML = window.marked.parse(mdText);
+    } else {
+      contentEl.textContent = mdText;
+    }
+    
+    // 콘텐츠 삽입 후 visibility와 opacity 복원
+    requestAnimationFrame(() => {
+      contentEl.style.visibility = "visible";
+      contentEl.style.opacity = "1";
+    });
+  });
 }
 
 // ================================================================
@@ -345,6 +367,17 @@ function applyFilter() {
   renderGenderChart(genderRows, disease);
   renderAgeChart(ageRows, disease);
   renderDiseaseInfo(disease);
+
+  // 차트 렌더링 완료 후 높이 동기화
+  // 여러 프레임을 거쳐 차트가 완전히 렌더링될 때까지 대기
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      // 레이아웃 재계산을 위한 추가 대기
+      setTimeout(() => {
+        syncSummaryHeight();
+      }, 50);
+    });
+  });
 
   console.log("applyFilter:", {
     disease,
@@ -373,13 +406,43 @@ window.addEventListener("DOMContentLoaded", () => {
    좌측(그래프) 높이에 우측(요약) 높이 동기화 + ageSection 자동 숨김
    ========================================================= */
 
+// 디바운싱된 syncSummaryHeight 함수
+function syncSummaryHeightDebounced() {
+  if (syncHeightTimer) {
+    clearTimeout(syncHeightTimer);
+  }
+  
+  syncHeightTimer = setTimeout(() => {
+    syncSummaryHeight();
+  }, 100); // 100ms 디바운싱
+}
+
+// 실제 높이 동기화 함수
 function syncSummaryHeight() {
   const chartsCol = document.getElementById("chartsCol");
   const summaryCol = document.getElementById("summaryCol");
+  const ageSection = document.getElementById("ageSection");
+  
   if (!chartsCol || !summaryCol) return;
 
-  const h = chartsCol.getBoundingClientRect().height;
-  summaryCol.style.height = `${Math.max(0, Math.floor(h))}px`;
+  // 레이아웃 재계산을 위해 강제로 리플로우 발생
+  void chartsCol.offsetHeight;
+
+  // ageSection이 존재하고 표시되어 있는 경우, ageSection의 하단 위치를 기준으로 높이 제한
+  if (ageSection && ageSection.style.display !== "none") {
+    const ageSectionRect = ageSection.getBoundingClientRect();
+    const chartsColRect = chartsCol.getBoundingClientRect();
+    
+    // ageSection의 하단이 chartsCol 내에서 어느 위치인지 계산
+    const ageSectionBottom = ageSectionRect.bottom - chartsColRect.top;
+    
+    // summaryCol의 높이는 ageSection의 하단을 넘지 않도록 설정
+    summaryCol.style.height = `${Math.max(0, Math.floor(ageSectionBottom))}px`;
+  } else {
+    // ageSection이 없거나 숨겨진 경우, chartsCol 전체 높이 사용
+    const h = chartsCol.getBoundingClientRect().height;
+    summaryCol.style.height = `${Math.max(0, Math.floor(h))}px`;
+  }
 }
 
 function toggleAgeSectionByCanvas() {
@@ -392,22 +455,25 @@ function toggleAgeSectionByCanvas() {
   if (ageSection.style.display === "none") {
     // 이미 숨김이면 그대로
   }
-  syncSummaryHeight();
+  syncSummaryHeightDebounced();
 }
 
 /* 페이지 로드/리사이즈 */
 window.addEventListener("load", () => {
-  syncSummaryHeight();
-  toggleAgeSectionByCanvas();
+  // 페이지 로드 완료 후 충분한 시간을 두고 높이 동기화
+  setTimeout(() => {
+    syncSummaryHeight();
+    toggleAgeSectionByCanvas();
+  }, 200);
 });
-window.addEventListener("resize", syncSummaryHeight);
+window.addEventListener("resize", syncSummaryHeightDebounced);
 
 /* 좌측 컬럼 높이 변경(막대그래프 표시/숨김 포함) 자동 감지 */
 (function attachResizeObserver() {
   const chartsColEl = document.getElementById("chartsCol");
   if (!chartsColEl) return;
 
-  const ro = new ResizeObserver(() => syncSummaryHeight());
+  const ro = new ResizeObserver(() => syncSummaryHeightDebounced());
   ro.observe(chartsColEl);
 })();
 
@@ -425,5 +491,10 @@ function setAgeSectionVisibleByData(ageLabels, ageValues) {
     ageValues.some(v => Number(v) > 0);
 
   ageSection.style.display = hasData ? "" : "none";
-  syncSummaryHeight();
+  // display 변경 후 레이아웃 재계산을 위해 대기
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      syncSummaryHeight();
+    });
+  });
 }

@@ -104,33 +104,27 @@
 
 .btn-list,
 .btn-delete {
-  display: inline-block;
-  padding: 10px 20px;
-  border-radius: 6px;
-  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 10px;
+  border: 1px solid #bfc6d4;
+  background: #fff;
+  cursor: pointer;
   font-size: 14px;
   text-decoration: none;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
+  transition: 0.2s ease;
+  color: #000;
 }
 
-.btn-list {
-  background-color: #1B3C73;
-  color: #fff;
-}
+
 
 .btn-list:hover {
-  background-color: #152A5A;
+  background-color: #dfe6f3;
 }
 
-.btn-delete {
-  background-color: #EF4444;
-  color: #fff;
-}
+
 
 .btn-delete:hover {
-  background-color: #DC2626;
+  background-color: #dfe6f3;
 }
 
 /*
@@ -173,36 +167,75 @@
 
 .inquiry-content-box {
   background-color: #fff;
-  border: 1px solid #E0E0E0;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 0 24px 24px 24px;
   white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 14px;
   line-height: 1.8;
-  color: #000;
-  min-height: 100px;
+  color: #333;
+  border: none;
+  margin: 0;
+  min-height: auto;
+  text-align: left;
+  text-indent: 0;
 }
 
 /*
-  ========= 답변 내용 박스 =========
+  ========= 답변 섹션 =========
 
-  목적: 답변 내용을 표시하는 박스 스타일
+  목적: 답변 내용을 섹션 단위로 구조화하여 표시
 */
 
+.reply-section {
+  background-color: #fff;
+  margin-bottom: 20px;
+  margin-top: 20px;
+}
+
+/* 답변 헤더 영역 */
+.reply-header {
+  padding: 20px 24px 16px 24px;
+  background-color: #DFE8F2;
+}
+
+.reply-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #000;
+  margin: 0 0 8px 0;
+  padding: 0;
+}
+
+.reply-date-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reply-date {
+  font-size: 14px;
+  color: #000;
+}
+
+.reply-date-value {
+  font-size: 14px;
+  color: #666;
+}
+
+/* 답변 내용 박스 */
 .reply-content-box {
   background-color: #fff;
-  border: 1px solid #E0E0E0;
-  border-radius: 6px;
-  padding: 16px;
-  margin-bottom: 20px;
+  padding: 0 24px 24px 24px;
   white-space: pre-wrap;
   word-wrap: break-word;
   font-size: 14px;
   line-height: 1.8;
-  color: #000;
-  min-height: 100px;
+  color: #333;
+  border: none;
+  margin: 0;
+  min-height: auto;
+  text-align: left;
+  text-indent: 0;
 }
 
 .reply-section-pending {
@@ -283,10 +316,18 @@
     text-align: center;
   }
 
+  .reply-header {
+    padding: 16px;
+  }
+
   .inquiry-content-box,
   .reply-content-box {
-    padding: 12px;
+    padding: 0 16px 16px 16px;
     font-size: 13px;
+  }
+
+  .reply-title {
+    font-size: 16px;
   }
 
   .inquiry-info-row {
@@ -308,10 +349,18 @@
     font-size: 18px;
   }
 
+  .reply-header {
+    padding: 12px;
+  }
+
   .inquiry-content-box,
   .reply-content-box {
-    padding: 12px;
+    padding: 0 12px 12px 12px;
     font-size: 12px;
+  }
+
+  .reply-title {
+    font-size: 14px;
   }
 
   .inquiry-info-item {
