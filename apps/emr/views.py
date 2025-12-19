@@ -6,7 +6,7 @@ from django.views.decorators.http import require_GET
 from datetime import datetime, date, time, timezone as dt_timezone, timedelta
 from django.db import connection
 from django.db import transaction
-from django.db.models import Q, Exists, OuterRef
+from django.db.models import Q
 from pytz import timezone as tz
 from django.utils import timezone
 from django.utils.timezone import localdate
@@ -94,6 +94,61 @@ def _ensure_doctor_logged_in(request):
     if not user_id or role != "DOCTOR":
         return redirect(f"/accounts/login/?next={request.path}")
     return None
+
+def _get_pending_reservations_for_doctor(doctor, target_date):
+    """
+    Collect reservations for the given doctor/date and drop only the ones that
+    already have a medical record completed for that specific day (pairing
+    1 completed record to 1 reservation in time order).
+    """
+    if not doctor or not target_date:
+        return []
+
+    day_start = timezone.make_aware(
+        datetime.combine(target_date, time.min),
+        timezone.get_current_timezone(),
+    )
+    day_end = day_start + timedelta(days=1)
+
+    reservations = list(
+        Reservations.objects.filter(
+            slot__doctor_id=doctor.doctor_id,
+            slot__slot_date=target_date,
+        )
+        .select_related("user", "slot")
+        .order_by("slot__start_time")
+    )
+    if not reservations:
+        return []
+
+    patient_ids = {res.user_id for res in reservations}
+
+    completed_counts = (
+        MedicalRecord.objects.filter(
+            doctor_id=doctor.doctor_id,
+            hos_id=doctor.hos_id,
+            user_id__in=patient_ids,
+            record_datetime__gte=day_start,
+            record_datetime__lt=day_end,
+        )
+        .values("user_id")
+        .annotate(cnt=Count("medical_record_id"))
+    )
+    completed_by_user = {row["user_id"]: row["cnt"] for row in completed_counts}
+
+    pending_reservations = []
+    reservations_by_user = {}
+    for res in reservations:
+        reservations_by_user.setdefault(res.user_id, []).append(res)
+
+    for res_list in reservations_by_user.values():
+        res_list.sort(key=lambda r: r.slot.start_time)
+        completed = completed_by_user.get(res_list[0].user_id, 0)
+        # drop as many earliest reservations as completed records for that user/day
+        pending_reservations.extend(res_list[completed:])
+
+    pending_reservations.sort(key=lambda r: r.slot.start_time)
+    return pending_reservations
 
 @require_GET
 def api_patient_summary(request):
@@ -238,39 +293,7 @@ def doctor_screen_dashboard(request):
 
         # 서버/DB TZ와 무관하게 로컬(설정된 TIME_ZONE, 기본 Asia/Seoul) 기준 날짜 사용
         target_date = timezone.localdate()
-        # record_datetime는 DB에 UTC로 저장될 수 있어 __date 비교가 KST 기준으로 어긋날 수 있음.
-        # 로컬(Asia/Seoul) 기준 하루 범위로 비교한다.
-        day_start = timezone.make_aware(
-            datetime.combine(target_date, time.min),
-            timezone.get_current_timezone(),
-        )
-        day_end = day_start + timedelta(days=1)
-
-        completed_today = MedicalRecord.objects.filter(
-            doctor_id=doctor.doctor_id,
-            hos_id=doctor.hos_id,
-            user_id=OuterRef("user_id"),
-            record_datetime__gte=day_start,
-            record_datetime__lt=day_end,
-        )
-
-        users = list(Reservations.objects.filter(
-            # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
-            slot__doctor_id=doctor.doctor_id,
-            slot__slot_date=target_date
-        ).annotate(
-            has_medical_record=Exists(completed_today)
-        ).filter(
-            has_medical_record=False
-        ).select_related(
-            # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
-            'user', 
-            'slot' 
-        ).order_by(
-            # 정렬: TimeSlots의 start_time을 기준으로 오름차순 정렬
-            'slot__start_time' 
-        ))
-        
+        users = _get_pending_reservations_for_doctor(doctor, target_date)
         
     except:
         print('error')
@@ -1997,39 +2020,8 @@ def get_reservation_medical_record(request):
     try:
         doctor = Doctors.objects.get(doctor_id=doctor_id)
 
-        # record_datetime는 DB에 UTC로 저장될 수 있어 __date 비교가 KST 기준으로 어긋날 수 있음.
-        # 로컬(Asia/Seoul) 기준 하루 범위로 비교한다.
-        day_start = timezone.make_aware(
-            datetime.combine(target_date, time.min),
-            timezone.get_current_timezone(),
-        )
-        day_end = day_start + timedelta(days=1)
-
-        completed_today = MedicalRecord.objects.filter(
-            doctor_id=doctor.doctor_id,
-            hos_id=doctor.hos_id,
-            user_id=OuterRef("user_id"),
-            record_datetime__gte=day_start,
-            record_datetime__lt=day_end,
-        )
-
-        users = list(Reservations.objects.filter(
-            # 필터링: 해당 의사의, 오늘 날짜에 잡힌 예약만 선택
-            slot__doctor_id=doctor.doctor_id,
-            slot__slot_date=target_date
-        ).annotate(
-            has_medical_record=Exists(completed_today)
-        ).filter(
-            has_medical_record=False
-        ).select_related(
-            # Eager Loading: User 객체와 TimeSlots 객체를 한 번의 쿼리로 미리 가져옵니다.
-            'user', 
-            'slot' 
-        ).order_by(
-            # 정렬: TimeSlots의 start_time을 기준으로 오름차순 정렬
-            'slot__start_time' 
-        ))
-
+        users = _get_pending_reservations_for_doctor(doctor, target_date)
+        
         for reservation in users:
             user = reservation.user
             slot = reservation.slot

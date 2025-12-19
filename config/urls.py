@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from apps.core import views as core_views
+from apps.core import errors as error_views
 from apps.emergency import views as emergency_views
 
 
@@ -60,6 +61,11 @@ urlpatterns = [
     path("", include("apps.newsletter.urls")), 
 ]
 if settings.DEBUG:
+    urlpatterns += [
+        path("__errors__/403/", error_views.debug_403),
+        path("__errors__/404/", error_views.debug_404),
+        path("__errors__/500/", error_views.debug_500),
+    ]
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 handler403 = "apps.core.errors.custom_403"
