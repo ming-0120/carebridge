@@ -32,13 +32,13 @@ def qna_list(request):
     except Users.DoesNotExist:
         return redirect('accounts:login')
     
-    # 검색 파라미터 (POST 방식)
-    search_keyword = request.POST.get('search', '').strip()
-    page_number = request.POST.get('page', 1)
+    # 검색 파라미터 (POST 또는 GET 방식)
+    search_keyword = (request.POST.get('search') or request.GET.get('search', '')).strip()
+    page_number = request.POST.get('page') or request.GET.get('page', 1)
     
-    # 정렬 파라미터 (POST 방식)
-    sort_field = request.POST.get('sort', 'created_at')  # 기본값: created_at
-    sort_order = request.POST.get('order', 'desc')  # 기본값: desc (내림차순)
+    # 정렬 파라미터 (POST 또는 GET 방식)
+    sort_field = request.POST.get('sort') or request.GET.get('sort', 'created_at')  # 기본값: created_at
+    sort_order = request.POST.get('order') or request.GET.get('order', 'desc')  # 기본값: desc (내림차순)
     
     # QnA 목록 조회 (로그인한 사용자 본인의 문의 + 다른 사람이 공개로 설정한 글 + 관리자가 만든 더미데이터)
     # select_related('user'): user 정보를 미리 로드하여 N+1 쿼리 문제 방지
@@ -56,6 +56,12 @@ def qna_list(request):
         )
         .filter(user__withdrawal='0')  # Active 사용자만
     )
+    
+    # 검색 필터링 (제목 또는 내용으로 검색)
+    if search_keyword:
+        qnas = qnas.filter(
+            Q(title__icontains=search_keyword) | Q(content__icontains=search_keyword)
+        )
     
     # 정렬 처리
     # 허용된 정렬 필드만 처리 (보안)
