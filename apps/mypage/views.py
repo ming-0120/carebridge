@@ -16,13 +16,13 @@ from django.db.models import Q
 from django.utils import timezone
 from datetime import datetime
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST  # 추가
+from django.views.decorators.http import require_POST
 from collections import defaultdict
-from apps.db.models.emergency import ErInfo, ErStatus, ErMessage
+from apps.db.models.emergency import ErInfo
 from apps.db.models.review import AiReview
-from apps.db.models.favorite import UserFavorite  # 추가
+from apps.db.models.favorite import UserFavorite
 from apps.db.models.slot_reservation import TimeSlots
-from apps.db.models.users import Users  # 추가
+from apps.db.models.users import Users
 from django.conf import settings
 
 def reservation_list(request):
@@ -89,7 +89,6 @@ def my_qna_list(request):
     now = timezone.now()
     three_months_ago = now - timedelta(days=90)
 
-    # 정렬 옵션 (?sort=date_asc / date_desc / answer)
     sort = request.GET.get("sort", "date_desc")
     order_map = {
         "date_asc": "created_at",
@@ -107,7 +106,6 @@ def my_qna_list(request):
         .order_by(order_by)
     )
 
-    # 템플릿에서 보기 좋게 flag/라벨을 계산
     rows = []
     for q in qs:
         has_answer = bool(q.reply)
@@ -225,6 +223,7 @@ def profile_edit(request):
                 doctor.save()
 
         user.save()
+        messages.success(request, "프로필 정보가 수정되었습니다.")
 
         if is_doctor:
             return redirect("/mstaff/doctor_dashboard/")

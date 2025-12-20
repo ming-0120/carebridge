@@ -14,7 +14,28 @@ function execDaumPostcode() {
     },
   }).open();
 }
+const phoneInput = document.getElementById('prof_phone');
 
+if (phoneInput) {
+  phoneInput.addEventListener('input', function (e) {
+    // 숫자만 추출
+    let value = e.target.value.replace(/[^0-9]/g, '');
+
+    // ✅ 최대 11자리로 제한
+    if (value.length > 11) {
+      value = value.slice(0, 11);
+    }
+
+    // 하이픈 처리
+    if (value.length > 3 && value.length <= 7) {
+      value = value.replace(/(\d{3})(\d+)/, '$1-$2');
+    } else if (value.length > 7) {
+      value = value.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
+    }
+
+    e.target.value = value;
+  });
+}
 document.addEventListener("DOMContentLoaded", () => {
   const fileInput    = document.getElementById("profileImageInput"); // ✅ 이 화면의 실제 id
   const previewImg   = document.getElementById("profilePreview");
