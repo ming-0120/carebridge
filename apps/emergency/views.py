@@ -719,6 +719,9 @@ def update_preferences(request):
     # 1) 정렬 설정
     elif action == "sort":
         request.session["sort"] = data.get("sort")
+        # 필터 초기화: "가장 가까운 응급실" 선택 시 필터는 독립적으로 동작
+        request.session.pop("etype", None)
+        request.session.pop("filters", None)
 
     # 2) 지역 설정
     elif action == "region":
@@ -729,6 +732,8 @@ def update_preferences(request):
     elif action == "filter":
         request.session["etype"] = data.get("etype", "")
         request.session["filters"] = data.get("filters", {})
+        # 정렬 초기화: 필터 적용 시 정렬은 독립적으로 동작
+        request.session.pop("sort", None)
 
     request.session.save()
     return JsonResponse({"status": "ok"})

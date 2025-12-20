@@ -49,7 +49,8 @@
 
       <div class="card-row" id="hospitalCards"></div>
     </section>
-  </div>
+    </div>
+  </main>
 
   <!-- 모달/스크립트는 기존 그대로 -->
   <div id="hospitalModal" class="modal hidden">
@@ -110,6 +111,18 @@
 
   <script src="{% static 'reservations/js/main.js' %}"></script>
 
-  {% include "core/footer.html" %}
+  <footer class="footer">
+    <div class="footer-container">
+      <h2 class="footer-brand-name">CareBridge</h2>
+      <div class="footer-info">
+        <p class="footer-info-line">
+          CareBridge 대표자명 : 디버깅내과 | 주소 : 서울특별시 강남구 현익빌딩 | 대표전화 : 02-000-0000
+        </p>
+      </div>
+      <div class="footer-copyright">
+        COPYRIGHT © CareBridge ALL RIGHTS RESERVED.
+      </div>
+    </div>
+  </footer>
 </body>
 </html>
