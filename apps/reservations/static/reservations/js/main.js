@@ -162,8 +162,8 @@ document.addEventListener("DOMContentLoaded", function () {
             `;
         
             // 병원 이름 클릭 시 모달 오픈
-            const nameEl = card.querySelector(".hospital-name");
-            nameEl.addEventListener("click", () => {
+            // const nameEl = card.querySelector(".hospital-name");
+            card.addEventListener("click", () => {
                 const hospitalForModal = makeHospitalForModal(h);
                 openHospitalModal(hospitalForModal);
             });
