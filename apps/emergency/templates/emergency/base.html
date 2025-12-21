@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}CareBridge 응급실{% endblock %}</title>
     {% load static %}
-
+    <link rel="icon" href="{% static 'core/img/favicon.png' %}" type="image/png">
     <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey={{ KAKAO_MAP_JS_KEY }}&autoload=false&libraries=services"></script>
     <script>const GOOGLE_API_KEY = "{{ GOOGLE_API_KEY }}";</script>
 
