@@ -551,9 +551,6 @@ document.addEventListener('DOMContentLoaded', function() {
     searchForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // 현재 스크롤 위치 저장
-      const currentScrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-      
       // FormData 생성
       const formData = new FormData(searchForm);
       
@@ -606,9 +603,6 @@ document.addEventListener('DOMContentLoaded', function() {
           paginationContainer.remove();
         }
         
-        // 스크롤 위치 복원
-        window.scrollTo(0, currentScrollPosition);
-        
         // 이벤트 리스너 재연결
         attachTableRowListeners();
         attachSortListeners();
@@ -618,6 +612,16 @@ document.addEventListener('DOMContentLoaded', function() {
         paginationLinks.forEach(link => {
           link.addEventListener('click', handlePaginationClick);
         });
+        
+        // 검색 후 테이블 영역으로 스크롤 이동
+        const updatedTableContainer = document.querySelector('.table-container');
+        if (updatedTableContainer) {
+          const offsetTop = updatedTableContainer.getBoundingClientRect().top + window.pageYOffset;
+          window.scrollTo({
+            top: offsetTop - 20, // 테이블 상단에 약간의 여백 추가
+            behavior: 'smooth' // 부드러운 스크롤
+          });
+        }
       })
       .catch(error => {
         console.error('검색 요청 실패:', error);

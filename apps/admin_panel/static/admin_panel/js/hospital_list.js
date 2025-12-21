@@ -340,7 +340,9 @@ document.addEventListener('DOMContentLoaded', function() {
           }
         });
         tr.addEventListener('mouseleave', function() {
+          // 인라인 스타일 제거하여 CSS 클래스의 배경색이 다시 적용되도록 함
           this.style.backgroundColor = '';
+          // 등록된 병원인 경우 CSS 클래스의 배경색이 자동으로 적용됨
         });
         
         resultsBody.appendChild(tr);

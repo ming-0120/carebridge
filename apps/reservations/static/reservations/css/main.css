@@ -282,44 +282,40 @@ body {
 }
 
 /* =========================
-   Sticky Footer (최종본)
+   레이아웃 구조 (Sticky Footer)
    ========================= */
 
-   html, body {
-    margin: 0;
-    padding: 0;
-    /* height: 100% 제거 - min-height: 100vh만 사용 */
-  }
-  
-  /* body를 flex 컨테이너로 */
-  .reservation-body {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-  }
-  
-  /* 실제 콘텐츠 영역 */
-  .reservation-main {
-    flex: 1 0 auto;  /* flex: 1 0 auto로 명시적 설정 */
-    width: 100%;
-  }
-  
-  /* 핵심: footer를 하단에 고정 */
-  .reservation-body .footer {
-    flex-shrink: 0;
-    margin-top: auto;
-  }
-  
-  /* =========================
-     Footer (페이지 전용)
-     ========================= */
-  
-  .footer {
-    width: 100%;
-    background: #2a2a2a;
-    color: #9ca3af;
-    font-size: 13px;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* body를 flex 컨테이너로 설정하여 푸터를 하단에 고정 */
+.reservation-body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 실제 콘텐츠 영역 - 남은 공간을 모두 차지 */
+.reservation-main {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+/* =========================
+   Footer (예약 페이지 전용)
+   ========================= */
+
+.footer {
+  flex-shrink: 0;
+  width: 100%;
+  background: #2a2a2a;
+  color: #9ca3af;
+  font-size: 13px;
+  margin-top: auto;
+}
 
 /* footer 내부 컨테이너 */
 .footer-container {
@@ -334,13 +330,19 @@ body {
   font-size: 22px;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 18px;
+  margin: 0 0 18px;
+  padding: 0;
+}
+
+.footer-info {
+  margin-bottom: 20px;
 }
 
 .footer-info-line {
   font-size: 13px;
   line-height: 1.8;
   color: #c7c7c7;
+  margin: 0;
 }
 
 .footer-copyright {
@@ -359,6 +361,27 @@ body {
 
   .footer-brand-name {
     font-size: 20px;
+    margin-bottom: 16px;
+  }
+
+  .footer-info-line {
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .footer-copyright {
+    font-size: 11px;
+    padding-top: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-container {
+    padding: 28px 12px 20px;
+  }
+
+  .footer-info-line {
+    font-size: 11px;
   }
 }
 

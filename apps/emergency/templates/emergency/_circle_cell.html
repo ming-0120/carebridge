@@ -2,6 +2,7 @@
 
 {% comment %}
 원형 그래프 표시 로직:
+- 상세 모달과 동일한 구조로 렌더링
 - 원형 그래프 안: 혼잡도 텍스트 (원활, 보통, 혼잡, 가능, 불가능)
 - 원형 그래프 아래: 숫자 (available/total만 표시, 단일 숫자는 "-"로 표시)
 - type_name: "er_general", "er_child", "birth", "negative_pressure", "isolation_general", "isolation_cohort"
@@ -13,58 +14,95 @@
     
     {% if total != None and total > 0 and available != None %}
         {# 정상 케이스: available과 total이 모두 있고, total > 0 #}
-        {% with pct=available|percent:total %}
-        <div class="status-wrap">
-            <div class="circle {{ color_class }}">
-                <svg>
-                    {# 배경 원: available == 0이면 색상으로, 아니면 회색으로 표시 #}
-                    {# 상세 모달과 동일한 로직: available == 0이고 red일 때만 빨간색 #}
-                    <circle class="meter-bg"
-                        cx="24" cy="24" r="20"
-                        stroke-dasharray="125.66, 125.66"
-                        {% if available == 0 and color_class == "red" %}
-                            stroke="#E53935"
-                            style="stroke: #E53935 !important;"
-                        {% else %}
-                            stroke="#e0e0e0"
-                            style="stroke: #e0e0e0 !important;"
-                        {% endif %}
-                        fill="none"
-                        stroke-width="4"
-                        stroke-linecap="round">
-                    </circle>
-                    {# 진행 원: stroke-dasharray를 원주 전체로 설정하고, stroke-dashoffset으로 제어 #}
-                    {# 12시 기준 시계방향으로 채워지도록 구현 #}
-                    {# CSS 변수로 실제 offset 값을 설정하여 애니메이션에서 사용 #}
-                    <circle class="meter"
-                        cx="24" cy="24" r="20"
-                        stroke-dasharray="125.66, 125.66"
-                        stroke-dashoffset="{{ available|circle_dashoffset:total }}"
-                        style="--dash-offset: {{ available|circle_dashoffset:total }};"
-                        fill="none"
-                        stroke-width="4"
-                        stroke-linecap="round">
-                    </circle>
-                </svg>
-                <span class="label">{{ congestion_label }}</span>
-            </div>
-            <div class="status-value">
-                {{ available }}/{{ total }}
-            </div>
-        </div>
-        {% endwith %}
+        {# 상세 모달과 동일한 로직: available == 0이고 red일 때만 배경을 빨강으로 처리 #}
+        {% if available == 0 and color_class == "red" %}
+            {% with bg_stroke_color="#E53935" dash_offset=available|circle_dashoffset:total safe_available=available|default:0 %}
+                <div class="status-wrap">
+                    <div class="circle {{ color_class }}">
+                        <svg>
+                            {# 배경 원: 상세 모달과 동일한 구조 #}
+                            <circle class="meter-bg"
+                                cx="24" cy="24" r="20"
+                                stroke-dasharray="125.66, 125.66"
+                                stroke="{{ bg_stroke_color }}"
+                                fill="none"
+                                stroke-width="4"
+                                stroke-linecap="round">
+                            </circle>
+                            {# 진행 원: available >= 0일 때만 렌더링 (상세 모달과 동일) #}
+                            {% if safe_available >= 0 %}
+                            <circle class="meter"
+                                cx="24" cy="24" r="20"
+                                stroke-dasharray="125.66, 125.66"
+                                stroke-dashoffset="{{ dash_offset }}"
+                                style="--dash-offset: {{ dash_offset }};"
+                                fill="none"
+                                stroke-width="4"
+                                stroke-linecap="round">
+                            </circle>
+                            {% endif %}
+                        </svg>
+                        <span class="label">{{ congestion_label }}</span>
+                    </div>
+                    <div class="status-value">
+                        {{ available }}/{{ total }}
+                    </div>
+                </div>
+            {% endwith %}
+        {% else %}
+            {% with bg_stroke_color="#e0e0e0" dash_offset=available|circle_dashoffset:total safe_available=available|default:0 %}
+                <div class="status-wrap">
+                    <div class="circle {{ color_class }}">
+                        <svg>
+                            {# 배경 원: 상세 모달과 동일한 구조 #}
+                            <circle class="meter-bg"
+                                cx="24" cy="24" r="20"
+                                stroke-dasharray="125.66, 125.66"
+                                stroke="{{ bg_stroke_color }}"
+                                fill="none"
+                                stroke-width="4"
+                                stroke-linecap="round">
+                            </circle>
+                            {# 진행 원: available >= 0일 때만 렌더링 (상세 모달과 동일) #}
+                            {% if safe_available >= 0 %}
+                            <circle class="meter"
+                                cx="24" cy="24" r="20"
+                                stroke-dasharray="125.66, 125.66"
+                                stroke-dashoffset="{{ dash_offset }}"
+                                style="--dash-offset: {{ dash_offset }};"
+                                fill="none"
+                                stroke-width="4"
+                                stroke-linecap="round">
+                            </circle>
+                            {% endif %}
+                        </svg>
+                        <span class="label">{{ congestion_label }}</span>
+                    </div>
+                    <div class="status-value">
+                        {{ available }}/{{ total }}
+                    </div>
+                </div>
+            {% endwith %}
+        {% endif %}
     {% elif available != None and available >= 0 %}
         {# available만 있고 total이 None이거나 0인 경우: "-" 표시 (원형 그래프 없음) #}
         <div class="status-wrap">
             <div class="circle none">
                 <svg>
+                    <circle class="meter-bg"
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="125.66, 125.66"
+                        stroke="#e0e0e0"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
+                    </circle>
                     <circle class="meter none"
-                            cx="24" cy="24" r="20"
-                            stroke-dasharray="0, 125.66"
-                            stroke="#e0e0e0"
-                            fill="none"
-                            stroke-width="4"
-                            stroke-linecap="round">
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="0, 125.66"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
                     </circle>
                 </svg>
                 <span class="label">-</span>
@@ -76,13 +114,20 @@
         <div class="status-wrap">
             <div class="circle none">
                 <svg>
+                    <circle class="meter-bg"
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="125.66, 125.66"
+                        stroke="#e0e0e0"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
+                    </circle>
                     <circle class="meter none"
-                            cx="24" cy="24" r="20"
-                            stroke-dasharray="0, 125.66"
-                            stroke="#e0e0e0"
-                            fill="none"
-                            stroke-width="4"
-                            stroke-linecap="round">
+                        cx="24" cy="24" r="20"
+                        stroke-dasharray="0, 125.66"
+                        fill="none"
+                        stroke-width="4"
+                        stroke-linecap="round">
                     </circle>
                 </svg>
                 <span class="label">-</span>
@@ -95,13 +140,20 @@
     <div class="status-wrap">
         <div class="circle none">
             <svg>
+                <circle class="meter-bg"
+                    cx="24" cy="24" r="20"
+                    stroke-dasharray="125.66, 125.66"
+                    stroke="#e0e0e0"
+                    fill="none"
+                    stroke-width="4"
+                    stroke-linecap="round">
+                </circle>
                 <circle class="meter none"
-                        cx="24" cy="24" r="20"
-                        stroke-dasharray="0, 125.66"
-                        stroke="#e0e0e0"
-                        fill="none"
-                        stroke-width="4"
-                        stroke-linecap="round">
+                    cx="24" cy="24" r="20"
+                    stroke-dasharray="0, 125.66"
+                    fill="none"
+                    stroke-width="4"
+                    stroke-linecap="round">
                 </circle>
             </svg>
             <span class="label">-</span>

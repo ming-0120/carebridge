@@ -18,6 +18,7 @@
     - JavaScript: admin_common.js, qna_detail.js
 -->
 {% load static %}
+{% load masking_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -182,17 +183,20 @@
         </div>
         
         <!-- 
-          연락처 정보 항목
+          연락처 정보 항목 (마스킹 처리)
           
-          목적: 문의 작성자의 연락처를 표시
+          목적: 문의 작성자의 연락처를 마스킹 처리하여 표시 (개인정보 보호)
             - 라벨: "연락처"
-            - 값: {{ qna.user.phone|default:"-" }} - 사용자 전화번호
+            - 값: 전화번호 마스킹 처리
+              → 010 + 공백 + 첫 번째 숫자 + "****" + 공백 + "****"
+              → 예: "010 7**** ****" (실제 전화번호: "010-7751-7593")
               → phone: 사용자의 전화번호
+              → mask_phone: 전화번호 마스킹 필터
               → |default:"-": phone이 없으면 "-" 표시
         -->
         <div class="inquiry-detail-item">
           <span class="inquiry-detail-label">연락처</span>
-          <span class="inquiry-detail-value">{{ qna.user.phone|default:"-" }}</span>
+          <span class="inquiry-detail-value">{{ qna.user.phone|mask_phone|default:"-" }}</span>
         </div>
         
         <!-- 

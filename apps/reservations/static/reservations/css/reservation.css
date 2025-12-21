@@ -236,8 +236,32 @@ body{
   cursor: not-allowed !important;
   opacity: 1 !important;
 }
+/* 선택한 날짜(셀) 배경 강조 */
+.fc .fc-daygrid-day.fc-day-selected {
+  background: rgba(25, 118, 210, 0.14); /* 연한 파랑 */
+}
 
+/* 셀 내부(숫자 영역 포함)도 자연스럽게 보이도록 */
+.fc .fc-daygrid-day.fc-day-selected .fc-daygrid-day-frame {
+  background: rgba(25, 118, 210, 0.14);
+}
+/* 선택한 날짜: 카드 배경색으로 채움 */
+.fc .fc-daygrid-day.fc-day-selected,
+.fc .fc-daygrid-day.fc-day-selected .fc-daygrid-day-frame {
+  background: #EEF3FF !important;
+}
 
+/* 선택한 날짜 테두리/강조: 조금 더 진한 톤 */
+.fc .fc-daygrid-day.fc-day-selected {
+  outline: 2px solid #C4DCF4 !important;
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+/* 숫자(일자)도 살짝 강조 */
+.fc .fc-daygrid-day.fc-day-selected .fc-daygrid-day-number {
+  font-weight: 700;
+}
 
 /* time select */
 .time-select{ padding: 16px; }

@@ -4,14 +4,6 @@
 {% block mypage_content %}
 <h2>개인정보수정</h2>
 
-{% if messages %}
-    <ul class="django-messages">
-        {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-
 <form method="post" enctype="multipart/form-data" class="doctor-edit-page">
     {% csrf_token %}
     
@@ -86,4 +78,13 @@
     </div>
 </form>
 <script src="{% static 'mypage/js/profile_edit.js' %}"></script>
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      alert("{{ message|escapejs }}");
+    {% endfor %}
+  });
+</script>
+{% endif %}
 {% endblock %}

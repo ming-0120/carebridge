@@ -39,7 +39,7 @@
             <div class="terms-box">
               <h3>1. 개인정보 수집 목적</h3>
               <ul>
-                <li>회원 가입 및 본인 식별 (계정 생성, 로그인, 회원 유형 구분: USER / DOCTOR / HOSPITAL / ADMIN)</li>
+                <li>회원 가입 및 본인 식별 (계정 생성, 로그인)</li>
                 <li>의사 인증 및 병원 소속 확인 (의사 면허번호, 진료과, 소속 병원 정보 확인)</li>
                 <li>병원·의사 기능 제공 (환자 관리, 진료·검사·처치 기록 확인, 진료 일정 및 예약 관리)</li>
                 <li>고객 문의 처리 및 공지사항 안내</li>
@@ -166,9 +166,9 @@
               <div class="writer-info-value writer-phone-group">
                 <span class="writer-text">{{ phone_parts.area|default:'' }}</span>
                 <input type="hidden" name="phone_area" value="{{ phone_parts.area|default:'' }}">
-                <span class="phone-separator"></span>
+                <span class="phone-separator">-</span>
                 <span class="writer-text">{{ phone_parts.middle|default:'' }}</span>
-                <span class="phone-separator"></span>
+                <span class="phone-separator">-</span>
                 <span class="writer-text">{{ phone_parts.last|default:'' }}</span>
               </div>
             </div>

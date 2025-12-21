@@ -24,6 +24,7 @@ from apps.db.models import Users, Doctors, Hospital, Qna, DailyVisit, UserFavori
 # Python 표준 라이브러리
 import json  # JSON 데이터 처리 (차트 데이터 직렬화)
 import re  # 정규표현식 (더미 데이터 생성 시 패턴 매칭)
+import random  # 랜덤 데이터 생성 (더미 그래프 데이터용)
 
 # Create your views here.
 
@@ -289,8 +290,21 @@ def dashboard(request):
         except DailyVisit.DoesNotExist:
             # 해당 날짜의 방문자 데이터가 없는 경우 (데이터베이스에 기록이 없음)
             # 예: 새로 시작한 서비스라서 아직 데이터가 없는 날짜
-            # 그래프에서 0으로 표시하기 위해 count를 0으로 설정
-            count = 0
+            # 더미 데이터 생성: 자연스러운 그래프를 위해 점진적으로 증가하는 패턴
+            #   - 6일 전: 낮은 값 (10~30)
+            #   - 5일 전: 약간 증가 (15~35)
+            #   - 4일 전: 계속 증가 (20~45)
+            #   - 3일 전: 더 증가 (30~55)
+            #   - 2일 전: 계속 증가 (40~65)
+            #   - 1일 전: 더 증가 (50~75)
+            #   - 오늘: 가장 높은 값 (60~85)
+            #   - 각 날짜마다 약간의 랜덤 변동 추가하여 자연스러움 향상
+            days_from_today = 6 - i  # 오늘로부터 멀어진 일수 (0~6)
+            # 기본값: 오늘에 가까울수록 높은 값 (최소 20, 최대 80)
+            base_value = 20 + (days_from_today * 8)  # 20, 28, 36, 44, 52, 60, 68
+            # 랜덤 변동 추가 (±10): 자연스러운 변동을 위해
+            random_variation = random.randint(-10, 10)
+            count = max(10, base_value + random_variation)  # 최소값 10 보장
         
         # 그래프 데이터에 날짜 레이블 추가 (X축 레이블)
         # labels 배열에 날짜 문자열 추가 (예: ['12/01', '12/02', ...])
@@ -299,7 +313,7 @@ def dashboard(request):
         # 그래프 데이터에 방문자 수 값 추가 (Y축 데이터)
         # values 배열에 방문자 수 추가 (예: [100, 150, ...])
         #   - 데이터가 있으면: 실제 방문자 수
-        #   - 데이터가 없으면: 0
+        #   - 데이터가 없으면: 더미 데이터 (점진적으로 증가하는 패턴)
         visitor_chart_data['values'].append(count)
     
     # 템플릿에 전달할 컨텍스트 데이터 (딕셔너리)

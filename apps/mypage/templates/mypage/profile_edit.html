@@ -4,14 +4,6 @@
 {% block mypage_content %}
 <h2>개인정보수정</h2>
 
-{% if messages %}
-    <ul class="django-messages">
-        {% for message in messages %}
-            <li class="{{ message.tags }}">{{ message }}</li>
-        {% endfor %}
-    </ul>
-{% endif %}
-
 <form method="post">
     {% csrf_token %}
 
@@ -52,7 +44,7 @@
     <div class="form-row">
         <label>연락처</label>
         <div class="form-inline">
-            <input type="text" name="phone" class="input-text" value="{{ user.phone }}">
+            <input type="text" name="phone" id="prof_phone" class="input-text" value="{{ user.phone }}">
         </div>
     </div>
 
@@ -82,4 +74,13 @@
 </form>
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <script src="{% static 'mypage/js/profile_edit.js' %}"></script>
+{% if messages %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    {% for message in messages %}
+      alert("{{ message|escapejs }}");
+    {% endfor %}
+  });
+</script>
+{% endif %}
 {% endblock %}

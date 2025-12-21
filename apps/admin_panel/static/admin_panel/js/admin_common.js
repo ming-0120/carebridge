@@ -1,4 +1,5 @@
 // ========= 관리자 페이지 공통 JavaScript =========
+// 버전: 2024-12-20 (페이지네이션 오류 수정)
 
 /**
  * URL 파라미터를 유지하면서 페이지 이동
@@ -953,8 +954,11 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
         detailSection.remove();
       }
       
-      // 페이지네이션 리스너 재연결
-      attachPaginationListeners();
+      // 페이지네이션 리스너 재연결 (페이지네이션 컨테이너가 있을 때만)
+      // paginationContainer는 위에서 이미 선언되었으므로 재사용
+      if (paginationContainer) {
+        attachPaginationListeners();
+      }
       
       // 정렬 링크 리스너 재연결
       attachSortListeners();
@@ -1646,43 +1650,38 @@ function handlePaginationAjax(e, url) {
  * // 결과: 모든 페이지네이션 링크에 AJAX 이벤트 리스너가 연결됨
  */
 function attachPaginationListeners() {
-  console.log('attachPaginationListeners 호출됨'); // 디버깅 로그 추가
+  // ========= 페이지네이션 컨테이너 조회 =========
+  const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+  
+  // 페이지네이션 컨테이너가 없으면 함수 종료 (페이지네이션이 없는 경우)
+  // 조용히 종료 (대시보드 등 페이지네이션이 없는 페이지는 정상)
+  if (!paginationContainer) {
+    return;
+  }
   
   // ========= 페이지네이션 링크 조회 =========
-  // 기존: document.querySelectorAll('.pagination a.page-link[href], .pagination a[href]');
-  // **핵심 수정: page-link와 pagination-link 두 클래스를 모두 찾도록 통합합니다.**
-  console.log('페이지네이션 링크 찾기 시도: 통합 선택자'); // 디버깅 로그 추가
-  const paginationLinks = document.querySelectorAll(
-    '.pagination a.page-link[href], ' + // 기존 HTML 링크 (.page-link)
-    '.pagination a.pagination-link[href], ' + // 로그에서 확인된 링크 (.pagination-link)
-    '.pagination a[href], ' + // 안전을 위해 모든 href 속성을 가진 <a> 태그를 포함
-    'nav[aria-label="Page navigation"] a.page-link[href], ' + // nav 내부 .page-link
-    'nav[aria-label="Page navigation"] a.pagination-link[href], ' + // nav 내부 .pagination-link
-    'nav[aria-label="Page navigation"] a[href]' // nav 내부 모든 href 속성을 가진 <a> 태그
-  );
+  // **핵심 수정: data-page 속성을 가진 링크를 우선적으로 찾고, 
+  //              href 속성이 있는 링크도 포함하여 더 포괄적으로 검색합니다.**
   
-  console.log('찾은 링크 개수:', paginationLinks.length); // 디버깅 로그 추가
+  // 방법 1: data-page 속성을 가진 링크 찾기 (가장 확실한 방법)
+  let paginationLinks = paginationContainer.querySelectorAll('a[data-page]');
   
-  // 찾은 링크가 0개인 경우 에러 로그를 출력합니다.
+  // 방법 2: data-page가 없으면 클래스 기반으로 찾기
   if (paginationLinks.length === 0) {
-    console.error('CRITICAL ERROR: attachPaginationListeners가 페이지 링크를 찾지 못했습니다.');
-    // 현재 DOM 구조를 확인하기 위해 pagination 컨테이너의 내용을 로그로 출력
-    const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
-    if (paginationContainer) {
-      console.error('Pagination Container Inner HTML:', paginationContainer.innerHTML.trim());
-    } else {
-      console.error('Pagination Container를 찾을 수 없습니다.');
-    }
-    // 디버깅: 실제로 어떤 요소들이 있는지 확인
-    const allPagination = document.querySelectorAll('.pagination, nav[aria-label="Page navigation"]');
-    const allLinks = document.querySelectorAll('.pagination a, nav[aria-label="Page navigation"] a');
-    console.log('pagination 컨테이너 개수:', allPagination.length);
-    console.log('pagination 내부 링크 개수:', allLinks.length);
-    if (allLinks.length > 0) {
-      console.log('첫 번째 링크:', allLinks[0]);
-      console.log('첫 번째 링크 클래스:', allLinks[0].className);
-      console.log('첫 번째 링크 data-page:', allLinks[0].dataset.page);
-    }
+    paginationLinks = paginationContainer.querySelectorAll(
+      'a.page-link, ' + // .page-link 클래스를 가진 링크
+      'a.pagination-link' // .pagination-link 클래스를 가진 링크
+    );
+  }
+  
+  // 방법 3: 여전히 없으면 href 속성이 있는 모든 링크 찾기
+  if (paginationLinks.length === 0) {
+    paginationLinks = paginationContainer.querySelectorAll('a[href]');
+  }
+  
+  // 찾은 링크가 0개인 경우 조용히 종료
+  // (페이지네이션 컨테이너는 있지만 링크가 없는 경우는 정상일 수 있음 - 예: 1페이지만 있는 경우)
+  if (paginationLinks.length === 0) {
     return;
   }
   
@@ -1926,8 +1925,11 @@ document.addEventListener('DOMContentLoaded', function() {
             detailSection.remove();
           }
           
-          // 페이지네이션 리스너 재연결
-          attachPaginationListeners();
+          // 페이지네이션 리스너 재연결 (페이지네이션 컨테이너가 있을 때만)
+          // paginationContainer는 위에서 이미 선언되었으므로 재사용
+          if (paginationContainer) {
+            attachPaginationListeners();
+          }
           
           // 테이블 행 리스너 재연결
           if (typeof window.reattachTableRowListeners === 'function') {
@@ -1958,15 +1960,13 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 스크롤 위치 유지: 페이지 이동 후에도 사용자가 보고 있던 위치 유지
   //   - 성능 최적화: 전체 HTML 대신 필요한 부분만 업데이트
   // 
-  // attachPaginationListeners(): 페이지네이션 링크에 이벤트 리스너 연결 함수 호출
-  //   - 목적: 모든 페이지네이션 링크를 찾아서 각각에 AJAX 이벤트 리스너 추가
-  //   - 동작:
-  //     1. 모든 페이지네이션 링크를 찾기
-  //     2. 각 링크에 대해 기존 이벤트 리스너 제거 (중복 방지)
-  //     3. 새로운 이벤트 리스너 추가 (AJAX 처리)
-  //     4. 링크 클릭 시 handlePaginationAjax 함수 호출
-  //   - 결과: 페이지네이션 링크 클릭 시 AJAX로 페이지 이동
-  attachPaginationListeners();
+  // **핵심 수정: 페이지네이션 컨테이너가 있을 때만 호출**
+  //   - 대시보드처럼 페이지네이션이 없는 페이지에서는 호출하지 않음
+  //   - 불필요한 오류 메시지 방지
+  const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+  if (paginationContainer) {
+    attachPaginationListeners();
+  }
   
   // ========= 로그아웃 버튼 이벤트 리스너 =========
   // 목적: 로그아웃 버튼 클릭 시 확인 창을 표시하고 로그아웃 처리

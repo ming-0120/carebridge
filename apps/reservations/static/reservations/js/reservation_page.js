@@ -129,7 +129,12 @@ document.addEventListener("DOMContentLoaded", () => {
     dateClick: function (info) {
       const clickedDate = info.dateStr;
       const dateObj = info.date;
-
+      // 5) 의사 선택 여부 확인
+      const doctorId = doctorIdInput ? doctorIdInput.value : null;
+      if (!doctorId) {
+        alert("먼저 의사를 선택해 주세요.");
+        return;
+      }
       // 1) 범위 밖/과거/일요일 차단
       if (isDisabledDate(dateObj)) {
         alert("해당 날짜에는 예약이 불가합니다.");
@@ -153,12 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // 4) 선택 날짜 저장
       if (selectedDateInput) selectedDateInput.value = clickedDate;
 
-      // 5) 의사 선택 여부 확인
-      const doctorId = doctorIdInput ? doctorIdInput.value : null;
-      if (!doctorId) {
-        alert("먼저 의사를 선택해 주세요.");
-        return;
-      }
+      
 
       // 6) 슬롯 로드
       loadSlots(doctorId, clickedDate);
@@ -176,13 +176,25 @@ document.addEventListener("DOMContentLoaded", () => {
       doctor_id: doctorId,
       date: dateStr,
     });
+    const now = new Date(today); // 현재 시각
+    const todayStr = today.toISOString().slice(0, 10); // YYYY-MM-DD
+    const isToday = (dateStr === todayStr);
+    function isPastTime(slot) {
+      if (!isToday) return false;
 
+      const [hour, minute] = slot.start_time.split(":").map(Number);
+
+      const slotTime = new Date(today);
+      slotTime.setHours(hour, minute, 0, 0);
+
+      return slotTime < now;
+    };
     fetch(`/reservations/api/doctor-slots/?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         const amRow = document.querySelector(".time-select .am-row");
         const pmRow = document.querySelector(".time-select .pm-row");
-        const selectedSlotInput = document.getElementById("selectedSlotId");
+        const selectedSlotInput = document.getElementById("selectedSlotId");        
 
         if (!amRow || !pmRow || !selectedSlotInput) return;
 
@@ -190,8 +202,8 @@ document.addEventListener("DOMContentLoaded", () => {
         pmRow.innerHTML = "";
         selectedSlotInput.value = "";
 
-        const isClosed = (slot) => slot.status === "CLOSED";
-
+        const isClosed = (slot) => slot.status === "CLOSED" || isPastTime(slot);
+        
         const makeSlotButton = (slot) => {
           const btn = document.createElement("button");
           btn.type = "button";
@@ -204,6 +216,7 @@ document.addEventListener("DOMContentLoaded", () => {
             btn.classList.add("time-btn-disabled");
             return btn;
           }
+          
 
           btn.addEventListener("click", () => {
             document.querySelectorAll(".time-btn").forEach(b => b.classList.remove("selected"));
