@@ -531,10 +531,14 @@
       주요 기능:
         - 첫 페이지로 이동: « 버튼
         - 이전 페이지로 이동: < 버튼
-        - 페이지 번호 표시: 현재 페이지 ±3 범위의 페이지 번호 표시
+        - 페이지 번호 표시: 현재 페이지 ±3 범위의 페이지 번호 표시 (현재 페이지가 1일 때는 4까지 표시)
         - 다음 페이지로 이동: > 버튼
         - 마지막 페이지로 이동: » 버튼
+      
+      조건부 표시:
+        - 전체 페이지가 1개일 때는 페이지네이션 버튼을 표시하지 않음
     -->
+    {% if page_obj.paginator.num_pages > 1 %}
     <div class="pagination">
       <!-- 
         이전 페이지 버튼 영역
@@ -614,12 +618,14 @@
           <!-- 
             인접 페이지 번호 링크
             
-            목적: 현재 페이지 ±3 범위의 페이지 번호를 링크로 표시
-              - num > page_obj.number|add:'-3': 현재 페이지 - 3보다 큰지 확인
-              - num < page_obj.number|add:'3': 현재 페이지 + 3보다 작은지 확인
-              - 예: 현재 페이지가 5이면 2, 3, 4, 5, 6, 7, 8만 표시
+            목적: 현재 페이지를 중심으로 항상 4개의 페이지 번호를 링크로 표시
+              - 현재 페이지가 1일 때: 1, 2, 3, 4 표시
+              - 현재 페이지가 2일 때: 1, 2, 3, 4 표시
+              - 현재 페이지가 3 이상일 때: 현재 페이지 - 1부터 현재 페이지 + 2까지 표시
           -->
-          {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+          {% elif page_obj.number == 1 and num <= 4 %}
+            <a href="#" class="page-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">{{ num }}</a>
+          {% elif page_obj.number > 1 and num >= page_obj.number|add:'-1' and num <= page_obj.number|add:'2' %}
             <a href="#" class="page-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}" data-search-type="{{ search_type|default:'' }}" data-search-keyword="{{ search_keyword|default:'' }}">{{ num }}</a>
           {% endif %}
         {% endfor %}
@@ -684,6 +690,7 @@
         <span class="page-link disabled">»</span>
       {% endif %}
     </div>
+    {% endif %}
 
     <!-- 
       선택 병원 상세정보 섹션

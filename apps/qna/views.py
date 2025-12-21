@@ -219,25 +219,21 @@ def qna_write(request):
                     year = '20' + year
             birth_date = f"{year}-{month}-{day}"
     
-    # 전화번호 분리 (010-1234-5678 형식) 및 마스킹 (010 6*** ****)
+    # 전화번호 분리 (010-1234-5678 형식) - 마스킹 없이 원본 표시
     phone_parts = {'area': '', 'middle': '', 'last': ''}
     if user.phone:
         phone_split = user.phone.split('-')
         if len(phone_split) >= 3:
             phone_parts['area'] = phone_split[0]
-            # 중간 번호 마스킹: 첫 글자만 표시, 나머지 *
-            middle = phone_split[1]
-            phone_parts['middle'] = middle[0] + '*' * (len(middle) - 1) if middle else ''
-            # 마지막 번호 마스킹: 전체 *
-            last = phone_split[2]
-            phone_parts['last'] = '*' * len(last) if last else ''
+            # 중간 번호 원본 표시
+            phone_parts['middle'] = phone_split[1] if phone_split[1] else ''
+            # 마지막 번호 원본 표시
+            phone_parts['last'] = phone_split[2] if phone_split[2] else ''
         elif len(phone_split) == 1 and len(user.phone) >= 10:
             # 하이픈 없는 경우 (01012345678)
             phone_parts['area'] = user.phone[:3]
-            middle = user.phone[3:7]
-            phone_parts['middle'] = middle[0] + '*' * (len(middle) - 1) if middle else ''
-            last = user.phone[7:]
-            phone_parts['last'] = '*' * len(last) if last else ''
+            phone_parts['middle'] = user.phone[3:7] if len(user.phone) >= 7 else ''
+            phone_parts['last'] = user.phone[7:] if len(user.phone) > 7 else ''
     
     # 이메일 분리 (user@domain.com 형식)
     email_parts = {'username': '', 'domain': ''}

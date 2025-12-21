@@ -33,7 +33,7 @@ def mask_resident_reg_no(reg_no):
 def mask_phone(phone):
     """
     전화번호 마스킹 필터
-    예: "010-7751-7593" → "010 7**** ****"
+    예: "010-7751-7593" → "010 - 7*** - ****"
     """
     if not phone:
         return "-"
@@ -51,11 +51,11 @@ def mask_phone(phone):
     if not phone_clean.startswith("010"):
         return phone  # 010으로 시작하지 않으면 원본 반환
     
-    # 010 + 공백 + 첫 번째 숫자 + "****" + 공백 + "****"
+    # 010 - 첫 번째 숫자*** - ****
     area_code = phone_clean[:3]  # 010
     first_digit = phone_clean[3] if len(phone_clean) > 3 else ""
     
-    return f"{area_code} {first_digit}**** ****"
+    return f"{area_code} - {first_digit}*** - ****"
 
 
 @register.filter

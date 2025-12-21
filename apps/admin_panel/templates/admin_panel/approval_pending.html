@@ -596,6 +596,7 @@
           - 다음 페이지로 이동: > 버튼
           - 마지막 페이지로 이동: » 버튼
       -->
+      {% if page_obj.paginator.num_pages > 1 %}
       <div class="pagination">
         {% if page_obj.has_previous %}
           <a href="#" class="pagination-link" data-page="1" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">«</a>
@@ -609,7 +610,9 @@
           {% for num in page_obj.paginator.page_range %}
             {% if page_obj.number == num %}
               <span class="page-link active">{{ num }}</span>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+            {% elif page_obj.number == 1 and num <= 4 %}
+              <a href="#" class="pagination-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">{{ num }}</a>
+            {% elif page_obj.number > 1 and num >= page_obj.number|add:'-1' and num <= page_obj.number|add:'2' %}
               <a href="#" class="pagination-link" data-page="{{ num }}" data-sort="{{ sort_field|default:'' }}" data-order="{{ sort_order|default:'' }}">{{ num }}</a>
             {% endif %}
           {% endfor %}
@@ -625,6 +628,7 @@
           <span class="page-link disabled">»</span>
         {% endif %}
       </div>
+      {% endif %}
     </div>
 
     <!-- 
