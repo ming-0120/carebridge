@@ -795,6 +795,14 @@ function getSortUrl(sortField, currentSort, currentOrder) {
   //   - 예: url.searchParams.set('order', 'asc') → '?sort=name&order=asc'
   url.searchParams.set('order', newOrder);
   
+  // ⭐ 중요: 정렬 시 상세 정보 ID 파라미터 제거
+  // 목적: 정렬 시 상세 정보가 열린 상태를 초기화하여 목록 중심으로 동작하도록 함
+  //   - 정렬 = "목록 기준 동작"으로 강제
+  //   - 상세 정보가 열려있어도 정렬 시 닫히고 정렬된 목록만 표시
+  url.searchParams.delete('user_id');
+  url.searchParams.delete('doctor_id');
+  url.searchParams.delete('hospital_id');
+  
   // url.searchParams.delete('page'): 페이지 번호 파라미터 제거
   //   - 'page': 페이지 번호 파라미터 이름
   //   - 동작: 파라미터가 있으면 제거, 없으면 아무 동작 안 함
@@ -888,7 +896,84 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
   //   - 이유: 대부분의 경우 최신 데이터를 먼저 보여주는 것이 자연스러움
   const actualCurrentOrder = currentSortOrder || 'desc';
   
-  // ========= 정렬 URL 생성 =========
+  // 정렬 방향 결정 (같은 필드면 토글, 다르면 오름차순)
+  const nextOrder = (actualCurrentSort === sortField && actualCurrentOrder === 'asc') ? 'desc' : 'asc';
+  
+  // ========= 승인대기 페이지 정렬 처리 (목록 AJAX 갱신) =========
+  // 목적: 승인대기 페이지는 정렬 시 상세 영역만 갱신되는 구조라서
+  //       목록을 강제로 AJAX로 갱신하도록 분기 처리
+  //   - 승인대기 페이지: selectItem() 기반으로 상세 영역만 갱신하는 구조
+  //   - 정렬 시 목록이 갱신되지 않는 문제 해결
+  //   - doctor_id 파라미터를 제거하여 상세 열린 상태를 초기화
+  //   - 검색 파라미터는 자동으로 유지됨 (URLSearchParams가 현재 URL의 모든 파라미터를 포함)
+  if (window.location.pathname.includes('approval_pending')) {
+    // URL 파라미터 생성 (현재 URL의 모든 파라미터 포함, 검색 파라미터 자동 유지)
+    const params = new URLSearchParams(window.location.search);
+    params.set('sort', sortField);
+    params.set('order', nextOrder);
+    params.delete('doctor_id'); // ⭐ 중요: 상세 열린 상태 제거 (정렬 = "목록 기준 동작"으로 강제)
+    params.delete('page'); // 정렬 시 첫 페이지로
+    
+    // AJAX 요청으로 목록 갱신
+    fetch(window.location.pathname + '?' + params.toString(), {
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest'
+      }
+    })
+    .then(res => res.text())
+    .then(html => {
+      // 임시 DOM 요소 생성 및 HTML 파싱
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = html;
+      
+      // 테이블 컨테이너 업데이트
+      const tableContainer = document.querySelector('.table-container');
+      const newTableContainer = tempDiv.querySelector('.table-container');
+      if (tableContainer && newTableContainer) {
+        tableContainer.innerHTML = newTableContainer.innerHTML;
+      }
+      
+      // 페이지네이션 업데이트
+      const paginationContainer = document.querySelector('.pagination, nav[aria-label="Page navigation"]');
+      const newPaginationContainer = tempDiv.querySelector('.pagination, nav[aria-label="Page navigation"]');
+      if (paginationContainer && newPaginationContainer) {
+        paginationContainer.innerHTML = newPaginationContainer.innerHTML;
+      } else if (paginationContainer && !newPaginationContainer) {
+        paginationContainer.innerHTML = '';
+      }
+      
+      // 상세 정보 섹션 제거 (정렬 시 초기화)
+      const detailSection = document.querySelector('.approval-detail-section');
+      if (detailSection) {
+        detailSection.remove();
+      }
+      
+      // 이벤트 리스너 재연결
+      if (typeof window.reattachTableRowListeners === 'function') {
+        window.reattachTableRowListeners();
+      }
+      if (paginationContainer) {
+        attachPaginationListeners();
+      }
+      attachSortListeners();
+      if (typeof attachCheckboxListeners === 'function') {
+        attachCheckboxListeners();
+      }
+      if (typeof attachButtonListeners === 'function') {
+        attachButtonListeners();
+      }
+      
+      // URL 업데이트
+      window.history.pushState({}, '', window.location.pathname + '?' + params.toString());
+    })
+    .catch(error => {
+      console.error('정렬 요청 오류:', error);
+    });
+    
+    return; // 승인대기 페이지 처리는 여기서 종료
+  }
+  
+  // ========= 정렬 URL 생성 (그 외 페이지) =========
   // getSortUrl(sortField, actualCurrentSort, actualCurrentOrder): 정렬 URL 생성 함수 호출
   //   - sortField: 정렬할 필드 이름
   //   - actualCurrentSort: 현재 정렬 필드 (기본값 처리됨)
@@ -1077,35 +1162,20 @@ function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
  * @example
  * attachSortListeners();
  */
-// 전역 변수: 이벤트 위임이 이미 설정되었는지 확인
-let sortListenersAttached = false;
-
 function attachSortListeners() {
-  // 이벤트 위임이 이미 설정되어 있으면 다시 설정하지 않음
-  // 이벤트 위임은 한 번만 설정하면 DOM이 변경되어도 계속 작동함
-  if (sortListenersAttached) {
-    return;
-  }
-  
-  // 이벤트 위임 방식: document에 한 번만 이벤트 리스너를 붙여서
-  // DOM이 변경되어도 정렬 클릭이 계속 작동하도록 함
-  // 이 방법이 가장 안전하고 리스너 누락/중복/삭제 실패 문제가 적음
-  document.addEventListener('click', function(e) {
-    const link = e.target.closest('a[data-sort-field]');
-    if (!link) return;
-    
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
-    
-    const sortField = link.getAttribute('data-sort-field');
-    const currentSort = link.getAttribute('data-current-sort') || '';
-    const currentOrder = link.getAttribute('data-current-order') || 'desc';
-    
-    handleSortClick(sortField, currentSort, currentOrder);
-  }, true); // capture phase에서 처리
-  
-  sortListenersAttached = true;
+  // 이제는 이벤트 위임 방식으로 document에 한 번만 이벤트를 붙이므로
+  // 이 함수는 기존 코드와의 호환성을 위해 유지하되, 실제로는 실행되지 않음
+  // (이벤트 위임은 DOMContentLoaded에서 한 번만 설정됨)
+  // 
+  // 기존 코드 정리: 만약 기존에 개별 링크에 이벤트를 붙였다면 제거
+  const existingLinks = document.querySelectorAll('a[data-sort-field]');
+  existingLinks.forEach(link => {
+    if (link._sortHandler) {
+      // ✅ addEventListener capture=true로 달았으면, remove도 capture=true로!
+      link.removeEventListener('click', link._sortHandler, true);
+      link._sortHandler = null;
+    }
+  });
 }
 
 /**
@@ -2028,6 +2098,38 @@ document.addEventListener('DOMContentLoaded', function() {
   //   - 결과: 모든 페이지에서 스크롤이 정상적으로 작동함
   //   - 향후 확장: 필요시 함수 내부에 스크롤 방지 로직 추가 가능
   preventContainerWheelScroll();
+  
+  // ========= 정렬: 이벤트 위임 (AJAX로 DOM이 바뀌어도 항상 동작) =========
+  // 목적: 테이블이 AJAX로 변경되어도 정렬 기능이 항상 작동하도록 이벤트 위임 방식 사용
+  //   - 이벤트 위임: document에 한 번만 이벤트 리스너를 붙여서 DOM 변경과 무관하게 작동
+  //   - 상세 정보 창이 열려있어도 정렬 버튼이 항상 작동
+  //   - 리스너 누락/중복/삭제 실패 문제 방지
+  // 
+  // 한 번만 실행되도록 플래그 확인
+  if (!window._sortDelegationBound) {
+    window._sortDelegationBound = true;
+    
+    // document에 클릭 이벤트 위임
+    document.addEventListener('click', function (e) {
+      const link = e.target.closest('a[data-sort-field]');
+      if (!link) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // (중요) stopImmediatePropagation은 부작용이 잦아서 여기선 빼는 걸 추천
+      // e.stopImmediatePropagation();
+
+      const sortField = link.getAttribute('data-sort-field');
+      const currentSort = link.getAttribute('data-current-sort') || '';
+      const currentOrder = link.getAttribute('data-current-order') || 'desc';
+
+      // 디버깅 로그(이제는 무조건 찍혀야 함)
+      console.log('[SORT CLICK]', sortField, currentSort, currentOrder);
+
+      handleSortClick(sortField, currentSort, currentOrder);
+    }, true); // capture 유지
+  }
 });
 
 
