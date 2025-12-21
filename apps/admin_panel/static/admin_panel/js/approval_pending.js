@@ -479,7 +479,7 @@ function rejectSelected() {
   //   - 동작: 사용자가 확인 또는 취소 버튼을 클릭할 때까지 대기
   //   - 목적: 사용자에게 거절 작업을 확인받기 위함 (되돌릴 수 없음을 명시)
   //   - 주의: confirm()은 사용자 경험을 방해할 수 있으므로, 최신 웹에서는 커스텀 모달 사용 권장
-  if (confirm('선택한 의사의 승인을 거절하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+  if (confirm('선택한 의사의 승인을 거절하시겠습니까?')) {
     // ========= 액션 설정 =========
     // document.getElementById('actionInput'): 액션 input 요소 찾기
     //   - 'actionInput': 액션 input의 ID 속성

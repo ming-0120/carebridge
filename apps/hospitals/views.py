@@ -1,6 +1,7 @@
 # hospitals/views.py
 from django.http import JsonResponse
 from django.shortcuts import render
+import os
 import json
 import requests
 from apps.db.models.disease import DimDisease
@@ -83,8 +84,8 @@ def hospital_search(request):
     if not q:
         return JsonResponse({"results": []})
 
-    # HIRA 병원정보 API 서비스 키
-    SERVICE_KEY = "9767c8cf570c27ef856b2b355630a0d4a5701223a487b61faf3d9b3950c7b9d1"
+    # 병원 검색용 API 서비스 키 (환경 변수에서 읽어오고, 없으면 기본값 사용)
+    SERVICE_KEY = os.getenv("HOSPITAL_SEARCH_API_KEY", "9767c8cf570c27ef856b2b355630a0d4a5701223a487b61faf3d9b3950c7b9d1")
     
     # API 엔드포인트 (병원 기본 정보 조회)
     base_url = "https://apis.data.go.kr/B551182/hospInfoServicev2/getHospBasisList"
