@@ -316,6 +316,19 @@ function selectItem(event, itemId, paramName = 'id') {
     //   - 반환값: 없음 (void)
     updateSelectedRowStyle(itemId, paramName);
     
+    // ========= 정렬 버튼 이벤트 리스너 재연결 =========
+    // 목적: 상세 정보 업데이트 후 정렬 버튼 이벤트 리스너를 다시 연결
+    //   - DOM 업데이트 후에도 정렬 버튼이 정상적으로 작동하도록 보장
+    //   - 사용자 경험(UX) 개선: 상세 정보가 표시되어도 정렬 기능이 계속 작동
+    if (typeof attachSortListeners === 'function') {
+      // DOM 업데이트가 완전히 완료된 후 실행하기 위해 requestAnimationFrame 사용
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          attachSortListeners();
+        });
+      });
+    }
+    
     // ========= URL 업데이트 (히스토리 관리, 페이지 새로고침 없음) =========
     // 목적: 브라우저 히스토리에 새로운 상태를 추가하여 URL을 업데이트
     //   - 페이지 새로고침 없이 URL만 변경
@@ -1027,6 +1040,13 @@ function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
           console.log('테이블 행 클릭 이벤트: 페이징 버튼 클릭 감지, 무시함', target);
           return; // stopImmediatePropagation 호출 전에 return
         }
+        
+        // ⭐️ 정렬 버튼 클릭은 row 클릭 이벤트 무시
+        // 정렬 링크(a[data-sort-field])를 클릭한 경우 테이블 행 클릭 이벤트를 무시
+        if (target.closest('a[data-sort-field]') || target.hasAttribute('data-sort-field')) {
+          console.log('테이블 행 클릭 이벤트: 정렬 버튼 클릭 감지, 무시함', target);
+          return; // stopImmediatePropagation 호출 전에 return
+        }
 
         // 이벤트 기본 동작 차단
         e.preventDefault();
@@ -1057,20 +1077,35 @@ function attachTableRowListeners(rowSelector, dataAttrName, selectFunction) {
  * @example
  * attachSortListeners();
  */
+// 전역 변수: 이벤트 위임이 이미 설정되었는지 확인
+let sortListenersAttached = false;
+
 function attachSortListeners() {
-  const sortLinks = document.querySelectorAll('a[data-sort-field]');
+  // 이벤트 위임이 이미 설정되어 있으면 다시 설정하지 않음
+  // 이벤트 위임은 한 번만 설정하면 DOM이 변경되어도 계속 작동함
+  if (sortListenersAttached) {
+    return;
+  }
   
-  sortLinks.forEach(link => {
-    link.removeEventListener('click', link._sortHandler);
-    link._sortHandler = function(e) {
-      e.preventDefault();
-      const sortField = link.getAttribute('data-sort-field');
-      const currentSort = link.getAttribute('data-current-sort') || '';
-      const currentOrder = link.getAttribute('data-current-order') || 'desc';
-      handleSortClick(sortField, currentSort, currentOrder);
-    };
-    link.addEventListener('click', link._sortHandler);
-  });
+  // 이벤트 위임 방식: document에 한 번만 이벤트 리스너를 붙여서
+  // DOM이 변경되어도 정렬 클릭이 계속 작동하도록 함
+  // 이 방법이 가장 안전하고 리스너 누락/중복/삭제 실패 문제가 적음
+  document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[data-sort-field]');
+    if (!link) return;
+    
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    
+    const sortField = link.getAttribute('data-sort-field');
+    const currentSort = link.getAttribute('data-current-sort') || '';
+    const currentOrder = link.getAttribute('data-current-order') || 'desc';
+    
+    handleSortClick(sortField, currentSort, currentOrder);
+  }, true); // capture phase에서 처리
+  
+  sortListenersAttached = true;
 }
 
 /**
