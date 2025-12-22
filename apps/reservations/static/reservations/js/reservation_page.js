@@ -88,32 +88,7 @@ document.addEventListener("DOMContentLoaded", () => {
     height: "auto",
     showNonCurrentDates: true,
     fixedWeekCount: false,
-
-    // 의사별 예약 이벤트
-    events: function (info, successCallback, failureCallback) {
-      const doctorId = doctorIdInput ? doctorIdInput.value : null;
-
-      if (!doctorId) {
-        successCallback([]);
-        return;
-      }
-
-      const params = new URLSearchParams({
-        doctor_id: doctorId,
-        start: info.startStr,
-        end: info.endStr,
-      });
-
-      fetch(`/reservations/api/doctor-reservations/?${params.toString()}`)
-        .then(res => res.json())
-        .then(data => successCallback(data))
-        .catch(err => {
-          console.error("events load error", err);
-          successCallback([]);
-          failureCallback(err);
-        });
-    },
-
+    
     dayCellClassNames: function (info) {
       const dateStr = toYMD(info.date);
       const holiday = isHolidayDateStr(dateStr);

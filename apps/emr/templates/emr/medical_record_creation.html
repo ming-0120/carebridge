@@ -221,12 +221,13 @@
     <div class="modal-overlay" id="drugSearchModal">
         <div class="modal-content">
 
-            <div class="modal-header">약품 검색 모달창</div>
+            <div class="modal-header">
+                약품 검색 모달창
+            </div>
 
             <div class="modal-body">
                 <div class="search-controls">
-                    <input type="text" id="drugNameInput" placeholder="약품명을 입력한다">
-                    <button type="button" onclick="performSearch()">검색</button>
+                    <input type="text" id="drugNameInput" placeholder="약품 입력">
                 </div>
 
                 <table class="result-table" id="drugResultTable">
@@ -238,11 +239,6 @@
                     </thead>
                     <tbody></tbody>
                 </table>
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn-cancel-6page" type="button" onclick="closeModal('drugSearchModal')">취소</button>
-                <button class="btn-confirm-6page" type="button" onclick="confirmSelection()">확인</button>
             </div>
 
         </div>

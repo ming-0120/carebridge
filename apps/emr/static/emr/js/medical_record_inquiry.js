@@ -64,6 +64,10 @@ function showDetail(el) {
     const content = normalizeValue(el.getAttribute("data-content"));
     const status = normalizeValue(el.getAttribute("data-status"));
     const notes = normalizeValue(el.getAttribute("data-notes"));
+    const drugName = normalizeValue(el.getAttribute("data-drug-name"));
+    const drugCode = normalizeValue(el.getAttribute("data-drug-code"));
+    const drugFrequency = normalizeValue(el.getAttribute("data-drug-frequency"));
+    const drugDose = normalizeValue(el.getAttribute("data-drug-dose"));
     const attachmentsRaw = el.getAttribute("data-attachments");
 
     let attachments = [];
@@ -77,22 +81,42 @@ function showDetail(el) {
 
     const detail = document.getElementById("detailContent");
 
-    const attachmentHtml = attachments.length
-        ? `<div class="detail-item"><strong>첨부파일</strong><ul class="attachment-list">${attachments.map(a => `<li><a href="${a.url}" target="_blank" rel="noopener">${a.name || '파일'}</a></li>`).join("")}</ul></div>`
-        : "";
+    const isPrescription = type === "처방" || el.hasAttribute("data-drug-name") || el.hasAttribute("data-drug-code");
 
-    detail.innerHTML = `
-        <div class="detail-item"><strong>이벤트 유형</strong> ${type}</div>
-        <div class="detail-item"><strong>발생 일시</strong> ${date}</div>
-        <div class="detail-item"><strong>담당 의사</strong> ${doc}</div>
-        <br>
-        <h4>상세 내용</h4>
-        <div class="detail-item"><strong>record_type</strong> ${recType}</div>
-        <div class="detail-item"><strong>record_content</strong> ${content}</div>
-        <div class="detail-item"><strong>status</strong> ${status}</div>
-        <div class="detail-item"><strong>notes</strong> ${notes}</div>
-        ${attachmentHtml}
-    `;
+    let detailHtml = "";
+    if (isPrescription) {
+        detailHtml = `
+            <div class="detail-item"><strong>이벤트 유형</strong> ${type}</div>
+            <div class="detail-item"><strong>발생 일시</strong> ${date}</div>
+            <div class="detail-item"><strong>담당 의사</strong> ${doc}</div>
+            <br>
+            <h4>상세 내용</h4>
+            <div class="detail-item"><strong>약명</strong> ${drugName}</div>
+            <div class="detail-item"><strong>약품코드</strong> ${drugCode}</div>
+            <div class="detail-item"><strong>투여빈도</strong> ${drugFrequency}</div>
+            <div class="detail-item"><strong>투여용량</strong> ${drugDose}</div>
+            <div class="detail-item"><strong>특이사항</strong> ${notes}</div>
+        `;
+    } else {
+        const attachmentHtml = attachments.length
+            ? `<div class="detail-item"><strong>첨부파일</strong><ul class="attachment-list">${attachments.map(a => `<li><a href="${a.url}" target="_blank" rel="noopener">${a.name || '파일'}</a></li>`).join("")}</ul></div>`
+            : "";
+
+        detailHtml = `
+            <div class="detail-item"><strong>이벤트 유형</strong> ${type}</div>
+            <div class="detail-item"><strong>발생 일시</strong> ${date}</div>
+            <div class="detail-item"><strong>담당 의사</strong> ${doc}</div>
+            <br>
+            <h4>상세 내용</h4>
+            <div class="detail-item"><strong>record_type</strong> ${recType}</div>
+            <div class="detail-item"><strong>record_content</strong> ${content}</div>
+            <div class="detail-item"><strong>status</strong> ${status}</div>
+            <div class="detail-item"><strong>notes</strong> ${notes}</div>
+            ${attachmentHtml}
+        `;
+    }
+
+    detail.innerHTML = detailHtml;
 
     const detailCard = document.getElementById("detailView");
     detailCard.style.display = "block";
