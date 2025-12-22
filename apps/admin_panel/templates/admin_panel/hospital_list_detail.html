@@ -12,7 +12,6 @@
     3. 병원의 각 정보 필드를 그리드 레이아웃으로 표시
     4. 비밀번호는 마스킹 처리하여 표시 (첫 글자만 표시, 나머지는 *)
     5. 총 의사수는 여러 필드를 확인하여 표시
-    6. 상세소개는 있는 경우에만 조건부로 표시
   
   사용 시점:
     - 병원 목록에서 병원을 선택했을 때 (AJAX로 로드)
@@ -27,7 +26,6 @@
       → address: 주소
       → doctor_count: 총 의사 수 (필드 1)
       → dr_total: 총 의사 수 (필드 2, 대체)
-      → category_name: 상세소개 (선택 사항)
       → estb_date: 등록일
 {% endcomment %}
 {% if selected_hospital %}
@@ -168,24 +166,6 @@
         {% endif %}
       </span>
     </div>
-    
-    {% comment %}
-      상세소개 정보 항목 (조건부 표시)
-      
-      목적: 병원의 상세소개를 표시 (있는 경우에만 표시)
-        - 조건: if selected_hospital.category_name - 상세소개가 있는 경우에만 표시
-        - CSS 클래스: detail-item full-width (전체 너비 항목 스타일)
-          → full-width: 상세소개는 긴 텍스트일 수 있으므로 전체 너비로 표시
-        - detail-label: "상세소개" (라벨)
-        - detail-value: selected_hospital.category_name (병원의 상세소개)
-          → category_name: 병원의 상세소개 (선택 사항)
-    {% endcomment %}
-    {% if selected_hospital.category_name %}
-    <div class="detail-item full-width">
-      <span class="detail-label">상세소개</span>
-      <span class="detail-value">{{ selected_hospital.category_name }}</span>
-    </div>
-    {% endif %}
     
     {% comment %}
       개원일 정보 항목

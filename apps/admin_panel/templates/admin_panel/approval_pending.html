@@ -20,6 +20,7 @@
     - 상세 정보 템플릿: approval_pending_detail.html (AJAX로 로드)
 -->
 {% load static %}
+{% load masking_filters %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -544,14 +545,15 @@
                 <td>{{ item.doctor.license_no }}</td>
                 
                 <!-- 
-                  전화번호 셀
+                  전화번호 셀 (마스킹 처리)
                   
-                  목적: 의사의 전화번호 표시
-                    - {{ item.doctor.user.phone|default:"-" }}: 의사의 전화번호
-                    - phone: 사용자의 전화번호
-                    - |default:"-": phone이 없으면 "-" 표시
+                  목적: 의사의 전화번호를 마스킹 처리하여 표시 (개인정보 보호)
+                    - {{ item.doctor.user.phone|mask_phone }}: 의사의 전화번호 마스킹 처리
+                      → phone: 사용자의 전화번호
+                      → mask_phone: 전화번호 마스킹 필터 (010 - 첫 번째 숫자*** - ****)
+                    - mask_phone 필터가 이미 "-"을 반환하므로 default 필터 불필요
                 -->
-                <td>{{ item.doctor.user.phone|default:"-" }}</td>
+                <td>{{ item.doctor.user.phone|mask_phone }}</td>
                 
                 <!-- 
                   생성일시 셀

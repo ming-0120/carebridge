@@ -408,6 +408,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const tr = e.target.closest('tr.hospital-row');
       if (!tr) return;
 
+      // ⭐ DB에 등록된 병원인지 확인
+      // hospital-registered 클래스가 있으면 DB에 이미 등록된 병원
+      if (tr.classList.contains('hospital-registered')) {
+        const hospitalName = tr.dataset.name || '이 병원';
+        alert(`${hospitalName}은(는) 이미 DB에 등록된 병원입니다.\n다른 병원을 선택해주세요.`);
+        return; // 선택 취소 (필드에 값 입력하지 않음, 모달도 닫지 않음)
+      }
+
       const id = tr.dataset.id;
       const name = tr.dataset.name;
       const address = tr.dataset.address;

@@ -823,23 +823,6 @@
             </div>
           </div>
           
-          <!-- 
-            상세소개 정보 항목 (조건부 표시)
-            
-            목적: 병원의 상세소개를 표시 (있는 경우에만 표시)
-              - 조건: category_name이 있는 경우에만 표시
-              - col-md-12: 중간 화면 크기 이상에서 12컬럼 (100% 너비, 전체 너비)
-              - detail-label: "상세소개" (라벨)
-              - detail-value: selected_hospital.category_name (병원의 상세소개)
-          -->
-          {% if selected_hospital.category_name %}
-          <div class="col-md-12">
-            <div class="detail-item">
-              <span class="detail-label d-block fw-bold">상세소개</span>
-              <div class="detail-value">{{ selected_hospital.category_name }}</div>
-            </div>
-          </div>
-          {% endif %}
         </div>
       </div>
     </div>

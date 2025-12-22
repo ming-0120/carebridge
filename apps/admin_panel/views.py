@@ -1330,7 +1330,10 @@ def qna_list(request):
             if qna_ids:
                 # 대기 상태(reply가 없는 상태)의 문의는 삭제하지 않음
                 Qna.objects.filter(qna_id__in=qna_ids, reply__isnull=False).delete()
-            return redirect('/admin_panel/qna_list/')
+            # 삭제 처리 후 리다이렉트 (AJAX 요청이 아닌 경우에만)
+            # 페이지네이션 AJAX 요청은 리다이렉트하지 않음
+            if request.headers.get('X-Requested-With') != 'XMLHttpRequest':
+                return redirect('/admin_panel/qna_list/')
     
     # 파라미터 추출
     sort_field = get_request_param(request, 'sort', '')

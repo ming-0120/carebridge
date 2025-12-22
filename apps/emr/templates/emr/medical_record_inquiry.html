@@ -97,11 +97,11 @@
             {% endif %}
 
             {# ------------------------------ #}
-            {#  약물 처방                     #}
+            {#  처방                          #}
             {# ------------------------------ #}
             {% if v.prescriptions %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                치료·처치 기록 <span class="toggle-icon">▼</span>
+                처방 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 {% for p in v.prescriptions %}
@@ -112,7 +112,12 @@
                     data-doc="{{ v.doctor }}"
                     data-rec-type="{{ p.order_name }}"
                     data-content="{{ p.dose }} / {{ p.frequency }}"
-                    data-status="처방">
+                    data-status="처방"
+                    data-drug-name="{{ p.order_name }}"
+                    data-drug-code="{{ p.order_code }}"
+                    data-drug-frequency="{{ p.frequency }}"
+                    data-drug-dose="{{ p.dose }}"
+                    data-notes="{{ p.notes }}">
                     - {{ p.order_name }} / {{ p.dose }} / {{ p.frequency }} / {{ v.datetime_display }}
                 </div>
                 {% endfor %}
@@ -124,7 +129,7 @@
             {# ------------------------------ #}
             {% if v.treatment %}
             <div class="level-2-item" aria-expanded="false" onclick="toggleAccordion(this)">
-                약물 처방 <span class="toggle-icon">▼</span>
+                치료·처치 기록 <span class="toggle-icon">▼</span>
             </div>
             <div class="accordion-content" style="display:none;">
                 {% for tr in v.treatment %}
