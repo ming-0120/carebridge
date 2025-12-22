@@ -855,7 +855,16 @@ def medical_record_inquiry(request):
         try:
             med_order = v.medicineorders
             if med_order:
-                med_data = list(med_order.medicinedata_set.all())
+                med_data = [
+                    {
+                        "order_name": md.order_name,
+                        "order_code": md.order_code,
+                        "dose": md.dose,
+                        "frequency": md.frequency,
+                        "notes": med_order.notes,
+                    }
+                    for md in med_order.medicinedata_set.all()
+                ]
         except:
             med_data = []
 
