@@ -45,7 +45,6 @@ function addAttachment(input) {
         
         // 4. 파일 객체를 fileList에 추가
         fileList.push(file);
-        alert(`${file.name} 파일이 첨부되었습니다. (ID: ${uniqueId})`);
     }
     
     // 다음 파일 선택을 위해 input 값 초기화
