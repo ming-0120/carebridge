@@ -669,7 +669,17 @@ body.qna-detail-body {
   }
 }
 
-
+/* 
+  ========= 페이지네이션 숨김 처리 =========
+  
+  목적: 문의 상세 페이지에서는 페이지네이션이 필요 없으므로 숨김 처리
+    - display: none - 페이지네이션 완전히 숨김
+    - 사용처: 문의 상세 페이지의 페이지네이션 (.container.qna-detail-page .pagination)
+    - 이유: 문의 상세 페이지는 단일 항목을 표시하는 페이지이므로 페이지네이션이 불필요
+*/
+.container.qna-detail-page .pagination {
+  display: none !important;
+}
 
 
 

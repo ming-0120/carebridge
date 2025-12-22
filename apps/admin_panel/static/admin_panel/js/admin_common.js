@@ -803,13 +803,12 @@ function getSortUrl(sortField, currentSort, currentOrder) {
   url.searchParams.delete('doctor_id');
   url.searchParams.delete('hospital_id');
   
-  // url.searchParams.delete('page'): 페이지 번호 파라미터 제거
-  //   - 'page': 페이지 번호 파라미터 이름
-  //   - 동작: 파라미터가 있으면 제거, 없으면 아무 동작 안 함
-  //   - 목적: 정렬을 변경하면 첫 페이지로 이동
-  //   - 이유: 정렬이 변경되면 데이터 순서가 바뀌므로 첫 페이지부터 보여주는 것이 자연스러움
-  //   - 예: '?sort=name&order=asc&page=3' → '?sort=name&order=asc' (page 제거)
-  url.searchParams.delete('page'); // 정렬 시 첫 페이지로
+  // ⭐ 수정: 정렬 시 현재 페이지 번호 유지
+  //   - 목적: 사용자가 현재 보고 있는 페이지를 유지하면서 정렬 변경
+  //   - 사용자 경험(UX) 개선: 3페이지에서 정렬하면 3페이지를 유지하면서 정렬된 결과 표시
+  //   - 예: '?sort=name&order=asc&page=3' → '?sort=name&order=asc&page=3' (page 유지)
+  //   - 주의: 페이지 번호를 제거하지 않으므로 현재 페이지가 URL에 있으면 그대로 유지됨
+  // url.searchParams.delete('page'); // 정렬 시 첫 페이지로 (주석 처리: 현재 페이지 유지)
   
   // ========= 검색 파라미터 유지 =========
   // 목적: 정렬을 변경해도 검색 조건은 유지
@@ -912,7 +911,10 @@ function handleSortClick(sortField, currentSortField, currentSortOrder) {
     params.set('sort', sortField);
     params.set('order', nextOrder);
     params.delete('doctor_id'); // ⭐ 중요: 상세 열린 상태 제거 (정렬 = "목록 기준 동작"으로 강제)
-    params.delete('page'); // 정렬 시 첫 페이지로
+    // ⭐ 수정: 정렬 시 현재 페이지 번호 유지
+    //   - 목적: 사용자가 현재 보고 있는 페이지를 유지하면서 정렬 변경
+    //   - 사용자 경험(UX) 개선: 3페이지에서 정렬하면 3페이지를 유지하면서 정렬된 결과 표시
+    // params.delete('page'); // 정렬 시 첫 페이지로 (주석 처리: 현재 페이지 유지)
     
     // AJAX 요청으로 목록 갱신
     fetch(window.location.pathname + '?' + params.toString(), {
