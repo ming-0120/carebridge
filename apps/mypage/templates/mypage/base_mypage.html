@@ -21,11 +21,12 @@
     <!-- ✅ main이 화면 높이를 채우도록 래핑 -->
     <main class="mypage-main">
       <div class="mypage-layout">
+        {% if request.session.role != "DOCTOR" %}
         <!-- 왼쪽 마이페이지 메뉴 -->
         <aside class="mypage-sidebar">
           {% include "mypage/_sidebar.html" %}
         </aside>
-
+        {% endif %}
         <!-- 오른쪽 콘텐츠 -->
         <section class="mypage-content">
           {% block mypage_content %}{% endblock %}
