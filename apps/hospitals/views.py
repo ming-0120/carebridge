@@ -91,6 +91,8 @@ def hospital_search(request):
             "id": h.pk,
             "name": h.name,
             "address": h.address,
+            "tel":h.tel,
+            "estb_date" : h.estb_date,
         }
         for h in qs
     ]
