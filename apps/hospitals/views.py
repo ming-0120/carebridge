@@ -85,7 +85,16 @@ def hospital_search(request):
         .filter(Q(name__icontains=q))
         .order_by("name")
     )
-
+    # DB에서 등록된 병원의 병원명 목록 조회 (hos_name이 있는 병원만)
+    # 병원명으로 비교하여 등록 여부 확인 (hpid는 UUID로 자동 생성되므로 API의 ykiho와 일치하지 않음)
+    # distinct()로 중복 제거하여 쿼리 최적화
+    registered_names = set(
+        Hospital.objects
+        .filter(hos_name__isnull=False)
+        .exclude(hos_name="")
+        .values_list("name", flat=True)
+        .distinct()
+    )
     results = [
         {
             "id": h.pk,
@@ -93,6 +102,7 @@ def hospital_search(request):
             "address": h.address,
             "tel":h.tel,
             "estb_date" : h.estb_date,
+            "is_registered": h.name in registered_names,  # DB에 등록된 병원인지 확인 (병원명 기준)
         }
         for h in qs
     ]
