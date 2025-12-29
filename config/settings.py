@@ -27,7 +27,7 @@ env = environ.Env(
 env.read_env(os.path.join(BASE_DIR, '.env'))
 
 DEBUG = env('DEBUG')
-SECRET_KEY = env('SECRET_KEY', default='django-insecure-coh6tb%m)as!^$=#@(aljpv_7fbih0)x0w-*(b7-mx(8iie*9u')
+SECRET_KEY = env('SECRET_KEY', '')
 
 # 카카오 관련 설정
 KAKAO_REST_API_KEY = env('KAKAO_REST_API_KEY', default='')
@@ -38,9 +38,7 @@ KAKAO_REDIRECT_URI = env(
 KAKAO_MAP_JS_KEY = os.getenv("KAKAO_REST_API_KEY")
 
 ALLOWED_HOSTS = [
-    "52.79.116.240",
-    "localhost",
-    "127.0.0.1",
+    
     "dn-carebridge.com",
     "www.dn-carebridge.com",
 ]
@@ -116,16 +114,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'carebridge',         
-        'USER': 'carebridge_user',     
-        'PASSWORD': 'cb1234',         
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
-        'OPTIONS': {
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-            'charset': 'utf8mb4',
-        },
+        
     }
 }
 
@@ -157,7 +146,7 @@ CHANNEL_LAYERS = {
         # Redis를 백엔드로 사용하겠다고 명시
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("127.0.0.1", 6379)], # 1단계에서 띄운 Redis 서버 주소와 포트
+            "hosts": [], # 1단계에서 띄운 Redis 서버 주소와 포트
             # 실제 배포시에는 AWS ElastiCache 등의 주소를 넣게 됩니다.
         },
     },
@@ -177,9 +166,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-    BASE_DIR / 'apps/emergency/static',
-    BASE_DIR / 'apps/emr/static',
+    
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -208,10 +195,3 @@ OPENAPI_SERVICE_KEY = urllib.parse.quote(RAW_API_KEY, safe='')
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # 환경변수에서 읽기
 GOOGLE_API_KEY = os.getenv("GOOGLE_MAP_API_KEY", "")
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_USE_TLS = True
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'sarah500288@gmail.com'
-EMAIL_HOST_PASSWORD = 'hnyqlluxksyutefn'
-DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
