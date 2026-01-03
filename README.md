@@ -101,7 +101,7 @@
 > 
 
 
-<img width="7500" height="7500" alt="unnamed-2026-01-03T13_52_33" src="https://github.com/user-attachments/assets/71cd071c-d7be-4dfb-a6bd-22e0fd245381" />
+<img width="7500" height="3500" alt="unnamed-2026-01-03T13_52_33" src="https://github.com/user-attachments/assets/71cd071c-d7be-4dfb-a6bd-22e0fd245381" />
 
 ---
 
