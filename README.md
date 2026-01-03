@@ -100,8 +100,9 @@
 > 응급실 실시간 상태는 별도 테이블로 관리하여 최신값만 유지
 > 
 
+<img width="3857" height="3745" alt="unnamed-2026-01-03T13_52_33" src="https://github.com/user-attachments/assets/74f452dc-589d-46bc-a36e-ca4078a159e6" />
 
-<img width="7500" height="3500" alt="unnamed-2026-01-03T13_52_33" src="https://github.com/user-attachments/assets/71cd071c-d7be-4dfb-a6bd-22e0fd245381" />
+
 
 ---
 
