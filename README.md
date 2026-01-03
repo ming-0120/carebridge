@@ -137,3 +137,12 @@
 - 공공데이터 특성을 고려한 **데이터 정제 구조**
 - 실제 서비스 환경을 고려한 **배포·운영 경험**
 - 보안을 고려한 인증·비밀번호 재설정 구조
+
+## **각 상황별 화면 흐름도**
+- 로그인 사용자
+<img width="2546" height="1165" alt="image" src="https://github.com/user-attachments/assets/47ee7261-7407-4356-9835-7141f265d4ab" />
+- 비로그인 사용자
+<img width="2108" height="969" alt="image" src="https://github.com/user-attachments/assets/7f45c634-a8a6-49b9-9ad3-4c207cc645ed" />
+- 관리자
+<img width="1513" height="1007" alt="image" src="https://github.com/user-attachments/assets/81217547-2135-4a62-b9d9-ffbccefb6d6e" />
+
