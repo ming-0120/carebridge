@@ -70,6 +70,5 @@
 ### 📄 상세 설계 및 기술 문서
 [Notion 링크](https://www.notion.so/API-Django-2dc8296227df80b59e88f77c7eda94c0#2dd8296227df8003bef5d89aaf92ef85)
 
-attachments/assets/efc3b40f-93be-45bc-929e-b102603a471d" />
 
 ---
