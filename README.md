@@ -228,6 +228,7 @@ can_reserve = matched_dept is not None
 - 서버 운영 경험(AWS, 로그, 디스크 관리)이 뜻깊은 경험이 됨
 
 ## **🤳 화면**
+### **케어브릿지 발표 영상**
 [![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
 
 <img width="1905" height="1760" alt="KakaoTalk_20251229_114717726_03" src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" />
