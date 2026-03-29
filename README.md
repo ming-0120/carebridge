@@ -228,14 +228,14 @@ can_reserve = matched_dept is not None
 - 서버 운영 경험(AWS, 로그, 디스크 관리)이 뜻깊은 경험이 됨
 
 ## **🤳 화면**
-https://www.youtube.com/watch?v=T2mVEn3PbGM
+[![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
 
-![KakaoTalk_20251229_114717726_03.png](attachment:26ee826c-8803-4cce-991d-03cc67f14640:3cc9cab6-3fe0-462d-a7fc-068920052591.png)
+<img width="1905" height="1760" alt="KakaoTalk_20251229_114717726_03" src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" />
+<img width="1905" height="1510" alt="KakaoTalk_20251229_114717726" src="https://github.com/user-attachments/assets/64dfacc7-817f-4518-b93d-a7f47c127f5d" />
+<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_01" src="https://github.com/user-attachments/assets/f11f1749-32f6-4dd8-9f38-e504049a6876" />
+<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_02" src="https://github.com/user-attachments/assets/52fc56db-b1ce-4108-8533-1298db28c09c" />
+<img width="1905" height="1311" alt="KakaoTalk_20251229_114717726_04" src="https://github.com/user-attachments/assets/b488cb7c-8dfa-4e0e-891b-1f6c847681bc" />
 
-![KakaoTalk_20251229_114717726.png](attachment:4711b2a5-97bd-45f8-bc78-b7cdca3d1d9c:KakaoTalk_20251229_114717726.png)
 
-![KakaoTalk_20251229_114717726_01.png](attachment:db9d7c8f-2a1f-4434-8eee-05a68c960a66:KakaoTalk_20251229_114717726_01.png)
 
-![KakaoTalk_20251229_114717726_02.png](attachment:b74f7735-b275-43d3-b20b-11daf4ee4e76:KakaoTalk_20251229_114717726_02.png)
 
-![KakaoTalk_20251229_114717726_04.png](attachment:2277fe4b-62fb-464d-b4cb-201e2cf29756:KakaoTalk_20251229_114717726_04.png)
