@@ -213,7 +213,7 @@ can_reserve = matched_dept is not None
 
 ---
 
-# ** 협업 및 커뮤니케이션 방법**
+# **협업 및 커뮤니케이션 방법**
 
 - GitHub Flow 기반 협업
 - 기능 단위 PR 및 코드 리뷰
@@ -222,7 +222,7 @@ can_reserve = matched_dept is not None
 
 ---
 
-# ** 회고**
+# **회고**
 
 - Django ORM과 DB 설계의 중요성을 체감
 - 공공데이터는 “가져오는 것”보다 “정제하는 것”이 더 중요함
