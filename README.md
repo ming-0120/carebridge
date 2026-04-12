@@ -2,6 +2,13 @@
 <img width="1536" height="1024" alt="logo_2" src="https://github.com/user-attachments/assets/cf3229b3-90e2-4840-8066-8d28ecf94218" />
 
 ## **🤳 화면**
+### **사용자 화면 구상도**
+<img width="1589" height="1306" alt="image" src="https://github.com/user-attachments/assets/8e7afd70-2bcb-4bae-9c8b-5b48b520e0fa" />
+### **의료진 화면 구상도**
+<img width="1425" height="1008" alt="image" src="https://github.com/user-attachments/assets/2c7a54d5-aa5d-4727-baac-d01610ffbe93" />
+### **관리자 화면 구상도**
+<img width="1422" height="897" alt="image" src="https://github.com/user-attachments/assets/ce182eaa-7d49-41c8-bed9-e71014e80ac4" />
+
 ### **케어브릿지 발표 영상**
 [![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
 
