@@ -1,32 +1,30 @@
 # 👩‍⚕️ **케어브릿지**
 <img width="1536" height="1024" alt="logo_2" src="https://github.com/user-attachments/assets/cf3229b3-90e2-4840-8066-8d28ecf94218" />
 
-## 📋 **프로젝트 개요**
+## **🤳 화면**
+### **케어브릿지 발표 영상**
+[![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
+
+<img width="1905" height="1760" alt="KakaoTalk_20251229_114717726_03" src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" />
+<img width="1905" height="1510" alt="KakaoTalk_20251229_114717726" src="https://github.com/user-attachments/assets/64dfacc7-817f-4518-b93d-a7f47c127f5d" />
+<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_01" src="https://github.com/user-attachments/assets/f11f1749-32f6-4dd8-9f38-e504049a6876" />
+<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_02" src="https://github.com/user-attachments/assets/52fc56db-b1ce-4108-8533-1298db28c09c" />
+<img width="1905" height="1311" alt="KakaoTalk_20251229_114717726_04" src="https://github.com/user-attachments/assets/b488cb7c-8dfa-4e0e-891b-1f6c847681bc" />
+
+## **프로젝트 개요**
 
 - **프로젝트명**: 케어브릿지 (CareBridge) – 공공의료 데이터 기반 병원·응급실 통합 정보 플랫폼
 - **개발 기간**: 2025.11.19 ~ 2025.12.23
 - **수행 방식**: **팀 프로젝트**
 - **담당 범위**: 백엔드(Django) / 데이터 처리 / 일부 프론트 연동
 
-## **💼 서비스 기획 배경**
+## **서비스 기획 배경**
 
 - 응급실, 병원 예약, 감염병 정보를 한 곳에서 확인할 수 있는 **의료 통합 시스템 개발**
 - **공공데이터**는 많지만 흩어져 있어서 기능적 사용은 어려움
 - 응급실 포화도가 단순 조회가 아닌 **거리·혼잡도·상태 기반 의사결정 지원**이 필요
 
 ---
-
-## **🔧 기술 스택** (Tech Stack)
-
-- **Backend:** Django, Python
-- **Database:** MySQL 8.0
-- **Infra:** AWS EC2, Nginx, Gunicorn
-- **Frontend:** HTML, CSS, Vanilla JS
-- **Data:** 공공의료 Open API
-- **협업툴:** GitHub, Notion, VSCode, PuTTY
-
----
-
 # **💡 기능 요약 및 담당 역할**
 
 ## **📌 기능 요약**
@@ -47,23 +45,15 @@
 
 ---
 
-# **기술 스택 및 아키텍처**
+# **협업 및 커뮤니케이션 방법**
 
-## **📐 아키텍처 특징**
-
-- Django App 단위로 기능 분리
-    - `accounts` – 사용자/권한/인증
-    - `hospitals` – 병원·부서·의사 정보
-    - `reservations` – 예약 및 타임슬롯
-    - `emergency` – 응급실 실시간 데이터
-    - `statistics` – 감염병 통계
-- Staging 테이블 → 운영 테이블 반영 구조
-- 서버에서 정제된 데이터만 View로 전달
+- GitHub Flow 기반 협업
+- 기능 단위 PR 및 코드 리뷰
+- 문제 발생 시 원인·해결 과정을 Notion에 기록
+- 프론트엔드와 API 명세 공유
 
 ---
-
 # **개발 중 발생한 문제 해결 및 트러블슈팅 경험**
-
 ---
 
 ## **✅ 배포 문제 : 서버 500 에러 및 디스크 용량 문제**
@@ -210,35 +200,6 @@ can_reserve = matched_dept is not None
 
 - 비밀번호 직접 노출 제거 → 보안 취약점 근본 차단
 - 1회성 토큰 기반 인증으로 계정 탈취 위험 감소
-
----
-
-# **협업 및 커뮤니케이션 방법**
-
-- GitHub Flow 기반 협업
-- 기능 단위 PR 및 코드 리뷰
-- 문제 발생 시 원인·해결 과정을 Notion에 기록
-- 프론트엔드와 API 명세 공유
-
----
-
-# **회고**
-
-- Django ORM과 DB 설계의 중요성을 체감
-- 공공데이터는 “가져오는 것”보다 “정제하는 것”이 더 중요함
-- 다음 단계로는 캐싱(Redis) 및 비동기 처리 도입을 고려하고 싶음
-- 서버 운영 경험(AWS, 로그, 디스크 관리)이 뜻깊은 경험이 됨
-
-## **🤳 화면**
-### **케어브릿지 발표 영상**
-[![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
-
-<img width="1905" height="1760" alt="KakaoTalk_20251229_114717726_03" src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" />
-<img width="1905" height="1510" alt="KakaoTalk_20251229_114717726" src="https://github.com/user-attachments/assets/64dfacc7-817f-4518-b93d-a7f47c127f5d" />
-<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_01" src="https://github.com/user-attachments/assets/f11f1749-32f6-4dd8-9f38-e504049a6876" />
-<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_02" src="https://github.com/user-attachments/assets/52fc56db-b1ce-4108-8533-1298db28c09c" />
-<img width="1905" height="1311" alt="KakaoTalk_20251229_114717726_04" src="https://github.com/user-attachments/assets/b488cb7c-8dfa-4e0e-891b-1f6c847681bc" />
-
 
 
 
