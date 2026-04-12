@@ -3,9 +3,18 @@
 
 ### **화면 구상도**
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/8e7afd70-2bcb-4bae-9c8b-5b48b520e0fa" width="32%" />
-  <img src="https://github.com/user-attachments/assets/2c7a54d5-aa5d-4727-baac-d01610ffbe93" width="32%" />
-  <img src="https://github.com/user-attachments/assets/ce182eaa-7d49-41c8-bed9-e71014e80ac4" width="32%" />
+  <img src="https://github.com/user-attachments/assets/8e7afd70-2bcb-4bae-9c8b-5b48b520e0fa" width="32%" /><br>
+  <b>사용자 화면</b>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2c7a54d5-aa5d-4727-baac-d01610ffbe93" width="32%" /><br>
+  <b>의료진 화면</b>
+</p>
+
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ce182eaa-7d49-41c8-bed9-e71014e80ac4" width="32%" /><br>
+  <b>관리자 화면</b>
 </p>
 
 ### **케어브릿지 발표 영상**
