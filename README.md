@@ -23,11 +23,27 @@
 [![케어브릿지_발표영상](http://img.youtube.com/vi/T2mVEn3PbGM/0.jpg)](https://www.youtube.com/watch?v=T2mVEn3PbGM)
 
 ### **화면**
-<img width="1905" height="1760" alt="KakaoTalk_20251229_114717726_03" src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" />
-<img width="1905" height="1510" alt="KakaoTalk_20251229_114717726" src="https://github.com/user-attachments/assets/64dfacc7-817f-4518-b93d-a7f47c127f5d" />
-<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_01" src="https://github.com/user-attachments/assets/f11f1749-32f6-4dd8-9f38-e504049a6876" />
-<img width="1920" height="919" alt="KakaoTalk_20251229_114717726_02" src="https://github.com/user-attachments/assets/52fc56db-b1ce-4108-8533-1298db28c09c" />
-<img width="1905" height="1311" alt="KakaoTalk_20251229_114717726_04" src="https://github.com/user-attachments/assets/b488cb7c-8dfa-4e0e-891b-1f6c847681bc" />
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/02fd408f-b174-48e2-b1e4-a1514f0bb324" width="300"/><br/>      
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/64dfacc7-817f-4518-b93d-a7f47c127f5d" width="300"/><br/>      
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/f11f1749-32f6-4dd8-9f38-e504049a6876" width="300"/><br/>      
+    </td>
+  </tr>
+  <tr>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/52fc56db-b1ce-4108-8533-1298db28c09c" width="300"/><br/>      
+    </td>
+    <td align="center">
+      <img src="https://github.com/user-attachments/assets/b488cb7c-8dfa-4e0e-891b-1f6c847681bc" width="300"/><br/>      
+    </td>
+  </tr>
+</table>
 
 ## **프로젝트 개요**
 
