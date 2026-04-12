@@ -5,7 +5,7 @@
 <table align="center">
   <tr>
     <td align="center">
-      <img src="https://github.com/user-attachments/assets/8e7afd70-2bcb-4bae-9c8b-5b48b520e0fa" width="300"/><br/>
+      <img src="https://github.com/user-attachments/assets/8cd7808a-7e4a-4777-a25e-b7b218a7237d" width="300"/><br/>
       <b>사용자 화면</b>
     </td>
     <td align="center">
